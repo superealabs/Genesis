@@ -17,26 +17,6 @@
           is-mandatory
           fill-width
         />
-        <GenesisInput 
-          v-model="config.projectDescription" 
-          variant="secondary" 
-          label="Description du projet"
-          size="lg"
-          placeholder="Une brève description de l'application..."
-          fill-width
-        />
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GenesisInput
-          v-model="config.projectLocation"
-          type="path"
-          variant="secondary"
-          label="Localisation"
-          fill-width
-          size="lg"
-          @request-folder-path="handleSelectFolderPath"
-        />
         <GenesisInput
           v-model="config.projectPort"
           type="number"
@@ -46,6 +26,31 @@
           placeholder="ex: 8080"
           fill-width
         />
+      </div>
+
+      <div class="w-full">
+        <GenesisInput 
+          v-model="config.projectDescription" 
+          variant="secondary" 
+          label="Description du projet"
+          size="lg"
+          placeholder="Une brève description de l'application..."
+          :type="'textarea'"
+          fill-width
+        />
+      </div>
+
+      <div class="w-full">
+        <GenesisInput
+          v-model="config.projectLocation"
+          type="path"
+          variant="secondary"
+          label="Emplacement"
+          fill-width
+          size="lg"
+          @request-folder-path="handleSelectFolderPath"
+        />
+
       </div>
     </div>
 
@@ -153,116 +158,160 @@
         :default-open="false"
         variant="secondary"
       >
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          
-          <!-- Logging Level -->
-          <GenesisInput
-            v-model="config.loggingLevel"
-            type="select"
-            variant="secondary"
-            label="Niveau de Logging"
-            placeholder="INFO"
-            fill-width
-          >
-            <template #default="{ close }">
-              <div class="p-1 space-y-1">
-                <button
-                  v-for="opt in availableLoggingLevels"
-                  :key="opt"
-                  type="button"
-                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                  :class="{ 'text-accent font-medium': config.loggingLevel === opt }"
-                  @click="() => { updateConfig('loggingLevel', opt); close() }"
-                >
-                  {{ opt }}
-                </button>
-              </div>
-            </template>
-          </GenesisInput>
-
-          <!-- Security Type -->
-          <GenesisInput
-            v-model="config.securityType"
-            type="select"
-            variant="secondary"
-            label="Type de Sécurité"
-            placeholder="Aucune"
-            fill-width
-          >
-            <template #default="{close}">
-              <div class="p-1 space-y-1">
-                <button
-                  type="button"
-                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                  :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }"
-                  @click="() => { updateConfig('securityType', 'NONE'); close() }"
-                >
-                  Aucune
-                </button>
-                <button
-                  v-for="opt in availableSecurityTypes"
-                  :key="opt"
-                  type="button"
-                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                  :class="{ 'text-accent font-medium': config.securityType === opt }"
-                  @click="() => { updateConfig('securityType', opt); close() }"
-                >
-                  {{ opt }}
-                </button>
-              </div>
-            </template>
-          </GenesisInput>
-
-          <!-- Cache Provider -->
-          <GenesisInput
-            v-model="config.cacheProvider"
-            type="select"
-            variant="secondary"
-            label="Fournisseur de Cache"
-            placeholder="Aucun"
-            fill-width
-          >
-            <template #default="{ close }">
-              <div class="p-1 space-y-1">
-                <button
-                  v-for="opt in availableCacheProviders"
-                  :key="opt"
-                  type="button"
-                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                  :class="{ 'text-accent font-medium': config.cacheProvider === opt }"
-                  @click="() => { updateConfig('cacheProvider', opt); close() }"
-                >
-                  {{ opt }}
-                </button>
-              </div>
-            </template>
-          </GenesisInput>
-
-          <!-- Hibernate DDL Auto -->
-          <div v-if="showHibernateDdl" class="space-y-1">
+        <div class="flex flex-row gap-4">
+          <!-- ═══ GESTION DES PROFILS DE CONFIGURATION ═══ -->
+          <div class="flex flex-col gap-8">
+            
+            <!-- Logging Level -->
             <GenesisInput
-              v-model="config.hibernateDdlAuto"
+              v-model="config.loggingLevel"
               type="select"
               variant="secondary"
-              label="Hibernate DDL Auto"
-              placeholder="none"
+              label="Niveau de Logging"
+              placeholder="INFO"
               fill-width
             >
               <template #default="{ close }">
                 <div class="p-1 space-y-1">
                   <button
-                    v-for="opt in availableHibernateDdlAutoOptions"
+                    v-for="opt in availableLoggingLevels"
                     :key="opt"
                     type="button"
                     class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                    :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }"
-                    @click="() => { updateConfig('hibernateDdlAuto', opt); close() }"
+                    :class="{ 'text-accent font-medium': config.loggingLevel === opt }"
+                    @click="() => { updateConfig('loggingLevel', opt); close() }"
                   >
                     {{ opt }}
                   </button>
                 </div>
               </template>
             </GenesisInput>
+
+            <!-- Security Type -->
+            <GenesisInput
+              v-model="config.securityType"
+              type="select"
+              variant="secondary"
+              label="Type de Sécurité"
+              placeholder="Aucune"
+              fill-width
+            >
+              <template #default="{close}">
+                <div class="p-1 space-y-1">
+                  <button
+                    type="button"
+                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                    :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }"
+                    @click="() => { updateConfig('securityType', 'NONE'); close() }"
+                  >
+                    Aucune
+                  </button>
+                  <button
+                    v-for="opt in availableSecurityTypes"
+                    :key="opt"
+                    type="button"
+                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                    :class="{ 'text-accent font-medium': config.securityType === opt }"
+                    @click="() => { updateConfig('securityType', opt); close() }"
+                  >
+                    {{ opt }}
+                  </button>
+                </div>
+              </template>
+            </GenesisInput>
+
+            <!-- Cache Provider -->
+            <GenesisInput
+              v-model="config.cacheProvider"
+              type="select"
+              variant="secondary"
+              label="Fournisseur de Cache"
+              placeholder="Aucun"
+              fill-width
+            >
+              <template #default="{ close }">
+                <div class="p-1 space-y-1">
+                  <button
+                    v-for="opt in availableCacheProviders"
+                    :key="opt"
+                    type="button"
+                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                    :class="{ 'text-accent font-medium': config.cacheProvider === opt }"
+                    @click="() => { updateConfig('cacheProvider', opt); close() }"
+                  >
+                    {{ opt }}
+                  </button>
+                </div>
+              </template>
+            </GenesisInput>
+
+            <!-- Hibernate DDL Auto -->
+            <div v-if="showHibernateDdl" class="space-y-1">
+              <GenesisInput
+                v-model="config.hibernateDdlAuto"
+                type="select"
+                variant="secondary"
+                label="Hibernate DDL Auto"
+                placeholder="none"
+                fill-width
+              >
+                <template #default="{ close }">
+                  <div class="p-1 space-y-1">
+                    <button
+                      v-for="opt in availableHibernateDdlAutoOptions"
+                      :key="opt"
+                      type="button"
+                      class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                      :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }"
+                      @click="() => { updateConfig('hibernateDdlAuto', opt); close() }"
+                    >
+                      {{ opt }}
+                    </button>
+                  </div>
+                </template>
+              </GenesisInput>
+            </div>
+          </div>
+
+          <div class="w-fit space-y-3">
+            <!-- Panneau de gestion des configurations -->
+            <GenesisConfigurationPanel
+              :configurations="mockConfigurations"
+              :selected-config-id="selectedConfigId"
+              :filtered-configs="mockFilteredConfigs"
+              :search-query="configSearchQuery"
+              :can-move-up="canMoveUp"
+              :can-move-down="canMoveDown"
+              @update:search-query="configSearchQuery = $event"
+              @add="handleAddConfig"
+              @delete="handleDeleteConfig"
+              @rename="handleRenameConfig"
+              @edit="handleEditConfig"
+              @toggle-visibility="handleToggleVisibility"
+              @move-up="handleMoveUp"
+              @move-down="handleMoveDown"
+              @select-configuration="selectedConfigId = $event"
+            />
+            <!-- Barre d'outils des actions -->
+            <div class="flex gap-2">
+              <!-- rajouter un text hover -->
+              <GenesisButtonIcon :variant="'secondary'" @click="handleSaveConfig">
+                <IconSave />
+              </GenesisButtonIcon>
+              
+              <GenesisButtonIcon :variant="'secondary'" @click="handleLoadConfig" :disabled="!selectedConfigId">
+                <IconDownload />
+              </GenesisButtonIcon>
+
+              <GenesisButtonIcon :variant="'secondary'" @click="handleExportConfig" :disabled="!selectedConfigId">
+                <IconUpload />
+              </GenesisButtonIcon>
+
+              <GenesisButtonIcon :variant="'secondary'" @click="handleExportAllConfigs">
+                <IconSave />
+              </GenesisButtonIcon>
+
+            </div>
           </div>
 
         </div>
@@ -272,11 +321,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
+
+import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
+import IconDownload from '@genesis-labs/web-core/core/components/ui/icons/IconDownload.vue';
+import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
+
+import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
+// import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
+
 
 // ============================================================================
 // 1. EMITS
@@ -322,6 +380,48 @@ const showHibernateDdl = computed(() => framework.value?.withHibernateDdlAuto ==
 function handleSelectFolderPath() {
   emit('request-folder-path');
 }
+
+
+const configSearchQuery = ref('');
+const selectedConfigId = ref<string | number | null>(null);
+
+// Données mockées pour l'affichage (le traitement réel viendra plus tard)
+const mockConfigurations = ref([
+  { id: 1, name: 'Profil Par Défaut', isHidden: false, components: ['INFO', 'NONE', 'Aucun', 'none'] },
+  { id: 2, name: 'Profil Production', isHidden: false, components: ['ERROR', 'JWT', 'Redis', 'validate'] }
+]);
+
+const mockFilteredConfigs = computed(() => {
+  if (!configSearchQuery.value.trim()) return mockConfigurations.value;
+  const query = configSearchQuery.value.toLowerCase();
+  return mockConfigurations.value.filter(c => c.name.toLowerCase().includes(query));
+});
+
+const canMoveUp = computed(() => {
+  if (!selectedConfigId.value) return false;
+  const index = mockConfigurations.value.findIndex(c => c.id === selectedConfigId.value);
+  return index > 0;
+});
+
+const canMoveDown = computed(() => {
+  if (!selectedConfigId.value) return false;
+  const index = mockConfigurations.value.findIndex(c => c.id === selectedConfigId.value);
+  return index < mockConfigurations.value.length - 1;
+});
+
+// Handlers mockés pour l'affichage (à implémenter avec la vraie logique plus tard)
+function handleSaveConfig() { console.log('[Mock] Sauvegarder la configuration actuelle'); }
+function handleLoadConfig() { console.log('[Mock] Charger la configuration', selectedConfigId.value); }
+function handleExportConfig() { console.log('[Mock] Exporter la configuration', selectedConfigId.value); }
+function handleExportAllConfigs() { console.log('[Mock] Exporter toutes les configurations'); }
+function handleAddConfig() { console.log('[Mock] Ajouter une configuration'); }
+function handleDeleteConfig(id: string | number) { console.log('[Mock] Supprimer', id); }
+function handleRenameConfig(id: string | number, newName: string) { console.log('[Mock] Renommer', id, newName); }
+function handleEditConfig(id: string | number) { console.log('[Mock] Éditer', id); }
+function handleToggleVisibility(id: string | number) { console.log('[Mock] Toggle visibilité', id); }
+function handleMoveUp() { console.log('[Mock] Monter', selectedConfigId.value); }
+function handleMoveDown() { console.log('[Mock] Descendre', selectedConfigId.value); }
+
 
 // ============================================================================
 // 5. WATCHERS (Logique réactive)

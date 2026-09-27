@@ -126,6 +126,11 @@ const props = withDefaults(defineProps<{
    * - 'fixed' : Positionné par rapport au viewport (idéal pour les overlays globaux qui doivent sortir des conteneurs).
    */
   positioning?: 'absolute' | 'fixed';
+  /**
+   * Force le dropdown à s'ouvrir vers le bas, ignorant la logique automatique
+   * de détection d'espace en bas de l'écran (règle des 150px).
+   */
+  forceDown?: boolean;
 }>(), {
   align: 'right',
   dropdownSize: 'md',
@@ -137,7 +142,8 @@ const props = withDefaults(defineProps<{
   openAtHover: false,
   label: '',
   isMandatory: false,
-  positioning: 'absolute' // Changé de 'fixed' à 'absolute' pour corriger les problèmes de débordement
+  positioning: 'absolute', // Changé de 'fixed' à 'absolute' pour corriger les problèmes de débordement
+  forceDown: false
 });
 
 const emit = defineEmits<{ close: [] }>();
@@ -178,7 +184,8 @@ const dropdownStyle = computed(() => {
     const el = getMenuButtonEl();
     const rect = el?.getBoundingClientRect();
     // Estimation simple : si le bas du bouton est à moins de 150px du bas de l'écran, on affiche au-dessus
-    const goesUp = rect ? (window.innerHeight - rect.bottom) < 150 : false;
+   const goesUp = !props.forceDown && rect ? (window.innerHeight - rect.bottom) < 150 : false;
+
 
     if (goesUp) {
       style.bottom = '100%';

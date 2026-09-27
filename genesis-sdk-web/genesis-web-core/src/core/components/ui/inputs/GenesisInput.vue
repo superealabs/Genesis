@@ -44,6 +44,7 @@
                 match-trigger-width
                 :class="inputWrapperClasses"
                 :align="'left'"
+                :force-down="true"
             >
                 <template #trigger>
                     <span class="truncate">
@@ -55,6 +56,34 @@
                 </template>
             </GenesisDropdown>
         </template>
+
+        <!-- ═══ CAS TEXTAREA (Multi-ligne redimensionnable) ═══ -->
+        <template v-else-if="type === 'textarea'">
+            <div
+                class="flex flex-col min-h-0 overflow-hidden border border-secondary rounded-lg bg-bg-dark/30 relative transition-all duration-200 focus-within:ring-1 focus-within:ring-accent"
+                :class="[containerVariantClasses, { 'opacity-50': disabled }]"
+                :style="resizeStyle"
+            >
+                <textarea
+                    class="flex-1 w-full min-h-0 bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed p-3 custom-scrollbar resize-none"
+                    :disabled="disabled"
+                    :placeholder="placeholder"
+                    :value="String(modelValue ?? '')"
+                    v-bind="$attrs"
+                    @input="handleInput"
+                />
+                
+                <!-- Handle de redimensionnement vertical -->
+                <div 
+                    class="absolute bottom-0 left-0 right-0 h-3 py-3 cursor-ns-resize flex items-center justify-center hover:bg-accent/20 transition-colors z-20 rounded-b-lg"
+                    @mousedown="startResizeBottom"
+                    title="Redimensionner verticalement"
+                >
+                    <IconDragY class="text-text-muted opacity-50 hover:opacity-100" :size="20" />
+                </div>
+            </div>
+        </template>
+
 
         <!-- ═══ CAS STANDARD (text, password, number, date, color, file, multiChoice) ═══ -->
         <template v-else>
@@ -178,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, useSlots } from 'vue';
+import { computed, useSlots, ref } from 'vue';
 import GenesisSwitch from './GenesisSwitch.vue';
 import GenesisCheckbox, { type CheckboxState } from './GenesisCheckbox.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
@@ -186,11 +215,13 @@ import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/
 import GenesisLabel from '@genesis-labs/web-core/core/components/ui/labels/GenesisLabel.vue';
 import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
 import IconFolder from '@genesis-labs/web-core/core/components/ui/icons/IconFolder.vue';
+import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable.ts';
+import IconDragY from '../icons/IconDragY.vue';
 
-export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean' | 'color' | 'select' | 'file' | 'checkbox-3-state' | 'path';
+export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean' | 'color' | 'select' | 'file' | 'checkbox-3-state' | 'path' | 'textarea';
 
 interface Props {
-    modelValue?: string | number | boolean | CheckboxState;
+    modelValue?: string | number | boolean | CheckboxState | string;
     placeholder?: string;
     type?: InputType;
     disabled?: boolean;
@@ -241,8 +272,18 @@ const hasRightSlot      = computed(() => !!slots.right);
 const hasOuterLeftSlot  = computed(() => !!slots['outer-left']);
 const hasOuterRightSlot = computed(() => !!slots['outer-right']);
 
-// ═══ Handlers ═══
 
+const MIN_HEIGHT = 100;
+
+// gestion du resizer
+const { resizeStyle, startResizeBottom } = useResizable({
+    minHeight: MIN_HEIGHT, // Hauteur minimale pour garder le panneau utilisable
+    maxHeight: () => MIN_HEIGHT * 2, // Hauteur max : 85% de la fenêtre
+    resizableX: ref(false), // Désactive le redimensionnement horizontal
+    resizableY: ref(true)   // Active le redimensionnement vertical
+});
+
+// ═══ Handlers ═══
 function handleInput(event: Event) {
     const target = event.target as HTMLInputElement;
     emit('update:modelValue', props.type === 'number' && target.value !== ''

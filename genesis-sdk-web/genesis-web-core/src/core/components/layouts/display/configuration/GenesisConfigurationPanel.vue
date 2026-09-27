@@ -142,7 +142,7 @@ const emit = defineEmits<{
     'update:searchQuery': [value: string];
     add: [];
     delete: [id: string | number];
-    rename: [id: string | number, newName: string]; // ✅ MODIFIÉ
+    rename: [id: string | number, newName: string];
     edit: [id: string | number];
     toggleVisibility: [id: string | number];
     moveUp: [id: string | number];
