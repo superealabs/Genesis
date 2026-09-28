@@ -1,7 +1,7 @@
 package org.labs.genesis.dashboard.rules;
 
 import org.labs.genesis.connexion.model.ColumnMetadata;
-import org.labs.genesis.dashboard.model.DashboardDataType;
+import org.labs.genesis.dashboard.model.DashboardEnums.DashboardDataType;
 
 import java.util.Locale;
 

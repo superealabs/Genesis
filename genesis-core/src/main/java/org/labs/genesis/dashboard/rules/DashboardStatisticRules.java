@@ -1,8 +1,8 @@
 package org.labs.genesis.dashboard.rules;
 
 import org.labs.genesis.connexion.model.ColumnMetadata;
-import org.labs.genesis.dashboard.model.DashboardDataType;
-import org.labs.genesis.dashboard.model.StatisticType;
+import org.labs.genesis.dashboard.model.DashboardEnums.DashboardDataType;
+import org.labs.genesis.dashboard.model.DashboardEnums.StatisticType;
 
 import java.util.Collections;
 import java.util.EnumMap;
