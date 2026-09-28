@@ -25,7 +25,7 @@ class DashboardQueryBuilderTest {
         assertEquals(2, plan.getSelections().size());
         assertEquals(1, plan.getGroupBy().size());
         assertEquals("produit", plan.getGroupBy().get(0));
-        assertEquals(StatisticType.SUM, plan.getSelections().get(1).getStatisticExpression());
+        assertEquals(StatisticType.SUM, plan.getSelections().get(1).getStatisticExpression().getStatistic());
     }
 
     @Test

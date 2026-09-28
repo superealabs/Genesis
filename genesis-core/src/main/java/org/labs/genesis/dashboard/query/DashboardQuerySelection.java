@@ -18,6 +18,6 @@ public class DashboardQuerySelection {
     private DashboardFieldRole role;
     private DashboardStatisticExpression statisticExpression;
     public boolean isAggregated() {
-        return statistic != null;
+        return statisticExpression != null;
     }
 }
