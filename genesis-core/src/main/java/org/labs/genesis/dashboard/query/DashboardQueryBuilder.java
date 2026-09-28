@@ -5,6 +5,8 @@ import org.labs.genesis.dashboard.model.DashboardVisualization;
 import org.labs.genesis.dashboard.rules.DashboardVisualizationRules;
 import org.labs.genesis.dashboard.rules.DashboardMetadataValidator;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.dashboard.rules.DashboardStatisticResolver;
+import org.labs.genesis.dashboard.model.DashboardDataSource;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public final class DashboardQueryBuilder {
                 field.getColumnName(),
                 field.getKey(),
                 field.getRole(),
-                field.getStatistic()
+                DashboardStatisticResolver.resolve(field)
         );
     }
 
@@ -73,5 +75,17 @@ public final class DashboardQueryBuilder {
         }
 
         return createPlan(visualization);
+    }
+
+    public static DashboardQueryPlan buildRowCount(DashboardDataSource source, String alias) {
+        if (source == null) {
+            throw new IllegalArgumentException("Dashboard data source is required");
+        }
+
+        DashboardQueryPlan plan = new DashboardQueryPlan();
+        plan.setSource(source);
+        plan.setRowStatistic(DashboardStatisticResolver.countRows(alias));
+
+        return plan;
     }
 }

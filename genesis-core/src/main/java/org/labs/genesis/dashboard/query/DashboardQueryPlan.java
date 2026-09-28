@@ -17,4 +17,5 @@ public class DashboardQueryPlan {
     private List<DashboardQuerySelection> selections = new ArrayList<>();
     private List<String> groupBy = new ArrayList<>();
     private DashboardQueryOptions options = new DashboardQueryOptions();
+    private DashboardStatisticExpression rowStatistic;
 }
