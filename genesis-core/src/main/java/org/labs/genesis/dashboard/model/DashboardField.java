@@ -16,9 +16,6 @@ public class DashboardField {
     private String columnName;
     private DashboardFieldRole role;
     private StatisticType statistic;
-    private Integer limit;
-    private DashboardSortDirection sortDirection;
-    private String filter;
 
     public DashboardField(String key, String columnName, DashboardFieldRole role) {
         this.key = key;

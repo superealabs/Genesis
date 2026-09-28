@@ -21,5 +21,6 @@ public class DashboardVisualization {
     private DashboardDataSource dataSource;
     private DashboardLayout layout;
     private List<DashboardField> fields = new ArrayList<>();
+    private DashboardQueryOptions queryOptions = new DashboardQueryOptions();
     private Map<String, Object> options = new HashMap<>();
 }
