@@ -276,21 +276,21 @@
           <div class="w-fit space-y-3">
             <!-- Panneau de gestion des configurations -->
             <GenesisConfigurationPanel
-              :configurations="mockConfigurations"
-              :selected-config-id="selectedConfigId"
-              :filtered-configs="mockFilteredConfigs"
-              :search-query="configSearchQuery"
-              :can-move-up="canMoveUp"
-              :can-move-down="canMoveDown"
-              @update:search-query="configSearchQuery = $event"
-              @add="handleAddConfig"
-              @delete="handleDeleteConfig"
-              @rename="handleRenameConfig"
-              @edit="handleEditConfig"
-              @toggle-visibility="handleToggleVisibility"
-              @move-up="handleMoveUp"
-              @move-down="handleMoveDown"
-              @select-configuration="selectedConfigId = $event"
+              :configurations="configManager.configurations.value"
+              :selected-config-id="configManager.selectedConfigId.value"
+              :filtered-configs="configManager.filteredConfigs.value"
+              :search-query="configManager.searchQuery.value"
+              :can-move-up="configManager.canMoveUp.value"
+              :can-move-down="configManager.canMoveDown.value"
+              @update:search-query="(val) => configManager.searchQuery.value = val"
+              @add="() => configManager.addConfiguration(getCurrentConfigValues())"
+              @delete="configManager.deleteConfiguration"
+              @rename="configManager.renameConfiguration"
+              @edit="(id) => configManager.editConfiguration(id, getCurrentConfigValues())"
+              @toggle-visibility="configManager.toggleVisibility"
+              @move-up="configManager.moveUp"
+              @move-down="configManager.moveDown"
+              @select-configuration="configManager.selectConfiguration"
             />
             <!-- Barre d'outils des actions -->
             <div class="flex gap-2">
@@ -323,6 +323,7 @@
 <script setup lang="ts">
 import { computed, watch, ref } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+import { useConfigurationManager } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
@@ -381,48 +382,96 @@ function handleSelectFolderPath() {
   emit('request-folder-path');
 }
 
-
-const configSearchQuery = ref('');
 const selectedConfigId = ref<string | number | null>(null);
 
-// Données mockées pour l'affichage (le traitement réel viendra plus tard)
-const mockConfigurations = ref([
+// Initialisation du composable de gestion des configurations
+const configManager = useConfigurationManager([
   { id: 1, name: 'Profil Par Défaut', isHidden: false, components: ['INFO', 'NONE', 'Aucun', 'none'] },
   { id: 2, name: 'Profil Production', isHidden: false, components: ['ERROR', 'JWT', 'Redis', 'validate'] }
-]);
+], { singleConfiguration: false });
 
-const mockFilteredConfigs = computed(() => {
-  if (!configSearchQuery.value.trim()) return mockConfigurations.value;
-  const query = configSearchQuery.value.toLowerCase();
-  return mockConfigurations.value.filter(c => c.name.toLowerCase().includes(query));
-});
+/**
+ * Helper : Récupère les valeurs actuelles des dropdowns sous forme de tableau
+ * pour les stocker dans la propriété 'components' de la configuration.
+ */
+function getCurrentConfigValues(): string[] {
+  return [
+    config.value.loggingLevel || 'INFO',
+    config.value.securityType || 'NONE',
+    config.value.cacheProvider || 'Aucun',
+    config.value.hibernateDdlAuto || 'none'
+  ];
+}
 
-const canMoveUp = computed(() => {
-  if (!selectedConfigId.value) return false;
-  const index = mockConfigurations.value.findIndex(c => c.id === selectedConfigId.value);
-  return index > 0;
-});
+/**
+ * Helper : Applique les valeurs d'une configuration sauvegardée aux dropdowns.
+ */
+function applyConfigValues(values: string[]) {
+  if (values[0]) updateConfig('loggingLevel', values[0]);
+  if (values[1]) updateConfig('securityType', values[1]);
+  if (values[2]) updateConfig('cacheProvider', values[2]);
+  if (values[3]) updateConfig('hibernateDdlAuto', values[3]);
+}
 
-const canMoveDown = computed(() => {
-  if (!selectedConfigId.value) return false;
-  const index = mockConfigurations.value.findIndex(c => c.id === selectedConfigId.value);
-  return index < mockConfigurations.value.length - 1;
-});
+/**
+ * Sauvegarde l'état actuel des dropdowns dans la configuration sélectionnée.
+ * Si aucune n'est sélectionnée, en crée une nouvelle.
+ */
+function handleSaveConfig() {
+  const values = getCurrentConfigValues();
+  if (configManager.selectedConfigId.value) {
+    configManager.editConfiguration(configManager.selectedConfigId.value, values);
+  } else {
+    configManager.addConfiguration(values);
+  }
+}
 
-// Handlers mockés pour l'affichage (à implémenter avec la vraie logique plus tard)
-function handleSaveConfig() { console.log('[Mock] Sauvegarder la configuration actuelle'); }
-function handleLoadConfig() { console.log('[Mock] Charger la configuration', selectedConfigId.value); }
-function handleExportConfig() { console.log('[Mock] Exporter la configuration', selectedConfigId.value); }
-function handleExportAllConfigs() { console.log('[Mock] Exporter toutes les configurations'); }
-function handleAddConfig() { console.log('[Mock] Ajouter une configuration'); }
-function handleDeleteConfig(id: string | number) { console.log('[Mock] Supprimer', id); }
-function handleRenameConfig(id: string | number, newName: string) { console.log('[Mock] Renommer', id, newName); }
-function handleEditConfig(id: string | number) { console.log('[Mock] Éditer', id); }
-function handleToggleVisibility(id: string | number) { console.log('[Mock] Toggle visibilité', id); }
-function handleMoveUp() { console.log('[Mock] Monter', selectedConfigId.value); }
-function handleMoveDown() { console.log('[Mock] Descendre', selectedConfigId.value); }
+/**
+ * Charge les valeurs de la configuration sélectionnée dans les dropdowns.
+ */
+function handleLoadConfig() {
+  if (!configManager.selectedConfigId.value) return;
+  const configToLoad = configManager.configurations.value.find(
+    c => c.id === configManager.selectedConfigId.value
+  );
+  if (configToLoad) {
+    applyConfigValues(configToLoad.components);
+  }
+}
 
+/**
+ * Télécharge la configuration sélectionnée au format JSON.
+ */
+function handleExportConfig() {
+  const configToExport = configManager.configurations.value.find(
+    c => c.id === configManager.selectedConfigId.value
+  );
+  if (configToExport) {
+    downloadJSON(configToExport, `${configToExport.name.replace(/\s+/g, '_')}.json`);
+  }
+}
 
+/**
+ * Télécharge l'ensemble des configurations au format JSON.
+ */
+function handleExportAllConfigs() {
+  downloadJSON(configManager.configurations.value, 'toutes_les_configurations.json');
+}
+
+/**
+ * Utilitaire pour déclencher le téléchargement d'un fichier JSON.
+ */
+function downloadJSON(data: any, filename: string) {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 // ============================================================================
 // 5. WATCHERS (Logique réactive)
 // ============================================================================
