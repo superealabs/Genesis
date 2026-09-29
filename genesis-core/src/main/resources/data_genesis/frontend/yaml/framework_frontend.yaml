@@ -5550,7 +5550,8 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
         import { useDateFormat } from '@/composables/useDateFormat'
-        {{#if containsFile=true}}import { buildFileSource, downloadFile, getGeneratedFileName, isImageContent } from '@/utils/file-utils'{{/if}}
+        {{#if containsFile=true}}import { buildFileSource, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from '@/utils/file-utils'
+        import { useImagePreview } from '@/composables/useImage'{{/if}}
       selector: "${majStart(className)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5578,20 +5579,12 @@
                 </template>
         
                 <template v-else-if="field.type === 'file'">
-                  <img
-                    v-if="isImageContent(${minStart(className)}Data[field.key])"
-                    :src="buildFileSource(${minStart(className)}Data[field.key])"
-                    :alt="field.key"
-                    class="max-h-10 max-w-10"
-                  />
-                  <button
-                    v-else-if="${minStart(className)}Data[field.key]"
-                    type="button"
-                    class="link link-primary"
-                    @click="downloadFile(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key))"
-                  >
-                    Télécharger {{ field.label }}
-                  </button>
+                  <div v-if="${minStart(className)}Data[field.key]" class="flex max-w-64 items-center gap-2">
+                    <button v-if="isImageContent(${minStart(className)}Data[field.key])" type="button" class="shrink-0 overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(${minStart(className)}Data[field.key]), field.label)"><img :src="buildFileSource(${minStart(className)}Data[field.key])" :alt="field.label" class="h-10 w-10 object-cover" /></button>
+                    <span v-else class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-base-200 text-[9px] font-bold text-base-content/70" aria-hidden="true">{{ getFileTypeLabel(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key)) }}</span>
+                    <span class="min-w-0 flex-1 text-[10px] text-base-content/60">{{ getFileSize(${minStart(className)}Data[field.key]) }}</span>
+                    <button type="button" class="btn btn-ghost btn-xs shrink-0" title="Télécharger le fichier" aria-label="Télécharger le fichier" @click.stop="downloadAsset(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key))">{{ downloadedFile === getGeneratedFileName(${minStart(className)}Data[field.key], field.key) ? 'Downloading...' : 'Download'  }}</button>
+                  </div>
                   <span v-else>--</span>
                 </template>
         
@@ -5614,6 +5607,14 @@
               </div>
             </td>
           </tr>
+          {{#if containsFile=true}}
+          <Teleport to="body">
+            <div v-if="previewSource" class="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" :aria-label="previewAlt" @click.self="closeImagePreview">
+              <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-white" aria-label="Fermer la prévisualisation" @click="closeImagePreview">×</button>
+              <img :src="previewSource" :alt="previewAlt" class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain" />
+            </div>
+          </Teleport>
+          {{/if}}
         </template>
       style: "<style scoped></style>"
       export: |
@@ -5654,6 +5655,7 @@
         const viewRow = () => emit('request-view', props.${minStart(className)})
         const updateRow = () => emit('request-update', props.${minStart(className)})
         const { formatDate } = useDateFormat()
+        {{#if containsFile=true}}const { previewSource, previewAlt, downloadedFile, openImagePreview, closeImagePreview, downloadAsset } = useImagePreview(){{/if}}
       componentName: "${majStart(className)}Row"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
@@ -5668,7 +5670,8 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
         import { useDateFormat } from '@/composables/useDateFormat'
-        {{#if containsFile=true}}import { buildFileSource, downloadFile, getGeneratedFileName, isImageContent } from '@/utils/file-utils'{{/if}}
+        {{#if containsFile=true}}import { buildFileSource, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from '@/utils/file-utils'
+        import { useImagePreview } from '@/composables/useImage'{{/if}}
       selector: "${majStart(className)}Card"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5702,20 +5705,12 @@
                         {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
                       </template>
                       <template v-else-if="field.type === 'file'">
-                        <img
-                          v-if="isImageContent(${minStart(className)}Data[field.key])"
-                          :src="buildFileSource(${minStart(className)}Data[field.key])"
-                          :alt="field.key"
-                          class="max-h-10 max-w-10"
-                        />
-                        <button
-                          v-else-if="${minStart(className)}Data[field.key]"
-                          type="button"
-                          class="link link-primary"
-                          @click="downloadFile(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key))"
-                        >
-                          Télécharger {{ field.label }}
-                        </button>
+                        <div v-if="${minStart(className)}Data[field.key]" class="flex w-full min-w-0 items-center gap-2 text-left">
+                          <button v-if="isImageContent(${minStart(className)}Data[field.key])" type="button" class="shrink-0 overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(${minStart(className)}Data[field.key]), field.label)"><img :src="buildFileSource(${minStart(className)}Data[field.key])" :alt="field.label" class="h-10 w-10 object-cover" /></button>
+                          <span v-else class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-base-200 text-[9px] font-bold text-base-content/70" aria-hidden="true">{{ getFileTypeLabel(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key)) }}</span>
+                          <span class="min-w-0 flex-1 text-[10px] text-base-content/60">{{ getFileSize(${minStart(className)}Data[field.key]) }}</span>
+                          <button type="button" class="btn btn-ghost btn-xs shrink-0" title="Télécharger le fichier" aria-label="Télécharger le fichier" @click.stop="downloadAsset(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key))">{{ downloadedFile === getGeneratedFileName(${minStart(className)}Data[field.key], field.key) ? 'Downloading...' : 'Download'  }}</button>
+                        </div>
                         <span v-else>--</span>
                       </template>
                       <template v-else>
@@ -5739,6 +5734,14 @@
               </div>
             </div>
           </div>
+          {{#if containsFile=true}}
+          <Teleport to="body">
+            <div v-if="previewSource" class="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" :aria-label="previewAlt" @click.self="closeImagePreview">
+              <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-white" aria-label="Fermer la prévisualisation" @click="closeImagePreview">×</button>
+              <img :src="previewSource" :alt="previewAlt" class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain" />
+            </div>
+          </Teleport>
+          {{/if}}
         </template>
       style: "<style scoped></style>"
       export: |
@@ -5779,6 +5782,7 @@
         const viewRow = () => emit('request-view', props.${minStart(className)})
         const updateRow = () => emit('request-update', props.${minStart(className)})
         const { formatDate } = useDateFormat()
+        {{#if containsFile=true}}const { previewSource, previewAlt, downloadedFile, openImagePreview, closeImagePreview, downloadAsset } = useImagePreview(){{/if}}
       componentName: "${majStart(className)}Card"
       destinationPath: "${destinationFolder}/src/entities/${minStart(className)}"
       componentAdditionalFiles: [ ]
@@ -6555,7 +6559,8 @@
       componentName: "${majStart(className)}Details"
       importFile: |
         import type { PropType } from 'vue'
-        {{#if containsFile=true}}import { buildFileSource, downloadFile, getGeneratedFileName, isImageContent } from '@/utils/file-utils'{{/if}}
+        {{#if containsFile=true}}import { buildFileSource, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from '@/utils/file-utils'
+        import { useImagePreview } from '@/composables/useImage'{{/if}}
         import type { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import { usePopup } from '@/composables/usePopup'
@@ -6577,22 +6582,14 @@
                   {{#each fields}}
                   <div>
                     <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadable(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
-                    <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
+                    <div id="${minStart(className)}${majStart(this.name)}" class="input min-h-16 w-full bg-base-100 cursor-default">
                       {{#if this.uiType=file}}
-                      <img
-                        v-if="isImageContent(${minStart(className)}.${this.name})"
-                        :src="buildFileSource(${minStart(className)}.${this.name})"
-                        alt="${formatReadable(this.name)}"
-                        class="max-h-full max-w-full"
-                      />
-                      <button
-                        v-else-if="${minStart(className)}.${this.name}"
-                        type="button"
-                        class="link link-primary"
-                        @click="downloadFile(${minStart(className)}.${this.name}, getGeneratedFileName(${minStart(className)}.${this.name}, '${minStart(this.name)}'))"
-                      >
-                        Télécharger ${formatReadable(this.name)}
-                      </button>
+                      <div v-if="${minStart(className)}.${this.name}" class="flex w-full min-w-0 items-center gap-3 py-2">
+                        <button v-if="isImageContent(${minStart(className)}.${this.name})" type="button" class="shrink-0 overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(${minStart(className)}.${this.name}), '${formatReadable(this.name)}')"><img :src="buildFileSource(${minStart(className)}.${this.name})" alt="${formatReadable(this.name)}" class="h-12 w-16 object-cover" /></button>
+                        <span v-else class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-base-200 text-[9px] font-bold text-base-content/70" aria-hidden="true">{{ getFileTypeLabel(${minStart(className)}.${this.name}, getGeneratedFileName(${minStart(className)}.${this.name}, '${minStart(this.name)}')) }}</span>
+                        <span class="min-w-0 flex-1 text-xs text-base-content/60">{{ getFileSize(${minStart(className)}.${this.name}) }}</span>
+                        <button type="button" class="btn btn-ghost btn-xs shrink-0" title="Télécharger le fichier" aria-label="Télécharger le fichier" @click.stop="downloadAsset(${minStart(className)}.${this.name}, getGeneratedFileName(${minStart(className)}.${this.name}, '${minStart(this.name)}'))">{{ downloadedFile === getGeneratedFileName(${minStart(className)}.${this.name}, '${minStart(this.name)}') ? 'Downloading...' : 'Download'  }}</button>
+                      </div>
                       <span v-else>--</span>
                       {{elseIf this.isForeignKey}}
                       <span>{{ ${minStart(className)}.${this.name}?.getKeyValue() ?? '' }}</span>
@@ -6631,8 +6628,17 @@
             @confirm="confirmDelete"
             @cancel="closePopup"
           />{{/if}}
+          {{#if containsFile=true}}
+          <Teleport to="body">
+            <div v-if="previewSource" class="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" :aria-label="previewAlt" @click.self="closeImagePreview">
+              <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-white" aria-label="Fermer la prévisualisation" @click="closeImagePreview">×</button>
+              <img :src="previewSource" :alt="previewAlt" class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain" />
+            </div>
+          </Teleport>
+          {{/if}}
         </template>
       export: |
+        {{#if containsFile=true}}const { previewSource, previewAlt, downloadedFile, openImagePreview, closeImagePreview, downloadAsset } = useImagePreview(){{/if}}
         {{#if isView}}
         defineProps({
           ${minStart(className)}: {
@@ -6794,7 +6800,8 @@
         import{ ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model.ts'
         import ${majStart(this.className)}TableForm from '@/entities/${minStart(this.className)}/${majStart(this.className)}TableForm.vue'
         {{/each}}{{/if}}{{#if containsFile=true}}
-        import { buildFileSource, downloadFile, fileToBase64, getGeneratedFileName, isImageContent } from '@/utils/file-utils'
+        import { buildFileSource, fileToBase64, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from '@/utils/file-utils'
+        import { useImagePreview } from '@/composables/useImage'
         {{/if}}
       selector: "${majStart(className)}Form"
       standalone: true
@@ -6851,21 +6858,11 @@
                     type="${this.uiType}"
                     @update:model-value="handle${majStart(this.name)}FileChange"
                   />
-                  <div v-if="formModel.${minStart(this.name)}" class="flex items-center gap-3">
-                    <img
-                      v-if="isImageContent(formModel.${minStart(this.name)})"
-                      :src="buildFileSource(formModel.${minStart(this.name)})"
-                      alt="${formatReadable(this.name)}"
-                      class="max-h-20 max-w-20 object-contain"
-                    />
-                    <div v-else class="flex items-center gap-2">
-                      <span>{{ getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') }}</span>
-                      <button
-                        type="button"
-                        class="link link-primary"
-                        @click="downloadFile(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))"
-                      >Télécharger</button>
-                    </div>
+                  <div v-if="formModel.${minStart(this.name)}" class="flex min-w-0 items-center gap-3 rounded-md border border-base-300 bg-base-200/40 p-2">
+                    <button v-if="isImageContent(formModel.${minStart(this.name)})" type="button" class="shrink-0 overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(formModel.${minStart(this.name)}), '${formatReadable(this.name)}')"><img :src="buildFileSource(formModel.${minStart(this.name)})" alt="${formatReadable(this.name)}" class="h-12 w-16 object-cover" /></button>
+                    <span v-else class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-base-200 text-[9px] font-bold text-base-content/70" aria-hidden="true">{{ getFileTypeLabel(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}')) }}</span>
+                    <span class="min-w-0 flex-1 text-xs text-base-content/60">{{ getFileSize(formModel.${minStart(this.name)}) }}</span>
+                    <button type="button" class="btn btn-ghost btn-xs shrink-0" title="Télécharger le fichier" aria-label="Télécharger le fichier" @click.stop="downloadAsset(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))">{{ downloadedFile === getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') ? 'Downloading...' : 'Download'  }}</button>
                     <button
                       type="button"
                       class="btn btn-xs btn-error btn-outline"
@@ -6891,21 +6888,11 @@
                     type="${this.uiType}"
                     @update:model-value="handle${majStart(this.name)}FileChange"
                   />
-                  <div v-if="formModel.${minStart(this.name)}" class="flex items-center gap-3">
-                    <img
-                      v-if="isImageContent(formModel.${minStart(this.name)})"
-                      :src="buildFileSource(formModel.${minStart(this.name)})"
-                      alt="${formatReadable(this.name)}"
-                      class="max-h-20 max-w-20 object-contain"
-                    />
-                    <div v-else class="flex items-center gap-2">
-                      <span>{{ getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') }}</span>
-                      <button
-                        type="button"
-                        class="link link-primary"
-                        @click="downloadFile(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))"
-                      >Télécharger</button>
-                    </div>
+                  <div v-if="formModel.${minStart(this.name)}" class="flex min-w-0 items-center gap-3 rounded-md border border-base-300 bg-base-200/40 p-2">
+                    <button v-if="isImageContent(formModel.${minStart(this.name)})" type="button" class="shrink-0 overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(formModel.${minStart(this.name)}), '${formatReadable(this.name)}')"><img :src="buildFileSource(formModel.${minStart(this.name)})" alt="${formatReadable(this.name)}" class="h-12 w-16 object-cover" /></button>
+                    <span v-else class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-base-200 text-[9px] font-bold text-base-content/70" aria-hidden="true">{{ getFileTypeLabel(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}')) }}</span>
+                    <span class="min-w-0 flex-1 text-xs text-base-content/60">{{ getFileSize(formModel.${minStart(this.name)}) }}</span>
+                    <button type="button" class="btn btn-ghost btn-xs shrink-0" title="Télécharger le fichier" aria-label="Télécharger le fichier" @click.stop="downloadAsset(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))">{{ downloadedFile === getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') ? 'Downloading...' : 'Download'  }}</button>
                     <button
                       type="button"
                       class="btn btn-xs btn-error btn-outline"
@@ -6962,9 +6949,18 @@
               </form>
             </div>
           </div>
+          {{#if containsFile=true}}
+          <Teleport to="body">
+            <div v-if="previewSource" class="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" :aria-label="previewAlt" @click.self="closeImagePreview">
+              <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-white" aria-label="Fermer la prévisualisation" @click="closeImagePreview">×</button>
+              <img :src="previewSource" :alt="previewAlt" class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain" />
+            </div>
+          </Teleport>
+          {{/if}}
         </template>
       style: "<style scoped></style>"
       export: |
+        {{#if containsFile=true}}const { previewSource, previewAlt, downloadedFile, openImagePreview, closeImagePreview, downloadAsset } = useImagePreview(){{/if}}
         const props = defineProps<{
           ${minStart(className)}?: ${majStart(className)}
           {{#if isParentTable=true and hasChildrenForm=true}}
@@ -7688,7 +7684,8 @@
         import { ref, onMounted } from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
-        {{#if containsFile=true}}import { buildFileSource, downloadFile, fileToBase64, getGeneratedFileName, isImageContent } from '@/utils/file-utils'{{/if}}
+        {{#if containsFile=true}}import { buildFileSource, fileToBase64, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from '@/utils/file-utils'
+        import { useImagePreview } from '@/composables/useImage'{{/if}}
 
         const props = defineProps<{
           internalId: number
@@ -7702,6 +7699,7 @@
         }>()
 
         const formModel = ref<${majStart(className)}FormDTO>(${majStart(className)}FormDTO.parse(props.${minStart(className)}))
+        {{#if containsFile=true}}const { previewSource, previewAlt, downloadedFile, openImagePreview, closeImagePreview, downloadAsset } = useImagePreview(){{/if}}
         {{#each fieldsFK}}
         {{#if this.isParentForeignKey}}{{removeLine}}
         {{else}}const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
@@ -7766,21 +7764,11 @@
                 type="file"
                 @update:model-value="handle${majStart(this.name)}FileChange"
               />
-              <div v-if="formModel.${minStart(this.name)}" class="flex items-center gap-2">
-                <img
-                  v-if="isImageContent(formModel.${minStart(this.name)})"
-                  :src="buildFileSource(formModel.${minStart(this.name)})"
-                  alt="${formatReadable(this.name)}"
-                  class="max-h-10 max-w-10 object-contain"
-                />
-                <div v-else class="flex items-center gap-2">
-                  <span>{{ getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') }}</span>
-                  <button
-                    type="button"
-                    class="link link-primary"
-                    @click="downloadFile(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))"
-                  >Télécharger</button>
-                </div>
+              <div v-if="formModel.${minStart(this.name)}" class="flex min-w-0 items-center gap-2 rounded-md border border-base-300 bg-base-200/40 p-1.5">
+                <button v-if="isImageContent(formModel.${minStart(this.name)})" type="button" class="shrink-0 overflow-hidden rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(formModel.${minStart(this.name)}), '${formatReadable(this.name)}')"><img :src="buildFileSource(formModel.${minStart(this.name)})" alt="${formatReadable(this.name)}" class="h-8 w-8 object-cover" /></button>
+                <span v-else class="grid h-8 w-8 shrink-0 place-items-center rounded bg-base-200 text-[8px] font-bold text-base-content/70" aria-hidden="true">{{ getFileTypeLabel(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}')) }}</span>
+                <span class="min-w-0 flex-1 text-[10px] text-base-content/60">{{ getFileSize(formModel.${minStart(this.name)}) }}</span>
+                <button type="button" class="btn btn-ghost btn-xs shrink-0" title="Télécharger le fichier" aria-label="Télécharger le fichier" @click.stop="downloadAsset(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))">{{ downloadedFile === getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') ? 'Downloading...' : 'Download'  }}</button>
                 <button
                   type="button"
                   class="btn btn-xs btn-error btn-outline"
@@ -7807,6 +7795,14 @@
               </button>
             </td>
           </tr>
+          {{#if containsFile=true}}
+          <Teleport to="body">
+            <div v-if="previewSource" class="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" :aria-label="previewAlt" @click.self="closeImagePreview">
+              <button type="button" class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 text-white" aria-label="Fermer la prévisualisation" @click="closeImagePreview">×</button>
+              <img :src="previewSource" :alt="previewAlt" class="max-h-[90vh] max-w-[90vw] rounded-lg object-contain" />
+            </div>
+          </Teleport>
+          {{/if}}
         </template>
 
         <style scoped></style>
