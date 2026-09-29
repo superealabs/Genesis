@@ -4147,6 +4147,725 @@
   frameworkId: 6
   name: "Spring Security - Session Authentication"
   securityFiles:
+    - fileType: "Security Roles"
+      fileName: "SecurityRoles"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security;
+
+        public final class SecurityRoles {
+
+            public static final String ADMIN = "ROLE_ADMIN";
+            public static final String USER = "ROLE_USER";
+
+            private SecurityRoles() {
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security"
+
+    - fileType: "Security Role Entity"
+      fileName: "SecurityRole"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.entities;
+
+        import jakarta.persistence.*;
+        import lombok.Getter;
+        import lombok.Setter;
+
+        @Getter
+        @Setter
+        @Entity
+        @Table(name = "security_roles")
+        public class SecurityRole {
+
+            @Id
+            @GeneratedValue(strategy = GenerationType.IDENTITY)
+            private Long id;
+
+            @Column(nullable = false, unique = true, length = 100)
+            private String name;
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/entities"
+
+    - fileType: "Security User Entity"
+      fileName: "SecurityUser"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.entities;
+
+        import jakarta.persistence.*;
+        import lombok.Getter;
+        import lombok.Setter;
+
+        import java.util.HashSet;
+        import java.util.Set;
+
+        @Getter
+        @Setter
+        @Entity
+        @Table(name = "security_users")
+        public class SecurityUser {
+
+            @Id
+            @GeneratedValue(strategy = GenerationType.IDENTITY)
+            private Long id;
+
+            @Column(nullable = false, unique = true, length = 100)
+            private String username;
+
+            @Column(nullable = false, unique = true, length = 255)
+            private String email;
+
+            @Column(nullable = false, length = 100)
+            private String password;
+
+            @Column(nullable = false)
+            private boolean enabled = true;
+
+            @ManyToMany(fetch = FetchType.EAGER)
+            @JoinTable(
+                    name = "security_user_roles",
+                    joinColumns = @JoinColumn(name = "user_id"),
+                    inverseJoinColumns = @JoinColumn(name = "role_id")
+            )
+            private Set<SecurityRole> roles = new HashSet<>();
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/entities"
+
+    - fileType: "Security Role Repository"
+      fileName: "SecurityRoleRepository"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.repositories;
+
+        import ${groupLink}.${lowerCase(projectName)}.config.security.entities.SecurityRole;
+        import org.springframework.data.jpa.repository.JpaRepository;
+
+        import java.util.Optional;
+
+        public interface SecurityRoleRepository extends JpaRepository<SecurityRole, Long> {
+
+            Optional<SecurityRole> findByName(String name);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/repositories"
+
+    - fileType: "Security User Repository"
+      fileName: "SecurityUserRepository"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.repositories;
+
+        import ${groupLink}.${lowerCase(projectName)}.config.security.entities.SecurityUser;
+        import org.springframework.data.jpa.repository.JpaRepository;
+
+        import java.util.Optional;
+
+        public interface SecurityUserRepository extends JpaRepository<SecurityUser, Long> {
+
+            Optional<SecurityUser> findByUsername(String username);
+
+            boolean existsByUsername(String username);
+
+            boolean existsByEmail(String email);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/repositories"
+
+    - fileType: "Security User Details Service"
+      fileName: "SecurityUserDetailsService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security.services;
+
+        import ${groupLink}.${lowerCase(projectName)}.config.security.entities.SecurityUser;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.repositories.SecurityUserRepository;
+
+        import org.springframework.security.core.userdetails.User;
+        import org.springframework.security.core.userdetails.UserDetails;
+        import org.springframework.security.core.userdetails.UserDetailsService;
+        import org.springframework.security.core.userdetails.UsernameNotFoundException;
+        import org.springframework.stereotype.Service;
+
+        @Service
+        public class SecurityUserDetailsService implements UserDetailsService {
+
+            private final SecurityUserRepository userRepository;
+
+            public SecurityUserDetailsService(SecurityUserRepository userRepository) {
+                this.userRepository = userRepository;
+            }
+
+            @Override
+            public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+                SecurityUser user = userRepository
+                        .findByUsername(username)
+                        .orElseThrow(() ->
+                                new UsernameNotFoundException("Utilisateur introuvable : " + username)
+                        );
+
+                String[] authorities = user.getRoles()
+                        .stream()
+                        .map(role -> role.getName())
+                        .toArray(String[]::new);
+
+                return User.withUsername(user.getUsername())
+                        .password(user.getPassword())
+                        .authorities(authorities)
+                        .disabled(!user.isEnabled())
+                        .build();
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security/services"
+
+    - fileType: "Security Configuration"
+      fileName: "SecurityConfig"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security;
+
+        import ${groupLink}.${lowerCase(projectName)}.config.security.services.SecurityUserDetailsService;
+
+        import org.springframework.context.annotation.Bean;
+        import org.springframework.context.annotation.Configuration;
+        import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+        import org.springframework.security.config.Customizer;
+        import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+        import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+        import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+        import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+        import org.springframework.security.crypto.password.PasswordEncoder;
+        import org.springframework.security.web.SecurityFilterChain;
+        import org.springframework.security.web.util.matcher.RegexRequestMatcher;
+
+        @Configuration
+        @EnableWebSecurity
+        @EnableMethodSecurity
+        public class SecurityConfig {
+
+            private final SecurityUserDetailsService userDetailsService;
+
+            public SecurityConfig(SecurityUserDetailsService userDetailsService) {
+                this.userDetailsService = userDetailsService;
+            }
+
+            @Bean
+            public PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
+            }
+
+            @Bean
+            public DaoAuthenticationProvider authenticationProvider(
+                    PasswordEncoder passwordEncoder
+            ) {
+                DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+
+                provider.setUserDetailsService(userDetailsService);
+                provider.setPasswordEncoder(passwordEncoder);
+
+                return provider;
+            }
+
+            @Bean
+            public SecurityFilterChain securityFilterChain(HttpSecurity http,DaoAuthenticationProvider authenticationProvider) throws Exception {
+
+                http
+                        .csrf(Customizer.withDefaults())
+
+                        .authenticationProvider(authenticationProvider)
+
+                        .authorizeHttpRequests(auth -> auth
+
+                                .requestMatchers(
+                                        "/login",
+                                        "/access-denied",
+                                        "/error/**",
+                                        "/css/**",
+                                        "/js/**",
+                                        "/images/**",
+                                        "/fonts/**",
+                                        "/favicon.ico"
+                                ).permitAll()
+                                
+                        {{#each adminRoutesSection}}
+                                .requestMatchers(
+                        ${this.routes}
+                                ).hasRole("ADMIN")
+                        {{/each}}  
+                                .anyRequest().authenticated()
+                        )
+
+                        .formLogin(form -> form
+                                .loginPage("/login")
+                                .loginProcessingUrl("/login")
+                                .defaultSuccessUrl("/", true)
+                                .failureUrl("/login?error")
+                                .permitAll()
+                        )
+
+                        .logout(logout -> logout
+                                .logoutUrl("/logout")
+                                .logoutSuccessUrl("/login?logout")
+                                .invalidateHttpSession(true)
+                                .deleteCookies("JSESSIONID")
+                                .permitAll()
+                        )
+
+                        .exceptionHandling(exception -> exception
+                              .accessDeniedHandler((request, response, accessDeniedException) ->
+                                      response.sendRedirect(request.getContextPath() + "/access-denied")
+                              )
+                        )
+
+                        .sessionManagement(session -> session
+                              .sessionFixation(fixation ->
+                                      fixation.migrateSession()
+                              )
+                        );
+
+                return http.build();
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security"
+
+    - fileType: "Authentication Controller"
+      fileName: "AuthController"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.controllers;
+
+        import org.springframework.stereotype.Controller;
+        import org.springframework.web.bind.annotation.GetMapping;
+
+        @Controller
+        public class AuthController {
+
+            @GetMapping("/login")
+            public String login() {
+                return "auth/login";
+            }
+
+            @GetMapping("/access-denied")
+            public String accessDenied() {
+                return "auth/access-denied";
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
+
+    - fileType: "Security Schema Initializer"
+      fileName: "SecuritySchemaInitializer"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config.security;
+
+        import ${groupLink}.${lowerCase(projectName)}.config.security.entities.SecurityRole;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.entities.SecurityUser;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.repositories.SecurityRoleRepository;
+        import ${groupLink}.${lowerCase(projectName)}.config.security.repositories.SecurityUserRepository;
+
+        import org.slf4j.Logger;
+        import org.slf4j.LoggerFactory;
+
+        import org.springframework.boot.ApplicationArguments;
+        import org.springframework.boot.ApplicationRunner;
+        import org.springframework.security.crypto.password.PasswordEncoder;
+        import org.springframework.stereotype.Component;
+
+        import javax.sql.DataSource;
+
+        import java.sql.Connection;
+        import java.sql.DatabaseMetaData;
+        import java.sql.ResultSet;
+        import java.sql.SQLException;
+        import java.sql.Statement;
+
+        import java.util.HashSet;
+        import java.util.Locale;
+        import java.util.Set;
+
+        @Component
+        public class SecuritySchemaInitializer implements ApplicationRunner {
+
+            private static final Logger LOGGER = LoggerFactory.getLogger(SecuritySchemaInitializer.class);
+
+            private static final String DEFAULT_ADMIN_USERNAME = "admin";
+            private static final String DEFAULT_ADMIN_EMAIL = "admin@user.com";
+            private static final String DEFAULT_ADMIN_PASSWORD = "Pwd@123";
+
+            private final DataSource dataSource;
+            private final SecurityRoleRepository roleRepository;
+            private final SecurityUserRepository userRepository;
+            private final PasswordEncoder passwordEncoder;
+
+            public SecuritySchemaInitializer(DataSource dataSource, SecurityRoleRepository roleRepository, SecurityUserRepository userRepository, PasswordEncoder passwordEncoder) {
+                this.dataSource = dataSource;
+                this.roleRepository = roleRepository;
+                this.userRepository = userRepository;
+                this.passwordEncoder = passwordEncoder;
+            }
+
+            @Override
+            public void run(ApplicationArguments args) {
+                LOGGER.info("[Security Schema] Initialisation du schéma de sécurité...");
+
+                try (Connection connection = dataSource.getConnection()) {
+                    DatabaseType databaseType = detectDatabase(connection);
+                    LOGGER.info("[Security Schema] Base détectée : {}", databaseType);
+                    createSecurityTables(connection, databaseType);
+                    initializeSecurityData();
+                    LOGGER.info("[Security Schema] Initialisation terminée.");
+
+                } catch (Exception ex) {
+                    LOGGER.error("[Security Schema] Erreur pendant l'initialisation.",ex);
+                    throw new IllegalStateException("Impossible d'initialiser le schéma de sécurité.",ex);
+                }
+            }
+
+            private void createSecurityTables(Connection connection, DatabaseType databaseType) throws SQLException {
+                if (!tableExists(connection,"security_roles")) {
+                    execute(connection, createRolesTableSql(databaseType));
+                    LOGGER.info("[Security Schema] Table security_roles créée.");
+                } else {
+                    LOGGER.info("[Security Schema] Table security_roles déjà existante.");
+                }
+
+                if (!tableExists(connection, "security_users")) {
+                    execute(connection, createUsersTableSql(databaseType));
+                    LOGGER.info("[Security Schema] Table security_users créée.");
+                } else {
+                    LOGGER.info("[Security Schema] Table security_users déjà existante.");
+                }
+
+                if (!tableExists(connection, "security_user_roles")) {
+                    execute(connection, createUserRolesTableSql(databaseType));
+                    LOGGER.info("[Security Schema] Table security_user_roles créée.");
+                } else {
+                    LOGGER.info("[Security Schema] Table security_user_roles déjà existante.");
+                }
+            }
+
+            private void initializeSecurityData() {
+                SecurityRole adminRole = roleRepository
+                                .findByName(SecurityRoles.ADMIN)
+                                .orElseGet(() -> {
+                                    SecurityRole role = new SecurityRole();
+                                    role.setName(SecurityRoles.ADMIN);
+                                    return roleRepository.save(role);
+                                });
+                roleRepository
+                        .findByName(SecurityRoles.USER)
+                        .orElseGet(() -> {
+                            SecurityRole role = new SecurityRole();
+                            role.setName(SecurityRoles.USER);
+                            return roleRepository.save(role);
+                        });
+                SecurityUser admin = userRepository
+                                .findByUsername(
+                                        DEFAULT_ADMIN_USERNAME
+                                )
+                                .orElse(null);
+                if (admin == null) {
+                    admin = new SecurityUser();
+                    admin.setUsername(DEFAULT_ADMIN_USERNAME);
+                    admin.setEmail(DEFAULT_ADMIN_EMAIL);
+                    admin.setPassword(passwordEncoder.encode(DEFAULT_ADMIN_PASSWORD));
+                    admin.setEnabled(true);
+                    Set<SecurityRole> roles = new HashSet<>();
+                    roles.add(adminRole);
+                    admin.setRoles(roles);
+                    userRepository.save(admin);
+                    LOGGER.info("[Security Schema] Administrateur par défaut créé.");
+                } else {
+                    boolean hasAdminRole =
+                            admin.getRoles()
+                                    .stream()
+                                    .anyMatch(role -> SecurityRoles.ADMIN.equals(role.getName()));
+                    if (!hasAdminRole) {
+                        admin.getRoles()
+                                .add(adminRole);
+                        userRepository.save(admin);
+                        LOGGER.info("[Security Schema] ROLE_ADMIN ajouté à l'administrateur existant.");
+                    }
+                }
+            }
+
+            private boolean tableExists(Connection connection, String tableName) throws SQLException {
+                DatabaseMetaData metadata = connection.getMetaData();
+                String catalog = connection.getCatalog();
+                String schema;
+                try {
+                    schema = connection.getSchema();
+                } catch (SQLException ex) {
+                    schema = null;
+                }
+                if (findTable(metadata, catalog, schema, tableName)) {
+                    return true;
+                }
+                return findTable(metadata,catalog,null,tableName);
+            }
+
+            private boolean findTable(DatabaseMetaData metadata, String catalog, String schema, String tableName) throws SQLException {
+                try (ResultSet tables = metadata.getTables(catalog, schema, "%", new String[]{"TABLE"})) {
+                    while (tables.next()) {
+                        String existingTable = tables.getString("TABLE_NAME");
+                        if (tableName.equalsIgnoreCase(existingTable)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            private DatabaseType detectDatabase(Connection connection) throws SQLException {
+                String productName = connection
+                                .getMetaData()
+                                .getDatabaseProductName()
+                                .toLowerCase(Locale.ROOT);
+                if (productName.contains("postgres")) {
+                    return DatabaseType.POSTGRESQL;
+                }
+                if (productName.contains("mysql") || productName.contains("mariadb")) {
+                    return DatabaseType.MYSQL;
+                }
+                if (productName.contains("microsoft") || productName.contains("sql server")) {
+                    return DatabaseType.SQL_SERVER;
+                }
+                if (productName.contains("oracle")) {
+                    return DatabaseType.ORACLE;
+                }
+                throw new IllegalStateException("Base de données non supportée pour la sécurité : " + productName);
+            }
+
+            private void execute(Connection connection, String sql) throws SQLException {
+                try (Statement statement = connection.createStatement()) {
+                    statement.execute(sql);
+                }
+            }
+
+            private String createRolesTableSql(DatabaseType databaseType) {
+                return switch (databaseType) {
+                    case POSTGRESQL -> """
+                            CREATE TABLE security_roles (
+                                id BIGSERIAL PRIMARY KEY,
+                                name VARCHAR(100) NOT NULL UNIQUE
+                            )
+                            """;
+
+                    case MYSQL -> """
+                            CREATE TABLE security_roles (
+                                id BIGINT NOT NULL AUTO_INCREMENT,
+                                name VARCHAR(100) NOT NULL,
+                                PRIMARY KEY (id),
+                                CONSTRAINT uk_sec_roles_name UNIQUE (name)
+                            ) ENGINE=InnoDB
+                            """;
+
+                    case SQL_SERVER -> """
+                            CREATE TABLE security_roles (
+                                id BIGINT IDENTITY(1,1) NOT NULL,
+                                name NVARCHAR(100) NOT NULL,
+                                CONSTRAINT pk_security_roles
+                                    PRIMARY KEY (id),
+                                CONSTRAINT uk_sec_roles_name
+                                    UNIQUE (name)
+                            )
+                            """;
+
+                    case ORACLE -> """
+                            CREATE TABLE security_roles (
+                                id NUMBER(19)
+                                    GENERATED BY DEFAULT AS IDENTITY,
+                                name VARCHAR2(100) NOT NULL,
+                                CONSTRAINT pk_security_roles
+                                    PRIMARY KEY (id),
+                                CONSTRAINT uk_sec_roles_name
+                                    UNIQUE (name)
+                            )
+                            """;
+                };
+            }
+
+            private String createUsersTableSql(DatabaseType databaseType) {
+                return switch (databaseType) {
+                    case POSTGRESQL -> """
+                            CREATE TABLE security_users (
+                                id BIGSERIAL PRIMARY KEY,
+                                username VARCHAR(100) NOT NULL UNIQUE,
+                                email VARCHAR(255) NOT NULL UNIQUE,
+                                password VARCHAR(255) NOT NULL,
+                                enabled BOOLEAN NOT NULL DEFAULT TRUE
+                            )
+                            """;
+
+                    case MYSQL -> """
+                            CREATE TABLE security_users (
+                                id BIGINT NOT NULL AUTO_INCREMENT,
+                                username VARCHAR(100) NOT NULL,
+                                email VARCHAR(255) NOT NULL,
+                                password VARCHAR(255) NOT NULL,
+                                enabled BOOLEAN NOT NULL DEFAULT TRUE,
+                                PRIMARY KEY (id),
+                                CONSTRAINT uk_sec_users_username
+                                    UNIQUE (username),
+                                CONSTRAINT uk_sec_users_email
+                                    UNIQUE (email)
+                            ) ENGINE=InnoDB
+                            """;
+
+                    case SQL_SERVER -> """
+                            CREATE TABLE security_users (
+                                id BIGINT IDENTITY(1,1) NOT NULL,
+                                username NVARCHAR(100) NOT NULL,
+                                email NVARCHAR(255) NOT NULL,
+                                password NVARCHAR(255) NOT NULL,
+                                enabled BIT NOT NULL DEFAULT 1,
+                                CONSTRAINT pk_security_users
+                                    PRIMARY KEY (id),
+                                CONSTRAINT uk_sec_users_username
+                                    UNIQUE (username),
+                                CONSTRAINT uk_sec_users_email
+                                    UNIQUE (email)
+                            )
+                            """;
+
+                    case ORACLE -> """
+                            CREATE TABLE security_users (
+                                id NUMBER(19)
+                                    GENERATED BY DEFAULT AS IDENTITY,
+                                username VARCHAR2(100) NOT NULL,
+                                email VARCHAR2(255) NOT NULL,
+                                password VARCHAR2(255) NOT NULL,
+                                enabled NUMBER(1) DEFAULT 1 NOT NULL,
+                                CONSTRAINT pk_security_users
+                                    PRIMARY KEY (id),
+                                CONSTRAINT uk_sec_users_username
+                                    UNIQUE (username),
+                                CONSTRAINT uk_sec_users_email
+                                    UNIQUE (email),
+                                CONSTRAINT ck_sec_users_enabled
+                                    CHECK (enabled IN (0, 1))
+                            )
+                            """;
+                };
+            }
+
+            private String createUserRolesTableSql(DatabaseType databaseType) {
+                return switch (databaseType) {
+                    case POSTGRESQL -> """
+                            CREATE TABLE security_user_roles (
+                                user_id BIGINT NOT NULL,
+                                role_id BIGINT NOT NULL,
+
+                                CONSTRAINT pk_security_user_roles
+                                    PRIMARY KEY (user_id, role_id),
+
+                                CONSTRAINT fk_sur_user
+                                    FOREIGN KEY (user_id)
+                                    REFERENCES security_users(id)
+                                    ON DELETE CASCADE,
+
+                                CONSTRAINT fk_sur_role
+                                    FOREIGN KEY (role_id)
+                                    REFERENCES security_roles(id)
+                                    ON DELETE CASCADE
+                            )
+                            """;
+
+                    case MYSQL -> """
+                            CREATE TABLE security_user_roles (
+                                user_id BIGINT NOT NULL,
+                                role_id BIGINT NOT NULL,
+
+                                PRIMARY KEY (user_id, role_id),
+
+                                CONSTRAINT fk_sur_user
+                                    FOREIGN KEY (user_id)
+                                    REFERENCES security_users(id)
+                                    ON DELETE CASCADE,
+
+                                CONSTRAINT fk_sur_role
+                                    FOREIGN KEY (role_id)
+                                    REFERENCES security_roles(id)
+                                    ON DELETE CASCADE
+                            ) ENGINE=InnoDB
+                            """;
+
+                    case SQL_SERVER -> """
+                            CREATE TABLE security_user_roles (
+                                user_id BIGINT NOT NULL,
+                                role_id BIGINT NOT NULL,
+
+                                CONSTRAINT pk_security_user_roles
+                                    PRIMARY KEY (user_id, role_id),
+
+                                CONSTRAINT fk_sur_user
+                                    FOREIGN KEY (user_id)
+                                    REFERENCES security_users(id)
+                                    ON DELETE CASCADE,
+
+                                CONSTRAINT fk_sur_role
+                                    FOREIGN KEY (role_id)
+                                    REFERENCES security_roles(id)
+                                    ON DELETE CASCADE
+                            )
+                            """;
+
+                    case ORACLE -> """
+                            CREATE TABLE security_user_roles (
+                                user_id NUMBER(19) NOT NULL,
+                                role_id NUMBER(19) NOT NULL,
+
+                                CONSTRAINT pk_security_user_roles
+                                    PRIMARY KEY (user_id, role_id),
+
+                                CONSTRAINT fk_sur_user
+                                    FOREIGN KEY (user_id)
+                                    REFERENCES security_users(id)
+                                    ON DELETE CASCADE,
+
+                                CONSTRAINT fk_sur_role
+                                    FOREIGN KEY (role_id)
+                                    REFERENCES security_roles(id)
+                                    ON DELETE CASCADE
+                            )
+                            """;
+                };
+            }
+
+            private enum DatabaseType {POSTGRESQL,MYSQL,SQL_SERVER,ORACLE}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config/security"
+
+    - fileType: "Access Denied Page"
+      fileName: "access-denied"
+      extension: "html"
+      content: |
+        <div xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout/base}">
+            <main layout:fragment="content">
+                <div class="header">
+                    <h3>Accès refusé</h3>
+                    <a th:href="@{/}"
+                       class="btn btn-primary btn-md">
+                        <svg width="16"
+                             height="16"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7" />
+                        </svg>
+                        <p>Retour</p>
+                    </a>
+                </div>
+
+                <div class="error-container">
+                    <p class="error-message">Vous ne disposez pas des autorisations nécessaires pour effectuer cette action.
+                    </p>
+                </div>
+            </main>
+        </div>
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/auth"
+
     - fileType: "Login Page"
       fileName: "login"
       extension: "html"
@@ -4314,12 +5033,12 @@
                 </div>
 
                 <div class="error-message"
-                     th:if="*{param.error}">
+                     th:if="$[thymeleafDollar]{param.error}">
                     <p>Invalid username or password</p>
                 </div>
 
                 <div class="success-message"
-                      th:if="*{param.logout}">
+                      th:if="$[thymeleafDollar]{param.logout}">
                     <p>You have been logged out successfully</p>
                 </div>
 
@@ -4434,7 +5153,16 @@
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/templates/auth"
 
-  additionalDependencies: [ ]
+  additionalDependencies:
+    - groupId: "org.springframework.boot"
+      artifactId: "spring-boot-starter-security"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.springframework.security"
+      artifactId: "spring-security-test"
+      version: "{{removeLine}}"
+      scope: "test"
 
   metadataBooleanTrueKeys:
     - "useAuthSession"

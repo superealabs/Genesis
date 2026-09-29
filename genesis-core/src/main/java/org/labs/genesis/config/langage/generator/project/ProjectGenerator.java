@@ -174,6 +174,7 @@ public class ProjectGenerator {
             String extension = projectFile.getExtension();
 
             // ALT rendering for specific placeholders
+            content = engine.simpleRenderAlt(content, Map.of("thymeleafDollar", "$"));
             content = engine.simpleRenderAlt(content, Map.of("spring-cloud.version", "${spring-cloud.version}"));
             content = engine.simpleRenderAlt(content, Map.of("spring.application.name", "${spring.application.name}"));
             content = engine.simpleRenderAlt(content, Map.of("server.port", "${server.port}"));
@@ -327,6 +328,26 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
         System.out.println("Generating PROJECT FILESSS 2");
+
+        List<String> adminProtectedRoutes = FrameworkMetadataProvider.getAdminProtectedRoutes(entities);
+        if (!adminProtectedRoutes.isEmpty()) {
+            HashMap<String, Object> adminRoutesSection = new HashMap<>();
+            adminRoutesSection.put(
+                    "routes",
+                    adminProtectedRoutes.stream()
+                            .map(route ->
+                                    "                            \"" +
+                                            route +
+                                            "\""
+                            )
+                            .collect(
+                                    Collectors.joining(",\n")
+                            )
+            );
+            projectFilesEditsHashMap.put("adminRoutesSection", Collections.singletonList(adminRoutesSection));
+        } else {
+            projectFilesEditsHashMap.put("adminRoutesSection", Collections.emptyList());
+        }
 
         if (context.getFramework().getUseDB()) {
             if (context.getFramework().getModelDao() != null) {

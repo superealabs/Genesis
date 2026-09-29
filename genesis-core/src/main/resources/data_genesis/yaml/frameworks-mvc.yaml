@@ -4676,6 +4676,13 @@
 
         server:
           port: ${projectPort}
+        
+          servlet:
+            session:
+              timeout: 30m
+              cookie:
+                http-only: true
+                same-site: lax
 
         logging:
           level:
