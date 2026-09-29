@@ -216,6 +216,37 @@ ${flashMessageSection}
                     {{elseIf this.isForeignKey}}
 
                         ${dataForeignValue}
+                    {{elseIf this.type = String[]}}
+
+                        ${arrayDataValue}
+
+                    {{elseIf this.isDateTimeTz}}
+
+                        ${dateTimeTzDataValue}
+
+                    {{elseIf this.isDateTime}}
+
+                        ${dateTimeDataValue}
+
+                    {{elseIf this.isTimeTz}}
+
+                        ${timeTzDataValue}
+
+                    {{elseIf this.isTime}}
+
+                        ${timeDataValue}
+
+                    {{elseIf this.isDate}}
+
+                        ${dateDataValue}
+
+                    {{elseIf this.isPeriodInterval}}
+
+                        ${periodIntervalDataValue}
+
+                    {{elseIf this.isDurationInterval}}
+
+                        ${intervalDataValue}
 
                     {{else}}
 
@@ -291,7 +322,8 @@ ${flashMessageSection}
     </table>
 </div>
 
-{{#if !isView}}<div id="customModal" class="modal" data-trigger=".btn-delete" data-input="${className}Id"
+{{#if !isView}}
+<div id="customModal" class="modal" data-trigger=".btn-delete" data-input="${className}Id"
     data-text="${className}IdText">
     <div class="modal-content">
         <div class="modal-header">
@@ -307,7 +339,7 @@ ${flashMessageSection}
         <div class="modal-body">
             <div class="warning-icon" style="text-align: center; margin: 20px 0;">
                 <svg width="64" height="64" viewBox="0 0 122.88 111.54" style="color: var(--error-color);">
-                    <path fill="currentColor"
+                    <path fill="currentCol2026-09-07T06:16:10.681537Zor"
                         d="M2.35,84.42,45.28,10.2l.17-.27h0A23,23,0,0,1,52.5,2.69,17,17,0,0,1,61.57,0a16.7,16.7,0,0,1,9.11,2.69,22.79,22.79,0,0,1,7,7.26q.19.32.36.63l42.23,73.34.24.44h0a22.48,22.48,0,0,1,2.37,10.19,17.63,17.63,0,0,1-2.17,8.35,15.94,15.94,0,0,1-6.93,6.6c-.19.1-.39.18-.58.26a21.19,21.19,0,0,1-9.11,1.75v0H17.61c-.22,0-.44,0-.65,0a18.07,18.07,0,0,1-6.2-1.15A16.42,16.42,0,0,1,3,104.24a17.53,17.53,0,0,1-3-9.57,23,23,0,0,1,1.57-8.74,7.66,7.66,0,0,1,.77-1.51Z" />
                     <path fill="var(--bg-secondary)"
                         d="M9,88.75,52.12,14.16c5.24-8.25,13.54-8.46,18.87,0l42.43,73.69c3.39,6.81,1.71,16-9.33,15.77H17.61C10.35,103.8,5.67,97.43,9,88.75Z" />
@@ -332,9 +364,7 @@ ${flashMessageSection}
             </button>
             <form id="deleteForm" style="margin: 0;" method="post" ${deleteLink}>
                 ${antiForgeryTokenTagHelper}
-                {{#each fields}}{{#if this.isForeignKey = false}}{{#if this.isPrimaryKey = true}}
-                <input type="hidden" name="${this.name}" id="${className}Id" />{{/if}}{{else}}{{removeLine}}{{/if}}
-                {{/each}}{{removeLine}}
+                ${deletePkInputs}
                 <button type="submit" class="btn btn-danger btn-sm">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
@@ -346,7 +376,8 @@ ${flashMessageSection}
             </form>
         </div>
     </div>
-</div>{{else}}{{removeLine}}{{/if}}
+</div>
+{{else}}{{removeLine}}{{/if}}
 
 <div class="content-footer">
     <div class="pagination">

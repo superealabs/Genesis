@@ -1,3 +1,4 @@
+
 package org.labs.genesis.frontend.generator;
 
 import org.labs.genesis.config.Constantes;
@@ -98,7 +99,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewListTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewListHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewListHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -131,7 +132,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewDetailsTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewDetailHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewDetailHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -165,7 +166,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewCreateTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewCreateHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewCreateHashMap(framework,tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -198,7 +199,7 @@ public class ViewsGenerator implements IViewsGenerator {
 
         String templateContent = loadViewEditTemplate(viewsTemplate);
 
-        HashMap<String, Object> metadataPrimary = getAltViewEditHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewEditHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
 
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
@@ -228,7 +229,7 @@ public class ViewsGenerator implements IViewsGenerator {
             String groupLink) throws Exception {
 
         String templateContent = loadViewFormTemplate(viewsTemplate);
-        HashMap<String, Object> metadataPrimary = getAltViewFormHashMap(framework);
+        HashMap<String, Object> metadataPrimary = getAltViewFormHashMap(framework, tableMetadata);
         String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
         HashMap<String, Object> metadataFinally = getMvcHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
 
@@ -277,6 +278,7 @@ public class ViewsGenerator implements IViewsGenerator {
         fileName = engine.simpleRender(fileName, metadataFinally);
 
         String result = engine.render(firstResult, metadataFinally);
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
         FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
         
         // Générer la page d'accueil

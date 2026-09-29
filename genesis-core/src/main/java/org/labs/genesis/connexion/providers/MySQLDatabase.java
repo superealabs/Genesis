@@ -186,6 +186,7 @@ public class MySQLDatabase extends Database {
                 column.setTimeTz(isColumnTimeTz);
                 column.setDateTime(isColumnDateTime);
                 column.setDateTimeTz(isColumnDateTimeTz);
+                column.setJson(isJsonColumn(connex, databaseName, tableName, columnName));
                 column.setUseTimeZone(useTimeZone);
                 column.setInterval(isColumnInterval);
 
@@ -224,6 +225,56 @@ public class MySQLDatabase extends Database {
             throw new RuntimeException(e);
         }
         return listeCols;
+    }
+
+    private boolean isJsonColumn(Connection connection, String databaseName, String tableName, String columnName) throws SQLException {
+
+        String sql = """
+            SELECT
+                c.DATA_TYPE,
+                EXISTS (
+                    SELECT 1
+                    FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+                    JOIN INFORMATION_SCHEMA.CHECK_CONSTRAINTS cc
+                      ON cc.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA
+                     AND cc.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+                    WHERE tc.CONSTRAINT_SCHEMA = c.TABLE_SCHEMA
+                      AND tc.TABLE_NAME = c.TABLE_NAME
+                      AND tc.CONSTRAINT_TYPE = 'CHECK'
+                      AND LOWER(
+                            REPLACE(
+                                REPLACE(cc.CHECK_CLAUSE, '`', ''),
+                                ' ',
+                                ''
+                            )
+                          ) LIKE ?
+                ) AS json_check
+            FROM INFORMATION_SCHEMA.COLUMNS c
+            WHERE c.TABLE_SCHEMA = ?
+              AND c.TABLE_NAME = ?
+              AND c.COLUMN_NAME = ?
+            """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+            ps.setString(
+                    1,
+                    "%json_valid(" + columnName.toLowerCase() + ")%"
+            );
+
+            ps.setString(2, databaseName);
+            ps.setString(3, tableName);
+            ps.setString(4, columnName);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+
+                return "json".equalsIgnoreCase(rs.getString("DATA_TYPE"))
+                        || rs.getBoolean("json_check");
+            }
+        }
     }
 
     @Override
