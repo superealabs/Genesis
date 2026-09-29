@@ -218,7 +218,7 @@ public class APIGenerator implements GenesisGenerator {
         String result = engine.simpleRender(templateContent, metadataPrimary);
 
         // Rendu final
-        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
+        HashMap<String, Object> metadataFinally = getHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, destinationFolder, projectName, groupLink);
         // Ajustement du chemin de sauvegarde
         String fileSavePath;
         if (generateComponentOnly) {

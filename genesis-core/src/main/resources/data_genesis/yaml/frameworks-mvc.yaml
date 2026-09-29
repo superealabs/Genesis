@@ -3649,6 +3649,113 @@
         }
 
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
+    - fileType: "FileUtils"
+      fileName: "FileUtils"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.utils;
+
+        import org.springframework.web.multipart.MultipartFile;
+        import java.io.IOException;
+        public final class FileUtils {
+
+            private FileUtils() {}
+
+            public static byte[] toBytes(MultipartFile file) {
+                if (file == null || file.isEmpty()) {
+                    return null;
+                }
+
+                try {
+                    return file.getBytes();
+                } catch (IOException ex) {
+                    throw new IllegalArgumentException("Impossible de lire le fichier envoyé.", ex);
+                }
+            }
+
+            public static String detectMimeType(byte[] content) {
+                if (content == null || content.length == 0) {
+                    return "application/octet-stream";
+                }
+
+                // PNG
+                if (content.length >= 4
+                        && (content[0] & 0xFF) == 0x89
+                        && content[1] == 0x50
+                        && content[2] == 0x4E
+                        && content[3] == 0x47) {
+                    return "image/png";
+                }
+
+                // JPEG
+                if (content.length >= 3
+                        && (content[0] & 0xFF) == 0xFF
+                        && (content[1] & 0xFF) == 0xD8
+                        && (content[2] & 0xFF) == 0xFF) {
+                    return "image/jpeg";
+                }
+
+                // GIF
+                if (content.length >= 3
+                        && content[0] == 0x47
+                        && content[1] == 0x49
+                        && content[2] == 0x46) {
+                    return "image/gif";
+                }
+
+                // PDF
+                if (content.length >= 4
+                        && content[0] == 0x25
+                        && content[1] == 0x50
+                        && content[2] == 0x44
+                        && content[3] == 0x46) {
+                    return "application/pdf";
+                }
+
+                // BMP
+                if (content.length >= 2
+                        && content[0] == 0x42
+                        && content[1] == 0x4D) {
+                    return "image/bmp";
+                }
+
+                // WEBP
+                if (content.length >= 12
+                        && content[0] == 0x52
+                        && content[1] == 0x49
+                        && content[2] == 0x46
+                        && content[3] == 0x46
+                        && content[8] == 0x57
+                        && content[9] == 0x45
+                        && content[10] == 0x42
+                        && content[11] == 0x50) {
+                    return "image/webp";
+                }
+
+                return "application/octet-stream";
+            }
+
+            public static boolean isImage(byte[] content) {
+                return detectMimeType(content).startsWith("image/");
+            }
+
+            public static String extensionFromMimeType(String mimeType) {
+                return switch (mimeType) {
+                    case "image/png" -> ".png";
+                    case "image/jpeg" -> ".jpg";
+                    case "image/gif" -> ".gif";
+                    case "image/bmp" -> ".bmp";
+                    case "image/webp" -> ".webp";
+                    case "application/pdf" -> ".pdf";
+                    default -> ".bin";
+                };
+            }
+
+            public static String buildFileName(String baseName, byte[] content) {
+                return baseName+ extensionFromMimeType(detectMimeType(content));
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/utils"
     - fileType: "Timestamp Range Converter"
       fileName: "TSRangeConverter"
       extension: "java"
@@ -4561,6 +4668,11 @@
           messages:
             basename: messages
             encoding: UTF-8
+        
+          servlet:
+            multipart:
+              max-file-size: -1
+              max-request-size: -1
 
         server:
           port: ${projectPort}
@@ -4719,9 +4831,12 @@
       {{tab}}{{#each this.attributeTypeAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}{{/if}}
+      {{#if this.type = byte[]}}
+      {{else}}
       {{tab}}{{#each this.validationAnnotations}}
       {{tab}}${this}
       {{tab}}{{/each}}{{removeLine}}
+      {{/if}}
       {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
       {{tab}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
@@ -5039,6 +5154,14 @@
       import ${groupLink}.${lowerCase(projectName)}.models.dto.${majStart(className)}Search;
       import ${groupLink}.${lowerCase(projectName)}.services.interfaces.${majStart(className)}Service;
       import ${groupLink}.${lowerCase(projectName)}.utils.WebUtils;
+      {{#if hasFileFields}}
+      import ${groupLink}.${lowerCase(projectName)}.utils.FileUtils;
+      import org.springframework.web.multipart.MultipartFile;
+      import org.springframework.http.ResponseEntity;
+      import org.springframework.http.HttpHeaders;
+      import org.springframework.http.MediaType;
+      import org.springframework.http.ContentDisposition;
+      {{else}}{{removeLine}}{{/if}}
       import org.springframework.data.domain.Page;
       import org.springframework.data.domain.PageRequest;
       import org.springframework.data.domain.Pageable;
@@ -5141,7 +5264,7 @@
       {{tab}}    return "${minStart(className)}/view";
       {{tab}}}
       {{tab}}
-      {{#if !isView}}
+      {{#each writableController}}
       {{tab}}@GetMapping("/create")
       {{tab}}public String showCreateForm(Model model) {
       {{tab}}    model.addAttribute("${minStart(className)}", new ${majStart(className)}());
@@ -5156,6 +5279,9 @@
       {{tab}}public String create${majStart(className)}(
       {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
       {{tab}}        BindingResult bindingResult,
+      {{#each fileFields}}
+      {{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,
+      {{/each}}
       {{tab}}        Model model,
       {{tab}}        RedirectAttributes redirectAttributes) {
       {{#each fieldsFK}}
@@ -5167,6 +5293,18 @@
       {{tab}}                "${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}",
       {{tab}}                "NotNull",
       {{tab}}                "Ce champ est obligatoire."
+      {{tab}}        );
+      {{tab}}    }
+      {{/if}}
+      {{/each}}{{removeLine}}
+      {{#each fileFields}}
+      {{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(FileUtils.toBytes(${minStart(this.name)}File));
+      {{tab}}    }
+      {{#if this.isNullable}}
+      {{else}}
+      {{tab}}    else {
+      {{tab}}        bindingResult.rejectValue("${minStart(this.name)}", "NotNull", "Ce fichier est obligatoire."
       {{tab}}        );
       {{tab}}    }
       {{/if}}
@@ -5203,14 +5341,18 @@
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} créé avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{else}}{{removeLine}}{{/if}}
+      {{/each}}
       {{tab}}
-      {{#if isView = false and hasCompositePrimaryKey = true}}
+        {{#each writableController}}
+      {{#if hasCompositePrimaryKey}}
       {{tab}}@GetMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}/edit")
       {{tab}}public String showEditForm(
       {{tab}}        Model model{{#each compositePkFields}},
       {{tab}}        @PathVariable("${this.name}") ${this.type} ${this.name}{{/each}}) {
-      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{tab}}    ${majStart(className)}Id id =
+      {{tab}}            new ${majStart(className)}Id(
+      {{tab}}                    {{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}}
+      {{tab}}            );
       {{tab}}    ${majStart(className)} ${minStart(className)} =
       {{tab}}            ${minStart(className)}Service.get${majStart(className)}ById(id);
       {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
@@ -5220,12 +5362,13 @@
       {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/edit";
       {{tab}}}
-      {{elseIf isView = false}}
+      {{else}}
       {{tab}}@GetMapping("/{id}/edit")
       {{tab}}public String showEditForm(
       {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
       {{tab}}        Model model) {
-      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{tab}}    ${majStart(className)} ${minStart(className)} =
+      {{tab}}            ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
       {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
       {{#each foreignOptionTypes}}
       {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
@@ -5233,29 +5376,42 @@
       {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/edit";
       {{tab}}}
-      {{else}}{{removeLine}}{{/if}}
+      {{/if}}
+      {{/each}}
       {{tab}}
-      {{#if isView = false and hasCompositePrimaryKey = true}}
+      {{#each writableController}}
+      {{#if hasCompositePrimaryKey}}
       {{tab}}@PostMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}/edit")
       {{tab}}public String update${majStart(className)}(
       {{tab}}        {{#each compositePkFields}}@PathVariable("${this.name}") ${this.type} ${this.name},
       {{tab}}        {{/each}}
       {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
       {{tab}}        BindingResult bindingResult,
+      {{#each fileFields}}
+      {{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,
+      {{/each}}
       {{tab}}        Model model,
       {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{#each fileFields}}
+      {{#if @first}}
+      {{tab}}    ${majStart(className)} existing${majStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(id);
+      {{/if}}
+      {{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(FileUtils.toBytes(${minStart(this.name)}File));
+      {{tab}}    } else {
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(existing${majStart(className)}.get${majStart(this.name)}());
+      {{tab}}    }
+      {{/each}}{{removeLine}}
       {{tab}}    if (bindingResult.hasErrors()) {
       {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
       {{#each foreignOptionTypes}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
+      {{tab}}        model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}        return "${minStart(className)}/edit";
       {{tab}}    }
-      {{tab}}    ${majStart(className)}Id id =
-      {{tab}}            new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
       {{#each fieldsFK}}
       {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
-      {{#if this.isNullable}}
       {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
       {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
       {{tab}}        } else {
@@ -5265,37 +5421,43 @@
       {{tab}}                    )
       {{tab}}            );
       {{tab}}        }
-      {{else}}
-      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
-      {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
-      {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
-      {{tab}}                )
-      {{tab}}        );
-      {{/if}}
       {{tab}}    }
       {{/each}}{{removeLine}}
       {{tab}}    ${minStart(className)}Service.update${majStart(className)}(id, ${minStart(className)});
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{elseIf isView = false}}
+      {{else}}
       {{tab}}@PostMapping("/{id}/edit")
       {{tab}}public String update${majStart(className)}(
       {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
       {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
       {{tab}}        BindingResult bindingResult,
+      {{#each fileFields}}
+      {{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,
+      {{/each}}
       {{tab}}        Model model,
       {{tab}}        RedirectAttributes redirectAttributes) {
+      {{#each fileFields}}
+      {{#if @first}}
+      {{tab}}    ${majStart(className)} existing${majStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{/if}}
+      {{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(FileUtils.toBytes(${minStart(this.name)}File));
+      {{tab}}    } else {
+      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(existing${majStart(className)}.get${majStart(this.name)}());
+      {{tab}}    }
+      {{/each}}{{removeLine}}
       {{tab}}    if (bindingResult.hasErrors()) {
-      {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");{{#each foreignOptionTypes}}
+      {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
+      {{#each foreignOptionTypes}}
       {{tab}}        model.addAttribute("${minStart(this.type)}Options",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
       {{/each}}
       {{tab}}        return "${minStart(className)}/edit";
       {{tab}}    }
       {{#each fieldsFK}}
       {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
-      {{#if this.isNullable}}
-        {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
       {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
       {{tab}}        } else {
       {{tab}}            ${minStart(className)}.set${majStart(this.name)}(
@@ -5304,52 +5466,119 @@
       {{tab}}                    )
       {{tab}}            );
       {{tab}}        }
-      {{else}}
-      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
-      {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
-      {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
-      {{tab}}                )
-      {{tab}}        );
-      {{/if}}
       {{tab}}    }
       {{/each}}{{removeLine}}
       {{tab}}    ${minStart(className)}Service.update${majStart(className)}(${pkColumn},${minStart(className)});
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{else}}{{removeLine}}{{/if}}
+      {{/if}}
+      {{/each}}
       {{tab}}
-      {{#if isView = false and hasCompositePrimaryKey = true}}
+      {{#each fileFields}}
+      {{tab}}@GetMapping("/files/${minStart(this.name)}/preview")
+      {{tab}}public ResponseEntity<byte[]> preview${majStart(this.name)}(
+      {{#if ../hasCompositePrimaryKey}}
+      {{#each ../compositePkFields}}
+      {{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name}{{#if @last}}{{else}},{{/if}}
+      {{/each}}
+      {{else}}
+      {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn}
+      {{/if}}
+      {{tab}}) {
+      {{#if ../hasCompositePrimaryKey}}
+      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each ../compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(id);
+      {{else}}
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{/if}}
+      {{tab}}    byte[] content = ${minStart(className)}.get${majStart(this.name)}();
+      {{tab}}    if (content == null || content.length == 0) {
+      {{tab}}        return ResponseEntity.notFound().build();
+      {{tab}}    }
+      {{tab}}    String mimeType = FileUtils.detectMimeType(content);
+      {{tab}}    return ResponseEntity.ok()
+      {{tab}}            .contentType(MediaType.parseMediaType(mimeType))
+      {{tab}}            .header(
+      {{tab}}                    HttpHeaders.CONTENT_DISPOSITION,
+      {{tab}}                    ContentDisposition.inline()
+      {{tab}}                            .filename(FileUtils.buildFileName("${minStart(className)}-${minStart(this.name)}", content))
+      {{tab}}                            .build()
+      {{tab}}                            .toString()
+      {{tab}}            )
+      {{tab}}            .body(content);
+      {{tab}}}
+      {{tab}}
+      {{/each}}
+      {{#each fileFields}}
+      {{tab}}@GetMapping("/files/${minStart(this.name)}/download")
+      {{tab}}public ResponseEntity<byte[]> download${majStart(this.name)}(
+      {{#if ../hasCompositePrimaryKey}}
+      {{#each ../compositePkFields}}
+      {{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name}{{#if @last}}{{else}},{{/if}}
+      {{/each}}
+      {{else}}
+      {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn}
+      {{/if}}
+      {{tab}}) {
+      {{#if ../hasCompositePrimaryKey}}
+      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each ../compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(id);
+      {{else}}
+      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{/if}}
+      {{tab}}    byte[] content = ${minStart(className)}.get${majStart(this.name)}();
+      {{tab}}    if (content == null || content.length == 0) {
+      {{tab}}        return ResponseEntity.notFound().build();
+      {{tab}}    }
+      {{tab}}    String mimeType = FileUtils.detectMimeType(content);
+      {{tab}}    String fileName = FileUtils.buildFileName("${minStart(className)}-${minStart(this.name)}", content);
+      {{tab}}    return ResponseEntity.ok()
+      {{tab}}            .contentType(MediaType.parseMediaType(mimeType))
+      {{tab}}            .header(
+      {{tab}}                    HttpHeaders.CONTENT_DISPOSITION,
+      {{tab}}                    ContentDisposition.attachment()
+      {{tab}}                            .filename(fileName)
+      {{tab}}                            .build()
+      {{tab}}                            .toString()
+      {{tab}}            )
+      {{tab}}            .body(content);
+      {{tab}}}
+      {{tab}}
+      {{/each}}
+        {{#each writableController}}
+      {{#if hasCompositePrimaryKey}}
       {{tab}}@PostMapping("/delete")
       {{tab}}public String delete${majStart(className)}(
       {{#each compositePkFields}}
       {{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name},
       {{/each}}
       {{tab}}        RedirectAttributes redirectAttributes) {
-      {{tab}}    ${majStart(className)}Id id =
-      {{tab}}            new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
       {{tab}}    try {
-      {{tab}}       ${minStart(className)}Service.delete${majStart(className)}(id);
-      {{tab}}       redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}        ${minStart(className)}Service.delete${majStart(className)}(id);
+      {{tab}}        redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
       {{tab}}    } catch (DataIntegrityViolationException ex) {
-      {{tab}}       redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
+      {{tab}}        redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
       {{tab}}    }
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{elseIf isView = false}}
+      {{else}}
       {{tab}}@PostMapping("/delete")
       {{tab}}public String delete${majStart(className)}(
       {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn},
       {{tab}}        RedirectAttributes redirectAttributes) {
       {{tab}}    try {
-      {{tab}}       ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
-      {{tab}}       redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
+      {{tab}}        ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
+      {{tab}}        redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
       {{tab}}    } catch (DataIntegrityViolationException ex) {
-      {{tab}}       redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
+      {{tab}}        redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données."
+      {{tab}}        );
       {{tab}}    }
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{else}}{{removeLine}}{{/if}}
+      {{/if}}
+      {{/each}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]
@@ -5451,10 +5680,22 @@
         <script src="./js/filter-utils.js"></script>
         <script src="./js/export-utils.js"></script>
       fileDataValue: |
-        <span th:if="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
-            Fichier disponible
-        </span>
-        <span th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+        <div th:if="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null
+                            and ${minStart(className)}.${minStart(this.name)}.length > 0}">
+
+            <a th:href="${filePreviewUrl}"
+               target="_blank">
+                Prévisualiser
+            </a>
+
+            <a th:href="${fileDownloadUrl}">
+                Télécharger
+            </a>
+
+        </div>
+
+        <span th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null
+                            and ${minStart(className)}.${minStart(this.name)}.length > 0}">
             Aucun fichier
         </span>
       filterTrueSelectedTagHelper: "th:selected=\"$[thymeleafDollar]{${minStart(className)}Search.${minStart(this.name)} == true}\""
@@ -5498,10 +5739,24 @@
       deleteLink: "th:action=\"@{/${minStart(className)}/delete}\""
       updateLink: "th:href=\"@{/${minStart(className)}/{id}/edit(id=$[thymeleafDollar]{${minStart(className)}.${pkColumn}})}\""
       fileDataValue: |
-        <p th:if="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
-            Fichier disponible
-        </p>
-        <p th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null}">
+        <div th:if="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null
+                            and ${minStart(className)}.${minStart(this.name)}.length > 0}">
+
+            <a th:href="${filePreviewUrl}"
+               target="_blank"
+               class="btn btn-secondary btn-sm">
+                Prévisualiser
+            </a>
+
+            <a th:href="${fileDownloadUrl}"
+               class="btn btn-primary btn-sm">
+                Télécharger
+            </a>
+
+        </div>
+
+        <p th:unless="$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)} != null
+                            and ${minStart(className)}.${minStart(this.name)}.length > 0}">
             Aucun fichier
         </p>
       hiddenPkValue: "th:value=\"$[thymeleafDollar]{${minStart(className)}.${minStart(this.name)}}\""
