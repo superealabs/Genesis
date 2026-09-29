@@ -717,8 +717,16 @@ public class FormConfigurationForm {
 
             if (value == null) {
                 configuration.assignedColumns.remove(field.getName());
+                Map<String, FieldConfiguration> tableConf = tablesConf.get(selectedTable.getTableName());
+                if(tableConf != null) {
+                    tableConf.remove(field.getName());
+                    if(tableConf.isEmpty())
+                        tablesConf.remove(selectedTable.getTableName());
+                }
             } else {
                 configuration.assignedColumns.put(field.getName(), value);
+                tablesConf.computeIfAbsent(selectedTable.getTableName(), key -> new HashMap<>())
+                        .put(field.getName(), new FieldConfiguration("none", new HashMap<>()));
             }
 
             updateFieldConfiguration(selectedTable.getTableName(),
@@ -1204,6 +1212,7 @@ public class FormConfigurationForm {
                 tableConf.computeIfAbsent(columnName, k -> new FieldConfiguration());
 
         fieldConf.setComponent(component);
+        System.out.println(tablesConf);
     }
 
     private void updateFieldConfiguration(String tableName, String columnName, String configuration, String type, String value) {
@@ -1221,6 +1230,8 @@ public class FormConfigurationForm {
                 }
             }
         }
+        System.out.println(tablesConf);
+
     }
 
     public Map<String, Map<String, FieldConfiguration>>getTablesConfiguration() {

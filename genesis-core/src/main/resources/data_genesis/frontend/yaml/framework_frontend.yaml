@@ -3723,6 +3723,7 @@
             "format": "prettier --write src/"
           },
           "dependencies": {
+            "@ckeditor/ckeditor5-vue": "^8.2.0",
             "@fortawesome/fontawesome-svg-core": "^7.0.0",
             "@fortawesome/free-brands-svg-icons": "^7.0.0",
             "@fortawesome/free-regular-svg-icons": "^7.0.0",
@@ -3732,6 +3733,7 @@
             "axios": "^1.11.0",
             "bootstrap": "^5.3.7",
             "bootstrap-icons": "^1.13.1",
+            "ckeditor5": "^48.5.2",
             "daisyui": "^5.0.50",
             "dayjs": "^1.11.21",
             "patch-package": "^8.0.1",
@@ -6647,6 +6649,9 @@
         {{#if isParentTable=true and hasChildrenForm=true}} import { ref, computed, onMounted } from 'vue'{{elseIf containsFile=true}}import { computed, ref } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model.ts'
         import GenesisButton from '@/components/button/GenesisButton.vue'
+        import GenesisCurrency from '@/components/form/GenesisCurrency.vue'
+        import GenesisPhone from '@/components/form/GenesisPhone.vue'
+        import GenesisQuantity from '@/components/form/GenesisQuantity.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}{{#if isParentTable=true and hasChildrenForm=true}}
         {{#each childrenWithForm}}
@@ -6689,6 +6694,69 @@
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
+                  {{elseIf this.uiType=textarea}}
+                  <!-- ${formatReadable(this.name)} | Textarea -->
+                    <GenesisTextarea
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                  {{elseIf this.uiType=ckeditor}}
+                  <!-- ${formatReadable(this.name)} | Ckeditor -->
+                    <GenesisTextarea
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                    :is-ckeditor="true"
+                  />
+                  {{elseIf this.uiType=json-editor}}
+                  <!-- ${formatReadable(this.name)} | Json-editor -->
+                    <GenesisTextarea
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                    :is-json-editor="true"
+                  />
+                  {{elseIf this.uiType=phone}}
+                  <!-- ${formatReadable(this.name)} | Phone -->
+                    <GenesisPhone
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                  {{elseIf this.uiType=currency}}
+                  <!-- ${formatReadable(this.name)} | Currency -->
+                  <GenesisCurrency
+                    label="${formatReadable(this.name)}" ${this.input-config}
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}" ${this.currency}
+                  />
+                  {{elseIf this.uiType=quantity}}
+                  <!-- ${formatReadable(this.name)} | Quantity -->
+                  <GenesisQuantity
+                    label="${formatReadable(this.name)}" ${this.input-config}
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                  {{elseIf this.uitType=none}}
+                  {{elseIf this.uitType=map and this.isGeographic}}
+                  <GenesisMap
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${formatReadable(this.name)}'] : undefined"
+                    v-model:latitude="formModel.${minStart(this.name)}.latitude"
+                    v-model:longitude="formModel.${minStart(this.name)}.longitude"/>
+                  {{elseIf this.uitType=map}}
+                  <GenesisMap
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${formatReadable(this.name)}'] : undefined"
+                    v-model:latitude="formModel.${this.latitude}"
+                    v-model:longitude="formModel.${this.longitude}"/>
                   {{elseIf this.uiType = checkbox}}
                   <!-- ${formatReadable(this.name)} -->
                   <label class="flex items-center gap-2">
@@ -6705,7 +6773,7 @@
                     label="${formatReadable(this.name)}"
                     :violation="${minStart(className)}Violations ? ${minStart(className)}Violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
-                    type="${this.uiType}"
+                    type="${this.uiType}" ${this.accepted-file}
                     v-model="formModel.${minStart(this.name)}"
                   />
                   <img :src="${minStart(this.name)}Url" alt="No image"/>
@@ -6725,7 +6793,7 @@
                     label="${formatReadable(this.name)}"
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
-                    type="${this.uiType}"
+                    type="${this.uiType}" ${this.accepted-file}
                     v-model="formModel.${minStart(this.name)}"
                   />
                   <img :src="${minStart(this.name)}Url" alt="No image"/>
@@ -6756,7 +6824,7 @@
                     label="${formatReadable(this.name)}"
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
-                    type="${this.uiType}"
+                    type="${this.uiType}" ${this.input-config} ${this.accepted-file}
                     v-model="formModel.${minStart(this.name)}"
                     :value="formModel.${minStart(this.name)}"
                   />
@@ -7461,7 +7529,8 @@
         {{#each fields}}
         {{#if this.isForeignKey}}
         ${minStart(this.name)}?: string
-        {{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}
+        {{elseIf this.isDate}}${minStart(this.name)}?: string
+        {{elseif}}${minStart(this.name)}?: {latitude: number, longitude: number}{{else}}
         ${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
@@ -7527,6 +7596,9 @@
         <script setup lang="ts">
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'
+        import GenesisCurrency from '@/components/form/GenesisCurrency.vue'
+        import GenesisPhone from '@/components/form/GenesisPhone.vue'
+        import GenesisQuantity from '@/components/form/GenesisQuantity.vue'
         import { ref, onMounted } from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
@@ -7588,14 +7660,76 @@
                     updateModel()
                   }
                 "
-              />
             </td>
+            {{elseIf this.uiType=textarea}}
+            <!-- ${formatReadable(this.name)} | Textarea -->
+            <GenesisTextarea
+              label="${formatReadable(this.name)}"
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=ckeditor}}
+            <!-- ${formatReadable(this.name)} | Ckeditor -->
+            <GenesisTextarea
+              label="${formatReadable(this.name)}"
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              :is-ckeditor="true"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=json-editor}}
+            <!-- ${formatReadable(this.name)} | Json-editor -->
+            <GenesisTextarea
+              label="${formatReadable(this.name)}"
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              :is-json-editor="true"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=phone}}
+            <!-- ${formatReadable(this.name)} | Phone -->
+            <GenesisPhone
+              label="${formatReadable(this.name)}"
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=currency}}
+            <!-- ${formatReadable(this.name)} | Currency -->
+            <GenesisCurrency
+              label="${formatReadable(this.name)}" ${this.input-config}
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}" 
+              v-model="formModel.${minStart(this.name)}" ${this.currency}
+              :value="formModel.${minStart(this.name)}"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=quantity}}
+            <!-- ${formatReadable(this.name)} | Quantity -->
+            <GenesisQuantity
+              label="${formatReadable(this.name)}"  ${this.input-config}
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uitType=none}}
             {{else}}
             <td>
               <GenesisInput
                 :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                 placeholder="Enter ${formatReadable(this.name)}"
-                type="${this.uiType}"
+                type="${this.uiType}" ${this.input-config} ${this.accepted-file}
                 v-model="formModel.${minStart(this.name)}"
                 :value="formModel.${minStart(this.name)}"
                 @update:model-value="(newVal) => updateModel()"

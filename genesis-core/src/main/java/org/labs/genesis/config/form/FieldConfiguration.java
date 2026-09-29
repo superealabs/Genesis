@@ -1,6 +1,7 @@
 package org.labs.genesis.config.form;
 
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,6 +12,7 @@ import java.util.Map;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class FieldConfiguration {
 
     private String component;
@@ -54,5 +56,73 @@ public class FieldConfiguration {
                     ", type='" + type + '\'' +
                     '}';
         }
+    }
+
+    public String getInputConfiguration() {
+        if (configuration == null || configuration.isEmpty()) {
+            return "";
+        }
+
+        String[] keys = {"min", "max", "step"};
+        StringBuilder sb = new StringBuilder();
+
+        for (String key : keys) {
+            Configuration conf = configuration.get(key);
+            if (conf != null && conf.getValue() != null && !conf.getValue().isBlank()) {
+                if (!sb.isEmpty()) {
+                    sb.append(' ');
+                }
+                sb.append(key)
+                        .append("=\"")
+                        .append(conf.getValue())
+                        .append('"');
+            }
+        }
+
+        return sb.toString();
+    }
+
+    public String getFileConfiguration() {
+        if (configuration == null || configuration.isEmpty()) {
+            return "";
+        }
+
+        Configuration conf = configuration.get("accept");
+        if(conf == null || conf.getValue() == null
+                || conf.getValue().isBlank()) return "";
+        return "accept=\"" + conf.getValue() + "\"";
+    }
+
+    public String getCurrency() {
+        if (configuration == null || configuration.isEmpty()) {
+            return "";
+        }
+
+        Configuration conf = configuration.get("currency");
+        if(conf == null || conf.getValue() == null
+                || conf.getValue().isBlank()) return "";
+        return "currency=\"" + conf.getValue() + "\"";
+    }
+
+    public String getLatitude() {
+        if (configuration == null || configuration.isEmpty()) {
+            return null;
+        }
+
+        Configuration conf = configuration.get("latitude");
+        if(conf == null || conf.getValue() == null
+                || conf.getValue().isBlank()) return null;
+        return conf.getValue();
+    }
+
+    public String getLongitude() {
+        if (configuration == null || configuration.isEmpty()) {
+            return null;
+        }
+
+        Configuration conf = configuration.get("longitude");
+        if(conf == null || conf.getValue() == null
+                || conf.getValue().isBlank()) return null;
+        return conf.getValue();
     }
 }

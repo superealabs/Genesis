@@ -345,14 +345,13 @@ public class ProjectGenerator {
                     .filter(file -> "PointSerializer".equals(file.getFileType()))
                     .findFirst()
                     .orElse(null);
+            FilesEdit deserializer = context.getFramework().getConditionalFiles().stream()
+                    .filter(file -> "PointDeserializer".equals(file.getFileType()))
+                    .findFirst()
+                    .orElse(null);
 
-            if(serializer != null) {
-                String destination = engine.simpleRender(serializer.getDestinationPath(), projectFilesEditsHashMap);
-                String content = serializer.getContent() == null ? "" : serializer.getContent();
-                Path serializerTarget = Paths.get(destination, serializer.getFileName() + "." + serializer.getExtension());
-                FileUtils.createFileStructure(destination);
-                Files.writeString(serializerTarget, engine.render(content, projectFilesEditsHashMap));
-            }
+            addFile(projectFilesEditsHashMap, serializer, serializer.getDestinationPath());
+            addFile(projectFilesEditsHashMap, deserializer, serializer.getDestinationPath());
         }
 
         if (context.getFramework().getUseDB()) {
@@ -462,6 +461,16 @@ public class ProjectGenerator {
             }
         } catch (Exception e) {
             System.err.println("   ⚠️  Post-setup Django échoué: " + e.getMessage());
+        }
+    }
+
+    private static void addFile(HashMap<String, Object> projectFilesEditsHashMap, FilesEdit serializer, String destinationPath) throws Exception {
+        if(serializer != null) {
+            String serializerDestination = engine.simpleRender(destinationPath, projectFilesEditsHashMap);
+            String serializerContent = serializer.getContent() == null ? "" : serializer.getContent();
+            Path serializerTarget = Paths.get(serializerDestination, serializer.getFileName() + "." + serializer.getExtension());
+            FileUtils.createFileStructure(serializerDestination);
+            Files.writeString(serializerTarget, engine.render(serializerContent, projectFilesEditsHashMap));
         }
     }
 

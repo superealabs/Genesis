@@ -6,8 +6,7 @@
         "range",
         "quantity",
         "currency",
-        "map",
-        "percentage"
+        "map"
       ]
     },
 
@@ -20,54 +19,13 @@
         "phone",
         "password",
         "color",
-        "radio",
-        "select",
-        "autocomplete",
         "file"
-      ]
-    },
-
-    "boolean": {
-      "components": [
-        "checkbox",
-        "switch",
-        "radio"
-      ]
-    },
-
-    "date": {
-      "components": [
-        "date",
-        "date-range"
-      ]
-    },
-
-    "time": {
-      "components": [
-        "time"
-      ]
-    },
-
-    "datetime": {
-      "components": [
-        "datetime-local"
-      ]
-    },
-
-    "binary": {
-      "components": [
-        "file"
-      ]
-    },
-
-    "geographic": {
-      "components": [
-        "geographic map"
       ]
     },
 
     "json": {
       "components": [
+        "text",
         "json-editor",
         "textarea"
       ]
@@ -171,6 +129,18 @@
               "GBP",
               "MGA"
             ]
+          },
+          {
+            "name": "min",
+            "type": "number"
+          },
+          {
+            "name": "max",
+            "type": "number"
+          },
+          {
+            "name": "step",
+            "type": "number"
           }
         ]
       }

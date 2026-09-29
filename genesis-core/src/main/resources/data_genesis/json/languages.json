@@ -79,7 +79,8 @@
       "java.util.List<String>": [],
       "Float": [],
       "org.locationtech.jts.geom.Point" : [
-        "@com.fasterxml.jackson.databind.annotation.JsonSerialize(using = ${groupLink}.${lowerCase(projectName)}.config.PointSerializer.class)"
+        "@com.fasterxml.jackson.databind.annotation.JsonSerialize(using = ${groupLink}.${lowerCase(projectName)}.config.PointSerializer.class)",
+        "@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = ${groupLink}.${lowerCase(projectName)}.config.PointDeserializer.class)"
       ]
     },
     "mockData": {
