@@ -5550,7 +5550,7 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
         import { useDateFormat } from '@/composables/useDateFormat'
-        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
+        {{#if containsFile=true}}import { buildFileSource, downloadFile, getGeneratedFileName, isImageContent } from '@/utils/file-utils'{{/if}}
       selector: "${majStart(className)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5578,9 +5578,21 @@
                 </template>
         
                 <template v-else-if="field.type === 'file'">
-                  <img v-if="${minStart(className)}Data[field.key]"
-                    :src="getUrl(${minStart(className)}Data[field.key])"
-                    :alt="field.key" class="max-h-10 max-w-10"/>
+                  <img
+                    v-if="isImageContent(${minStart(className)}Data[field.key])"
+                    :src="buildFileSource(${minStart(className)}Data[field.key])"
+                    :alt="field.key"
+                    class="max-h-10 max-w-10"
+                  />
+                  <button
+                    v-else-if="${minStart(className)}Data[field.key]"
+                    type="button"
+                    class="link link-primary"
+                    @click="downloadFile(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key))"
+                  >
+                    Télécharger {{ field.label }}
+                  </button>
+                  <span v-else>--</span>
                 </template>
         
                 <template v-else>
@@ -5656,7 +5668,7 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
         import { useDateFormat } from '@/composables/useDateFormat'
-        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
+        {{#if containsFile=true}}import { buildFileSource, downloadFile, getGeneratedFileName, isImageContent } from '@/utils/file-utils'{{/if}}
       selector: "${majStart(className)}Card"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5691,11 +5703,20 @@
                       </template>
                       <template v-else-if="field.type === 'file'">
                         <img
-                          v-if="${minStart(className)}Data[field.key]"
-                          :src="getUrl(${minStart(className)}Data[field.key])"
+                          v-if="isImageContent(${minStart(className)}Data[field.key])"
+                          :src="buildFileSource(${minStart(className)}Data[field.key])"
                           :alt="field.key"
                           class="max-h-10 max-w-10"
                         />
+                        <button
+                          v-else-if="${minStart(className)}Data[field.key]"
+                          type="button"
+                          class="link link-primary"
+                          @click="downloadFile(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key))"
+                        >
+                          Télécharger {{ field.label }}
+                        </button>
+                        <span v-else>--</span>
                       </template>
                       <template v-else>
                         {{ ${minStart(className)}Data[field.key] ?? '--' }}
@@ -6534,7 +6555,7 @@
       componentName: "${majStart(className)}Details"
       importFile: |
         import type { PropType } from 'vue'
-        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
+        {{#if containsFile=true}}import { buildFileSource, downloadFile, getGeneratedFileName, isImageContent } from '@/utils/file-utils'{{/if}}
         import type { ${majStart(className)} } from '@/models/${majStart(className)}Model'{{#if !isView}}
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import { usePopup } from '@/composables/usePopup'
@@ -6558,9 +6579,21 @@
                     <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadable(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
                     <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
                       {{#if this.uiType=file}}
-                      <img :src="getUrl(${minStart(className)}.${this.name})"
-                      alt="${formatReadable(this.name)}"
-                      class="max-h-full max-w-full"/>
+                      <img
+                        v-if="isImageContent(${minStart(className)}.${this.name})"
+                        :src="buildFileSource(${minStart(className)}.${this.name})"
+                        alt="${formatReadable(this.name)}"
+                        class="max-h-full max-w-full"
+                      />
+                      <button
+                        v-else-if="${minStart(className)}.${this.name}"
+                        type="button"
+                        class="link link-primary"
+                        @click="downloadFile(${minStart(className)}.${this.name}, getGeneratedFileName(${minStart(className)}.${this.name}, '${minStart(this.name)}'))"
+                      >
+                        Télécharger ${formatReadable(this.name)}
+                      </button>
+                      <span v-else>--</span>
                       {{elseIf this.isForeignKey}}
                       <span>{{ ${minStart(className)}.${this.name}?.getKeyValue() ?? '' }}</span>
                       {{elseIf this.isDate}}
@@ -6752,7 +6785,7 @@
         label: "{{removeLine}}"
       componentName: "${majStart(className)}Form"
       importFile: |
-        {{#if isParentTable=true and hasChildrenForm=true}} import { ref, computed, onMounted } from 'vue'{{elseIf containsFile=true}}import { computed, ref } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
+        {{#if isParentTable=true and hasChildrenForm=true}} import { ref, computed, onMounted } from 'vue'{{else}}import { ref } from 'vue'{{/if}}
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model.ts'
         import GenesisButton from '@/components/button/GenesisButton.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
@@ -6760,7 +6793,9 @@
         {{#each childrenWithForm}}
         import{ ${majStart(this.className)}FormDTO, type ${majStart(this.className)} } from '@/models/${majStart(this.className)}Model.ts'
         import ${majStart(this.className)}TableForm from '@/entities/${minStart(this.className)}/${majStart(this.className)}TableForm.vue'
-        {{/each}}{{/if}}
+        {{/each}}{{/if}}{{#if containsFile=true}}
+        import { buildFileSource, downloadFile, fileToBase64, getGeneratedFileName, isImageContent } from '@/utils/file-utils'
+        {{/if}}
       selector: "${majStart(className)}Form"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -6814,9 +6849,29 @@
                     :violation="${minStart(className)}Violations ? ${minStart(className)}Violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
                     type="${this.uiType}"
-                    v-model="formModel.${minStart(this.name)}"
+                    @update:model-value="handle${majStart(this.name)}FileChange"
                   />
-                  <img :src="${minStart(this.name)}Url" alt="No image"/>
+                  <div v-if="formModel.${minStart(this.name)}" class="flex items-center gap-3">
+                    <img
+                      v-if="isImageContent(formModel.${minStart(this.name)})"
+                      :src="buildFileSource(formModel.${minStart(this.name)})"
+                      alt="${formatReadable(this.name)}"
+                      class="max-h-20 max-w-20 object-contain"
+                    />
+                    <div v-else class="flex items-center gap-2">
+                      <span>{{ getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') }}</span>
+                      <button
+                        type="button"
+                        class="link link-primary"
+                        @click="downloadFile(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))"
+                      >Télécharger</button>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-xs btn-error btn-outline"
+                      @click="formModel.${minStart(this.name)} = null"
+                    >Supprimer le fichier</button>
+                  </div>
                   {{elseIf isParentTable=true and hasChildrenForm=true}}
                   <!-- ${formatReadable(this.name)} -->
                   <GenesisInput
@@ -6834,9 +6889,29 @@
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
                     type="${this.uiType}"
-                    v-model="formModel.${minStart(this.name)}"
+                    @update:model-value="handle${majStart(this.name)}FileChange"
                   />
-                  <img :src="${minStart(this.name)}Url" alt="No image"/>
+                  <div v-if="formModel.${minStart(this.name)}" class="flex items-center gap-3">
+                    <img
+                      v-if="isImageContent(formModel.${minStart(this.name)})"
+                      :src="buildFileSource(formModel.${minStart(this.name)})"
+                      alt="${formatReadable(this.name)}"
+                      class="max-h-20 max-w-20 object-contain"
+                    />
+                    <div v-else class="flex items-center gap-2">
+                      <span>{{ getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') }}</span>
+                      <button
+                        type="button"
+                        class="link link-primary"
+                        @click="downloadFile(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))"
+                      >Télécharger</button>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-xs btn-error btn-outline"
+                      @click="formModel.${minStart(this.name)} = null"
+                    >Supprimer le fichier</button>
+                  </div>
                   {{elseIf this.type=DateOnly}}
                   <!-- ${formatReadable(this.name)} | DateOnly -->
                   <GenesisInput
@@ -6916,21 +6991,14 @@
         {{/each}}
         {{/if}}
         
+        const formModel = ref<Partial<${majStart(className)}FormDTO>>({ ...${majStart(className)}FormDTO.parse(props.${minStart(className)}) })
         {{#each fields}}
-        {{#if this.uiType = file}}
-        const ${minStart(this.name)}Url = computed(() => {
-          const ${minStart(this.name)} = formModel.value.${minStart(this.name)}
-          if (!${minStart(this.name)}) return ''
-        
-          if (${minStart(this.name)} instanceof File) {
-            return URL.createObjectURL(${minStart(this.name)})
-          }
-          return 'data:image/png;base64,'+${minStart(this.name)}
-        })
+        {{#if this.uiType=file}}
+        const handle${majStart(this.name)}FileChange = async (value: string | File | null) => {
+          formModel.value.${minStart(this.name)} = value instanceof File ? await fileToBase64(value) : value
+        }
         {{/if}}
         {{/each}}
-        
-        const formModel = ref<Partial<${majStart(className)}FormDTO>>({ ...${majStart(className)}FormDTO.parse(props.${minStart(className)}) })
         {{#each fieldsFK}}
         const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
         const ${minStart(this.name)}DefaultValue = props.${minStart(className)}
@@ -6944,33 +7012,15 @@
           ${minStart(this.className)}s.value = data
         }
         {{/each}}{{/if}}
-        const fileToBase64 = (file: File): Promise<string> => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader()
-            reader.onload = () => {
-              if (typeof reader.result !== 'string') {
-                reject(new Error('Unable to read the selected file'))
-                return
-              } 
-              const commaIndex = reader.result.indexOf(',')
-              resolve(
-                commaIndex >= 0
-                ? reader.result.substring(commaIndex + 1)
-                : reader.result,
-              )
-            }  
-            reader.onerror = () => {
-              reject(reader.error ?? new Error('Unable to read the selected file'))
-            }
-            reader.readAsDataURL(file)
-          })
-        }
         async function handleSubmit() {
           const data: any = { ...formModel.value }
+          const fileFieldNames = [
+            {{#each fields}}{{#if this.uiType=file}}'${this.name}',{{/if}}{{/each}}
+          ]
           Object.keys(data).forEach(key => {
             if (data[key] === ''
-                    || data[key] === null
-                    || data[key] === undefined) {
+                    || data[key] === undefined
+                    || (data[key] === null && !fileFieldNames.includes(key))) {
                 delete data[key];
             }
           });
@@ -7569,7 +7619,7 @@
         {{#each fields}}
         {{#if this.isForeignKey}}
         ${minStart(this.name)}?: string
-        {{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}
+        {{elseIf this.uiType=file}}${minStart(this.name)}?: string | Uint8Array | null{{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}
         ${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
@@ -7638,6 +7688,7 @@
         import { ref, onMounted } from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
+        {{#if containsFile=true}}import { buildFileSource, downloadFile, fileToBase64, getGeneratedFileName, isImageContent } from '@/utils/file-utils'{{/if}}
 
         const props = defineProps<{
           internalId: number
@@ -7666,6 +7717,15 @@
         function updateModel() {
           emit('udpate:model-value', formModel.value)
         }
+
+        {{#each fields}}
+        {{#if this.uiType=file}}
+        const handle${majStart(this.name)}FileChange = async (value: string | File | null) => {
+          formModel.value.${minStart(this.name)} = value instanceof File ? await fileToBase64(value) : value
+          updateModel()
+        }
+        {{/if}}
+        {{/each}}
         
         onMounted(() => {
           updateModel()
@@ -7697,6 +7757,36 @@
                   }
                 "
               />
+            </td>
+            {{elseIf this.uiType=file}}
+            <td>
+              <GenesisInput
+                :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                placeholder="Select ${formatReadable(this.name)}"
+                type="file"
+                @update:model-value="handle${majStart(this.name)}FileChange"
+              />
+              <div v-if="formModel.${minStart(this.name)}" class="flex items-center gap-2">
+                <img
+                  v-if="isImageContent(formModel.${minStart(this.name)})"
+                  :src="buildFileSource(formModel.${minStart(this.name)})"
+                  alt="${formatReadable(this.name)}"
+                  class="max-h-10 max-w-10 object-contain"
+                />
+                <div v-else class="flex items-center gap-2">
+                  <span>{{ getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}') }}</span>
+                  <button
+                    type="button"
+                    class="link link-primary"
+                    @click="downloadFile(formModel.${minStart(this.name)}, getGeneratedFileName(formModel.${minStart(this.name)}, '${minStart(this.name)}'))"
+                  >Télécharger</button>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-xs btn-error btn-outline"
+                  @click="formModel.${minStart(this.name)} = null; updateModel()"
+                >Supprimer</button>
+              </div>
             </td>
             {{else}}
             <td>

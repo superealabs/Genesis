@@ -1,5 +1,5 @@
-export function getUrl(image?: Uint8Array) {
-  if (!image) return ''
+import { buildFileSource } from '@/utils/file-utils'
 
-  return `data:image/png;base64,${image}`
+export function getUrl(image?: unknown) {
+  return buildFileSource(image)
 }
