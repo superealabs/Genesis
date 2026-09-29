@@ -1,4 +1,4 @@
-package org.labs.genesis.config.git;
+package org.labs.genesis.config.tools;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +11,8 @@ public class GitConfiguration {
 
     private boolean separateRepositories;
 
+    private boolean isRepositoryPrivate;
+
     private String repositoryName;
 
     private String backendRepositoryName;
@@ -22,4 +24,5 @@ public class GitConfiguration {
     private String githubUsername;
 
     private String githubToken;
+
 }

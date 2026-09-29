@@ -2,7 +2,8 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.config.tools.DockerConfiguration;
+import org.labs.genesis.config.tools.GitConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
@@ -11,7 +12,6 @@ import org.labs.genesis.config.langage.generator.indicator.NoOpProgressReporter;
 import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.sync.builder.GenesisContextBuilder;
 import org.labs.genesis.config.langage.generator.sync.models.GenesisContextModel;
-import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.frontend.generator.ViewsGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -24,12 +24,16 @@ import org.labs.genesis.frontend.generator.IFrontendGenerator;
 import org.labs.genesis.frontend.generator.IViewsGenerator;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
+import org.labs.utils.DockerUtils;
 import org.labs.utils.FileUtils;
 import org.labs.utils.GitUtils;
 import org.labs.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,6 +54,7 @@ public class ProjectGenerator {
     public static final Map<Integer, FrontendLanguage> frontendLanguage;
     public static final Map<Integer, FrontendFramework> frontendFrameworks;
     public static final Map<Integer, InterfaceLang> langs;
+    public static final Map<String, FilesEdit> dockerConfs;
 
     static {
         try {
@@ -63,6 +68,9 @@ public class ProjectGenerator {
 
             projects = Arrays.stream(FileUtils.fromYaml(Project[].class, Constantes.PROJECT_YAML))
                     .collect(Collectors.toMap(Project::getId, project -> project));
+
+            dockerConfs = Arrays.stream(FileUtils.fromYaml(FilesEdit[].class, Constantes.DOCKER_CONF_YAML))
+                    .collect(Collectors.toMap(FilesEdit::getFileName, dockerConf -> dockerConf));
 
             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))
                     .peek(framework -> {
@@ -323,10 +331,10 @@ public class ProjectGenerator {
                 context.getFrameworkConfiguration()
         );
         System.out.println("Generating PROJECT FILESSS 2");
-
+        boolean useDocker = context != null && context.getDockerConfiguration() != null ? context.getDockerConfiguration().isUseDocker() : false;
         if (context.getFramework().getUseDB()) {
             if (context.getFramework().getModelDao() != null) {
-                var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
+                var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName(), useDocker);
                 projectFilesEditsHashMap.putAll(mapDaoGlobal);
             } else {
                 // For frameworks without ModelDao (like Django), still generate entitiesImports and entitiesAll
@@ -645,19 +653,18 @@ public class ProjectGenerator {
         generateProject(context, new NoOpProgressReporter());
     }
 
-    public void initGit(String path, boolean isCreateRemote, String repoName, String userName, String token) throws Exception {
+    public void initGit(String path, boolean isCreateRemote, String repoName, String userName, String token, boolean isPrivate) throws Exception {
         GitUtils.gitInit(path);
         GitUtils.gitAdd(path);
-        GitUtils.gitCommit(path, "Initialisation du projet");
+        GitUtils.gitSetMainBranch(path);
+        GitUtils.gitCommit(path, "chore: Initialize project setup");
 
         if(repoName != null && !repoName.isBlank() && userName != null && !userName.isBlank()) {
             GitUtils.gitRemote(path, userName, repoName);
         }
 
         if(isCreateRemote) {
-            try {
-                GitUtils.createRemoteRepo(token, repoName, false);
-            } catch (Exception e) {}
+            GitUtils.createRemoteRepo(token, repoName, isPrivate);
             GitUtils.gitPush(path, userName, token);
         }
     }
@@ -668,38 +675,72 @@ public class ProjectGenerator {
 
         Framework framework = context.getFramework();
         FrontendFramework frontendFramework = context.getFrontendFramework();
-        if (framework == null) {
-            return;
-        }
+        if (framework == null) return;
 
-        String projectPath = engine.simpleRender(context.getDestinationFolder(), Map.of("projectName", context.getProjectName()));
+        Map<String, Object> variables = Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder());
+
+        String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);
+        String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());
         String frontendPath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
 
-        FilesEdit backendGitIgnoreFile = GitUtils.getGitIgnore(framework.getConditionalFiles());
-        String backendPath = backendGitIgnoreFile != null ? engine.simpleRender(backendGitIgnoreFile.getDestinationPath(),
-                Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))
-            : projectPath + "/" + StringUtils.majStart(context.getProjectName());
+        FilesEdit backendGitIgnoreFile = GitUtils.get(framework.getConditionalFiles(), ".gitignore");
 
         GitUtils.generateGitIgnoreIfNeeded(backendGitIgnoreFile, backendPath);
-
-        if(context.isGenerateProjectStructure()) {
-            if (frontendFramework == null) {
-                return;
-            }
-            FilesEdit frontendGitIgnoreFile = GitUtils.getGitIgnore(frontendFramework.getConditionalFiles());
+        if(context.isGenerateFrontendApp()) {
+            if (frontendFramework == null) return;
+            FilesEdit frontendGitIgnoreFile = GitUtils.get(frontendFramework.getConditionalFiles(), ".gitignore");
             GitUtils.generateGitIgnoreIfNeeded(frontendGitIgnoreFile, frontendPath);
         }
 
         if(config.isSeparateRepositories()) {
             initGit(backendPath, config.isCreateRemoteRepository(), config.getBackendRepositoryName(),
-                        config.getGithubUsername(), config.getGithubToken());
-            if(context.isGenerateProjectStructure()) {
+                        config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
+            if(context.isGenerateFrontendApp()) {
                 initGit(frontendPath, config.isCreateRemoteRepository(), config.getFrontendRepositoryName(),
-                        config.getGithubUsername(), config.getGithubToken());
+                        config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
             }
         } else {
             initGit(projectPath, config.isCreateRemoteRepository(), config.getRepositoryName(),
-                    config.getGithubUsername(), config.getGithubToken());
+                    config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
+        }
+    }
+
+    public void addDockerConfiguration(ProjectGenerationContext context) throws Exception {
+        DockerConfiguration config = context.getDockerConfiguration();
+        if(!config.isUseDocker()) return;
+
+        Framework framework = context.getFramework();
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        if (framework == null) return;
+
+        Map<String, Object> variables = DockerUtils.getVariables(context, config, framework, frontendFramework, engine);
+
+        String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);
+        String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());
+        String frontendPath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
+
+        FilesEdit dockerCompose = dockerConfs.get("docker-compose");
+        String dockerComposeContent = engine.render(dockerCompose.getContent(), variables);
+        Path dockerComposePath = Paths.get(projectPath,
+                dockerCompose.getFileName() + "." + dockerCompose.getExtension());
+        Files.writeString(dockerComposePath, dockerComposeContent);
+
+        FilesEdit backendDockerFile = GitUtils.get(
+                framework.getConditionalFiles(), "DockerFile");
+        String backendDockerFileContent = engine.render(
+                backendDockerFile != null ? backendDockerFile.getContent() : "", variables);
+        Path backendDockerFilePath = Paths.get(backendPath, backendDockerFile != null ? backendDockerFile.getFileName() : "");
+        Files.writeString(backendDockerFilePath, backendDockerFileContent);
+
+        if(context.isGenerateFrontendApp()) {
+            if(frontendFramework == null) return;
+            FilesEdit frontendDockerFile = GitUtils.get(
+                    frontendFramework.getConditionalFiles(), "DockerFile");
+            String frontendDockerFileContent = engine.render(
+                    frontendDockerFile != null ? frontendDockerFile.getContent() : "", variables);
+            Path frontendDockerFilePath = Paths.get(
+                    frontendPath, frontendDockerFile.getFileName());
+            Files.writeString(frontendDockerFilePath, frontendDockerFileContent);
         }
     }
 
@@ -711,6 +752,7 @@ public class ProjectGenerator {
             generateComponentsOnly(context, indicator);
         }
         initGit(context);
+        addDockerConfiguration(context);
     }
     private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
