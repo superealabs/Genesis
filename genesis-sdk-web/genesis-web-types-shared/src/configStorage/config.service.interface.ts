@@ -1,4 +1,6 @@
+// genesis-sdk-web/genesis-web-types-shared/src/configStorage/config.service.interface.ts
 import { ConfigType } from "./config.types";
+
 /**
  * Structure standardisée d'une configuration Genesis.
  * Le générique T permet de typer strictement le payload en fonction du ConfigType.
@@ -20,12 +22,12 @@ export interface GenesisConfig<T = Record<string, unknown>> {
  * Il sera implémenté différemment pour le Web (LocalStorage/Blob) 
  * et pour VS Code (Extension Host / FileSystem).
  */
-export interface IConfigStorage {
+export interface IConfigService {
   /**
-   * Récupère l'ensemble des configurations stockées localement.
-   * Utilisé pour alimenter la liste d'affichage dans l'UI.
+   * Récupère les configurations stockées localement.
+   * @param configType (Optionnel) Si fourni, ne renvoie que les configurations de ce type.
    */
-  getAll(): Promise<GenesisConfig[]>;
+  getAll(configType?: ConfigType): Promise<GenesisConfig[]>;
 
   /**
    * Sauvegarde ou met à jour une configuration dans le stockage local.
@@ -37,7 +39,7 @@ export interface IConfigStorage {
    * Supprime une configuration du stockage local par son identifiant.
    * @param id L'identifiant unique de la configuration à supprimer.
    */
-  delete(id: string): Promise<void>;
+  delete(id: string | number): Promise<void>; // ✅ Corrigé : accepte string | number
 
   /**
    * Déclenche le processus d'importation (ouverture de dialogue de fichier) 

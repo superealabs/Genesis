@@ -4,23 +4,27 @@ import { FrameworkHandler } from './Framework/FrameworkHandler';
 import { GeneratorHandler } from './Generator/GeneratorHandler';
 import { FrontendHandler } from './FrontEnd/FrontendFrameworkHandler';
 import { DatabaseHandler } from './database/DatabaseHandler';
+import { ConfigHandler } from './core/config/ConfigHandler';
 
 export class WebviewMessageRouter {
     private frameworkHandler: FrameworkHandler;
     private generatorHandler: GeneratorHandler;
     private frontendHandler: FrontendHandler;
     private databaseHandler: DatabaseHandler;
+    private configHandler: ConfigHandler;
+
 
     constructor(
         private panel: vscode.WebviewPanel,
         private genesisApi: GenesisApiService,
-        private context: vscode.ExtensionContext
+        private context: vscode.ExtensionContext,
     ) {
         // Initialisation des handlers
         this.frameworkHandler = new FrameworkHandler(); 
         this.generatorHandler = new GeneratorHandler(this.panel);
         this.frontendHandler = new FrontendHandler(this.panel);
         this.databaseHandler = new DatabaseHandler(this.panel);
+        this.configHandler = new ConfigHandler(this.panel, this.context);
     }
 
     /**
@@ -151,6 +155,27 @@ export class WebviewMessageRouter {
                     break;
                 case 'SELECT_FRAMEWORK':
                     await this.generatorHandler.handleSelectFramework(message.payload, this.panel);
+                    break;
+
+
+                // CONFIG
+                case 'CONFIG_GET_ALL':
+                    await this.configHandler.handleGetAll(message.payload);
+                    break;
+                case 'CONFIG_SAVE':
+                    await this.configHandler.handleSave(message.payload);
+                    break;
+                case 'CONFIG_DELETE':
+                    await this.configHandler.handleDelete(message.payload);
+                    break;
+                case 'CONFIG_IMPORT':
+                    await this.configHandler.handleImport();
+                    break;
+                case 'CONFIG_EXPORT':
+                    await this.configHandler.handleExport(message.payload);
+                    break;
+                case 'CONFIG_EXPORT_ALL':
+                    await this.configHandler.handleExportAll(message.payload);
                     break;
 
                 default:
