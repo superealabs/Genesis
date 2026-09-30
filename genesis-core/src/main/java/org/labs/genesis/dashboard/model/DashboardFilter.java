@@ -10,7 +10,7 @@ import org.labs.genesis.dashboard.model.DashboardEnums.DashboardLogicalOperator;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class DashboardFilter {
+public class DashboardFilter implements DashboardFilterNode {
     private String columnName;
     private String operator;
     private Object value;

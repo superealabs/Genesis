@@ -5,6 +5,12 @@ import org.labs.genesis.dashboard.model.*;
 import org.labs.genesis.dashboard.model.DashboardEnums.*;
 import org.labs.genesis.forms.ui.visualization.model.QueryRole;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
+import org.labs.genesis.forms.ui.visualization.model.FilterLogicalOperator;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationFilterCondition;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationFilterGroup;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationFilterNode;
+
+import java.util.List;
 
 import java.util.Locale;
 
@@ -40,6 +46,7 @@ public final class DashboardVisualizationMapper {
         Object limit = component.getConfig().getValue("limit");
         if (limit instanceof Number number) result.getQueryOptions().setLimit(number.intValue());
         mapSort(component, result);
+        mapFilters(component, result);
         return result;
     }
 
@@ -83,5 +90,61 @@ public final class DashboardVisualizationMapper {
         result.getQueryOptions()
                 .getSorts()
                 .add(new DashboardSort(columnValue.toString(), direction));
+    }
+
+    private static DashboardFilter mapCondition(VisualizationFilterCondition condition) {
+        if (condition == null || condition.getColumn() == null || condition.getColumn().isBlank()) {
+            return null;
+        }
+        DashboardLogicalOperator relation = condition.getRelationToPrevious() == FilterLogicalOperator.OR
+                        ? DashboardLogicalOperator.OR
+                        : DashboardLogicalOperator.AND;
+        return new DashboardFilter(condition.getColumn(), condition.getOperator(), condition.getValue(), relation);
+    }
+
+    private static DashboardFilterGroup mapGroup(VisualizationFilterGroup group) {
+        if (group == null) {
+            return null;
+        }
+        DashboardFilterGroup result = new DashboardFilterGroup();
+        result.setRelation(group.getRelation()
+                        == FilterLogicalOperator.OR
+                        ? DashboardLogicalOperator.OR
+                        : DashboardLogicalOperator.AND
+        );
+        for (VisualizationFilterNode child : group.getChildren()) {
+            DashboardFilterNode mapped = mapFilterNode(child);
+            if (mapped != null) {
+                result.addChild(mapped);
+            }
+        }
+        return result;
+    }
+
+    private static DashboardFilterNode mapFilterNode(VisualizationFilterNode node) {
+        if (node instanceof VisualizationFilterCondition condition) {
+            return mapCondition(condition);}
+        if (node instanceof VisualizationFilterGroup group) {
+            return mapGroup(group);
+        }
+        return null;
+    }
+
+    private static void mapFilters(DashboardVisualComponent component, DashboardVisualization result) {
+        Object filtersValue = component.getConfig().getValue("filters");
+        if (!(filtersValue instanceof List<?> filters)) {
+            return;
+        }
+        for (Object item : filters) {
+            if (!(item instanceof VisualizationFilterNode node)) {
+                continue;
+            }
+            DashboardFilterNode mapped = mapFilterNode(node);
+            if (mapped != null) {
+                result.getQueryOptions()
+                        .getFilters()
+                        .add(mapped);
+            }
+        }
     }
 }
