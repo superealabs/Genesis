@@ -9813,6 +9813,12 @@
             type: 'interval' as const,
             required: ${this.isRequired},
           },
+          {{elseIf this.uiType=file}}
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: 'Uint8Array' as const,
+            required: ${this.isRequired},
+          },
           {{else}}
           ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
           {{/if}}{{/each}}{{removeLine}}
