@@ -62,6 +62,7 @@ public class DashboardVisualComponent extends JPanel {
      * écrase les données d'une requête plus récente.
      */
     private int dataLoadVersion = 0;
+    private final String dashboardId = java.util.UUID.randomUUID().toString();
 
     public DashboardVisualComponent(
             VisualizationItem visualizationItem,
@@ -788,6 +789,14 @@ public class DashboardVisualComponent extends JPanel {
         }
 
         return null;
+    }
+
+    public String getDataSourceName() {
+        return getTableName();
+    }
+
+    public String getDashboardId() {
+        return dashboardId;
     }
 
     // =========================================================================
