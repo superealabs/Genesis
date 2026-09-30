@@ -1,7 +1,7 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, HostListener, Input, OnInit } from '@angular/core';
 import { FormGroup, FormControl, Validators, AbstractControl, ValidatorFn, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common'; // pour *ngIf et *ngFor
-import { fileToBase64 } from '../file-utils';
+import { buildFileSource, downloadFile, fileToBase64, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from '../file-utils';
 
 export interface FieldConfig {
   type: 'text' | 'number' | 'date' | 'select' | 'textarea' | 'file'| 'hidden' | 'datetime-local' | 'time' | 'checkbox';
@@ -31,6 +31,15 @@ export interface FieldConfig {
   styleUrls: ['./dynamic-field.component.css']
 })
 export class DynamicFieldComponent implements OnInit {
+  readonly buildFileSource = buildFileSource;
+  readonly getGeneratedFileName = getGeneratedFileName;
+  readonly isImageContent = isImageContent;
+  readonly getFileSize = getFileSize;
+  readonly getFileTypeLabel = getFileTypeLabel;
+  previewSource: string | null = null;
+  previewAlt = '';
+  downloadedFile: string | null = null;
+  private downloadFeedbackTimeout?: ReturnType<typeof setTimeout>;
   @Input() field!: FieldConfig;
   @Input() form!: FormGroup;
   @Input() initialData: any = {};
@@ -55,10 +64,12 @@ export class DynamicFieldComponent implements OnInit {
     if (c.futureOrPresent) validators.push(this.futureOrPresentValidator);
 
     let value = this.initialData?.[this.field.name];
-    let defaultValue = '';
+    let defaultValue: any = this.field.type === 'file' ? null : '';
 
     if (value !== undefined) {
-      if (typeof value === 'object' && value !== null) {
+      if (this.field.type === 'file') {
+        defaultValue = value;
+      } else if (typeof value === 'object' && value !== null) {
         defaultValue = JSON.stringify(value);
       } else {
         defaultValue = String(value); // ou value.toString()
@@ -67,6 +78,40 @@ export class DynamicFieldComponent implements OnInit {
 
 
     this.form.addControl(this.field.name, new FormControl(defaultValue, validators));
+  }
+
+  removeFile(): void {
+    const control = this.getControl();
+    control.setValue(null);
+    control.markAsDirty();
+    control.markAsTouched();
+    control.updateValueAndValidity();
+  }
+
+  get currentFile(): unknown {
+    return this.getControl()?.value;
+  }
+
+  openPreview(content: unknown): void {
+    this.previewSource = buildFileSource(content);
+    this.previewAlt = getGeneratedFileName(content);
+  }
+
+  closePreview(): void {
+    this.previewSource = null;
+  }
+
+  downloadAsset(content: unknown): void {
+    const fileName = getGeneratedFileName(content);
+    downloadFile(content, fileName);
+    this.downloadedFile = fileName;
+    if (this.downloadFeedbackTimeout) clearTimeout(this.downloadFeedbackTimeout);
+    this.downloadFeedbackTimeout = setTimeout(() => this.downloadedFile = null, 1600);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closePreview();
   }
 
   getControl(): FormControl {
