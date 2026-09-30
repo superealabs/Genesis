@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.labs.genesis.dashboard.model.DashboardEnums.DashboardLogicalOperator;
 
 @Getter
 @Setter
@@ -13,5 +14,5 @@ public class DashboardFilter {
     private String columnName;
     private String operator;
     private Object value;
-    private String relationToPrevious = "AND";
+    private DashboardLogicalOperator relationToPrevious = DashboardLogicalOperator.AND;
 }

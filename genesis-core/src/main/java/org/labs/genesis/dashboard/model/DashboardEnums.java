@@ -57,4 +57,9 @@ public final class DashboardEnums {
         MIN,
         MAX
     }
+
+    public enum DashboardLogicalOperator {
+        AND,
+        OR
+    }
 }

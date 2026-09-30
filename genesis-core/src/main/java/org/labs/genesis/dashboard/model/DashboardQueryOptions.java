@@ -12,7 +12,6 @@ import java.util.List;
 @NoArgsConstructor
 public class DashboardQueryOptions {
     private Integer limit;
-    private String filter;
     private List<DashboardSort> sorts = new ArrayList<>();
-    private List<DashboardFilter> filters = new ArrayList<>();
+    private List<DashboardFilterNode> filters = new ArrayList<>();
 }
