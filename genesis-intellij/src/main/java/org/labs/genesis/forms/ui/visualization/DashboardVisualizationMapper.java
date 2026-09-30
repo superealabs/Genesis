@@ -29,9 +29,9 @@ public final class DashboardVisualizationMapper {
             } catch (IllegalArgumentException ignored) { continue; }
             DashboardField field = new DashboardField(parameter.getKey(), value.toString(), dashboardRole);
             if (dashboardRole == DashboardFieldRole.MEASURE) {
-                String aggregation = component.getConfig().getString("aggregation", "SUM").trim().toUpperCase(Locale.ROOT).replace(' ', '_');
+                String aggregation = component.getConfig().getString("aggregation", "NONE").trim().toUpperCase(Locale.ROOT).replace(' ', '_');
                 try { field.setStatistic(StatisticType.valueOf(aggregation)); }
-                catch (IllegalArgumentException ignored) { field.setStatistic(StatisticType.SUM); }
+                catch (IllegalArgumentException ignored) { field.setStatistic(StatisticType.NONE); }
             }
             result.getFields().add(field);
         }

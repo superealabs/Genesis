@@ -13,6 +13,9 @@ public final class DashboardStatisticResolver {
             return null;
         }
         StatisticType statistic = field.getStatistic();
+        if (statistic == StatisticType.NONE) {
+            return null;
+        }
         String columnName = field.getColumnName();
         validate(statistic, columnName);
         return new DashboardStatisticExpression(statistic, columnName, field.getKey(), statistic == StatisticType.COUNT_DISTINCT);

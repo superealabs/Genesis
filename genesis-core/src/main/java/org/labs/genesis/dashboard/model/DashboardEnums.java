@@ -49,6 +49,7 @@ public final class DashboardEnums {
     }
 
     public enum StatisticType {
+        NONE,
         COUNT,
         COUNT_DISTINCT,
         SUM,

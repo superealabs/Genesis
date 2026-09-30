@@ -12,7 +12,8 @@ import java.util.Set;
 
 public final class DashboardStatisticRules {
 
-    private static final Set<StatisticType> TABLE_STATISTICS = Collections.unmodifiableSet(EnumSet.of(StatisticType.COUNT));
+    private static final Set<StatisticType> TABLE_STATISTICS = Collections.unmodifiableSet(
+            EnumSet.of(StatisticType.NONE, StatisticType.COUNT));
 
     private static final Map<DashboardDataType, Set<StatisticType>> COLUMN_STATISTICS = createRules();
 
@@ -33,13 +34,19 @@ public final class DashboardStatisticRules {
             return Collections.emptySet();
         }
 
-        return COLUMN_STATISTICS.getOrDefault(dataType, Collections.emptySet()
-        );
+        Set<StatisticType> supported = COLUMN_STATISTICS.getOrDefault(dataType, Collections.emptySet());
+        if (supported.isEmpty()) return supported;
+        EnumSet<StatisticType> withNone = EnumSet.copyOf(supported);
+        withNone.add(StatisticType.NONE);
+        return Collections.unmodifiableSet(withNone);
     }
 
     public static boolean supports(ColumnMetadata column, StatisticType statisticType) {
         if (statisticType == null) {
             return false;
+        }
+        if (statisticType == StatisticType.NONE) {
+            return column != null;
         }
         return getColumnStatistics(column).contains(statisticType);
     }
