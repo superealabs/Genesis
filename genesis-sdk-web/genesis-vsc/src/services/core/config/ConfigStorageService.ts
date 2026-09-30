@@ -21,19 +21,23 @@ export class ConfigStorageService implements IConfigService {
   }
 
   async save(config: GenesisConfig): Promise<void> {
-    const configs = await this.getAll(); // Récupère tout
-    const index = configs.findIndex(c => c.id === config.id);
+    // Note à moi même, le save, n'arrive pas ici
+    console.log("Utilisation de Save depuis Extensionhost");
+
+    const configs = await this.getAll();
+    const index = configs.findIndex(c => String(c.id) === String(config.id));
     
+    const newConfigs = [...configs];
     config.updatedAt = new Date().toISOString();
 
     if (index >= 0) {
-      configs[index] = config;
+      newConfigs[index] = config;
     } else {
       config.createdAt = new Date().toISOString();
-      configs.push(config);
+      newConfigs.push(config);
     }
     
-    await this.context.globalState.update(STORAGE_KEY, configs);
+    await this.context.globalState.update(STORAGE_KEY, newConfigs);
   }
 
   async delete(id: string | number): Promise<void> { // ✅ Corrigé : signature alignée avec l'interface

@@ -44,10 +44,17 @@ export function useConfig() {
         store.setLoading(true);
         store.clearError();
         try {
-            await svc.save(config);
-            store.addOrUpdateConfiguration(config);
-            store.setSelectedConfig(config.id);
+            // CRUCIAL : Supprime toute réactivité Vue (Proxy) pour éviter DataCloneError dans postMessage
+            const plainConfig = JSON.parse(JSON.stringify(config));
+            
+            console.log("[useConfig] Envoi de plainConfig au service...");
+            await svc.save(plainConfig);
+            
+            console.log("[useConfig] Sauvegarde réussie, mise à jour du store");
+            store.addOrUpdateConfiguration(plainConfig);
+            store.setSelectedConfig(plainConfig.id);
         } catch (err) {
+            console.error("[useConfig] Erreur dans saveConfiguration:", err);
             store.setError((err as Error).message || 'Erreur lors de la sauvegarde.');
         } finally {
             store.setLoading(false);

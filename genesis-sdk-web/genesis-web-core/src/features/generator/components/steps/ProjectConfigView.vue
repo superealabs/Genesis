@@ -35,7 +35,7 @@
           label="Description du projet"
           size="lg"
           placeholder="Une brève description de l'application..."
-          :type="'textarea'"
+          type="textarea"
           fill-width
         />
       </div>
@@ -50,7 +50,6 @@
           size="lg"
           @request-folder-path="handleSelectFolderPath"
         />
-
       </div>
     </div>
 
@@ -103,7 +102,7 @@
                 type="button"
                 class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
                 :class="{ 'text-accent font-medium': config.buildTool === tool }"
-                @click="() => { updateConfig('buildTool', tool); close() }"
+                @click="() => { updateConfig('buildTool', tool); close(); }"
               >
                 {{ tool.charAt(0).toUpperCase() + tool.slice(1) }}
               </button>
@@ -138,7 +137,7 @@
                   type="button"
                   class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
                   :class="{ 'text-accent font-medium': config.frameworkVersion === v }"
-                  @click="() => { updateConfig('frameworkVersion', v); close() }"
+                  @click="() => { updateConfig('frameworkVersion', v); close(); }"
                 >
                   {{ v }}
                 </button>
@@ -158,11 +157,10 @@
         :default-open="false"
         variant="secondary"
       >
-        <div class="flex flex-row gap-4">
-          <!-- ═══ GESTION DES PROFILS DE CONFIGURATION ═══ -->
-          <div class="flex flex-col gap-8">
-            
-            <!-- Logging Level -->
+        <div class="flex flex-col lg:flex-row gap-6">
+          
+          <!-- ═══ COLONNE GAUCHE : INPUTS DE CONFIGURATION ═══ -->
+          <div class="flex-1 flex flex-col gap-4">
             <GenesisInput
               v-model="config.loggingLevel"
               type="select"
@@ -179,7 +177,7 @@
                     type="button"
                     class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
                     :class="{ 'text-accent font-medium': config.loggingLevel === opt }"
-                    @click="() => { updateConfig('loggingLevel', opt); close() }"
+                    @click="() => { updateConfig('loggingLevel', opt); close(); }"
                   >
                     {{ opt }}
                   </button>
@@ -187,7 +185,6 @@
               </template>
             </GenesisInput>
 
-            <!-- Security Type -->
             <GenesisInput
               v-model="config.securityType"
               type="select"
@@ -196,13 +193,13 @@
               placeholder="Aucune"
               fill-width
             >
-              <template #default="{close}">
+              <template #default="{ close }">
                 <div class="p-1 space-y-1">
                   <button
                     type="button"
                     class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
                     :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }"
-                    @click="() => { updateConfig('securityType', 'NONE'); close() }"
+                    @click="() => { updateConfig('securityType', 'NONE'); close(); }"
                   >
                     Aucune
                   </button>
@@ -212,7 +209,7 @@
                     type="button"
                     class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
                     :class="{ 'text-accent font-medium': config.securityType === opt }"
-                    @click="() => { updateConfig('securityType', opt); close() }"
+                    @click="() => { updateConfig('securityType', opt); close(); }"
                   >
                     {{ opt }}
                   </button>
@@ -220,7 +217,6 @@
               </template>
             </GenesisInput>
 
-            <!-- Cache Provider -->
             <GenesisInput
               v-model="config.cacheProvider"
               type="select"
@@ -237,7 +233,7 @@
                     type="button"
                     class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
                     :class="{ 'text-accent font-medium': config.cacheProvider === opt }"
-                    @click="() => { updateConfig('cacheProvider', opt); close() }"
+                    @click="() => { updateConfig('cacheProvider', opt); close(); }"
                   >
                     {{ opt }}
                   </button>
@@ -245,7 +241,6 @@
               </template>
             </GenesisInput>
 
-            <!-- Hibernate DDL Auto -->
             <div v-if="showHibernateDdl" class="space-y-1">
               <GenesisInput
                 v-model="config.hibernateDdlAuto"
@@ -263,7 +258,7 @@
                       type="button"
                       class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
                       :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }"
-                      @click="() => { updateConfig('hibernateDdlAuto', opt); close() }"
+                      @click="() => { updateConfig('hibernateDdlAuto', opt); close(); }"
                     >
                       {{ opt }}
                     </button>
@@ -273,8 +268,9 @@
             </div>
           </div>
 
-          <div class="w-fit space-y-3">
-            <!-- Panneau de gestion des configurations -->
+          <!-- ═══ COLONNE DROITE : PANNEAU ET ACTIONS ═══ -->
+          <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+            
             <GenesisConfigurationPanel
               :configurations="configManager.configurations.value"
               :selected-config-id="configManager.selectedConfigId.value"
@@ -283,37 +279,35 @@
               :can-move-up="configManager.canMoveUp.value"
               :can-move-down="configManager.canMoveDown.value"
               @update:search-query="(val) => configManager.searchQuery.value = val"
-              @add="() => configManager.addConfiguration(getCurrentConfigValues())"
-              @delete="configManager.deleteConfiguration"
-              @rename="configManager.renameConfiguration"
-              @edit="(id) => configManager.editConfiguration(id, getCurrentConfigValues())"
+              @add="handleAddConfig"
+              @delete="handleDeleteConfig"
+              @rename="handleRenameConfig"
               @toggle-visibility="configManager.toggleVisibility"
               @move-up="configManager.moveUp"
               @move-down="configManager.moveDown"
-              @select-configuration="configManager.selectConfiguration"
+              @select-configuration="handleSelectConfig"
             />
-            <!-- Barre d'outils des actions -->
-            <div class="flex gap-2">
-              <!-- rajouter un text hover -->
-              <GenesisButtonIcon :variant="'secondary'" @click="handleSaveConfig">
-                <IconSave />
-              </GenesisButtonIcon>
-              
-              <GenesisButtonIcon :variant="'secondary'" @click="handleLoadConfig" :disabled="!selectedConfigId">
-                <IconDownload />
-              </GenesisButtonIcon>
 
-              <GenesisButtonIcon :variant="'secondary'" @click="handleExportConfig" :disabled="!selectedConfigId">
+            <div class="flex gap-2 justify-end">
+              <GenesisButtonIcon 
+                variant="secondary" 
+                title="Exporter la configuration sélectionnée"
+                :disabled="!configManager.selectedConfigId.value"
+                @click="handleExportConfig"
+              >
                 <IconUpload />
               </GenesisButtonIcon>
 
-              <GenesisButtonIcon :variant="'secondary'" @click="handleExportAllConfigs">
+              <GenesisButtonIcon 
+                variant="secondary" 
+                title="Exporter toutes les configurations"
+                @click="handleExportAllConfigs"
+              >
                 <IconSave />
               </GenesisButtonIcon>
-
             </div>
-          </div>
 
+          </div>
         </div>
       </GenesisDisclosure>
     </div>
@@ -321,28 +315,31 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, ref } from 'vue';
+import { computed, watch, ref, onMounted, nextTick } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useConfigurationManager } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
+import { useConfig } from '@genesis-labs/web-core/core/features/config/composables/useConfig';
+import type { GenesisConfig, FrameworkAdvancedConfigurationPayload } from '@genesis-labs/shared-types';
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
-
-import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
-import IconDownload from '@genesis-labs/web-core/core/components/ui/icons/IconDownload.vue';
-import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
-
 import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
-// import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 
+import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
+import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
 
 // ============================================================================
-// 1. EMITS
+// 1. EMITS & CONSTANTES
 // ============================================================================
 const emit = defineEmits<{
   'request-folder-path': [];
 }>();
+
+const DEFAULT_VALUES = ['INFO', 'NONE', 'Aucun', 'none'];
+
+// Flag pour éviter les faux positifs de l'auto-save lors du chargement d'une config
+const isApplyingConfig = ref(false);
 
 // ============================================================================
 // 2. COMPOSABLES
@@ -366,8 +363,17 @@ const {
   fetchHibernateDdlAutoOptions
 } = useGenerator();
 
+const { 
+  loadConfigurations, 
+  saveConfiguration, 
+  deleteConfiguration,
+  configurations: persistedConfigs 
+} = useConfig();
+
+const configManager = useConfigurationManager([], { singleConfiguration: false });
+
 // ============================================================================
-// 3. COMPUTEDS (Données dérivées)
+// 3. COMPUTEDS
 // ============================================================================
 const config = computed(() => stepperData.value.config);
 const framework = computed(() => stepperData.value.framework);
@@ -378,111 +384,172 @@ const showHibernateDdl = computed(() => framework.value?.withHibernateDdlAuto ==
 // ============================================================================
 // 4. ACTIONS
 // ============================================================================
+
 function handleSelectFolderPath() {
   emit('request-folder-path');
 }
 
-const selectedConfigId = ref<string | number | null>(null);
-
-// Initialisation du composable de gestion des configurations
-const configManager = useConfigurationManager([
-  { id: 1, name: 'Profil Par Défaut', isHidden: false, components: ['INFO', 'NONE', 'Aucun', 'none'] },
-  { id: 2, name: 'Profil Production', isHidden: false, components: ['ERROR', 'JWT', 'Redis', 'validate'] }
-], { singleConfiguration: false });
-
-/**
- * Helper : Récupère les valeurs actuelles des dropdowns sous forme de tableau
- * pour les stocker dans la propriété 'components' de la configuration.
- */
 function getCurrentConfigValues(): string[] {
   return [
-    config.value.loggingLevel || 'INFO',
-    config.value.securityType || 'NONE',
-    config.value.cacheProvider || 'Aucun',
-    config.value.hibernateDdlAuto || 'none'
+    config.value.loggingLevel || DEFAULT_VALUES[0],
+    config.value.securityType || DEFAULT_VALUES[1],
+    config.value.cacheProvider || DEFAULT_VALUES[2],
+    config.value.hibernateDdlAuto || DEFAULT_VALUES[3]
   ];
 }
 
-/**
- * Helper : Applique les valeurs d'une configuration sauvegardée aux dropdowns.
- */
 function applyConfigValues(values: string[]) {
-  if (values[0]) updateConfig('loggingLevel', values[0]);
-  if (values[1]) updateConfig('securityType', values[1]);
-  if (values[2]) updateConfig('cacheProvider', values[2]);
-  if (values[3]) updateConfig('hibernateDdlAuto', values[3]);
+  isApplyingConfig.value = true;
+  updateConfig('loggingLevel', values[0]);
+  updateConfig('securityType', values[1]);
+  updateConfig('cacheProvider', values[2]);
+  updateConfig('hibernateDdlAuto', values[3]);
+  
+  nextTick(() => {
+    isApplyingConfig.value = false;
+  });
 }
 
-/**
- * Sauvegarde l'état actuel des dropdowns dans la configuration sélectionnée.
- * Si aucune n'est sélectionnée, en crée une nouvelle.
- */
-function handleSaveConfig() {
-  const values = getCurrentConfigValues();
+async function handleAddConfig() {
+  let valuesToUse: string[];
+  
   if (configManager.selectedConfigId.value) {
-    configManager.editConfiguration(configManager.selectedConfigId.value, values);
+    const selected = configManager.configurations.value.find(c => c.id === configManager.selectedConfigId.value);
+    valuesToUse = selected ? [...selected.components] : [...DEFAULT_VALUES];
   } else {
-    configManager.addConfiguration(values);
+    valuesToUse = getCurrentConfigValues();
+  }
+
+  const newConfig = configManager.addConfiguration(valuesToUse);
+
+  const genesisConfig: GenesisConfig<FrameworkAdvancedConfigurationPayload> = {
+    id: String(newConfig.id),
+    name: newConfig.name,
+    configType: 'framework_advanced-configuration',
+    schemaVersion: '1.0.0',
+    createdAt: new Date().toISOString(),
+    payload: {
+      loggingLevel: valuesToUse[0],
+      securityType: valuesToUse[1],
+      cacheProvider: valuesToUse[2],
+      hibernateDdlAuto: valuesToUse[3]
+    }
+  };
+  
+  await saveConfiguration(genesisConfig);
+  configManager.searchQuery.value = '';
+}
+
+function handleSelectConfig(id: string | number) {
+  if (configManager.selectedConfigId.value === id) {
+    configManager.selectConfiguration(null);
+    applyConfigValues(DEFAULT_VALUES);
+  } else {
+    configManager.selectConfiguration(id);
   }
 }
 
 /**
- * Charge les valeurs de la configuration sélectionnée dans les dropdowns.
+ * RENOMMAGE : Met à jour l'UI et sauvegarde immédiatement.
  */
-function handleLoadConfig() {
-  if (!configManager.selectedConfigId.value) return;
-  const configToLoad = configManager.configurations.value.find(
-    c => c.id === configManager.selectedConfigId.value
-  );
-  if (configToLoad) {
-    applyConfigValues(configToLoad.components);
+async function handleRenameConfig(id: string | number, newName: string) {
+  // 1. Mise à jour de l'UI locale
+  configManager.renameConfiguration(id, newName);
+
+  // 2. Récupération de la config existante dans le store de persistance
+  const existingConfig = persistedConfigs.value.find(c => String(c.id) === String(id));
+  
+  if (existingConfig) {
+    // 3. Création de l'objet mis à jour
+    const updatedConfig = {
+      ...existingConfig,
+      name: newName
+    } as GenesisConfig<FrameworkAdvancedConfigurationPayload>;
+
+    try {
+      console.log("=== DÉBUT DU DEBUG DE RENAME ===");
+      
+      // Valeur 1 : La config MAJ telle qu'elle est envoyée à la sauvegarde
+      console.log("1. Config MAJ à sauvegarder (updatedConfig) :", JSON.parse(JSON.stringify(updatedConfig)));
+      
+      // Appel au service de sauvegarde
+      await saveConfiguration(updatedConfig); 
+      
+      // Valeur 2 : La même config récupérée par son ID APRÈS la sauvegarde
+      const configAfterSave = persistedConfigs.value.find(c => String(c.id) === String(id));
+      console.log("2. Config récupérée par ID après save :", JSON.parse(JSON.stringify(configAfterSave)));
+      
+      console.log("=== FIN DU DEBUG DE RENAME ===");
+      
+    } catch (error) {
+      console.error("❌ Erreur de sauvegarde lors du rename :", error);
+    }
+  } else {
+    console.warn("⚠️ Configuration non trouvée dans persistedConfigs pour l'ID :", id);
   }
 }
 
-/**
- * Télécharge la configuration sélectionnée au format JSON.
- */
-function handleExportConfig() {
-  const configToExport = configManager.configurations.value.find(
-    c => c.id === configManager.selectedConfigId.value
-  );
+async function handleDeleteConfig(id: string | number) {
+  configManager.deleteConfiguration(id);
+  await deleteConfiguration(String(id));
+
+  if (!configManager.selectedConfigId.value) {
+    applyConfigValues(DEFAULT_VALUES);
+  }
+}
+
+async function handleExportConfig() {
+  const configToExport = persistedConfigs.value.find(c => c.id === configManager.selectedConfigId.value);
   if (configToExport) {
-    downloadJSON(configToExport, `${configToExport.name.replace(/\s+/g, '_')}.json`);
+    const blob = new Blob([JSON.stringify(configToExport, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${configToExport.name.replace(/\s+/g, '_')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 }
 
-/**
- * Télécharge l'ensemble des configurations au format JSON.
- */
-function handleExportAllConfigs() {
-  downloadJSON(configManager.configurations.value, 'toutes_les_configurations.json');
-}
-
-/**
- * Utilitaire pour déclencher le téléchargement d'un fichier JSON.
- */
-function downloadJSON(data: any, filename: string) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+async function handleExportAllConfigs() {
+  const blob = new Blob([JSON.stringify(persistedConfigs.value, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = filename;
+  a.download = 'toutes_les_configurations.json';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
 // ============================================================================
-// 5. WATCHERS (Logique réactive)
+// 5. LIFECYCLE & WATCHERS
 // ============================================================================
 
-/**
- * Charge les options de configuration spécifiques au framework sélectionné.
- * L'option { immediate: true } permet d'exécuter ce watcher dès le montage 
- * du composant, évitant ainsi la duplication de code avec un hook onMounted.
- * L'utilisation de Promise.all optimise le temps de chargement en exécutant 
- * les requêtes API en parallèle plutôt qu'en séquence.
- */
+onMounted(async () => {
+  await loadConfigurations('framework_advanced-configuration');
+  
+  const uiConfigs = persistedConfigs.value.map(c => {
+    const payload = c.payload as unknown as FrameworkAdvancedConfigurationPayload;
+    return {
+      id: c.id,
+      name: c.name,
+      isHidden: false,
+      components: [
+        payload.loggingLevel || DEFAULT_VALUES[0],
+        payload.securityType || DEFAULT_VALUES[1],
+        payload.cacheProvider || DEFAULT_VALUES[2],
+        payload.hibernateDdlAuto || DEFAULT_VALUES[3]
+      ]
+    };
+  });
+
+  configManager.configurations.value = uiConfigs;
+});
+
 watch(
   () => framework.value?.id,
   async (newId) => {
@@ -499,5 +566,58 @@ watch(
     }
   },
   { immediate: true }
+);
+
+// Watcher principal : Charge les valeurs dans l'UI dès que la sélection change
+watch(
+  () => configManager.selectedConfigId.value,
+  (newId) => {
+    if (newId) {
+      const configToLoad = configManager.configurations.value.find(c => c.id === newId);
+      if (configToLoad) {
+        applyConfigValues(configToLoad.components);
+      }
+    }
+  }
+);
+
+// Watcher d'auto-save : Déclenche la sauvegarde dès qu'un dropdown change (si une config est sélectionnée)
+watch(
+  () => [
+    config.value.loggingLevel,
+    config.value.securityType,
+    config.value.cacheProvider,
+    config.value.hibernateDdlAuto
+  ],
+  async (newValues, oldValues) => {
+    // Ignore les changements provoqués par applyConfigValues (chargement d'une config)
+    if (isApplyingConfig.value) return;
+    
+    // Ignore si aucune valeur n'a réellement changé
+    if (oldValues && JSON.stringify(newValues) === JSON.stringify(oldValues)) return;
+
+    const selectedId = configManager.selectedConfigId.value;
+    if (selectedId) {
+      const values = newValues as string[];
+      
+      // Mise à jour de l'UI locale
+      configManager.editConfiguration(selectedId, values);
+      
+      // Sauvegarde Backend
+      const existingConfig = persistedConfigs.value.find(c => String(c.id) === String(selectedId));
+      if (existingConfig) {
+        const updatedConfig: GenesisConfig<FrameworkAdvancedConfigurationPayload> = {
+          ...existingConfig,
+          payload: {
+            loggingLevel: values[0],
+            securityType: values[1],
+            cacheProvider: values[2],
+            hibernateDdlAuto: values[3]
+          }
+        };
+        await saveConfiguration(updatedConfig);
+      }
+    }
+  }
 );
 </script>

@@ -26,7 +26,7 @@ export const useConfigStore = defineStore('config', () => {
     }
 
     function addOrUpdateConfiguration(config: GenesisConfig) {
-        const index = configurations.value.findIndex(c => c.id === config.id);
+        const index = configurations.value.findIndex(c => String(c.id) === String(config.id));
         if (index >= 0) {
             configurations.value[index] = config;
         } else {

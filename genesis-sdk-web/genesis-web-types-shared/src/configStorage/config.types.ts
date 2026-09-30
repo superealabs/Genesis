@@ -5,11 +5,14 @@
  * Extensible selon les futures fonctionnalités du générateur.
  */
 export type ConfigType = 
-  | 'technical_stack' 
-  | 'advanced_configuration' // <-- Ajouté pour cet exemple
-  | 'generation_options'     // <-- Ajouté pour le futur
-  | 'database' 
-  | 'frontend' 
-  | 'relations' 
-  | 'generator';
+  | 'framework_technical-stack' 
+  | 'framework_advanced-configuration' // <-- Ajouté pour cet exemple
+  | 'generator_generation-options'     // <-- Ajouté pour le futur
 
+export interface FrameworkAdvancedConfigurationPayload {
+  loggingLevel: string;
+  securityType: string;
+  cacheProvider: string;
+  hibernateDdlAuto: string;
+  [key: string]: unknown; // ✅ AJOUT : Rend l'interface compatible avec Record<string, unknown>
+}

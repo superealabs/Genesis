@@ -19,6 +19,8 @@ import { generatorServiceVsc } from '@/features/generator/services/generator.ser
 import { DATABASE_SERVICE_KEY } from '@genesis-labs/web-core/features/database/manifest';
 import { databaseServiceVsc } from '@/features/database/services/database.service';
 
+import { CONFIG_SERVICE_KEY } from '@genesis-labs/web-core/core/features/config/manifest.ts';
+import { configServiceVsc, ConfigServiceVsc } from './core/features/config/services/config-storage.service.ts';
 // Rajouter un manifest
 
 console.log('[Main] Router importé:', router);  
@@ -32,6 +34,7 @@ app.provide(FRAMEWORK_SERVICE_KEY, frameworkServiceVsc);
 app.provide(FRONTEND_SERVICE_KEY, frontendServiceVsc); // <-- C'était la ligne manquante !
 app.provide(GENERATOR_SERVICE_KEY, generatorServiceVsc);
 app.provide(DATABASE_SERVICE_KEY, databaseServiceVsc);
+app.provide(CONFIG_SERVICE_KEY, configServiceVsc);
 
 // Rajouter le provide ici plus tard
 

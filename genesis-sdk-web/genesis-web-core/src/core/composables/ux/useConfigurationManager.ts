@@ -32,10 +32,6 @@ export function useConfigurationManager(
 
   // --- 2. Computeds (Données dérivées) ---
 
-  /**
-   * Filtre la liste des configurations en fonction de la requête de recherche.
-   * Retourne la liste complète si la recherche est vide.
-   */
   const filteredConfigs = computed(() => {
     if (!searchQuery.value.trim()) return configurations.value;
     const query = searchQuery.value.toLowerCase();
@@ -43,29 +39,25 @@ export function useConfigurationManager(
   });
 
   /**
-   * Indique s'il est possible de déplacer la sélection vers l'élément précédent.
+   * Vérifie si on peut monter la sélection dans la liste FILTRÉE.
    */
   const canMoveUp = computed(() => {
     if (!selectedConfigId.value) return false;
-    const index = configurations.value.findIndex(c => c.id === selectedConfigId.value);
+    const index = filteredConfigs.value.findIndex(c => c.id === selectedConfigId.value);
     return index > 0;
   });
 
   /**
-   * Indique s'il est possible de déplacer la sélection vers l'élément suivant.
+   * Vérifie si on peut descendre la sélection dans la liste FILTRÉE.
    */
   const canMoveDown = computed(() => {
     if (!selectedConfigId.value) return false;
-    const index = configurations.value.findIndex(c => c.id === selectedConfigId.value);
-    return index < configurations.value.length - 1;
+    const index = filteredConfigs.value.findIndex(c => c.id === selectedConfigId.value);
+    return index < filteredConfigs.value.length - 1;
   });
 
   // --- 3. Actions ---
 
-  /**
-   * Génère un nom unique pour une nouvelle configuration en incrémentant un compteur
-   * jusqu'à trouver un nom qui n'existe pas encore dans la liste.
-   */
   function generateUniqueName(): string {
     const baseName = 'config';
     let counter = 1;
@@ -79,9 +71,6 @@ export function useConfigurationManager(
     return proposedName;
   }
 
-  /**
-   * Ajoute une nouvelle configuration et la sélectionne automatiquement.
-   */
   function addConfiguration(components: string[] = []): ConfigurationItem {
     const newConfig: ConfigurationItem = {
       id: Date.now(),
@@ -96,10 +85,6 @@ export function useConfigurationManager(
     return newConfig;
   }
 
-  /**
-   * Supprime une configuration. Si l'élément supprimé était sélectionné, 
-   * la sélection est automatiquement transférée à l'élément le plus proche en haut de la liste.
-   */
   function deleteConfiguration(id: string | number): void {
     const index = configurations.value.findIndex(c => c.id === id);
     if (index !== -1) {
@@ -111,6 +96,7 @@ export function useConfigurationManager(
         if (configurations.value.length === 0) {
           selectedConfigId.value = null;
         } else {
+          // Sélectionne l'élément précédent, ou le premier si on était au début
           const newIndex = index > 0 ? index - 1 : 0;
           selectedConfigId.value = configurations.value[newIndex].id;
         }
@@ -143,38 +129,39 @@ export function useConfigurationManager(
   }
 
   /**
-   * Déplace la sélection vers l'élément précédent dans la liste.
-   * Note : Cette fonction modifie uniquement l'ID sélectionné, elle ne réorganise pas le tableau.
+   * Déplace la sélection vers le haut dans la liste FILTRÉE.
    */
   function moveUp(): void {
     if (!selectedConfigId.value) return;
-    const index = configurations.value.findIndex(c => c.id === selectedConfigId.value);
+    const index = filteredConfigs.value.findIndex(c => c.id === selectedConfigId.value);
     if (index > 0) {
-      selectedConfigId.value = configurations.value[index - 1].id;
+      selectedConfigId.value = filteredConfigs.value[index - 1].id;
     }
   }
 
   /**
-   * Déplace la sélection vers l'élément suivant dans la liste.
-   * Note : Cette fonction modifie uniquement l'ID sélectionné, elle ne réorganise pas le tableau.
+   * Déplace la sélection vers le bas dans la liste FILTRÉE.
    */
   function moveDown(): void {
     if (!selectedConfigId.value) return;
-    const index = configurations.value.findIndex(c => c.id === selectedConfigId.value);
-    if (index < configurations.value.length - 1) {
-      selectedConfigId.value = configurations.value[index + 1].id;
+    const index = filteredConfigs.value.findIndex(c => c.id === selectedConfigId.value);
+    if (index < filteredConfigs.value.length - 1) {
+      selectedConfigId.value = filteredConfigs.value[index + 1].id;
     }
   }
 
+  /**
+   * Gère la sélection ET la désélection (toggle).
+   * Si l'ID cliqué est déjà sélectionné, on le désélectionne (null).
+   */
   function selectConfiguration(id: string | number | null): void {
-    selectedConfigId.value = id;
+    if (selectedConfigId.value === id) {
+      selectedConfigId.value = null; // Désélection
+    } else {
+      selectedConfigId.value = id;   // Sélection
+    }
   }
 
-  /**
-   * Assigne des éléments (ex: tables) à une configuration spécifique.
-   * Si l'option singleConfiguration est active, l'élément est d'abord retiré de 
-   * toutes les autres configurations pour garantir qu'il n'appartient qu'à une seule.
-   */
   function assignToConfig(id: string | number, items: string[]): void {
     const targetConfig = configurations.value.find(c => c.id === id);
     if (!targetConfig) return;
@@ -195,9 +182,6 @@ export function useConfigurationManager(
     });
   }
 
-  /**
-   * Retire des éléments d'une configuration spécifique.
-   */
   function removeFromConfig(id: string | number, items: string[]): void {
     const config = configurations.value.find(c => c.id === id);
     if (config) {
@@ -207,17 +191,12 @@ export function useConfigurationManager(
 
   // --- 4. Retour ---
   return {
-    // État
     configurations,
     selectedConfigId,
     searchQuery,
-    
-    // Computeds
     filteredConfigs,
     canMoveUp,
     canMoveDown,
-    
-    // Actions
     addConfiguration,
     deleteConfiguration,
     renameConfiguration,
