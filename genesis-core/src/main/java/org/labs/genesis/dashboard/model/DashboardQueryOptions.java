@@ -14,4 +14,5 @@ public class DashboardQueryOptions {
     private Integer limit;
     private String filter;
     private List<DashboardSort> sorts = new ArrayList<>();
+    private List<DashboardFilter> filters = new ArrayList<>();
 }
