@@ -1,12 +1,12 @@
-import { Component, Input,OnInit } from '@angular/core';
+import { Component, HostListener, Input,OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component';
 import { Language,LanguageService } from '../services/language/language.service';
-import {buildFileSource, getGeneratedFileName, isImageContent} from '../file-utils';
+import {buildFileSource, downloadFile, getFileSize, getGeneratedFileName, isImageContent} from '../file-utils';
 
 export interface Column {
-  type: 'string' | 'number' | 'Date' | 'Uint8Array' | 'boolean';
+  type: string;
   label: string;
   fieldName: string;
 }
@@ -31,17 +31,31 @@ export interface Column {
       <tbody>
         <tr *ngFor="let ligne of datas">
           <td *ngFor="let col of columns; let i = index">
-            <ng-container *ngIf="col.type === 'Uint8Array'; else normalCell">
-              <img
-                *ngIf="ligne[i] && isImageContent(ligne[i]); else nonImageFile"
-                [src]="buildFileSource(ligne[i])"
-                [alt]="getGeneratedFileName(ligne[i])"
-                class="file-preview"
-              />
+            <ng-container *ngIf="isFileColumn(col.type); else normalCell">
+              <div *ngIf="ligne[i] && isImageContent(ligne[i]); else nonImageFile" class="file-cell">
+                <img
+                  [src]="buildFileSource(ligne[i])"
+                  [alt]="getGeneratedFileName(ligne[i])"
+                  class="file-preview"
+                  role="button"
+                  tabindex="0"
+                  (click)="openPreview(ligne[i], getGeneratedFileName(ligne[i]))"
+                  (keydown.enter)="openPreview(ligne[i], getGeneratedFileName(ligne[i]))"
+                />
+                <span class="file-size">{{ getFileSize(ligne[i]) }}</span>
+                <button type="button" class="file-download" (click)="downloadAsset(ligne[i])" [attr.aria-label]="'Télécharger ' + getGeneratedFileName(ligne[i])" title="Télécharger l'image">
+                  <i class="bi bi-download"></i> {{ downloadedFile === getGeneratedFileName(ligne[i]) ? 'Téléchargement…' : 'Télécharger' }}
+                </button>
+              </div>
               <ng-template #nonImageFile>
-                <span>
-                  {{ ligne[i] ? 'Fichier non prévisualisable' : 'Aucun fichier' }}
-                </span>
+                <div *ngIf="ligne[i]; else noFile" class="file-cell">
+                  <span>{{ getGeneratedFileName(ligne[i]) }}</span>
+                  <span class="file-size">{{ getFileSize(ligne[i]) }}</span>
+                <button *ngIf="ligne[i]" type="button" (click)="downloadAsset(ligne[i])" [attr.aria-label]="'Télécharger ' + getGeneratedFileName(ligne[i])" title="Télécharger">
+                  <i class="bi bi-download"></i> {{ downloadedFile === getGeneratedFileName(ligne[i]) ? 'Téléchargement…' : '' }}
+                </button>
+                </div>
+                <ng-template #noFile><span>Aucun fichier</span></ng-template>
               </ng-template>
             </ng-container>
             <ng-template #normalCell>
@@ -62,6 +76,11 @@ export interface Column {
         </tr>
       </tbody>
     </table>
+
+    <div *ngIf="previewSource" class="image-preview-overlay" role="dialog" aria-modal="true" [attr.aria-label]="previewAlt" (click)="closePreview()">
+      <button type="button" class="preview-close" aria-label="Fermer la prévisualisation" (click)="closePreview()">×</button>
+      <img [src]="previewSource" [alt]="previewAlt" (click)="$event.stopPropagation()" />
+    </div>
 
     <app-confirmation-box
       *ngIf="showConfirmation"
@@ -108,7 +127,14 @@ export interface Column {
       object-fit: cover;
       border-radius: 4px;
       display: block;
+      cursor: zoom-in;
     }
+    .file-cell { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .file-size { color: #64748b; font-size: .75rem; }
+    .file-download { cursor: pointer; }
+    .image-preview-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1rem; background: rgba(0,0,0,.82); }
+    .image-preview-overlay img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+    .preview-close { position: absolute; top: 1rem; right: 1rem; color: white; background: transparent; border: 0; font-size: 2rem; cursor: pointer; }
     .actions {
       display: flex;
       gap: 0;
@@ -142,7 +168,12 @@ export interface Column {
 export class ListComponent implements OnInit{
   readonly buildFileSource = buildFileSource;
   readonly getGeneratedFileName = getGeneratedFileName;
+  readonly getFileSize = getFileSize;
   readonly isImageContent = isImageContent;
+  previewSource: string | null = null;
+  previewAlt = '';
+  downloadedFile: string | null = null;
+  private downloadFeedbackTimeout?: ReturnType<typeof setTimeout>;
   @Input() columns: Column[] = [];
   @Input() datas: any[] = [];
   @Input() routeToDetail: string = 'entity';
@@ -167,6 +198,21 @@ export class ListComponent implements OnInit{
   }
 
   constructor(private router: Router,public langService: LanguageService) {}
+
+  isFileColumn(type: string): boolean {
+    return ['uint8array', 'bytea', 'blob', 'varbinary', 'byte[]', 'bytearray', 'file'].includes(type.replace(/\s/g, '').toLowerCase());
+  }
+
+  openPreview(content: unknown, alt: string): void { this.previewSource = buildFileSource(content); this.previewAlt = alt; }
+  closePreview(): void { this.previewSource = null; }
+  downloadAsset(content: unknown): void {
+    const fileName = getGeneratedFileName(content);
+    downloadFile(content, fileName);
+    this.downloadedFile = fileName;
+    if (this.downloadFeedbackTimeout) clearTimeout(this.downloadFeedbackTimeout);
+    this.downloadFeedbackTimeout = setTimeout(() => this.downloadedFile = null, 1600);
+  }
+  @HostListener('document:keydown.escape') onEscape(): void { this.closePreview(); }
 
   setActiveColumn(index: number) {
     if (this.activeColumn === index) {
