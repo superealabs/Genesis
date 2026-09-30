@@ -115,7 +115,7 @@ public class DashboardConfigurationForm {
     }
 
     private DashboardVisualization toDashboardVisualization(DashboardVisualComponent component) {
-        DashboardVisualization visualization = DashboardVisualizationMapper.map(component);
+        DashboardVisualization visualization = DashboardVisualizationMapper.map(component, projectGenerationContext);
         visualization.setLayout(new DashboardLayout(component.getGridX(), component.getGridY(),
                 component.getGridWidth(), component.getGridHeight()));
         return visualization;
