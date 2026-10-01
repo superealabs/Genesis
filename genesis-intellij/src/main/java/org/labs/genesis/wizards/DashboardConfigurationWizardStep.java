@@ -52,7 +52,10 @@ public class DashboardConfigurationWizardStep
         return generationContextManager
                 .getContext()
                 .getGenerationProcess()
-                .isGenerateProjectProcess();
+                .isGenerateProjectProcess()
+                && generationContextManager.
+                getContext()
+                .isGenerateFrontendApp();
     }
 
     // =========================================================
