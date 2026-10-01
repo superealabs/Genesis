@@ -16,6 +16,11 @@ import org.labs.genesis.forms.ui.visualization.GridCanvas;
 import org.labs.genesis.forms.ui.data.DataPanelTree;
 import org.labs.genesis.forms.ui.visualization.VisualizationPanel;
 import org.labs.genesis.forms.ui.visualization.configuration.VisualizationConfigurationPanel;
+import org.labs.genesis.dashboard.model.DashboardConfiguration;
+import org.labs.genesis.dashboard.model.DashboardLayout;
+import org.labs.genesis.dashboard.model.DashboardPage;
+import org.labs.genesis.dashboard.model.DashboardVisualization;
+import org.labs.genesis.forms.ui.visualization.DashboardVisualizationMapper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -82,6 +87,38 @@ public class DashboardConfigurationForm {
         installListeners();
         initializeTabs();
         refreshLayout();
+    }
+
+    public DashboardConfiguration toDashboardConfiguration() {
+        DashboardConfiguration configuration = new DashboardConfiguration();
+        int pageIndex = 0;
+        for (GridCanvas canvas : pageCanvases) {
+            DashboardPage page = new DashboardPage();
+            page.setId("page_" + pageIndex);
+            page.setTitle(getPageTitle(canvas, pageIndex));
+            for (DashboardVisualComponent component : canvas.getVisualComponents()) {
+                page.getVisualizations().add(toDashboardVisualization(component));
+            }
+            configuration.getPages().add(page);
+            pageIndex++;
+        }
+        return configuration;
+    }
+
+    private String getPageTitle(GridCanvas canvas, int index) {
+        for (Component component : tabsPanel.getComponents()) {
+            if (!(component instanceof JPanel tab) || tab.getClientProperty("gridCanvas") != canvas) continue;
+            JLabel label = (JLabel) tab.getClientProperty("titleLabel");
+            if (label != null) return label.getText();
+        }
+        return "Page " + (index + 1);
+    }
+
+    private DashboardVisualization toDashboardVisualization(DashboardVisualComponent component) {
+        DashboardVisualization visualization = DashboardVisualizationMapper.map(component, projectGenerationContext);
+        visualization.setLayout(new DashboardLayout(component.getGridX(), component.getGridY(),
+                component.getGridWidth(), component.getGridHeight()));
+        return visualization;
     }
 
     private void refreshDataPanel() {

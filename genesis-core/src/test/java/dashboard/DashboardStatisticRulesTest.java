@@ -18,7 +18,7 @@ class DashboardStatisticRulesTest {
         ColumnMetadata column = new ColumnMetadata();
         column.setNumeric(true);
         assertEquals(DashboardDataType.NUMERIC, DashboardDataTypeResolver.resolve(column));
-        assertEquals(Set.of(StatisticType.COUNT, StatisticType.COUNT_DISTINCT, StatisticType.SUM, StatisticType.AVG, StatisticType.MIN, StatisticType.MAX), DashboardStatisticRules.getColumnStatistics(column));
+        assertEquals(Set.of(StatisticType.NONE,StatisticType.COUNT, StatisticType.COUNT_DISTINCT, StatisticType.SUM, StatisticType.AVG, StatisticType.MIN, StatisticType.MAX), DashboardStatisticRules.getColumnStatistics(column));
     }
 
     @Test
@@ -26,7 +26,7 @@ class DashboardStatisticRulesTest {
         ColumnMetadata column = new ColumnMetadata();
         column.setText(true);
         assertEquals(DashboardDataType.TEXT, DashboardDataTypeResolver.resolve(column));
-        assertEquals(Set.of(StatisticType.COUNT, StatisticType.COUNT_DISTINCT), DashboardStatisticRules.getColumnStatistics(column));
+        assertEquals(Set.of(StatisticType.NONE,StatisticType.COUNT, StatisticType.COUNT_DISTINCT), DashboardStatisticRules.getColumnStatistics(column));
     }
 
     @Test
@@ -44,7 +44,7 @@ class DashboardStatisticRulesTest {
         ColumnMetadata column = new ColumnMetadata();
         column.setColumnType("BOOLEAN");
         assertEquals(DashboardDataType.BOOLEAN, DashboardDataTypeResolver.resolve(column));
-        assertEquals(Set.of(StatisticType.COUNT, StatisticType.COUNT_DISTINCT), DashboardStatisticRules.getColumnStatistics(column));
+        assertEquals(Set.of(StatisticType.NONE,StatisticType.COUNT, StatisticType.COUNT_DISTINCT), DashboardStatisticRules.getColumnStatistics(column));
     }
 
     @Test

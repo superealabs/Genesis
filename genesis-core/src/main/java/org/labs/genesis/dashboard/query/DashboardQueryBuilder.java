@@ -19,6 +19,16 @@ public final class DashboardQueryBuilder {
         return createPlan(visualization);
     }
 
+    public static DashboardQueryPlan build(DashboardVisualization visualization, TableMetadata sourceTable, List<TableMetadata> availableTables) {
+        validate(visualization);
+        if (!DashboardMetadataValidator.isValid(visualization, sourceTable, availableTables)) {
+            throw new IllegalArgumentException("Invalid dashboard metadata");
+        }
+        DashboardQueryPlan plan = createPlan(visualization);
+        plan.getJoins().addAll(DashboardJoinResolver.resolve(visualization, sourceTable, availableTables));
+        return plan;
+    }
+
     private static DashboardQueryPlan createPlan(DashboardVisualization visualization) {
         DashboardQueryPlan plan = new DashboardQueryPlan();
         plan.setSource(visualization.getDataSource());

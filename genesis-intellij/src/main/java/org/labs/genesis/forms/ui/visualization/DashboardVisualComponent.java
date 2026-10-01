@@ -4,10 +4,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.forms.renderer.VisualizationRenderer;
 import org.labs.genesis.forms.renderer.VisualizationRendererFactory;
+import org.labs.genesis.forms.renderer.map.MapRenderer;
 import org.labs.genesis.forms.renderer.provider.ChartData;
 import org.labs.genesis.forms.renderer.provider.DataProvider;
+import org.labs.genesis.forms.renderer.provider.MapData;
 import org.labs.genesis.forms.renderer.provider.TableData;
 import org.labs.genesis.forms.renderer.table.TableRenderer;
 import org.labs.genesis.forms.theme.DashboardTheme;
@@ -60,6 +63,7 @@ public class DashboardVisualComponent extends JPanel {
      * écrase les données d'une requête plus récente.
      */
     private int dataLoadVersion = 0;
+    private final String dashboardId = java.util.UUID.randomUUID().toString();
 
     public DashboardVisualComponent(
             VisualizationItem visualizationItem,
@@ -329,6 +333,8 @@ public class DashboardVisualComponent extends JPanel {
             return;
         }
 
+        List<TableMetadata> availableTables = context.getAllTables();
+
         final int version =
                 ++dataLoadVersion;
 
@@ -344,6 +350,33 @@ public class DashboardVisualComponent extends JPanel {
                 .executeOnPooledThread(() -> {
 
                     try {
+                        if (isMapVisualization()) {
+                            MapData data =
+                                    dataProvider.loadMap(
+                                            context.getConnection(),
+                                            tableName,
+                                            config,
+                                            visualizationItem,
+                                            availableTables
+
+                                    );
+
+                            SwingUtilities.invokeLater(() -> {
+
+                                if (version != dataLoadVersion) {
+                                    return;
+                                }
+
+                                setMapData(data);
+
+                                renderer.updateConfig(config);
+
+                                visualComponent.revalidate();
+                                visualComponent.repaint();
+                            });
+
+                            return;
+                        }
 
                         /*
                          * =====================================================
@@ -357,7 +390,9 @@ public class DashboardVisualComponent extends JPanel {
                                     dataProvider.loadTable(
                                             context.getConnection(),
                                             tableName,
-                                            config
+                                            config,
+                                            visualizationItem,
+                                            availableTables
                                     );
 
                             SwingUtilities.invokeLater(() -> {
@@ -388,7 +423,8 @@ public class DashboardVisualComponent extends JPanel {
                                         context.getConnection(),
                                         tableName,
                                         config,
-                                        visualizationItem
+                                        visualizationItem,
+                                        availableTables
                                 );
 
                         SwingUtilities.invokeLater(() -> {
@@ -406,7 +442,7 @@ public class DashboardVisualComponent extends JPanel {
                         });
 
                     } catch (Exception e) {
-
+                        e.printStackTrace();
                         SwingUtilities.invokeLater(() -> {
 
                             if (version != dataLoadVersion) {
@@ -474,6 +510,26 @@ public class DashboardVisualComponent extends JPanel {
         );
     }
 
+    private void setMapData(
+            MapData data
+    ) {
+
+        config.setValue(
+                MapData.CONFIG_KEY,
+                data
+        );
+
+        config.setValue(
+                MapData.ERROR_KEY,
+                null
+        );
+
+        config.setValue(
+                MapData.LOADING_KEY,
+                false
+        );
+    }
+
     // =========================================================================
     // CLEAR DATA
     // =========================================================================
@@ -494,6 +550,23 @@ public class DashboardVisualComponent extends JPanel {
 
             config.setValue(
                     TableData.CONFIG_KEY,
+                    null
+            );
+
+        } else if (isMapVisualization()) {
+
+            config.setValue(
+                    MapData.LOADING_KEY,
+                    true
+            );
+
+            config.setValue(
+                    MapData.ERROR_KEY,
+                    null
+            );
+
+            config.setValue(
+                    MapData.CONFIG_KEY,
                     null
             );
 
@@ -538,6 +611,23 @@ public class DashboardVisualComponent extends JPanel {
 
             config.setValue(
                     TableData.LOADING_KEY,
+                    false
+            );
+
+        } else if (isMapVisualization()) {
+
+            config.setValue(
+                    MapData.CONFIG_KEY,
+                    null
+            );
+
+            config.setValue(
+                    MapData.ERROR_KEY,
+                    message
+            );
+
+            config.setValue(
+                    MapData.LOADING_KEY,
                     false
             );
 
@@ -592,6 +682,13 @@ public class DashboardVisualComponent extends JPanel {
         );
     }
 
+    private boolean isMapVisualization() {
+
+        return MapRenderer.class.equals(
+                visualizationItem.rendererClass
+        );
+    }
+
     // =========================================================================
     // TABLE NAME
     // =========================================================================
@@ -611,8 +708,25 @@ public class DashboardVisualComponent extends JPanel {
             return table.toString().trim();
         }
 
+        // 2. Explicit data source
+        Object dataSource = config.getValue("dataSource");
+        if (dataSource != null && !dataSource.toString().trim().isEmpty()) {
+            return dataSource.toString().trim();
+        }
+
+        // 3. Measure table
+        for (VisualizationParameter param : visualizationItem.parameters) {
+            if (!param.hasQueryRole() || !param.isMeasure()) {
+                continue;
+            }
+            String tableName = extractConfiguredTable(param.getKey());
+            if (tableName != null) {
+                return tableName;
+            }
+        }
+
         // =====================================================================
-        // 2. TABLE COLUMNS
+        // 4. TABLE COLUMNS
         // =====================================================================
 
         Object columns =
@@ -647,7 +761,7 @@ public class DashboardVisualComponent extends JPanel {
         }
 
         // =====================================================================
-        // 3. NORMAL PARAMETERS
+        // 5. NORMAL PARAMETERS
         // =====================================================================
 
         for (VisualizationParameter param :
@@ -674,8 +788,8 @@ public class DashboardVisualComponent extends JPanel {
             }
 
             String tableName =
-                    DataProvider.extractTableNameStatic(
-                            stringValue
+                    extractConfiguredTable(
+                            param.getKey()
                     );
 
             if (tableName != null
@@ -685,22 +799,28 @@ public class DashboardVisualComponent extends JPanel {
             }
         }
 
-        // =====================================================================
-        // 4. DATA SOURCE
-        // =====================================================================
-
-        Object dataSource =
-                config.getValue(
-                        "dataSource"
-                );
-
-        if (dataSource != null
-                && !dataSource.toString().trim().isEmpty()) {
-
-            return dataSource.toString().trim();
-        }
-
         return null;
+    }
+
+    private String extractConfiguredTable(String key) {
+        Object value = config.getValue(key);
+        if (value == null) {
+            return null;
+        }
+        String stringValue = value.toString().trim();
+        if (stringValue.isEmpty()) {
+            return null;
+        }
+        String tableName = DataProvider.extractTableNameStatic(stringValue);
+        return tableName == null || tableName.isBlank() ? null : tableName;
+    }
+
+    public String getDataSourceName() {
+        return getTableName();
+    }
+
+    public String getDashboardId() {
+        return dashboardId;
     }
 
     // =========================================================================

@@ -49,11 +49,24 @@ public final class DashboardEnums {
     }
 
     public enum StatisticType {
+        NONE,
         COUNT,
         COUNT_DISTINCT,
         SUM,
         AVG,
         MIN,
         MAX
+    }
+
+    public enum DashboardLogicalOperator {
+        AND,
+        OR
+    }
+
+    public enum DashboardJoinType {
+        INNER,
+        LEFT,
+        RIGHT,
+        FULL
     }
 }

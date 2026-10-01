@@ -228,6 +228,7 @@ public class VisualizationPanel extends JPanel {
                                 VisualizationParameter.text("markerType", "Marker Type", false),
                                 VisualizationParameter.longitude("longitude", "Longitude", true),
                                 VisualizationParameter.latitude("latitude", "Latitude", true),
+                                VisualizationParameter.text("labelColumn", "Label Column", false),
                                 VisualizationParameter.measure("valueColumn", "Value Column", false)
                         )
                 ),

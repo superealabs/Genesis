@@ -3,7 +3,6 @@ package org.labs.genesis.forms.ui.data;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.treeStructure.Tree;
-import org.jspecify.annotations.NonNull;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
@@ -225,14 +224,9 @@ public class DataPanelTree extends JPanel {
         List<TableData> tablesToLoad = new ArrayList<>(tables);
 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            Database database = context.getDatabase();
-            if (database == null) {
-                return;
-            }
+            try {
 
-            try (Connection connection = database.getConnection(context.getCredentials())) {
-
-                Map<String, List<ColumnData>> columnsByTable = fetchAllColumns(database, connection);
+                Map<String, List<ColumnData>> columnsByTable = fetchAllColumns();
 
                 SwingUtilities.invokeLater(() -> {
                     for (TableData table : tablesToLoad) {
@@ -251,14 +245,10 @@ public class DataPanelTree extends JPanel {
         });
     }
 
-    private Map<String, List<ColumnData>> fetchAllColumns(Database database, Connection connection) throws Exception {
+    private Map<String, List<ColumnData>> fetchAllColumns() throws Exception {
         Map<String, List<ColumnData>> result = new HashMap<>();
 
-        List<TableMetadata> allMetadata = new ArrayList<>();
-        allMetadata.addAll(database.getEntities(connection, context.getCredentials(),
-                context.getLanguage(), context.getFramework()));
-        allMetadata.addAll(database.getViews(connection, context.getCredentials(),
-                context.getLanguage(), context.getFramework()));
+        List<TableMetadata> allMetadata = context.getAllTables();
 
         for (TableMetadata metadata : allMetadata) {
             String tableName = metadata.getTableName();
@@ -302,17 +292,8 @@ public class DataPanelTree extends JPanel {
     }
 
     private List<ColumnData> fetchColumnsForTable(TableData targetTable) {
-        Database database = context.getDatabase();
-        if (database == null) {
-            return new ArrayList<>();
-        }
-
-        try (Connection connection = database.getConnection(context.getCredentials())) {
-            List<TableMetadata> allMetadata = new ArrayList<>();
-            allMetadata.addAll(database.getEntities(connection, context.getCredentials(),
-                    context.getLanguage(), context.getFramework()));
-            allMetadata.addAll(database.getViews(connection, context.getCredentials(),
-                    context.getLanguage(), context.getFramework()));
+        try {
+            List<TableMetadata> allMetadata = context.getAllTables();
 
             for (TableMetadata metadata : allMetadata) {
                 if (targetTable.name.equals(metadata.getTableName())) {
@@ -327,31 +308,40 @@ public class DataPanelTree extends JPanel {
         return new ArrayList<>();
     }
 
+    public void loadMetadata() throws Exception {
+        if((context.getEntityTables() == null || context.getEntityTables().isEmpty())
+                && (context.getViewTables() == null || context.getViewTables().isEmpty())) {
+            Database database = context.getDatabase();
+
+            if(database != null) {
+                Connection connection = database.getConnection(context.getCredentials());
+                if(connection != null) {
+                    if(context.getEntityNames() == null || context.getEntityNames().isEmpty()
+                            || context.getViewNames() == null || context.getViewNames().isEmpty()) {
+                        context.setEntityNames(database.getAllTableNames(connection));
+                        context.setViewNames(database.getAllViewNames(connection));
+                    }
+                    context.setEntityTables(connection);
+                    context.setViewTables(database.getConnection(context.getCredentials()));
+                }
+            }
+        }
+    }
+
     // ============================================================
     // Database Operations
     // ============================================================
 
     private List<TableData> fetchAllTablesAndViews() {
-        Database database = context.getDatabase();
-        if (database == null) {
-            return new ArrayList<>();
-        }
-
-        try (Connection connection = database.getConnection(context.getCredentials())) {
-
-            List<TableMetadata> tables = database.getEntities(connection, context.getCredentials(),
-                    context.getLanguage(), context.getFramework());
-            List<TableMetadata> views = database.getViews(connection, context.getCredentials(),
-                    context.getLanguage(), context.getFramework());
-
+        try {
             List<TableData> result = new ArrayList<>();
+            if(context == null) return result;
+
+            loadMetadata();
+            List<TableMetadata> tables = context.getAllTables();
 
             for (TableMetadata table : tables) {
                 result.add(new TableData(table.getTableName()));
-            }
-
-            for (TableMetadata view : views) {
-                result.add(new TableData(view.getTableName()));
             }
 
             return result;
@@ -371,7 +361,7 @@ public class DataPanelTree extends JPanel {
 
         for (ColumnMetadata col : metadata) {
             columns.add(new ColumnData(
-                    col.getName(),
+                    col.getReferencedColumn(),
                     col.getColumnType() != null ? col.getColumnType().toUpperCase() : "UNKNOWN",
                     col.isPrimary(),
                     col.isNullable()

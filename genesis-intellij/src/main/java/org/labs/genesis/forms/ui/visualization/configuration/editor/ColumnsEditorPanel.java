@@ -3,7 +3,6 @@
     import com.intellij.icons.AllIcons;
     import lombok.Getter;
     import org.labs.genesis.forms.theme.DashboardTheme;
-    import org.labs.genesis.forms.ui.visualization.model.FieldQueryOptions;
     import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 
     import javax.swing.*;
@@ -22,8 +21,6 @@
 
         private final JPanel columnsContainer;
         private final JLabel countLabel;
-
-        private final FieldAdvancedOptionsPanel advancedOptionsPanel;
 
         private final List<ColumnOrFormulaRow> rows = new ArrayList<>();
 
@@ -66,68 +63,13 @@
             mainPanel.add(Box.createVerticalStrut(6));
             mainPanel.add(addButton);
 
-            advancedOptionsPanel = new FieldAdvancedOptionsPanel();
-            advancedOptionsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            advancedOptionsPanel.setVisible(false);
-
             mainPanel.add(Box.createVerticalStrut(10));
-            mainPanel.add(createAdvancedOptionsHeader());
             mainPanel.add(Box.createVerticalStrut(6));
-            mainPanel.add(advancedOptionsPanel);
-
-            advancedOptionsPanel.setChangeListener(this::notifyChange);
 
             add(mainPanel, BorderLayout.CENTER);
 
             addColumnRow(null);
             updateCountLabel();
-        }
-
-        // =========================================================================
-        // ADVANCED OPTIONS
-        // =========================================================================
-
-        private JPanel createAdvancedOptionsHeader() {
-            JPanel panel = new JPanel(new BorderLayout());
-            panel.setOpaque(false);
-            panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-            JLabel label = new JLabel("Query options");
-            label.setForeground(DashboardTheme.TEXT);
-            label.setFont(label.getFont().deriveFont(Font.BOLD, 11f));
-
-            JToggleButton toggle = createOptionsToggle();
-
-            toggle.addActionListener(e -> {
-                advancedOptionsPanel.setVisible(toggle.isSelected());
-
-                revalidate();
-                repaint();
-            });
-
-            panel.add(label, BorderLayout.WEST);
-            panel.add(toggle, BorderLayout.EAST);
-
-            return panel;
-        }
-
-        private JToggleButton createOptionsToggle() {
-            JToggleButton button = new JToggleButton(AllIcons.General.Filter);
-
-            button.setToolTipText("Limit / Sort / Filter");
-            button.setBorderPainted(false);
-            button.setContentAreaFilled(false);
-            button.setFocusPainted(false);
-            button.setFocusable(false);
-            button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            button.setMargin(new Insets(0, 0, 0, 0));
-
-            Dimension size = new Dimension(22, 22);
-            button.setPreferredSize(size);
-            button.setMinimumSize(size);
-            button.setMaximumSize(size);
-
-            return button;
         }
 
         // =========================================================================
@@ -366,26 +308,6 @@
         }
 
         // =========================================================================
-        // ADVANCED OPTIONS API
-        // =========================================================================
-
-        public void setQueryOptions(FieldQueryOptions options) {
-            if (options == null) {
-                options = new FieldQueryOptions();
-            }
-
-            advancedOptionsPanel.setOptions(options);
-
-            boolean active = !options.isEmpty();
-
-            advancedOptionsPanel.setVisible(active);
-        }
-
-        public FieldQueryOptions getQueryOptions() {
-            return advancedOptionsPanel.getOptions();
-        }
-
-        // =========================================================================
         // LISTENER
         // =========================================================================
 
@@ -465,8 +387,6 @@
             for (ColumnOrFormulaRow row : rows) {
                 row.setEnabled(enabled);
             }
-
-            advancedOptionsPanel.setEnabled(enabled);
         }
 
         public int getColumnCount() {

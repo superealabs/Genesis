@@ -15,6 +15,7 @@ import org.labs.genesis.connexion.Database;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
+import org.labs.genesis.dashboard.model.DashboardConfiguration;
 import org.labs.genesis.exceptions.InvalipRelationParameter;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
@@ -70,6 +71,7 @@ public class ProjectGenerationContext {
     private  boolean generateViewsTemplates = true;
     private ViewsTemplate viewsTemplate;
     private GitConfiguration gitConfiguration;
+    private DashboardConfiguration dashboardConfiguration;
 
     public ProjectGenerationContext() {
         this.generationProcess = new IntellijGenerationProcess();
@@ -103,6 +105,7 @@ public class ProjectGenerationContext {
         copy.setFrontendLanguage(this.frontendLanguage);
         copy.setConnection(this.connection);
         copy.setViewsTemplate(this.viewsTemplate);
+        copy.setDashboardConfiguration(this.dashboardConfiguration);
         return copy;
     }
 
