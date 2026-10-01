@@ -114,6 +114,40 @@ export function useConfig() {
         }
     }
 
+    async function loadAdvancedConfigurations(frameworkId: number, frameworkName: string) {
+        store.setLoading(true);
+        store.clearError();
+        try {
+            const data = await svc.getAll('framework_advanced-configuration');
+            return data.filter(c => {
+                const p = c.payload as any;
+                return p.frameworkId === frameworkId || p.frameworkName === frameworkName;
+            });
+        } catch (err) {
+            store.setError((err as Error).message || 'Erreur lors du chargement des configurations avancées.');
+            return [];
+        } finally {
+            store.setLoading(false);
+        }
+    }
+
+    async function loadTechnicalStackConfigurations(frameworkId: number, frameworkName: string) {
+        store.setLoading(true);
+        store.clearError();
+        try {
+            const data = await svc.getAll('framework_technical-stack');
+            return data.filter(c => {
+                const p = c.payload as any;
+                return p.frameworkId === frameworkId || p.frameworkName === frameworkName;
+            });
+        } catch (err) {
+            store.setError((err as Error).message || 'Erreur lors du chargement des configurations stack technique.');
+            return [];
+        } finally {
+            store.setLoading(false);
+        }
+    }
+
     // 4. Retour
     return {
         // État réactif (depuis le store)
@@ -131,6 +165,8 @@ export function useConfig() {
         importConfiguration,
         exportConfiguration,
         exportAllConfigurations,
+        loadAdvancedConfigurations,
+        loadTechnicalStackConfigurations,
         setSelectedConfig: store.setSelectedConfig,
         clearError: store.clearError
     };

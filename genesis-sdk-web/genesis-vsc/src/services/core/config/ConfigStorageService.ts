@@ -40,7 +40,7 @@ export class ConfigStorageService implements IConfigService {
     await this.context.globalState.update(STORAGE_KEY, newConfigs);
   }
 
-  async delete(id: string | number): Promise<void> { // ✅ Corrigé : signature alignée avec l'interface
+  async delete(id: string | number): Promise<void> {
     const configs = await this.getAll();
     // La comparaison avec != gère à la fois string et number de manière sûre ici
     const filtered = configs.filter(c => c.id != id); 

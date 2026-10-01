@@ -10,9 +10,21 @@ export type ConfigType =
   | 'generator_generation-options'     // <-- Ajouté pour le futur
 
 export interface FrameworkAdvancedConfigurationPayload {
+  frameworkId: number;        // NOUVEAU : Lien vers le framework
+  frameworkName: string;      // NOUVEAU : Nom du framework (sécurité en cas de changement d'ID)
   loggingLevel: string;
   securityType: string;
   cacheProvider: string;
   hibernateDdlAuto: string;
-  [key: string]: unknown; // ✅ AJOUT : Rend l'interface compatible avec Record<string, unknown>
+  [key: string]: unknown;
+}
+
+export interface FrameworkTechnicalStackPayload {
+  frameworkId: number;
+  frameworkName: string;
+  languageVersion: string;
+  buildTool: string;
+  groupId: string;
+  frameworkVersion: string;
+  [key: string]: unknown;
 }

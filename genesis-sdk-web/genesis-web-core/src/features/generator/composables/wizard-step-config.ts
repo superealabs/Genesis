@@ -112,6 +112,7 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
 
       try {
         console.log("[Étape 2] Configuration du projet validée");
+        console.log("Valeur de la configuration : " + JSON.stringify(config));
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde de la configuration.");
@@ -177,6 +178,7 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     beforeNext: async (store) => {
       try {
         console.log("[Étape 4] Configuration BDD validée");
+        console.log("Configuration de la base de donnée actuelle : " + JSON.stringify(store.stepperData.database))
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des credentials.");

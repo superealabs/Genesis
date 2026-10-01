@@ -194,6 +194,9 @@ function handleSelectScriptPath() {
   emit('request-file-path', { field: 'script', extensions: ['sql'] });
 }
 
+
+// Gestion des envoies de prompts et des receptions de prompts
+
 /**
  * Bascule l'état d'ouverture des deux panneaux latéraux simultanément.
  * Si les deux sont ouverts, ils sont fermés. Sinon, ils sont tous les deux ouverts.

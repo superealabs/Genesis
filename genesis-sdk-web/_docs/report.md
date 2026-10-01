@@ -23,3 +23,27 @@
         - optimisation du code extension host
         - optimisation du code webview
         - optimisation du code web-core
+
+
+- Normalement le chargement est gérer par useWizard, donc on corrige plus tard
+
+
+# ajouter
+Rajouter un attribut dans le payload idFramework(ou plutôt CoreFramework) pour éviter de charger toutes configurations liés à une configuration de type.
+Rajouter une image sur
+    - ProjecConfig
+    - DatabaseConfig
+
+Modifier l'ordre de lecture (configView -> scriptVIew -> chat)
+
+Modifier la valeur par defaut de l'affichage :
+    RelationView : Grid -> Table
+
+Modifier la structure des disclosures sur FrontEndConfiguration 11
+    - associer Framework&Port et rajouter la langue
+    - associer structure et navigation & charte graphique
+
+modifier l'étape de git :
+    - modifier l'interface pour que le hide -> devienne le disabled
+
+Rajouter une étape de résumer
