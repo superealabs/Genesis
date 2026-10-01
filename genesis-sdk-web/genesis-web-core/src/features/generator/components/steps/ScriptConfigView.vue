@@ -1,29 +1,7 @@
 <template>
   <div class="relative flex h-full w-full overflow-hidden">
 
-    <!-- 1. PANNEAU GAUCHE : Assistant IA -->
-    <div 
-      class="flex flex-col bg-bg-dark flex-shrink-0 h-full overflow-hidden"
-      :class="[isLlmOpen ? '' : 'w-0', !isResizingLlm ? 'transition-all duration-300 ease-in-out' : '']"
-      :style="isLlmOpen ? { width: `${llmWidth}px` } : {}"
-    >
-      <LlmAssistantPopup 
-        :is-open="isLlmOpen" 
-        @update:is-open="isLlmOpen = $event"
-        @generate="handleLlmGenerate" 
-      />
-    </div>
-
-    <!-- 2. DIVISEUR GAUCHE (Redimensionnable) -->
-    <div 
-      v-if="isLlmOpen" 
-      class="relative flex-shrink-0 w-1 cursor-col-resize group flex justify-center"
-      @mousedown="startResizeLlm"
-    >
-      <div class="w-px h-full bg-secondary group-hover:bg-accent/50 group-hover:w-1 transition-all duration-200" />
-    </div>
-
-    <!-- 3. PANNEAU CENTRAL : Inputs Principaux -->
+    <!-- 5. PANNEAU DROIT : Éditeur de Code -->
     <div class="flex flex-col flex-1 min-w-0 h-full relative">
       <div class="flex flex-col gap-6 p-6 overflow-y-auto h-full">
         
@@ -62,16 +40,17 @@
       </div>
     </div>
 
-    <!-- 4. DIVISEUR DROIT (Redimensionnable) -->
+    <!-- 2. DIVISEUR GAUCHE (Redimensionnable) -->
     <div 
-      v-if="isPreviewOpen" 
+      v-if="isLlmOpen" 
       class="relative flex-shrink-0 w-1 cursor-col-resize group flex justify-center"
-      @mousedown="startResizeCode"
+      @mousedown="startResizeLlm"
     >
       <div class="w-px h-full bg-secondary group-hover:bg-accent/50 group-hover:w-1 transition-all duration-200" />
     </div>
 
-    <!-- 5. PANNEAU DROIT : Éditeur de Code -->
+    <!-- 3. PANNEAU CENTRAL : Inputs Principaux -->
+
     <div 
       class="flex flex-col h-full overflow-hidden flex-shrink-0"
       :class="[isPreviewOpen ? '' : 'w-0', !isResizingCode ? 'transition-all duration-300 ease-in-out' : '']"
@@ -91,6 +70,30 @@
           </GenesisButtonIcon>
         </template>
       </GenesisIdeCm>
+    </div>
+
+    <!-- 4. DIVISEUR DROIT (Redimensionnable) -->
+    <div 
+      v-if="isPreviewOpen" 
+      class="relative flex-shrink-0 w-1 cursor-col-resize group flex justify-center"
+      @mousedown="startResizeCode"
+    >
+      <div class="w-px h-full bg-secondary group-hover:bg-accent/50 group-hover:w-1 transition-all duration-200" />
+    </div>
+
+
+
+        <!-- 1. PANNEAU GAUCHE : Assistant IA -->
+    <div 
+      class="flex flex-col bg-bg-dark flex-shrink-0 h-full overflow-hidden"
+      :class="[isLlmOpen ? '' : 'w-0', !isResizingLlm ? 'transition-all duration-300 ease-in-out' : '']"
+      :style="isLlmOpen ? { width: `${llmWidth}px` } : {}"
+    >
+      <LlmAssistantPopup 
+        :is-open="isLlmOpen" 
+        @update:is-open="isLlmOpen = $event"
+        @generate="handleLlmGenerate" 
+      />
     </div>
 
   </div>

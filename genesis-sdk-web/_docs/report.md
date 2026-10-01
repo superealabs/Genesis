@@ -47,3 +47,5 @@ modifier l'étape de git :
     - modifier l'interface pour que le hide -> devienne le disabled
 
 Rajouter une étape de résumer
+
+corriger l'interface de configuration de relation

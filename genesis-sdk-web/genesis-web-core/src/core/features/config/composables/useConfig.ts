@@ -48,6 +48,8 @@ export function useConfig() {
             const plainConfig = JSON.parse(JSON.stringify(config));
             
             console.log("[useConfig] Envoi de plainConfig au service...");
+
+            console.log("Configuration saved : " + JSON.stringify(plainConfig));
             await svc.save(plainConfig);
             
             console.log("[useConfig] Sauvegarde réussie, mise à jour du store");
@@ -148,6 +150,20 @@ export function useConfig() {
         }
     }
 
+    async function loadGenerationOptionsConfigurations() {
+        store.setLoading(true);
+        store.clearError();
+        try {
+            const data = await svc.getAll('generator_generation-options');
+            return data;
+        } catch (err) {
+            store.setError((err as Error).message || 'Erreur lors du chargement des options de génération.');
+            return [];
+        } finally {
+            store.setLoading(false);
+        }
+    }
+
     // 4. Retour
     return {
         // État réactif (depuis le store)
@@ -167,6 +183,7 @@ export function useConfig() {
         exportAllConfigurations,
         loadAdvancedConfigurations,
         loadTechnicalStackConfigurations,
+        loadGenerationOptionsConfigurations,
         setSelectedConfig: store.setSelectedConfig,
         clearError: store.clearError
     };

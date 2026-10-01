@@ -88,25 +88,26 @@
           <span class="text-accent text-sm font-normal">*</span>
         </h3>
         
-        <GenesisConfigurationSelector
-          :configurations="configManager.configurations.value"
-          :selected-config-id="configManager.selectedConfigId.value"
-          :filtered-configs="configManager.filteredConfigs.value"
-          :search-query="configManager.searchQuery.value"
-          :can-move-up="configManager.canMoveUp.value"
-          :can-move-down="configManager.canMoveDown.value"
-          :selected-items="selectedItemsInList" 
-          @update:search-query="(val) => configManager.searchQuery.value = val"
-          @add="() => configManager.addConfiguration(['model'])"
-          @delete="configManager.deleteConfiguration"
-          @rename="handleRename"
-          @toggle-visibility="configManager.toggleVisibility"
-          @move-up="configManager.moveUp"
-          @move-down="configManager.moveDown"
-          @select-configuration="configManager.selectConfiguration"
-          @assign="handleAssign"
-          @remove="handleRemove"
-        />
+      <!-- Dans le template, remplace la section GenesisConfigurationSelector par ceci : -->
+      <GenesisConfigurationSelector
+        :configurations="configManager.configurations.value"
+        :selected-config-id="configManager.selectedConfigId.value"
+        :filtered-configs="configManager.filteredConfigs.value"
+        :search-query="configManager.searchQuery.value"
+        :can-move-up="configManager.canMoveUp.value"
+        :can-move-down="configManager.canMoveDown.value"
+        :selected-items="selectedItemsInList" 
+        @update:search-query="(val) => configManager.searchQuery.value = val"
+        @add="handleAddConfig" 
+        @delete="handleDeleteConfig" 
+        @rename="handleRename"
+        @toggle-visibility="configManager.toggleVisibility"
+        @move-up="configManager.moveUp"
+        @move-down="configManager.moveDown"
+        @select-configuration="configManager.selectConfiguration"
+        @assign="handleAssign"
+        @remove="handleRemove"
+      />
       </div>
 
       <div class="border-t border-secondary"></div>
@@ -149,18 +150,28 @@ import GenesisCheckboxSimple from '@genesis-labs/web-core/core/components/ui/inp
 import GenesisConfigurationSelector from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationSelector.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
 
+import { useConfig } from '@genesis-labs/web-core/core/features/config/composables/useConfig';
+import { GenesisConfig } from '@genesis-labs/shared-types';
+import { GeneratorGenerationOptionsPayload } from '@genesis-labs/shared-types';
+
+
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
 // ============================================================================
-const configManager = useConfigurationManager([
-  { id: 1, name: 'Configuration par défaut', isHidden: false, components: ['model', 'dao', 'service', 'controller'] },
-  { id: 2, name: 'Modèles uniquement', isHidden: false, components: ['model'] },
-]);
+const configManager = useConfigurationManager([], { singleConfiguration: false });
+const localPersistedConfigs = ref<GenesisConfig[]>([]);
+
 
 const { stepperData, toggleTable, toggleView, tables, views, fetchTablesMetadata } = useGenerator();
 
 const isLoading = ref(false);
 const tableSearchQuery = ref('');
+
+const { 
+  loadGenerationOptionsConfigurations, 
+  saveConfiguration, 
+  deleteConfiguration,
+} = useConfig(); // ✅ AJOUTÉ
 
 // ============================================================================
 // 2. COMPUTEDS (Données dérivées)
@@ -198,30 +209,74 @@ const areAllTablesSelected = computed(() => {
 
 // --- Actions : Gestion des Configurations ---
 
+/**
+ * Helper : Sauvegarde l'état actuel d'une configuration spécifique dans le backend.
+ */
+/**
+ * Helper : Sauvegarde l'état actuel d'une configuration spécifique dans le backend.
+ */
+async function persistConfig(id: string | number) {
+  try {
+    const uiConfig = configManager.configurations.value.find(c => c.id === id);
+    const persistedConfig = localPersistedConfigs.value.find(c => String(c.id) === String(id));
+
+    if (uiConfig && persistedConfig) {
+      const updatedConfig: GenesisConfig<GeneratorGenerationOptionsPayload> = {
+        ...persistedConfig,
+        name: uiConfig.name,
+        payload: {
+          components: [...uiConfig.components]
+        }
+      };
+    
+      await saveConfiguration(updatedConfig);
+      
+      const index = localPersistedConfigs.value.findIndex(c => String(c.id) === String(id));
+      if (index !== -1) {
+        localPersistedConfigs.value[index] = updatedConfig;
+      }
+    }
+  } catch (error) {
+    console.error(`[persistConfig] Erreur critique lors de la sauvegarde de la configuration ${id}:`, error);
+  }
+}
+
+async function handleAddConfig() {
+  const defaultComponents = ['model', 'dao', 'service', 'controller'];
+  const newUiConfig = configManager.addConfiguration(defaultComponents);
+  
+  const newGenesisConfig: GenesisConfig<GeneratorGenerationOptionsPayload> = {
+    id: String(newUiConfig.id),
+    name: newUiConfig.name,
+    configType: 'generator_generation-options',
+    schemaVersion: '1.0.0',
+    createdAt: new Date().toISOString(),
+    payload: {
+      components: [...defaultComponents]
+    }
+  };
+  
+  await saveConfiguration(newGenesisConfig);
+}
+
 function handleRename(id: string | number, newName: string) {
   configManager.renameConfiguration(id, newName);
+  persistConfig(id); // ✅ Sauvegarde immédiate
 }
 
 function handleAssign(configId: string | number, items: string[]) {
   configManager.assignToConfig(configId, items);
+  persistConfig(configId); // ✅ Sauvegarde immédiate
 }
 
 function handleRemove(configId: string | number, items: string[]) {
   configManager.removeFromConfig(configId, items);
+  persistConfig(configId); // ✅ Sauvegarde immédiate
 }
 
-/**
- * Retourne le nom de la configuration à laquelle la table/vue est assignée.
- * Note : Cette logique suppose que les noms des tables sont stockés dans le tableau 
- * 'components' de la configuration. Si la structure de useConfigurationManager évolue, 
- * cette fonction devra être adaptée en conséquence.
- */
-function getAssignedConfig(item: TableMetadataDto): string {
-  const assignedConfigs = configManager.configurations.value
-    .filter(c => c.components.includes(item.tableName))
-    .map(c => c.name);
-  
-  return assignedConfigs.length > 0 ? assignedConfigs[0] : 'Non assigné';
+async function handleDeleteConfig(id: string | number) {
+  configManager.deleteConfiguration(id);
+  await deleteConfiguration(String(id)); // ✅ Suppression backend
 }
 
 function handleComponentToggle(comp: ComponentType, isChecked: boolean) {
@@ -235,14 +290,14 @@ function handleComponentToggle(comp: ComponentType, isChecked: boolean) {
   } else if (!isChecked && idx !== -1) {
     currentComponents.splice(idx, 1);
   } else {
-    return; // Aucun changement nécessaire
+    return;
   }
   
   configManager.editConfiguration(activeConfig.value.id, currentComponents);
+  persistConfig(activeConfig.value.id); // ✅ Sauvegarde immédiate
 }
 
-// --- Actions : Gestion des Tables/Vues ---
-
+// ... (isItemSelected, toggleItem, toggleAllTables, getAssignedConfig restent inchangés)
 const isItemSelected = (item: TableMetadataDto): boolean => {
   return item.isView 
     ? tableSelection.value.selectedViews.includes(item.tableName)
@@ -253,11 +308,6 @@ const toggleItem = (item: TableMetadataDto): void => {
   item.isView ? toggleView(item.tableName) : toggleTable(item.tableName);
 };
 
-/**
- * Bascule la sélection de toutes les tables.
- * La réaffectation directe du tableau réactif est préférée aux méthodes 
- * splice/push pour une meilleure lisibilité et des performances optimales.
- */
 const toggleAllTables = (): void => {
   if (areAllTablesSelected.value) {
     tableSelection.value.selectedTables = [];
@@ -266,16 +316,50 @@ const toggleAllTables = (): void => {
   }
 };
 
+function getAssignedConfig(item: TableMetadataDto): string {
+  const assignedConfigs = configManager.configurations.value
+    .filter(c => c.components.includes(item.tableName))
+    .map(c => c.name);
+  return assignedConfigs.length > 0 ? assignedConfigs[0] : 'Non assigné';
+}
+
+
+
+
+
 // ============================================================================
 // 4. LIFECYCLE
 // ============================================================================
 
+async function syncGenerationConfigs() {
+  const data = await loadGenerationOptionsConfigurations();
+  
+  localPersistedConfigs.value = data;
+  
+  // On mappe pour l'UI
+  configManager.configurations.value = data.map(c => {
+    const p = c.payload as unknown as GeneratorGenerationOptionsPayload;
+    return {
+      id: c.id,
+      name: c.name,
+      isHidden: false,
+      components: p.components || []
+    };
+  });
+  
+  configManager.selectConfiguration(configManager.configurations.value.length > 0 ? configManager.configurations.value[0].id : null);
+}
+
 onMounted(async () => {
   isLoading.value = true;
   try {
-    await fetchTablesMetadata();
+    // Chargement en parallèle des tables et des configs de génération
+    await Promise.all([
+      fetchTablesMetadata(),
+      syncGenerationConfigs()
+    ]);
   } catch (error) {
-    console.error('[GenerationConfigurationAlt] Erreur lors du chargement des tables:', error);
+    console.error('[GenerationConfigurationAlt] Erreur lors de l\'initialisation:', error);
   } finally {
     isLoading.value = false;
   }

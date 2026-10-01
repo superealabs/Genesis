@@ -28,3 +28,8 @@ export interface FrameworkTechnicalStackPayload {
   frameworkVersion: string;
   [key: string]: unknown;
 }
+
+export interface GeneratorGenerationOptionsPayload {
+  components: string[]; // Ex: ['model', 'dao', 'service', 'controller']
+  [key: string]: unknown;
+}
