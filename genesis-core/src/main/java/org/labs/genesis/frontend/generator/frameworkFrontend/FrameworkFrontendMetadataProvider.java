@@ -54,8 +54,11 @@ public class FrameworkFrontendMetadataProvider {
         List<Map<String, Object>> fields = getFieldsList(tableMetadata, formConfiguration);
         boolean containsFile = fields.stream()
                 .anyMatch(field -> "file".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean useMap = fields.stream()
+            .anyMatch(field -> "map".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
         metadata.put("fields", fields);
         metadata.put("containsFile", containsFile);
+        metadata.put("useMap", useMap);
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, formConfiguration));
         metadata.put("fieldsFK", fkList);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata, formConfiguration));

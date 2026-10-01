@@ -6744,14 +6744,14 @@
                     placeholder="Enter ${formatReadable(this.name)}"
                     v-model="formModel.${minStart(this.name)}"
                   />
-                  {{elseIf this.uitType=none}}
-                  {{elseIf this.uitType=map and this.isGeographic}}
+                  {{elseIf this.uiType=none}}
+                  {{elseIf this.uiType=map and this.isGeographic}}
                   <GenesisMap
                     label="${formatReadable(this.name)}"
                     :violation="violations ? violations['${formatReadable(this.name)}'] : undefined"
                     v-model:latitude="formModel.${minStart(this.name)}.latitude"
                     v-model:longitude="formModel.${minStart(this.name)}.longitude"/>
-                  {{elseIf this.uitType=map}}
+                  {{elseIf this.uiType=map}}
                   <GenesisMap
                     label="${formatReadable(this.name)}"
                     :violation="violations ? violations['${formatReadable(this.name)}'] : undefined"
@@ -7599,7 +7599,7 @@
         import GenesisCurrency from '@/components/form/GenesisCurrency.vue'
         import GenesisPhone from '@/components/form/GenesisPhone.vue'
         import GenesisQuantity from '@/components/form/GenesisQuantity.vue'
-        import { ref, onMounted } from 'vue'
+        import { ref, onMounted{{#if useMap}}, type Ref, toRef{{/if}}} from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
 
@@ -7631,6 +7631,24 @@
           emit('udpate:model-value', formModel.value)
         }
         
+        {{#if useMap}}
+        const mapPopup = ref<{
+          visible: boolean
+          latitude: Ref<number | null | undefined>
+          longitude: Ref<number | null | undefined>
+        } | null>(null)
+          
+        function openMap(
+          latitude: Ref<number | null | undefined>,
+          longitude: Ref<number | null | undefined>
+        ) {
+          mapPopup.value = {
+            visible: true,
+              latitude,
+              longitude
+          }
+        }
+        {{/if}}
         onMounted(() => {
           updateModel()
         })
@@ -7723,7 +7741,25 @@
               :value="formModel.${minStart(this.name)}"
               @update:model-value="(newVal) => updateModel()"
             />
-            {{elseIf this.uitType=none}}
+            {{elseIf this.uiType=map and this.isGeographic}}
+            <td class="text-center">
+              <button type="button" class="btn btn-outline btn-primary" 
+                @click="openMap(toRef(formModel.${minStart(this.name)}, 'latitude'), toRef(formModel.${minStart(this.name)}, 'longitude'))">
+              {{ formModel.${minStart(this.name)}.latitude != null && formModel.${minStart(this.name)}.longitude != null
+                ? formModel.${minStart(this.name)}.latitude.toFixed(6) + ',' + formModel.${minStart(this.name)}.longitude.toFixed(6)
+                : 'Choose location' }}
+              </button>
+            </td>
+            {{elseIf this.uiType=map}}
+            <td class="text-center">
+              <button type="button" class="btn btn-outline btn-primary" 
+                @click="openMap(toRef(formModel, '${this.latitude}'), toRef(formModel, '${this.longitude}')">
+              {{ formModel.${this.latitude} != null && formModel.${this.longitude} != null
+                ? formModel.${this.latitude}.toFixed(6) + ',' + formModel.${this.longitude}.toFixed(6)
+                : 'Choose location' }}
+              </button>
+            </td>
+            {{elseIf this.uiType=none}}
             {{else}}
             <td>
               <GenesisInput
@@ -7743,6 +7779,21 @@
               </button>
             </td>
           </tr>
+          {{#if useMap}}
+          <Teleport to="body">
+            <GenesisPopup
+              v-if="mapPopup"
+              title="Choose location"
+              :visible="mapPopup.visible"
+              @close="mapPopup = null"
+              >
+              <GenesisMap
+                v-model:latitude="mapPopup.latitude"
+                v-model:longitude="mapPopup.longitude"
+                label="Location"
+                />
+            </GenesisPopup>
+          </Teleport>{{/if}}
         </template>
 
         <style scoped></style>
