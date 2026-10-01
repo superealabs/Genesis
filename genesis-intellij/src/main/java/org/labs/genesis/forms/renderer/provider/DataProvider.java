@@ -3,10 +3,14 @@ package org.labs.genesis.forms.renderer.provider;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
-import org.labs.genesis.forms.ui.visualization.configuration.editor.GlobalVisualizationOptionsPanel;
+import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
+import org.labs.genesis.dashboard.model.DashboardVisualization;
+import org.labs.genesis.dashboard.query.DashboardQueryBuilder;
+import org.labs.genesis.dashboard.query.DashboardQueryPlan;
+import org.labs.genesis.forms.ui.visualization.DashboardVisualizationMapper;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -29,7 +33,9 @@ public class DataProvider {
     public MapData loadMap(
             Connection connection,
             String tableName,
-            VisualizationConfig config
+            VisualizationConfig config,
+            VisualizationItem item,
+            List<TableMetadata> availableTables
     ) throws Exception {
 
         validateTableInputs(connection, tableName, config);
@@ -39,18 +45,15 @@ public class DataProvider {
                 dialect(connection)
         );
 
-        QueryPlan plan = new QueryPlanner(
-                connection,
-                dsl
-        ).planMap(
-                tableName,
-                config
-        );
+        DashboardQueryPlan commonPlan = buildCommonPlan(tableName, config, item, availableTables);
 
-        Select<?> query = new SQLGenerator().generate(
-                dsl,
-                plan
-        );
+        Select<?> query =
+                new JooqDashboardQueryRenderer(
+                        connection,
+                        dsl
+                ).render(
+                        commonPlan
+                );
 
         System.out.println("[DataProvider] Map SQL: " + query);
 
@@ -459,7 +462,8 @@ public class DataProvider {
             Connection connection,
             String tableName,
             VisualizationConfig config,
-            VisualizationItem item
+            VisualizationItem item,
+            List<TableMetadata> availableTables
     ) throws Exception {
 
         validateInputs(
@@ -512,9 +516,11 @@ public class DataProvider {
                 dsl,
                 tableName,
                 config,
+                item,
                 dimensions,
                 measures,
-                values
+                values,
+                availableTables
         );
     }
 
@@ -525,7 +531,9 @@ public class DataProvider {
     public TableData loadTable(
             Connection connection,
             String tableName,
-            VisualizationConfig config
+            VisualizationConfig config,
+            VisualizationItem item,
+            List<TableMetadata> availableTables
     ) throws Exception {
 
         validateTableInputs(
@@ -544,7 +552,9 @@ public class DataProvider {
                 connection,
                 dsl,
                 tableName,
-                config
+                config,
+                item,
+                availableTables
         );
     }
 
@@ -627,19 +637,22 @@ public class DataProvider {
             DSLContext dsl,
             String tableName,
             VisualizationConfig config,
+            VisualizationItem item,
             List<VisualizationParameter> dimensions,
             List<VisualizationParameter> measures,
-            List<VisualizationParameter> values
+            List<VisualizationParameter> values,
+            List<TableMetadata> availableTables
+
     ) throws Exception {
+        DashboardQueryPlan commonPlan = buildCommonPlan(tableName, config, item, availableTables);
 
-        List<VisualizationParameter> parameters = new ArrayList<>();
-        parameters.addAll(dimensions);
-        parameters.addAll(measures);
-        parameters.addAll(values);
-
-        QueryPlan plan = new QueryPlanner(connection, dsl)
-                .planChart(tableName, config, parameters);
-        Select<?> query = new SQLGenerator().generate(dsl, plan);
+        Select<?> query =
+                new JooqDashboardQueryRenderer(
+                        connection,
+                        dsl
+                ).render(
+                        commonPlan
+                );
 
         System.out.println(
                 "[DataProvider] Chart SQL: " + query
@@ -664,12 +677,20 @@ public class DataProvider {
             Connection connection,
             DSLContext dsl,
             String tableName,
-            VisualizationConfig config
-    ) throws Exception {
+            VisualizationConfig config,
+            VisualizationItem item,
+            List<TableMetadata> availableTables
 
-        QueryPlan plan = new QueryPlanner(connection, dsl)
-                .planTable(tableName, config);
-        Select<?> query = new SQLGenerator().generate(dsl, plan);
+    ) throws Exception {
+        DashboardQueryPlan commonPlan = buildCommonPlan(tableName, config, item, availableTables);
+
+        Select<?> query =
+                new JooqDashboardQueryRenderer(
+                        connection,
+                        dsl
+                ).render(
+                        commonPlan
+                );
 
         System.out.println(
                 "[DataProvider] Table SQL: " + query
@@ -1729,5 +1750,31 @@ public class DataProvider {
         }
 
         return null;
+    }
+
+    private DashboardQueryPlan buildCommonPlan(String tableName, VisualizationConfig config, VisualizationItem item, List<TableMetadata> availableTables) {
+        DashboardVisualization visualization = DashboardVisualizationMapper.map(tableName, config, item);
+        TableMetadata sourceTable = findTable(tableName, availableTables);
+
+        if (sourceTable == null) {
+            throw new IllegalArgumentException("Dashboard source table not found: " + tableName);
+        }
+        return DashboardQueryBuilder.build(visualization, sourceTable, availableTables);
+    }
+
+    private TableMetadata findTable(String tableName, List<TableMetadata> availableTables) {
+        if (tableName == null || availableTables == null) {
+            return null;
+        }
+
+        return availableTables.stream()
+                .filter(table -> table != null
+                                && table.getTableName() != null
+                                && tableName.equalsIgnoreCase(
+                                table.getTableName()
+                        )
+                )
+                .findFirst()
+                .orElse(null);
     }
 }

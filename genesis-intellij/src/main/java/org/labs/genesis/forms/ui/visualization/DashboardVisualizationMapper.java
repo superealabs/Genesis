@@ -3,12 +3,7 @@ package org.labs.genesis.forms.ui.visualization;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.dashboard.model.*;
 import org.labs.genesis.dashboard.model.DashboardEnums.*;
-import org.labs.genesis.forms.ui.visualization.model.QueryRole;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
-import org.labs.genesis.forms.ui.visualization.model.FilterLogicalOperator;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationFilterCondition;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationFilterGroup;
-import org.labs.genesis.forms.ui.visualization.model.VisualizationFilterNode;
+import org.labs.genesis.forms.ui.visualization.model.*;
 
 import java.util.List;
 
@@ -26,27 +21,11 @@ public final class DashboardVisualizationMapper {
         String source = component.getDataSourceName();
         DashboardSourceType sourceType = resolveSourceType(source, context);
         result.setDataSource(new DashboardDataSource(source, sourceType));
-        for (VisualizationParameter parameter : component.getVisualizationItem().parameters) {
-            QueryRole role = parameter.getRole();
-            Object value = component.getConfig().getValue(parameter.getKey());
-            if (role == null || role == QueryRole.FILTER || role == QueryRole.SORT || role == QueryRole.LIMIT
-                    || value == null || value.toString().isBlank()) continue;
-            DashboardFieldRole dashboardRole;
-            try {
-                dashboardRole = DashboardFieldRole.valueOf(role == QueryRole.COLUMNS ? "COLUMN" : role.name());
-            } catch (IllegalArgumentException ignored) { continue; }
-            DashboardField field = new DashboardField(parameter.getKey(), value.toString(), dashboardRole);
-            if (dashboardRole == DashboardFieldRole.MEASURE) {
-                String aggregation = component.getConfig().getString("aggregation", "NONE").trim().toUpperCase(Locale.ROOT).replace(' ', '_');
-                try { field.setStatistic(StatisticType.valueOf(aggregation)); }
-                catch (IllegalArgumentException ignored) { field.setStatistic(StatisticType.NONE); }
-            }
-            result.getFields().add(field);
+        mapFields(result, component.getConfig(), component.getVisualizationItem());
+        if (result.getType() == DashboardVisualizationType.MAP) {
+            addOptionalMapColumn(result, component.getConfig(), "labelColumn");
         }
-        Object limit = component.getConfig().getValue("limit");
-        if (limit instanceof Number number) result.getQueryOptions().setLimit(number.intValue());
-        mapSort(component, result);
-        mapFilters(component, result);
+        mapQueryOptions(result, component.getConfig());
         return result;
     }
 
@@ -107,7 +86,8 @@ public final class DashboardVisualizationMapper {
             return null;
         }
         DashboardFilterGroup result = new DashboardFilterGroup();
-        result.setRelation(group.getRelation()
+        result.setOperator(
+                group.getRelation()
                         == FilterLogicalOperator.OR
                         ? DashboardLogicalOperator.OR
                         : DashboardLogicalOperator.AND
@@ -147,4 +127,149 @@ public final class DashboardVisualizationMapper {
             }
         }
     }
+
+    public static DashboardVisualization map(String source, VisualizationConfig config, VisualizationItem item) {
+        DashboardVisualization result = new DashboardVisualization();
+        result.setTitle(config.getString("title", item.name));
+        result.setType(typeFor(item.name));
+        result.setDataSource(new DashboardDataSource(source, DashboardSourceType.TABLE));
+        mapFields(result, config, item);
+        if (result.getType() == DashboardVisualizationType.MAP) {
+            addOptionalMapColumn(result, config, "labelColumn");
+        }
+        mapQueryOptions(result, config);
+
+        return result;
+    }
+
+    private static void mapFields(DashboardVisualization result, VisualizationConfig config, VisualizationItem item) {
+        for (VisualizationParameter parameter : item.parameters) {
+            QueryRole role = parameter.getRole();
+            if (role == null
+                    || role == QueryRole.FILTER
+                    || role == QueryRole.SORT
+                    || role == QueryRole.LIMIT) {
+                continue;
+            }
+            Object value = config.getValue(parameter.getKey());
+            if (value == null) {
+                continue;
+            }
+            if (role == QueryRole.COLUMNS && value instanceof List<?> values) {
+                mapColumns(result, values);
+                continue;
+            }
+            if (value.toString().isBlank()) {
+                continue;
+            }
+            DashboardFieldRole dashboardRole = toDashboardRole(role);
+            if (dashboardRole == null) {
+                continue;
+            }
+            DashboardField field = new DashboardField(parameter.getKey(), value.toString(), dashboardRole);
+            if (dashboardRole == DashboardFieldRole.MEASURE) {
+                field.setStatistic(resolveStatistic(config));
+            }
+            result.getFields().add(field);
+        }
+    }
+
+    private static void addOptionalMapColumn(DashboardVisualization result, VisualizationConfig config, String key) {
+        Object value = config.getValue(key);
+        if (value == null || value.toString().isBlank()) {
+            return;
+        }
+        result.getFields().add(new DashboardField(key, value.toString(), DashboardFieldRole.COLUMN));
+    }
+
+    private static void mapColumns(DashboardVisualization result, List<?> values) {
+        for (Object value : values) {
+            if (value == null || value.toString().isBlank()) {
+                continue;
+            }
+            String column = value.toString();
+            String key = simpleColumnName(column);
+            result.getFields().add(new DashboardField(key, column, DashboardFieldRole.COLUMN));
+        }
+    }
+
+    private static String simpleColumnName(String value
+    ) {
+        if (value == null) {
+            return null;
+        }
+        String result = value.trim();
+        int colon = result.lastIndexOf(':');
+        if (colon >= 0) {
+            result = result.substring(colon + 1);
+        }
+        int dot = result.lastIndexOf('.');
+        if (dot >= 0) {
+            result = result.substring(dot + 1);
+        }
+        return result;
+    }
+
+    private static DashboardFieldRole toDashboardRole(QueryRole role) {
+        try {
+            String name = role == QueryRole.COLUMNS ? "COLUMN" : role.name();
+            return DashboardFieldRole.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static StatisticType resolveStatistic(VisualizationConfig config) {
+        String aggregation = config.getString("aggregation", "NONE")
+                        .trim()
+                        .toUpperCase(Locale.ROOT)
+                        .replace(' ', '_');
+
+        try {
+            return StatisticType.valueOf(aggregation);
+
+        } catch (IllegalArgumentException e) {
+            return StatisticType.NONE;
+        }
+    }
+
+    private static void mapQueryOptions(DashboardVisualization result, VisualizationConfig config) {
+        Object limit = config.getValue("limit");
+        if (limit instanceof Number number) {
+            result.getQueryOptions().setLimit(number.intValue());
+        }
+        mapSort(config, result);
+        mapFilters(config, result);
+    }
+
+    private static void mapSort(VisualizationConfig config, DashboardVisualization result) {
+        Object columnValue = config.getValue("sortColumn");
+        if (columnValue == null || columnValue.toString().isBlank()) {
+            return;
+        }
+        String directionValue = config.getString("sortDirection", "ASC");
+        DashboardSortDirection direction = "DESC".equalsIgnoreCase(directionValue) ? DashboardSortDirection.DESC : DashboardSortDirection.ASC;
+        result.getQueryOptions()
+                .getSorts()
+                .add(new DashboardSort(columnValue.toString(), direction));
+    }
+
+    private static void mapFilters(VisualizationConfig config, DashboardVisualization result) {
+        Object filtersValue = config.getValue("filters");
+        if (!(filtersValue instanceof List<?> filters)) {
+            return;
+        }
+        for (Object item : filters) {
+            if (!(item instanceof VisualizationFilterNode node)) {
+                continue;
+            }
+            DashboardFilterNode mapped = mapFilterNode(node);
+            if (mapped != null) {
+                result.getQueryOptions()
+                        .getFilters()
+                        .add(mapped);
+            }
+        }
+    }
+
 }

@@ -62,4 +62,11 @@ public final class DashboardEnums {
         AND,
         OR
     }
+
+    public enum DashboardJoinType {
+        INNER,
+        LEFT,
+        RIGHT,
+        FULL
+    }
 }

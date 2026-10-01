@@ -2,10 +2,7 @@ package org.labs.genesis.dashboard.rules;
 
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
-import org.labs.genesis.dashboard.model.DashboardField;
-import org.labs.genesis.dashboard.model.DashboardVisualization;
-import org.labs.genesis.dashboard.model.DashboardFilter;
-import org.labs.genesis.dashboard.model.DashboardSort;
+import org.labs.genesis.dashboard.model.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,11 +40,38 @@ public final class DashboardMetadataValidator {
             List<DashboardSort> sorts = visualization.getQueryOptions().getSorts();
             if (sorts != null) for (DashboardSort sort : sorts)
                 if (sort != null && findVisualizationColumn(sourceTable, visualization, sort.getColumnName(), availableTables) == null) return false;
-            List<DashboardFilter> filters = visualization.getQueryOptions().getFilters();
-            if (filters != null) for (DashboardFilter filter : filters)
-                if (filter != null && findVisualizationColumn(sourceTable, visualization, filter.getColumnName(), availableTables) == null) return false;
+            List<DashboardFilterNode> filters = visualization.getQueryOptions().getFilters();
+            if (filters != null) {
+                for (DashboardFilterNode filter : filters) {
+                    if (isInvalidFilterNode(filter, sourceTable, visualization, availableTables)) {
+                        return false;
+                    }
+                }
+            }
         }
 
+        return true;
+    }
+
+    private static boolean isInvalidFilterNode(DashboardFilterNode node, TableMetadata sourceTable, DashboardVisualization visualization, List<TableMetadata> availableTables) {
+        if (node == null) {
+            return true;
+        }
+        if (node instanceof DashboardFilter filter) {
+            return findVisualizationColumn(sourceTable, visualization, filter.getColumnName(), availableTables) == null;
+        }
+
+        if (node instanceof DashboardFilterGroup group) {
+            if (group.getChildren() == null) {
+                return true;
+            }
+            for (DashboardFilterNode child : group.getChildren()) {
+                if (isInvalidFilterNode(child, sourceTable, visualization, availableTables)) {
+                    return true;
+                }
+            }
+            return false;
+        }
         return true;
     }
 

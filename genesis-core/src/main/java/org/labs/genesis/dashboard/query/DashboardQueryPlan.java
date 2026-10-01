@@ -18,4 +18,5 @@ public class DashboardQueryPlan {
     private List<String> groupBy = new ArrayList<>();
     private DashboardQueryOptions options = new DashboardQueryOptions();
     private DashboardStatisticExpression rowStatistic;
+    private List<DashboardJoin> joins = new ArrayList<>();
 }

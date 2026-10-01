@@ -12,7 +12,8 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 public class DashboardFilterGroup implements DashboardFilterNode {
-    private DashboardLogicalOperator relation = DashboardLogicalOperator.AND;
+    private DashboardLogicalOperator operator = DashboardLogicalOperator.AND;
+    private DashboardLogicalOperator relationToPrevious = DashboardLogicalOperator.AND;
     private List<DashboardFilterNode> children = new ArrayList<>();
 
     public void addChild(DashboardFilterNode child) {

@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.connexion.model.TableMetadata;
 import org.labs.genesis.forms.renderer.VisualizationRenderer;
 import org.labs.genesis.forms.renderer.VisualizationRendererFactory;
 import org.labs.genesis.forms.renderer.map.MapRenderer;
@@ -332,6 +333,8 @@ public class DashboardVisualComponent extends JPanel {
             return;
         }
 
+        List<TableMetadata> availableTables = context.getAllTables();
+
         final int version =
                 ++dataLoadVersion;
 
@@ -352,7 +355,10 @@ public class DashboardVisualComponent extends JPanel {
                                     dataProvider.loadMap(
                                             context.getConnection(),
                                             tableName,
-                                            config
+                                            config,
+                                            visualizationItem,
+                                            availableTables
+
                                     );
 
                             SwingUtilities.invokeLater(() -> {
@@ -384,7 +390,9 @@ public class DashboardVisualComponent extends JPanel {
                                     dataProvider.loadTable(
                                             context.getConnection(),
                                             tableName,
-                                            config
+                                            config,
+                                            visualizationItem,
+                                            availableTables
                                     );
 
                             SwingUtilities.invokeLater(() -> {
@@ -415,7 +423,8 @@ public class DashboardVisualComponent extends JPanel {
                                         context.getConnection(),
                                         tableName,
                                         config,
-                                        visualizationItem
+                                        visualizationItem,
+                                        availableTables
                                 );
 
                         SwingUtilities.invokeLater(() -> {
@@ -699,8 +708,25 @@ public class DashboardVisualComponent extends JPanel {
             return table.toString().trim();
         }
 
+        // 2. Explicit data source
+        Object dataSource = config.getValue("dataSource");
+        if (dataSource != null && !dataSource.toString().trim().isEmpty()) {
+            return dataSource.toString().trim();
+        }
+
+        // 3. Measure table
+        for (VisualizationParameter param : visualizationItem.parameters) {
+            if (!param.hasQueryRole() || !param.isMeasure()) {
+                continue;
+            }
+            String tableName = extractConfiguredTable(param.getKey());
+            if (tableName != null) {
+                return tableName;
+            }
+        }
+
         // =====================================================================
-        // 2. TABLE COLUMNS
+        // 4. TABLE COLUMNS
         // =====================================================================
 
         Object columns =
@@ -735,7 +761,7 @@ public class DashboardVisualComponent extends JPanel {
         }
 
         // =====================================================================
-        // 3. NORMAL PARAMETERS
+        // 5. NORMAL PARAMETERS
         // =====================================================================
 
         for (VisualizationParameter param :
@@ -762,8 +788,8 @@ public class DashboardVisualComponent extends JPanel {
             }
 
             String tableName =
-                    DataProvider.extractTableNameStatic(
-                            stringValue
+                    extractConfiguredTable(
+                            param.getKey()
                     );
 
             if (tableName != null
@@ -773,22 +799,20 @@ public class DashboardVisualComponent extends JPanel {
             }
         }
 
-        // =====================================================================
-        // 4. DATA SOURCE
-        // =====================================================================
-
-        Object dataSource =
-                config.getValue(
-                        "dataSource"
-                );
-
-        if (dataSource != null
-                && !dataSource.toString().trim().isEmpty()) {
-
-            return dataSource.toString().trim();
-        }
-
         return null;
+    }
+
+    private String extractConfiguredTable(String key) {
+        Object value = config.getValue(key);
+        if (value == null) {
+            return null;
+        }
+        String stringValue = value.toString().trim();
+        if (stringValue.isEmpty()) {
+            return null;
+        }
+        String tableName = DataProvider.extractTableNameStatic(stringValue);
+        return tableName == null || tableName.isBlank() ? null : tableName;
     }
 
     public String getDataSourceName() {
