@@ -1,13 +1,11 @@
 <template>
     <div class="flex flex-col gap-16 w-full">
-        <div class="flex flex-col w-full">
             <Carrousel
                 v-if="showCarousel"
                 :slides="carouselSlides"
                 slide-height="300px"
-                slot-height="100px"
                 :auto-play="true"
-                class="rounded-t-lg overflow-hidden shadow-sm flex-shrink-0"
+                class="rounded-t-lg shadow-sm flex-shrink-0"
             >
                 <template #bottom>
                     <div class="flex gap-4">
@@ -18,10 +16,12 @@
                             </h2>
                         </div>
 
-                        <div class="relative flex items-center w-full">
+                        <div 
+                            class="relative flex items-stretch w-full"
+                            style="clip-path: polygon(80px 0, 101% 0, 100% 101%, 0 101%);"
+                        >
                             <div 
                                 class="flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6 py-4 bg-bg-dark"
-                                style="clip-path: polygon(10% 0, 101% 0, 100% 101%, 0 101%);"
                             >
                                 <GenesisInput
                                     :modelValue="searchValue"
@@ -86,7 +86,6 @@
                     </div>
                 </template>
             </Carrousel>
-        </div>
 
         <div class="flex-1 min-h-0">
             <slot />

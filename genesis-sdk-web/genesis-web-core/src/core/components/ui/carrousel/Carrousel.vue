@@ -1,31 +1,50 @@
 <template>
-    <div 
-        class="relative w-full flex-shrink-0 bg-bg rounded-t-lg rounded-bl-lg"
-        :style="{ height: totalHeight }"
+    <div
+        ref="rootRef"
+        class="sticky z-30 w-full flex-shrink-0 bg-bg rounded-t-lg rounded-bl-lg"
+        :style="{ height: totalHeight, top: `calc(-1 * ${slideHeight})` }"
     >
-        <!-- ═══ BACKGROUND ANIMÉ — partagé entre slide et slot ═══ -->
+
+
+    <!-- Sentinelle : détecte le moment où le carrousel se colle -->
         <div
-            class="absolute inset-0 flex transition-transform duration-500 ease-in-out"
-            :style="{ transform: `translateX(-${currentSlide * 100}%)` }"
-        >
+            ref="sentinelRef"
+            class="absolute left-0 right-0 h-px pointer-events-none"
+            :style="{ top: `calc(${slideHeight} - 2px)` }"
+            aria-hidden="true"
+        />
+        <!-- ═══ BACKGROUND ANIMÉ — partagé entre slide et slot ═══ -->
+        <div class="absolute inset-0 overflow-hidden rounded-t-lg rounded-bl-lg">
+            <!-- 2. Bande mobile : elle porte le translateX -->
             <div
-                v-for="(slide, index) in slides"
-                :key="index"
-                class="w-full h-full flex-shrink-0"
+                class="flex h-full transition-transform duration-500 ease-in-out"
+                :style="{ transform: `translateX(-${currentSlide * 100}%)` }"
             >
-                <img
-                    v-if="slide.image"
-                    :src="slide.image"
-                    :alt="slide.label || 'Slide'"
-                    class="w-full h-full object-cover"
-                />
                 <div
-                    v-else
-                    class="w-full h-full"
-                    :style="{ backgroundColor: slide.color || '#3B82F6' }"
-                />
+                    v-for="(slide, index) in slides"
+                    :key="index"
+                    class="w-full h-full flex-shrink-0"
+                >
+                    <img
+                        v-if="slide.image"
+                        :src="slide.image"
+                        :alt="slide.label || 'Slide'"
+                        class="w-full h-full object-cover"
+                    />
+                    <div
+                        v-else
+                        class="w-full h-full"
+                        :style="{ backgroundColor: slide.color || '#3B82F6' }"
+                    />
+                </div>
             </div>
         </div>
+
+        <div
+            class="absolute inset-0 rounded-t-lg rounded-bl-lg bg-bg-dark pointer-events-none transition-opacity duration-300 ease-in-out"
+            :class="isStuck ? 'opacity-100' : 'opacity-0'"
+            aria-hidden="true"
+        />
 
         <!-- ═══ PARTIE SLIDE — hauteur configurable ═══ -->
         <div
@@ -82,7 +101,8 @@
 
         <!-- ═══ PARTIE SLOT — ancrée en bas, sur le même background ═══ -->
         <div
-            class="absolute bottom-0 left-0 right-0 z-10"
+            class="absolute bottom-0 left-0 right-0 z-10 flex flex-col [&>*]:flex-1 [&>*]:min-h-0"
+            :style="{ height: slotHeight }"
         >
             <slot name="bottom" />
         </div>
@@ -118,6 +138,20 @@ const emit = defineEmits<{
 
 const currentSlide = ref(0);
 let autoPlayInterval: ReturnType<typeof setInterval> | null = null;
+
+const rootRef = ref<HTMLElement | null>(null);
+const sentinelRef = ref<HTMLElement | null>(null);
+const isStuck = ref(false);
+let observer: IntersectionObserver | null = null;
+
+function getScrollParent(el: HTMLElement | null): HTMLElement | null {
+    let node = el?.parentElement ?? null;
+    while (node) {
+        if (/(auto|scroll|overlay)/.test(getComputedStyle(node).overflowY)) return node;
+        node = node.parentElement;
+    }
+    return null;
+}
 
 // Hauteur totale = slide + slot
 const totalHeight = computed(() => {
@@ -171,7 +205,21 @@ onMounted(() => {
         emit('slide-change', props.slides[0], 'right');
     }
     startAutoPlay();
+
+    if (sentinelRef.value) {
+        observer = new IntersectionObserver(
+            ([entry]) => {
+                const top = entry.rootBounds?.top ?? 0;
+                isStuck.value = !entry.isIntersecting && entry.boundingClientRect.top < top;
+            },
+            { root: getScrollParent(rootRef.value), threshold: 0 }
+        );
+        observer.observe(sentinelRef.value);
+    }
 });
 
-onUnmounted(() => stopAutoPlay());
+onUnmounted(() => {
+    stopAutoPlay();
+    observer?.disconnect();
+});
 </script>

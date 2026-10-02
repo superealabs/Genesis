@@ -6,7 +6,7 @@
     :trigger-size="'lg'"
     :close-on-select="true"
     :open-at-hover="true"
-    :positioning="'fixed'"
+    :positioning="'absolute'"
   >
     <template #triggerIcon>
       <component :is="currentIcon" :size="24" aria-hidden="true" />
@@ -74,9 +74,10 @@ import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/Gen
 import IconGrid from '@genesis-labs/web-core/core/components/ui/icons/IconGrid.vue';
 import IconTable from '@genesis-labs/web-core/core/components/ui/icons/IconTable.vue'; // ✅ À adapter si le nom est différent
 import IconListUl from '@genesis-labs/web-core/core/components/ui/icons/IconListUl.vue';
+import { DisplayMode } from '../../layouts/display/GenesisItem.types';
 
 const props = withDefaults(defineProps<{
-    modelValue: 'grid' | 'table' | 'list'; // ✅ Mis à jour
+    modelValue: DisplayMode; // ✅ Mis à jour
     align?: 'left' | 'right';
     hideChevron?: boolean;
 }>(), {
@@ -85,7 +86,7 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-    'update:modelValue': [value: 'grid' | 'table' | 'list']; // ✅ Mis à jour
+    'update:modelValue': [value: DisplayMode]; // ✅ Mis à jour
 }>();
 
 const currentIcon = computed(() => {

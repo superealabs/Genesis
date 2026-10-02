@@ -29,12 +29,9 @@
 
 
 # ajouter
-Rajouter un attribut dans le payload idFramework(ou plutôt CoreFramework) pour éviter de charger toutes configurations liés à une configuration de type.
 Rajouter une image sur
     - ProjecConfig
     - DatabaseConfig
-
-Modifier l'ordre de lecture (configView -> scriptVIew -> chat)
 
 Modifier la valeur par defaut de l'affichage :
     RelationView : Grid -> Table

@@ -35,77 +35,55 @@
       <p class="text-sm text-text-muted mb-3">
         Sélectionnez les langues à inclure dans le projet.
       </p>
-      
       <GenesisInput
-        v-model="selectedLanguageToAdd"
-        type="select"
-        placeholder="Sélectionner une langue..."
+        type="combobox"
+        :options="availableLanguages.map(lang => ({ label: lang.name, value: lang.code }))"
+        :multi-choice="true"
+        :choices="layoutConfig.selectedInterfaceLanguages.map(code => getLanguageName(code))"
+        placeholder="Rechercher une langue..."
         label="Ajouter une langue"
         fill-width
+        :variant="'secondary'"
+        @add-choice="(name) => {
+          const lang = availableLanguages.find(l => l.name === name);
+          if (lang && !layoutConfig.selectedInterfaceLanguages.includes(lang.code)) {
+            toggleLanguage(lang.code);
+          }
+        }"
+        @remove-choice="(name) => {
+          const lang = availableLanguages.find(l => l.name === name);
+          if (lang) toggleLanguage(lang.code);
+        }"
+      />
+    </GenesisDisclosure>
+
+    <!-- 4. CHARTE GRAPHIQUE -->
+    <GenesisDisclosure title="Layout Configuration" variant="primary">
+      <GenesisInput
+        v-model="layoutConfig.navbarType"
+        type="select"
+        label="Type de Navbar"
+        is-mandatory
+        fill-width
+        placeholder="Sélectionner..."
       >
-        <div class="p-1 space-y-1 max-h-60 overflow-y-auto">
+        <div class="p-1 space-y-1">
           <button
-            v-for="lang in availableLanguages"
-            :key="lang.code"
+            v-for="option in navbarOptions"
+            :key="option.value"
             type="button"
             class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors flex items-center justify-between"
-            :class="{ 'text-accent font-medium': selectedLanguageToAdd === lang.code }"
-            @click="handleLanguageSelect(lang.code)"
+            :class="{ 'text-accent font-medium': layoutConfig.navbarType === option.value }"
+            @click="updateFrontendLayout('navbarType', option.value)"
           >
-            <span>{{ lang.name }}</span>
-            <svg v-if="selectedLanguageToAdd === lang.code" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <span>{{ option.label }}</span>
+            <svg v-if="layoutConfig.navbarType === option.value" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"></polyline>
             </svg>
           </button>
         </div>
       </GenesisInput>
 
-      <div v-if="layoutConfig.selectedInterfaceLanguages.length > 0" class="flex flex-wrap gap-1.5 mt-3">
-        <GenesisLabel
-          v-for="code in layoutConfig.selectedInterfaceLanguages"
-          :key="code"
-          :text="getLanguageName(code)"
-          @remove="() => toggleLanguage(code)" 
-        />
-      </div>
-    </GenesisDisclosure>
-
-    <!-- 3. STRUCTURE ET NAVIGATION -->
-    <GenesisDisclosure title="Structure et Navigation" variant="primary">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GenesisInput
-          v-model="layoutConfig.navbarType"
-          type="select"
-          label="Type de Navbar"
-          is-mandatory
-          fill-width
-          placeholder="Sélectionner..."
-        >
-          <div class="p-1 space-y-1">
-            <button
-              v-for="option in navbarOptions"
-              :key="option.value"
-              type="button"
-              class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors flex items-center justify-between"
-              :class="{ 'text-accent font-medium': layoutConfig.navbarType === option.value }"
-              @click="updateFrontendLayout('navbarType', option.value)"
-            >
-              <span>{{ option.label }}</span>
-              <svg v-if="layoutConfig.navbarType === option.value" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-            </button>
-          </div>
-        </GenesisInput>
-
-        <div class="flex items-end pb-2">
-          <span class="text-sm text-text-muted italic">D'autres options de structure à venir...</span>
-        </div>
-      </div>
-    </GenesisDisclosure>
-
-    <!-- 4. CHARTE GRAPHIQUE -->
-    <GenesisDisclosure title="Charte Graphique" variant="primary">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GenesisInput
           v-model="layoutConfig.primaryColor"
@@ -150,14 +128,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted } from 'vue';
 
 import type { InterfaceLanguage } from '@genesis-labs/shared-types';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store';
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
-import GenesisLabel from '@genesis-labs/web-core/core/components/ui/labels/GenesisLabel.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
 
 // ============================================================================
@@ -182,7 +159,7 @@ const frontendStore = useFrontendStore();
 // ============================================================================
 // 3. ÉTAT LOCAL & CONSTANTES
 // ============================================================================
-const selectedLanguageToAdd = ref('');
+// const selectedLanguageToAdd = ref('');
 
 type NavbarType = 'side' | 'top' | '';
 
@@ -212,25 +189,6 @@ const availableLanguages = computed<InterfaceLanguage[]>(() =>
 // ============================================================================
 // 5. ACTIONS
 // ============================================================================
-
-/**
- * Ajoute une langue à la configuration et réinitialise le champ de sélection.
- * Le setTimeout est nécessaire pour permettre au composant GenesisInput (type select) 
- * de mettre à jour son état visuel interne avant que la valeur du v-model ne soit effacée.
- */
-function handleLanguageSelect(code: string) {
-  if (!code) return;
-  
-  selectedLanguageToAdd.value = code;
-  
-  if (!layoutConfig.value.selectedInterfaceLanguages.includes(code)) {
-    toggleLanguage(code);
-  }
-  
-  setTimeout(() => {
-    selectedLanguageToAdd.value = '';
-  }, 150);
-}
 
 /**
  * Retourne le nom lisible d'une langue à partir de son code.

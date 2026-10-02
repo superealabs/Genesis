@@ -122,7 +122,7 @@ const initials = computed(() => {
 const containerClasses = computed(() => {
     if (props.selected) {
         // Le mode 'grid' a une bordure, 'table' et 'list' ont juste un fond
-        return display.value === 'grid' ? 'bg-accent/10 border-accent' : 'bg-accent/10';
+        return display.value === 'grid' ? 'bg-accent/75 border-accent' : 'bg-accent/10';
     }
     return display.value === 'grid'
         ? 'bg-bg-light hover:border-accent/50'

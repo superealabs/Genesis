@@ -1,5 +1,10 @@
 <template>
-  <Menu v-slot="{ open, close }" as="div">
+  <Menu 
+    v-slot="{ open, close }" 
+    as="div" 
+    :model-value="internalOpen" 
+    @update:model-value="internalOpen = $event"
+  >
     <div
       class="inline-flex flex-col gap-1"
       @mouseenter="handleMouseEnter(open)"
@@ -13,7 +18,7 @@
         {{ label }}<span v-if="isMandatory" class="text-accent ml-0.5">*</span>
       </label>
 
-      <!-- Wrapper trigger + dropdown (le relative est essentiel pour le mode absolute) -->
+      <!-- Wrapper trigger + dropdown -->
       <div class="relative inline-block">
         <MenuButton as="template" @click="onTriggerClick">
           
@@ -26,6 +31,7 @@
             :disabled="triggerDisabled"
             :use-default-text="false"
             :class="{ '!border !border-secondary': open }"
+            @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
               <slot name="triggerIcon" />
@@ -49,6 +55,7 @@
             :disabled="triggerDisabled"
             :use-default-text="false"
             :class="{ '!border !border-secondary': open }"
+            @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
               <slot name="triggerIcon" />
@@ -69,6 +76,7 @@
             :size="triggerSize"
             :disabled="triggerDisabled"
             :class="{ '!border !border-secondary': open }"
+            @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <slot name="triggerIcon" />
           </GenesisButtonIcon>
@@ -97,7 +105,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, type ComponentPublicInstance } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted, nextTick, type ComponentPublicInstance } from 'vue';
 import { Menu, MenuButton, MenuItems } from '@headlessui/vue';
 
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
@@ -120,16 +128,7 @@ const props = withDefaults(defineProps<{
   openAtHover?: boolean;
   label?: string;
   isMandatory?: boolean;
-  /**
-   * Détermine le contexte de positionnement du dropdown.
-   * - 'absolute' (défaut) : Respecte les limites du conteneur parent (idéal pour les listes dans des frames scrollables).
-   * - 'fixed' : Positionné par rapport au viewport (idéal pour les overlays globaux qui doivent sortir des conteneurs).
-   */
   positioning?: 'absolute' | 'fixed';
-  /**
-   * Force le dropdown à s'ouvrir vers le bas, ignorant la logique automatique
-   * de détection d'espace en bas de l'écran (règle des 150px).
-   */
   forceDown?: boolean;
 }>(), {
   align: 'right',
@@ -142,7 +141,7 @@ const props = withDefaults(defineProps<{
   openAtHover: false,
   label: '',
   isMandatory: false,
-  positioning: 'absolute', // Changé de 'fixed' à 'absolute' pour corriger les problèmes de débordement
+  positioning: 'absolute',
   forceDown: false
 });
 
@@ -151,19 +150,24 @@ const emit = defineEmits<{ close: [] }>();
 // ============================================================================
 // 2. ÉTAT LOCAL
 // ============================================================================
+const internalOpen = ref(false);
+const isPersistent = ref(false); // Verrouille le menu contre la fermeture au survol après un clic
 const triggerRef = ref<ComponentPublicInstance | HTMLElement | null>(null);
 const triggerWidth = ref<number | null>(null);
 let hoverTimeout: number | null = null; 
+
+// Surveille la fermeture du menu pour réinitialiser l'état de persistance
+watch(internalOpen, (newValue) => {
+  if (!newValue) {
+    isPersistent.value = false;
+    clearHoverTimeout();
+  }
+});
 
 // ============================================================================
 // 3. COMPUTEDS & LOGIQUE DE POSITIONNEMENT
 // ============================================================================
 
-/**
- * Détermine les classes CSS de base du menu, en adaptant le positionnement 
- * et en garantissant un scroll interne (max-h + overflow-y-auto) pour éviter 
- * que le dropdown ne dépasse de l'écran, quelle que soit sa taille.
- */
 const menuItemsClasses = computed(() => {
   const positionClass = props.positioning === 'fixed' ? 'fixed z-[9999]' : 'absolute z-50';
   const base = `${positionClass} bg-bg-light border border-secondary rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto`;
@@ -171,21 +175,13 @@ const menuItemsClasses = computed(() => {
   return `${base} ${size}`;
 });
 
-/**
- * Calcule le style inline pour le positionnement.
- * En mode 'absolute', on utilise des pourcentages relatifs au parent (plus robuste dans les conteneurs scrollables).
- * En mode 'fixed', on utilise les coordonnées du viewport (getBoundingClientRect).
- */
 const dropdownStyle = computed(() => {
   const style: Record<string, string> = {};
 
   if (props.positioning === 'absolute') {
-    // Logique robuste pour les conteneurs : utilisation de top/bottom 100%
     const el = getMenuButtonEl();
     const rect = el?.getBoundingClientRect();
-    // Estimation simple : si le bas du bouton est à moins de 150px du bas de l'écran, on affiche au-dessus
-   const goesUp = !props.forceDown && rect ? (window.innerHeight - rect.bottom) < 150 : false;
-
+    const goesUp = !props.forceDown && rect ? (window.innerHeight - rect.bottom) < 150 : false;
 
     if (goesUp) {
       style.bottom = '100%';
@@ -201,24 +197,24 @@ const dropdownStyle = computed(() => {
       style.left = '0';
     }
   } else {
-    // Logique legacy pour le mode 'fixed' (par rapport au viewport)
     const el = getMenuButtonEl();
     if (!el) return {};
     const rect = el.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
     
     style.top = `${rect.bottom + 8}px`;
     
-    if (props.align === 'right') {
-      style.right = `${window.innerWidth - rect.right}px`;
-    } else {
+    if (props.matchTriggerWidth && triggerWidth.value !== null) {
       style.left = `${rect.left}px`;
+      style.width = `${triggerWidth.value}px`;
+      style.minWidth = `${triggerWidth.value}px`;
+    } else {
+      if (props.align === 'right') {
+        style.right = `${viewportWidth - rect.right}px`;
+      } else {
+        style.left = `${rect.left}px`;
+      }
     }
-  }
-
-  // Gestion de la largeur identique au trigger
-  if (props.matchTriggerWidth && triggerWidth.value !== null) {
-    style.width = `${triggerWidth.value}px`;
-    style.minWidth = `${triggerWidth.value}px`;
   }
 
   return style;
@@ -238,31 +234,41 @@ function measureTriggerWidth() {
   if (el) triggerWidth.value = el.offsetWidth;
 }
 
-async function onTriggerClick() {
+/**
+ * Intercepte le mousedown pour empêcher Headless UI de fermer le menu 
+ * si l'utilisateur clique sur le trigger alors qu'il est déjà ouvert via hover.
+ */
+function handleTriggerMouseDown(e: MouseEvent, isOpen: boolean) {
+  if (props.openAtHover && isOpen) {
+    e.preventDefault();
+    e.stopImmediatePropagation(); // Empêche Headless UI de recevoir l'événement et de fermer le menu
+    isPersistent.value = true;    // Active la persistance
+    clearHoverTimeout();          // Annule tout timer de fermeture en attente
+  }
+}
+
+function onTriggerClick() {
   if (props.positioning === 'fixed') {
-    updateFixedPosition();
-    await nextTick();
-    updateFixedPosition();
+    nextTick(() => {
+      if (props.matchTriggerWidth) measureTriggerWidth();
+    });
   }
 }
 
-function updateFixedPosition() {
-  // Cette fonction n'est plus utilisée pour le mode 'absolute', 
-  // mais conservée pour la compatibilité du mode 'fixed' si nécessaire.
-}
-
-function handleMouseEnter(open: boolean) {
-  if (!props.openAtHover) return;
+function handleMouseEnter(isOpen: boolean) {
+  if (!props.openAtHover || props.triggerDisabled) return;
   clearHoverTimeout();
-  if (!open) {
+  if (!isOpen) {
     if (props.matchTriggerWidth) measureTriggerWidth();
-    getMenuButtonEl()?.click();
+    getMenuButtonEl()?.click(); // Simule un clic pour ouvrir via Headless UI
   }
 }
 
-function handleMouseLeave(open: boolean, close: () => void) {
+function handleMouseLeave(isOpen: boolean, close: () => void) {
   if (!props.openAtHover) return;
-  if (open) {
+  
+  // Ne ferme le menu au survol que s'il n'est PAS en mode persistant (déclenché par un clic)
+  if (isOpen && !isPersistent.value) {
     hoverTimeout = window.setTimeout(() => {
       close();
       emit('close');
@@ -286,5 +292,7 @@ onMounted(() => {
   }
 });
 
-onUnmounted(clearHoverTimeout);
+onUnmounted(() => {
+  clearHoverTimeout();
+});
 </script>
