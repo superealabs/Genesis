@@ -144,7 +144,7 @@ import { useGenerator } from '@genesis-labs/web-core/features/generator/composab
 // UI Components
 import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
-import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.vue';
+import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.vue';
 import LayoutSwitcherAlt from '@genesis-labs/web-core/core/components/ui/dropdown/LayoutSwitcherAlt.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisSwitch from '@genesis-labs/web-core/core/components/ui/inputs/GenesisSwitch.vue';

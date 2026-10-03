@@ -46,3 +46,7 @@ modifier l'étape de git :
 Rajouter une étape de résumer
 
 corriger l'interface de configuration de relation
+
+
+DRY
+UR

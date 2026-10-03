@@ -4,7 +4,7 @@ import { ref, computed } from 'vue';
 
 // Types
 import type { FrontendFramework, InterfaceLanguage } from '@genesis-labs/shared-types';
-import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 export const useFrontendStore = defineStore('frontend', () => {
 

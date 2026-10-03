@@ -43,7 +43,8 @@
 <script setup lang="ts">
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconHelpCircle from '@genesis-labs/web-core/core/components/ui/icons/IconHelpCircle.vue';
-import IconTrashAlt from '../../ui/icons/IconTrashAlt.vue';
+// import IconTrashAlt from '../../ui/icons/IconTrashAlt.vue';
+import IconTrashAlt from '../../../ui/icons/IconTrashAlt.vue';
 
 defineProps<{
     containerClasses: string;

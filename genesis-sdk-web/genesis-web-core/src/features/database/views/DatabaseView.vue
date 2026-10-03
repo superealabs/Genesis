@@ -15,7 +15,7 @@ import { computed, onMounted } from 'vue';
 
 // Types
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
-import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 // Composables
 import { useDatabase } from '@genesis-labs/web-core/features/database/composables/useDatabase';

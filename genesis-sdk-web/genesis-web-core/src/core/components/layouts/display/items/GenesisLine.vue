@@ -1,12 +1,20 @@
 <template>
     <!-- ═══ MODE LINE (Liste Flex, pas un tableau) ═══ -->
+    <!-- `relative` : nécessaire pour ancrer la mascotte sur le bord haut -->
     <div
-        class="flex items-center justify-between w-full p-3 rounded-lg cursor-pointer transition-colors group"
+        class="relative flex items-center justify-between w-full p-3 rounded-lg cursor-pointer transition-colors group"
         :class="containerClasses"
         @click="$emit('click', $event)"
     >
-        <!-- ═══ PARTIE GAUCHE : Logo + Textes ═══ -->
-        <div class="flex items-center gap-3 flex-1 min-w-0">
+        <!-- Mascotte -->
+        <GenesisMascot :src="mascotSrc" :size="mascotSize" :selected="selected" />
+
+        <!-- ═══ PARTIE GAUCHE : Logo + Textes (double couche pour l'effet de sélection) ═══ -->
+        <GenesisSelectableIdentity
+            class="flex-1 min-w-0"
+            layer-class="flex items-center gap-3 min-w-0"
+            :selected="selected"
+        >
             <!-- Logo -->
             <div v-if="showLogo" :class="logoClasses">
                 <slot name="logo">{{ initials }}</slot>
@@ -22,7 +30,7 @@
                     <span v-if="sublabel" :class="sublabelClasses">{{ sublabel }}</span>
                 </template>
             </div>
-        </div>
+        </GenesisSelectableIdentity>
 
         <!-- ═══ PARTIE DROITE : Complément + Badge + Actions ═══ -->
         <div class="flex items-center gap-3 flex-shrink-0">
@@ -66,10 +74,12 @@
 <script setup lang="ts">
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconHelpCircle from '@genesis-labs/web-core/core/components/ui/icons/IconHelpCircle.vue';
-import IconTrashAlt from '../../ui/icons/IconTrashAlt.vue';
+import IconTrashAlt from '../../../ui/icons/IconTrashAlt.vue';
+import GenesisMascot from './GenesisMascot.vue';
+import GenesisSelectableIdentity from './GenesisSelectableIdentity.vue';
 
-// On reçoit TOUTES les classes calculées par GenesisItem pour respecter le DRY
-defineProps<{
+// On reçoit TOUTES les classes, la mascotte et l'état de sélection calculés par GenesisItem (DRY)
+withDefaults(defineProps<{
     containerClasses: string;
     badgeClasses: string;
     logoClasses: string;
@@ -86,7 +96,13 @@ defineProps<{
     initials: string;
     hasHeaderSlot: boolean;
     hasComplementary: boolean;
-}>();
+    mascotSrc: string;
+    mascotSize?: number;
+    selected?: boolean;
+}>(), {
+    selected: false,
+    mascotSize: 32
+});
 
 defineEmits<{
     click: [event: MouseEvent];

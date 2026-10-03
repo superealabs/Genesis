@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Framework, Language } from '@genesis-labs/shared-types';
-import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types.ts';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 
 import FrameworkList from './FrameworkList.vue'; 

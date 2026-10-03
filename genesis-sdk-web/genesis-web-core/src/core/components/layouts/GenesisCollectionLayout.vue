@@ -119,7 +119,7 @@ import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/Genes
 import Carrousel, { type CarouselSlide } from '@genesis-labs/web-core/core/components/ui/carrousel/Carrousel.vue';
 import SimpleSelectionPopup from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
-import type { DisplayMode } from './display/GenesisItem.types.ts';
+import type { DisplayMode } from './display/items/GenesisItem.types.ts';
 
 export type CollectionMode = 'selection' | 'compare';
 

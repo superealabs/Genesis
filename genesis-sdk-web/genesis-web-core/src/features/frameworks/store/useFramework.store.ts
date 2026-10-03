@@ -2,7 +2,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { Framework, FrameworkFilters, Language } from '@genesis-labs/shared-types';
-import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 export const useFrameworkStore = defineStore('framework', () => {
 

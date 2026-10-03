@@ -15,26 +15,35 @@
 
     <!-- ═══ BOUCLE DES SECTIONS ═══ -->
     <div v-for="section in groupedItems" :key="section.title" class="animate-fade-in">
-      
-      <!-- Titre de la section avec compteur -->
-      <h3 class="text-sm font-semibold text-primary mb-3 flex items-center gap-2 border-b border-secondary pb-1">
-        <span>{{ section.title }}</span>
-        <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border border-secondary">
-          {{ section.items.length }}
-        </span>
-      </h3>
 
-      <!-- Liste générique (reçoit les éléments via le scoped slot) -->
-      <GenesisList 
-        :display="display" 
-        :minColWidth="minColWidth" 
-        :headers="headers" 
-        :showHeader="showHeader" 
-        :haveActions="haveActions"
+      <GenesisDisclosure
+        :title="section.title"
+        :default-open="true"
+        :variant="'secondary'"
+        content-class="!pt-10"
       >
-        <slot :items="section.items" />
-      </GenesisList>
-      
+        <!-- Titre de la section avec compteur -->
+        <template #title>
+          <span class="text-2xl font-semibold">{{ section.title }}</span>
+          <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border border-secondary">
+            {{ section.items.length }}
+          </span>
+        </template>
+
+        <!-- Liste générique (reçoit les éléments via le scoped slot) -->
+         <div class="section-body">
+          <GenesisList
+            :display="display"
+            :minColWidth="minColWidth"
+            :headers="headers"
+            :showHeader="showHeader"
+            :haveActions="haveActions"
+          >
+            <slot :items="section.items" />
+          </GenesisList>
+         </div>
+      </GenesisDisclosure>
+
     </div>
   </div>
 </template>
@@ -42,7 +51,8 @@
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { computed } from 'vue';
 import GenesisList from './GenesisList.vue';
-import type { DisplayMode } from './GenesisItem.types';
+import type { DisplayMode } from './items/GenesisItem.types.ts';
+import GenesisDisclosure from '../GenesisDisclosure.vue';
 
 const props = withDefaults(defineProps<{
   items: T[];
@@ -103,6 +113,12 @@ const groupedItems = computed(() => {
 </script>
 
 <style scoped>
+
+/* Laisse la place à la mascotte (32px) qui dépasse au-dessus de la première rangée */
+.section-body {
+  padding-top: 1rem; /* 32px, s'ajoute au pt-2 du panneau : 40px au total */
+}
+
 .animate-fade-in { 
   animation: fadeIn 0.3s ease-out; 
 }

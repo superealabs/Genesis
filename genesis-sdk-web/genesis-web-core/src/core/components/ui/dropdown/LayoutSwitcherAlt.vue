@@ -74,7 +74,7 @@ import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/Gen
 import IconGrid from '@genesis-labs/web-core/core/components/ui/icons/IconGrid.vue';
 import IconTable from '@genesis-labs/web-core/core/components/ui/icons/IconTable.vue'; // ✅ À adapter si le nom est différent
 import IconListUl from '@genesis-labs/web-core/core/components/ui/icons/IconListUl.vue';
-import { DisplayMode } from '../../layouts/display/GenesisItem.types';
+import { DisplayMode } from '../../layouts/display/items/GenesisItem.types';
 
 const props = withDefaults(defineProps<{
     modelValue: DisplayMode; // ✅ Mis à jour

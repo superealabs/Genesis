@@ -4,7 +4,7 @@
       v-for="engine in engines"
       :key="engine.id"
       :label="engine.name"
-      :sublabel="`Port: ${engine.port}`"
+      :logo-src="resolveDatabaseLogo(engine)"
       :selected="selectedId === engine.id"
       :badge="databaseSlots?.get(engine.id) ?? null"
       @click="$emit('select', engine, $event)"
@@ -27,10 +27,11 @@
 // 1. IMPORTS
 // ============================================================================
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
-import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
-import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.vue';
+import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.vue';
+import { resolveDatabaseLogo } from '../assets/databaseLogos';
 
 // ============================================================================
 // 2. PROPS

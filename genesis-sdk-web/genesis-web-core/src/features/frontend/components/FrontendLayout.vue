@@ -37,7 +37,7 @@
 // 1. IMPORTS
 // ============================================================================
 import type { FrontendFramework } from '@genesis-labs/shared-types';
-import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types.ts';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 
 import FrontendList from './FrontendList.vue';

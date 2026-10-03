@@ -5,7 +5,6 @@
         :container-classes="containerClasses"
         :badge-classes="badgeClasses"
         :logo-classes="logoClasses"
-        :text-classes="textClasses"
         :label-classes="labelClasses"
         :sublabel-classes="sublabelClasses"
         :complementary-classes="complementaryClasses"
@@ -19,6 +18,9 @@
         :initials="initials"
         :has-header-slot="hasHeaderSlot"
         :has-complementary="hasComplementary"
+        :mascot-src="mascotSrc"
+        :mascot-size="mascotSize"
+        :selected="selected"
         @click="$emit('click', $event)"
         @info="$emit('info')"
         @close="$emit('close')"
@@ -28,7 +30,7 @@
         <template #complementary><slot name="complementary" /></template>
     </GenesisLine>
 
-    <!-- ═══ MODE TABLE (anciennement LIST : Tableau) ═══ -->   
+    <!-- ═══ MODE TABLE (anciennement LIST : Tableau) ═══ -->
     <GenesisTableLine
         v-else-if="display === 'table'"
         :container-classes="containerClasses"
@@ -65,12 +67,18 @@
         :initials="initials"
         :has-header-slot="hasHeaderSlot"
         :has-complementary="hasComplementary"
+        :mascot-src="mascotSrc"
+        :mascot-size="mascotSize"
         :selected="selected"
         @click="$emit('click', $event)"
         @info="$emit('info')"
         @close="$emit('close')"
     >
-        <template #logo><slot name="logo" /></template>
+        <template #logo>
+            <slot name="logo">
+                <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" />
+            </slot>
+        </template>
         <template #header><slot name="header" /></template>
         <template #complementary><slot name="complementary" /></template>
     </GenesisCard>
@@ -82,6 +90,8 @@ import { GENESIS_LIST_CONTEXT, type GenesisListContext } from './GenesisItem.typ
 import GenesisLine from './GenesisLine.vue';
 import GenesisTableLine from './GenesisTableLine.vue';
 import GenesisCard from './GenesisCard.vue';
+import genieUrl from '../../../../../assets/LOGO/Genesis/genie-normal.svg?url';
+import GenesisLogo from '../../../ui/logo/GenesisLogo.vue';
 
 const props = withDefaults(defineProps<{
     label?: string;
@@ -91,12 +101,17 @@ const props = withDefaults(defineProps<{
     showInfoButton?: boolean;
     showComplementary?: boolean;
     showLogo?: boolean;
+    /** Hauteur de la mascotte en px (modes grid et list) */
+    mascotSize?: number;
+    logoSrc?: string | null;
 }>(), {
     selected: false,
     badge: null,
     showInfoButton: false,
     showComplementary: true,
     showLogo: true,
+    mascotSize: 32,
+    logoSrc: null,
 });
 
 defineEmits<{
@@ -113,6 +128,9 @@ const slots = useSlots();
 const hasComplementary = computed(() => !!slots.complementary);
 const hasHeaderSlot = computed(() => !!slots.header);
 
+// ═══ SOURCE UNIQUE DE LA MASCOTTE (DRY) ═══
+const mascotSrc = genieUrl;
+
 const initials = computed(() => {
     if (!props.label) return '';
     return props.label.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
@@ -121,11 +139,15 @@ const initials = computed(() => {
 // ═══ SOURCE DE VÉRITÉ UNIQUE POUR LE CSS (DRY) ═══
 
 const containerClasses = computed(() => {
-    // Grid : la sélection est signalée par le remplissage animé du logo + texte (GenesisCard)
+    // Grid : la sélection est signalée par le remplissage animé du logo + texte + mascotte
     if (display.value === 'grid') {
         return 'bg-bg-light hover:border-primary/50';
     }
-    // List / Table : comportement inchangé
+    // List : même principe que grid (pas de changement de fond à la sélection)
+    if (display.value === 'list') {
+        return 'bg-bg-light hover:bg-bg-light/50';
+    }
+    // Table : comportement inchangé (fond accent à la sélection)
     return props.selected ? 'bg-accent/10' : 'bg-bg-light hover:bg-bg-light/50';
 });
 
@@ -145,10 +167,10 @@ const logoClasses = computed(() => {
 const textClasses = computed(() => {
     // En mode 'list' (flex), le texte est aligné à gauche, pas centré
     if (display.value === 'list') {
-        return 'flex flex-col gap-1 w-full'; 
+        return 'flex flex-col gap-1 w-full';
     }
     if (props.showLogo) {
-        return 'flex flex-col text-center gap-2 w-full';        
+        return 'flex flex-col text-center gap-2 w-full';
     }
     return 'flex flex-col gap-2 w-full';
 });

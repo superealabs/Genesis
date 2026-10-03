@@ -4,10 +4,10 @@
       v-for="fw in frontends"
       :key="fw.id"
       :label="fw.name"
-      :sublabel="fw.coreFramework"
       :selected="selectedId === fw.id"
       :show-info-button="true"
       :badge="frameworkSlots?.get(fw.id) ?? null"
+      :logo-src="resolveFrontendLogo(fw)"
       @click="$emit('select', fw, $event)"
       @info="$emit('info', fw)"
     >
@@ -18,7 +18,6 @@
       -->
       <template #default>
         <td class="p-3 text-center">{{ fw.name }}</td>
-        <td class="p-3 text-center text-text-muted">{{ fw.coreFramework }}</td>
       </template>
     </GenesisItem>
   </GenesisList>
@@ -29,10 +28,11 @@
 // 1. IMPORTS
 // ============================================================================
 import type { FrontendFramework } from '@genesis-labs/shared-types';
-import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
-import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.vue';
+import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.vue';
+import { resolveFrontendLogo } from '../assets/frontendLogo';
 
 // ============================================================================
 // 2. PROPS
