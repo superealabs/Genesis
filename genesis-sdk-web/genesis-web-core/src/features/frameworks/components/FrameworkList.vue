@@ -32,9 +32,18 @@
         @click="$emit('select', framework, $event)"
         @info="$emit('info', framework)"
       >
+
+        <template #logo>
+          <GenesisLogo
+            v-if="logos.get(framework.id)"
+            :src="logos.get(framework.id)!"
+            :alt="framework.coreFramework"
+          />
+        </template>
+        
         <template #default>
           <td class="p-3 text-center">{{ framework.name }}</td>
-          <td class="p-3 text-center">{{ framework.coreFramework }}</td>
+          <!-- <td class="p-3 text-center">{{ framework.coreFramework }}</td> -->
         </template>
       </GenesisItem>
     </template>
@@ -42,16 +51,19 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import type { Framework } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
 
 import GenesisGroupedList from '@genesis-labs/web-core/core/components/layouts/display/GenesisGroupedList.vue';
 import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.vue';
+import { resolveFrameworkLogo } from '../assets/frameworkLogos';
+import GenesisLogo from '@genesis-labs/web-core/core/components/ui/logo/GenesisLogo.vue';
 
 // ============================================================================
 // 1. PROPS
 // ============================================================================
-defineProps<{
+const props = defineProps<{
   frameworks: Framework[];
   selectedId?: number;
   display: DisplayMode;
@@ -62,6 +74,10 @@ defineProps<{
   groupOptions?: { label: string; value: keyof Framework | null }[];
   groupLabels?: Record<string | number, string>;
 }>();
+
+const logos = computed(
+  () => new Map(props.frameworks.map(f => [f.id, resolveFrameworkLogo(f)]))
+);
 
 // ============================================================================
 // 2. EMITS

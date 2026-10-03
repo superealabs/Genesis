@@ -28,7 +28,7 @@
         <template #complementary><slot name="complementary" /></template>
     </GenesisLine>
 
-    <!-- ═══ MODE TABLE (anciennement LIST : Tableau) ═══ -->
+    <!-- ═══ MODE TABLE (anciennement LIST : Tableau) ═══ -->   
     <GenesisTableLine
         v-else-if="display === 'table'"
         :container-classes="containerClasses"
@@ -65,6 +65,7 @@
         :initials="initials"
         :has-header-slot="hasHeaderSlot"
         :has-complementary="hasComplementary"
+        :selected="selected"
         @click="$emit('click', $event)"
         @info="$emit('info')"
         @close="$emit('close')"
@@ -120,13 +121,12 @@ const initials = computed(() => {
 // ═══ SOURCE DE VÉRITÉ UNIQUE POUR LE CSS (DRY) ═══
 
 const containerClasses = computed(() => {
-    if (props.selected) {
-        // Le mode 'grid' a une bordure, 'table' et 'list' ont juste un fond
-        return display.value === 'grid' ? 'bg-accent/75 border-accent' : 'bg-accent/10';
+    // Grid : la sélection est signalée par le remplissage animé du logo + texte (GenesisCard)
+    if (display.value === 'grid') {
+        return 'bg-bg-light hover:border-primary/50';
     }
-    return display.value === 'grid'
-        ? 'bg-bg-light hover:border-accent/50'
-        : 'bg-bg-light hover:bg-bg-light/50';
+    // List / Table : comportement inchangé
+    return props.selected ? 'bg-accent/10' : 'bg-bg-light hover:bg-bg-light/50';
 });
 
 const badgeClasses = 'w-5 h-5 rounded-full bg-accent text-bg text-xs font-bold flex items-center justify-center shadow-sm';
@@ -139,7 +139,7 @@ const layoutClasses = computed(() => {
 });
 
 const logoClasses = computed(() => {
-    return 'flex items-center justify-center w-10 h-10 rounded bg-secondary text-text-muted text-xs font-mono flex-shrink-0';
+    return 'flex items-center justify-center min-w-[48px] min-h-[48px] rounded text-text-muted text-xs font-mono flex-shrink-0';
 });
 
 const textClasses = computed(() => {

@@ -17,11 +17,10 @@
                         </div>
 
                         <div 
-                            class="relative flex items-stretch w-full"
-                            style="clip-path: polygon(80px 0, 101% 0, 100% 101%, 0 101%);"
-                        >
+                            class="relative flex items-stretch w-full"                        >
                             <div 
                                 class="flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6 py-4 bg-bg-dark"
+                                style="clip-path: polygon(80px 0, 101% 0, 100% 101%, 0 101%);"
                             >
                                 <GenesisInput
                                     :modelValue="searchValue"

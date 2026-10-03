@@ -40,7 +40,9 @@
     --color-text:        hsl(180, 100%, 6%);
     --color-text-muted:  hsl(180, 100%, 15%);
 
-    --color-accent:      hsl(145, 100%, 44%);
+    --color-accent:      hsl(48, 100%, 48%);
+    --color-primary: hsl(138, 100%, 48%);
+
     --color-secondary:   hsl(160, 100%, 40%);
 
     --color-hover-ghost: rgba(0, 0, 0, 0.05);
