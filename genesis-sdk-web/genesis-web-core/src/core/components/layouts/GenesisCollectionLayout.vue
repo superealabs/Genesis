@@ -17,11 +17,12 @@
                         </div>
 
                         <div 
-                            class="relative flex items-stretch w-full"                        >
-                            <div 
-                                class="flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6 py-4 bg-bg-dark"
-                                style="clip-path: polygon(80px 0, 101% 0, 100% 101%, 0 101%);"
-                            >
+                            class="relative flex items-stretch w-full"                        
+                        >
+
+                            <div class="bar-shape absolute inset-0 bg-bg-dark pointer-events-none" aria-hidden="true" />
+
+                            <div class="relative flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6">
                                 <GenesisInput
                                     :modelValue="searchValue"
                                     @update:modelValue="$emit('update:searchValue', $event as string)"
@@ -39,7 +40,7 @@
                                 </GenesisInput>
                             </div>
 
-                            <div class="flex gap-2 items-center flex-shrink-0 pr-6 bg-bg-dark h-full">
+                            <div class="relative flex gap-2 items-center flex-shrink-0 pr-6">
                                 <!-- ═══ BOUTON FILTRE (Émet un événement) ═══ -->
                                 <GenesisButtonIcon
                                     v-if="showFilter"
@@ -181,3 +182,19 @@ const internalMode = computed({
     set: (value) => emit('update:mode', value as CollectionMode)
 });
 </script>
+<style scoped>
+.bar-shape {
+    /* Largeur du capuchon (la partie incurvée à gauche) */
+    --cap: 96px;
+
+    /* Tracé du capuchon : viewBox 96 x 80, étiré à la hauteur de la barre */
+    --cap-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 80' preserveAspectRatio='none'%3E%3Cpath d='M96 0H90Q80 0 72.9 7.1L0 80H96Z'/%3E%3C/svg%3E");
+
+    -webkit-mask:
+        var(--cap-shape) left top / var(--cap) 100% no-repeat,
+        linear-gradient(#000, #000) right top / calc(100% - var(--cap) + 1px) 100% no-repeat;
+    mask:
+        var(--cap-shape) left top / var(--cap) 100% no-repeat,
+        linear-gradient(#000, #000) right top / calc(100% - var(--cap) + 1px) 100% no-repeat;
+}
+</style>
