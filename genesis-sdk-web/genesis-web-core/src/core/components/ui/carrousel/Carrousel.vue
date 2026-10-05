@@ -104,7 +104,7 @@
             class="absolute bottom-0 left-0 right-0 z-10 flex flex-col [&>*]:flex-1 [&>*]:min-h-0"
             :style="{ height: slotHeight }"
         >
-            <slot name="bottom" />
+            <slot name="bottom" :is-stuck="isStuck" />
         </div>
     </div>
 </template>

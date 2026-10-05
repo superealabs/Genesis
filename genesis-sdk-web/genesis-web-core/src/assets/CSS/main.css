@@ -13,14 +13,6 @@
 }
 
 @font-face {
-    font-family: 'Outfit';
-    src: url('../FONTS/Outfit/Outfit-Variable.woff2') format('woff2');
-    font-weight: 100 900;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
     font-family: 'Poppins';
     src: url('../FONTS/Poppins/Poppins-Variable.woff2') format('woff2');
     font-weight: 100 900;
@@ -33,17 +25,17 @@
    ═══════════════════════════════════════════════════════════ */
 
 @theme {
-    --color-bg-light:    hsl(140, 100%, 96%);
-    --color-bg:          hsl(140, 100%, 92%);
-    --color-bg-dark:     hsl(140, 100%, 88%);
+    --color-bg-light:    hsl(140, 100%, 0%);
+    --color-bg:          hsl(140, 100%, 0%);
+    --color-bg-dark:     hsl(140, 100%, 96%);
 
     --color-text:        hsl(180, 100%, 6%);
     --color-text-muted:  hsl(180, 100%, 15%);
 
     --color-accent:      hsl(48, 100%, 48%);
     --color-primary: hsl(138, 100%, 48%);
-
-    --color-secondary:   hsl(160, 100%, 40%);
+    --color-bg-secondary: hsl(197, 100%, 96);
+    --color-secondary:   hsl(197, 100%, 48%);
 
     --color-hover-ghost: rgba(0, 0, 0, 0.05);
 
@@ -71,7 +63,7 @@ body.theme-genesis.genesis-dark {
     --color-text-muted:  hsl(180, 100%, 88%);
 
     --color-accent:      hsl(48, 100%, 48%);
-    --color-primary: hsl(138, 100%, 48%);
+    --color-primary:    hsl(138, 100%, 48%);
     --color-secondary:   hsl(175, 100%, 10%);
 
     --color-hover-ghost: rgba(255, 255, 255, 0.1);
@@ -80,8 +72,8 @@ body.theme-genesis.genesis-dark {
 /* Genesis CLAIR (auto ET forcé) */
 body.theme-genesis.vscode-light,
 body.theme-genesis.genesis-light {
-    --color-bg-light:    hsl(140, 100%, 96%);
-    --color-bg:          hsl(140, 100%, 92%);
+    --color-bg-light:    hsl(140, 100%, 100%);
+    --color-bg:          hsl(140, 100%, 0%);
     --color-bg-dark:     hsl(140, 100%, 96%);
 
     --color-text:        hsl(180, 100%, 6%);
@@ -89,7 +81,9 @@ body.theme-genesis.genesis-light {
 
     --color-accent:      hsl(48, 100%, 48%);
     --color-primary: hsl(138, 100%, 48%);
-    --color-secondary:   hsl(180, 100%, 12%);
+
+    --color-bg-secondary: hsl(197, 100%, 92%);
+    --color-secondary:   hsl(197, 100%, 42%);
 
     --color-hover-ghost: rgba(0, 0, 0, 0.05);
 }
@@ -252,6 +246,10 @@ body.is-resizing * {
 body, html {
     padding: 0;
     margin: 0;
+    box-sizing: border-box;
+}
+
+* {
     box-sizing: border-box;
 }
 

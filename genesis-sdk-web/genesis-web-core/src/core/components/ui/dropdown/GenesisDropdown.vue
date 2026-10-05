@@ -20,7 +20,7 @@
 
       <!-- Wrapper trigger + dropdown -->
       <div class="relative inline-block">
-        <MenuButton as="template" @click="onTriggerClick">
+        <MenuButton as="template">
           
           <!-- Cas 1 : Slot trigger personnalisé -->
           <GenesisButton
@@ -30,7 +30,6 @@
             :size="triggerSize"
             :disabled="triggerDisabled"
             :use-default-text="false"
-            :class="{ '!border !border-secondary': open }"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
@@ -54,7 +53,6 @@
             :size="triggerSize"
             :disabled="triggerDisabled"
             :use-default-text="false"
-            :class="{ '!border !border-secondary': open }"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
@@ -75,7 +73,6 @@
             :variant="triggerVariant"
             :size="triggerSize"
             :disabled="triggerDisabled"
-            :class="{ '!border !border-secondary': open }"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <slot name="triggerIcon" />
@@ -105,13 +102,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick, type ComponentPublicInstance } from 'vue';
+import { ref, computed, watch, onMounted, nextTick, type ComponentPublicInstance, onUnmounted } from 'vue';
 import { Menu, MenuButton, MenuItems } from '@headlessui/vue';
 
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
-import { MENU_SIZES, type MenuSize } from '@genesis-labs/web-core/core/config/ui.config';
+import { MENU_SIZES, type MenuSize, type UI_Size_Unit, type UI_Variant } from '@genesis-labs/web-core/core/config/ui.config';
 
 // ============================================================================
 // 1. PROPS
@@ -122,13 +119,12 @@ const props = withDefaults(defineProps<{
   dropdownSize?: MenuSize | '3xl';
   hideChevron?: boolean;
   matchTriggerWidth?: boolean;
-  triggerVariant?: 'primary' | 'secondary' | 'tertiary';
-  triggerSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  triggerVariant?: UI_Variant;
+  triggerSize?: UI_Size_Unit;
   triggerDisabled?: boolean;
   openAtHover?: boolean;
   label?: string;
   isMandatory?: boolean;
-  positioning?: 'absolute' | 'fixed';
   forceDown?: boolean;
 }>(), {
   align: 'right',
@@ -141,7 +137,6 @@ const props = withDefaults(defineProps<{
   openAtHover: false,
   label: '',
   isMandatory: false,
-  positioning: 'absolute',
   forceDown: false
 });
 
@@ -169,8 +164,8 @@ watch(internalOpen, (newValue) => {
 // ============================================================================
 
 const menuItemsClasses = computed(() => {
-  const positionClass = props.positioning === 'fixed' ? 'fixed z-[9999]' : 'absolute z-50';
-  const base = `${positionClass} bg-bg-light border border-secondary rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto`;
+  // ✅ Uniquement absolute, plus de condition 'fixed'
+  const base = `absolute z-50 bg-bg-secondary rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto`;
   const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
   return `${base} ${size}`;
 });
@@ -178,43 +173,28 @@ const menuItemsClasses = computed(() => {
 const dropdownStyle = computed(() => {
   const style: Record<string, string> = {};
 
-  if (props.positioning === 'absolute') {
-    const el = getMenuButtonEl();
-    const rect = el?.getBoundingClientRect();
-    const goesUp = !props.forceDown && rect ? (window.innerHeight - rect.bottom) < 150 : false;
+  const el = getMenuButtonEl();
+  const rect = el?.getBoundingClientRect();
+  const goesUp = !props.forceDown && rect ? (window.innerHeight - rect.bottom) < 150 : false;
 
-    if (goesUp) {
-      style.bottom = '100%';
-      style.marginBottom = '8px';
-    } else {
-      style.top = '100%';
-      style.marginTop = '8px';
-    }
-
-    if (props.align === 'right') {
-      style.right = '0';
-    } else {
-      style.left = '0';
-    }
+  if (goesUp) {
+    style.bottom = '100%';
+    style.marginBottom = '8px';
   } else {
-    const el = getMenuButtonEl();
-    if (!el) return {};
-    const rect = el.getBoundingClientRect();
-    const viewportWidth = document.documentElement.clientWidth;
-    
-    style.top = `${rect.bottom + 8}px`;
-    
-    if (props.matchTriggerWidth && triggerWidth.value !== null) {
-      style.left = `${rect.left}px`;
-      style.width = `${triggerWidth.value}px`;
-      style.minWidth = `${triggerWidth.value}px`;
-    } else {
-      if (props.align === 'right') {
-        style.right = `${viewportWidth - rect.right}px`;
-      } else {
-        style.left = `${rect.left}px`;
-      }
-    }
+    style.top = '100%';
+    style.marginTop = '8px';
+  }
+
+  if (props.align === 'right') {
+    style.right = '0';
+  } else {
+    style.left = '0';
+  }
+
+  // Gestion de la largeur identique au trigger
+  if (props.matchTriggerWidth && triggerWidth.value !== null) {
+    style.width = `${triggerWidth.value}px`;
+    style.minWidth = `${triggerWidth.value}px`;
   }
 
   return style;
@@ -244,14 +224,6 @@ function handleTriggerMouseDown(e: MouseEvent, isOpen: boolean) {
     e.stopImmediatePropagation(); // Empêche Headless UI de recevoir l'événement et de fermer le menu
     isPersistent.value = true;    // Active la persistance
     clearHoverTimeout();          // Annule tout timer de fermeture en attente
-  }
-}
-
-function onTriggerClick() {
-  if (props.positioning === 'fixed') {
-    nextTick(() => {
-      if (props.matchTriggerWidth) measureTriggerWidth();
-    });
   }
 }
 

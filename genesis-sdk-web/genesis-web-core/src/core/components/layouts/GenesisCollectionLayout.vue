@@ -5,13 +5,20 @@
                 :slides="carouselSlides"
                 slide-height="300px"
                 :auto-play="true"
-                class="rounded-t-lg shadow-sm flex-shrink-0"
+                class="rounded-t-lg flex-shrink-0"
             >
-                <template #bottom>
-                    <div class="flex gap-4">
+                <template #bottom="{ isStuck}">
+                    <div 
+                        class="flex gap-4 rounded-b-lg" 
+                        id="background-header"
+                        :class="isStuck ? 'bg-white shadow-sm' : 'bg-transparent'"
+                        >
                         <div class="flex items-center gap-4 px-8 pb-4 pt-2">
                             <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
-                            <h2 class="font-semibold font-heading text-4xl text-white drop-shadow-md truncate">
+                            <h2 
+                                class="font-semibold font-heading text-4xl truncate transition-colors duration-300"
+                                :class="isStuck ? 'text-text' : 'text-white'"
+                            >
                                 <slot name="title">{{ title }}</slot>
                             </h2>
                         </div>
@@ -20,7 +27,10 @@
                             class="relative flex items-stretch w-full"                        
                         >
 
-                            <div class="bar-shape absolute inset-0 bg-bg-dark pointer-events-none" aria-hidden="true" />
+                            <div 
+                                class="bar-shape absolute inset-0 pointer-events-none" aria-hidden="true"
+                                :class="isStuck ? 'bg-white' : 'bg-bg-dark'"
+                                />
 
                             <div class="relative flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6">
                                 <GenesisInput

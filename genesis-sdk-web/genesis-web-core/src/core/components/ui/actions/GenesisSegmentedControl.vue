@@ -6,7 +6,7 @@
     class="inline-flex flex-col gap-4"
   >
     <!-- Conteneur du Segmented Control -->
-    <TabList class="inline-flex rounded-md p-1 gap-1 bg-bg-light border border-bg-light" role="group">
+    <TabList class="inline-flex rounded-md p-1 gap-1 bg-bg-secondary" role="group">
       <Tab
         v-for="option in options"
         :key="String(option.value)"
