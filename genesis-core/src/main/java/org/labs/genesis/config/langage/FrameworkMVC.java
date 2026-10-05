@@ -24,6 +24,7 @@ public class FrameworkMVC extends Framework {
     private FrontendDestinationPaths frontendPaths;
     private java.util.List<Project.ProjectFiles> templateEngineFiles;
     private java.util.List<Project.ProjectFolders> templateEngineFolders;
+    private java.util.List<FilesEdit> dashboardFiles = new ArrayList<>();
 
     public void setViewsTemplate() throws IOException {
         this.viewsTemplate = Arrays.stream(FileUtils.fromYaml(ViewsTemplate[].class, Constantes.VIEWS_TEMPLATES_YAML))
