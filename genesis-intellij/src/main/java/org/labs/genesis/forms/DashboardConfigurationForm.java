@@ -50,6 +50,7 @@ public class DashboardConfigurationForm {
     private JButton addTabButton;
     private JLabel titleLabel;
     private DataPanelTree dataPanelTree;
+    private JCheckBox skipDashboardCheckBox;
 
     private boolean leftSidebarCollapsed = false;
     private boolean rightSidebarCollapsed = false;
@@ -91,6 +92,10 @@ public class DashboardConfigurationForm {
 
     public DashboardConfiguration toDashboardConfiguration() {
         DashboardConfiguration configuration = new DashboardConfiguration();
+        configuration.setEnabled(!skipDashboardCheckBox.isSelected());
+        if (!configuration.isEnabled()) {
+            return configuration;
+        }
         int pageIndex = 0;
         for (GridCanvas canvas : pageCanvases) {
             DashboardPage page = new DashboardPage();
@@ -721,6 +726,31 @@ public class DashboardConfigurationForm {
             rightSidebarCollapsed = !rightSidebarCollapsed;
             refreshLayout();
         });
+        skipDashboardCheckBox.addActionListener(
+                e -> updateDashboardEnabledState()
+        );
+    }
+
+    private void updateDashboardEnabledState() {
+        boolean enabled = !skipDashboardCheckBox.isSelected();
+
+        setEnabledRecursively(leftSidebar, enabled);
+        setEnabledRecursively(centerArea, enabled);
+        setEnabledRecursively(rightSidebar, enabled);
+
+        leftSidebar.setEnabled(enabled);
+        centerArea.setEnabled(enabled);
+        rightSidebar.setEnabled(enabled);
+    }
+
+    private void setEnabledRecursively(Container container, boolean enabled) {
+        container.setEnabled(enabled);
+        for (Component component : container.getComponents()) {
+            component.setEnabled(enabled);
+            if (component instanceof Container child) {
+                setEnabledRecursively(child, enabled);
+            }
+        }
     }
 
     private void refreshLayout() {

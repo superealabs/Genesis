@@ -39,6 +39,10 @@ import static org.labs.genesis.config.langage.generator.framework.FrameworkMetad
 import static org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider.getInitialHashMap;
 import static org.labs.genesis.config.langage.generator.project.ProjectMetadataProvider.getProjectFilesEditsHashMap;
 
+import org.labs.genesis.dashboard.generation.DashboardGenerationModelBuilder;
+import org.labs.genesis.dashboard.generation.model.DashboardGenerationModel;
+import org.labs.genesis.dashboard.technology.springmvc.metadata.SpringMvcDashboardMetadataProvider;
+
 public class ProjectGenerator {
 
     public static final Map<Integer, Project> projects;
@@ -396,6 +400,10 @@ public class ProjectGenerator {
         indicator.setText2("generation framework additional files");
         renderFilesEdits(context.getFramework().getAdditionalFiles(), projectFilesEditsHashMap);
 
+        if (context.getFramework() instanceof FrameworkMVC mvcFramework) {
+            generateDashboardFiles(context, mvcFramework, entities, projectFilesEditsHashMap, indicator);
+        }
+
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
         System.out.println(securityType + " SECURITYYY");
 
@@ -457,6 +465,41 @@ public class ProjectGenerator {
         } catch (Exception e) {
             System.err.println("   ⚠️  Post-setup Django échoué: " + e.getMessage());
         }
+    }
+
+    private void generateDashboardFiles(ProjectGenerationContext context, FrameworkMVC mvcFramework, List<TableMetadata> entities, HashMap<String, Object> projectFilesEditsHashMap, ProgressReporter indicator) throws Exception {
+        if (!isDashboardEnabled(context)) {
+            return;
+        }
+        List<FilesEdit> dashboardFiles = mvcFramework.getDashboardFiles();
+
+        if (dashboardFiles == null || dashboardFiles.isEmpty()) {
+            return;
+        }
+
+        List<TableMetadata> availableTables = resolveDashboardTables(context, entities);
+        DashboardGenerationModel dashboardModel = DashboardGenerationModelBuilder.build(context.getDashboardConfiguration(), availableTables);
+
+        if (!dashboardModel.isEnabled() || dashboardModel.isEmpty()) {
+            return;
+        }
+
+        HashMap<String, Object> dashboardHashMap = new HashMap<>(projectFilesEditsHashMap);
+        dashboardHashMap.putAll(SpringMvcDashboardMetadataProvider.getDashboardHashMap(dashboardModel));
+        indicator.setText2("generation dashboard files");
+        renderFilesEdits(dashboardFiles, dashboardHashMap);
+    }
+
+    private boolean isDashboardEnabled(ProjectGenerationContext context) {
+        return context.getDashboardConfiguration() != null && context.getDashboardConfiguration().isEnabled();
+    }
+
+    private List<TableMetadata> resolveDashboardTables(ProjectGenerationContext context, List<TableMetadata> entities) {
+        if (entities != null && !entities.isEmpty()) {
+            return entities;
+        }
+
+        return context.getAllTables();
     }
 
     /**

@@ -81,6 +81,10 @@ public class DashboardConfigurationWizardStep
         } catch (IllegalArgumentException exception) {
             throw new ConfigurationException("Les options du dashboard contiennent une valeur invalide.");
         }
+        if (!configuration.isEnabled()) {
+            generationContextManager.getContext().setDashboardConfiguration(configuration);
+            return true;
+        }
         List<DashboardVisualization> visualizations = configuration.getPages().stream()
                 .flatMap(page -> page.getVisualizations().stream()).toList();
         if (visualizations.stream().anyMatch(visualization -> !DashboardVisualizationRules.isValid(visualization)))
