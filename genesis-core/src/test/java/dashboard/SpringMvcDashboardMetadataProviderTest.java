@@ -367,4 +367,44 @@ class SpringMvcDashboardMetadataProviderTest {
 
         return plan;
     }
+
+    @Test
+    void buildsDashboardPagesJavaMetadata() {
+
+        DashboardGenerationModel dashboard =
+                createDashboard();
+
+        HashMap<String, Object> metadata =
+                SpringMvcDashboardMetadataProvider
+                        .getDashboardHashMap(
+                                dashboard
+                        );
+
+        String pagesJava =
+                (String) metadata.get(
+                        "dashboardPagesJava"
+                );
+
+        assertNotNull(
+                pagesJava
+        );
+
+        assertTrue(
+                pagesJava.contains(
+                        "\"main\""
+                )
+        );
+
+        assertTrue(
+                pagesJava.contains(
+                        "\"Dashboard principal\""
+                )
+        );
+
+        assertTrue(
+                pagesJava.startsWith(
+                        "java.util.List.of("
+                )
+        );
+    }
 }

@@ -51,6 +51,7 @@ public final class SpringMvcDashboardMetadataProvider {
         metadata.put("dashboardPages", pages);
         metadata.put("dashboardVisualizations", visualizations);
         metadata.put("dashboardQueries", queries);
+        metadata.put("dashboardPagesJava", renderPagesJava(pages));
         metadata.put("hasDashboardPages", !pages.isEmpty());
         metadata.put("hasDashboardVisualizations", !visualizations.isEmpty());
 
@@ -278,5 +279,28 @@ public final class SpringMvcDashboardMetadataProvider {
 
     private static String valueOrEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private static String renderPagesJava(List<Map<String, Object>> pages) {
+        if (pages == null || pages.isEmpty()) {
+            return "java.util.List.of()";
+        }
+
+        List<String> renderedPages = new ArrayList<>();
+        for (Map<String, Object> page : pages) {
+            String id = javaString(String.valueOf(page.get("id")));
+            String title = javaString(String.valueOf(page.get("title")));
+            renderedPages.add(
+                    "java.util.Map.of("
+                            + "\"id\", "
+                            + id
+                            + ", "
+                            + "\"title\", "
+                            + title
+                            + ")"
+            );
+        }
+
+        return "java.util.List.of(" + String.join(", ", renderedPages) + ")";
     }
 }

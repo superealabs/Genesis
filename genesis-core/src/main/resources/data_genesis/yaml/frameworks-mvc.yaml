@@ -4871,6 +4871,38 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
 
+    - fileType: "DashboardController"
+      fileName: "DashboardController"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.controllers;
+
+        import ${groupLink}.${lowerCase(projectName)}.services.DashboardService;
+        import org.springframework.stereotype.Controller;
+        import org.springframework.ui.Model;
+        import org.springframework.web.bind.annotation.GetMapping;
+        import org.springframework.web.bind.annotation.RequestMapping;
+
+        @Controller
+        @RequestMapping("/dashboard")
+        public class DashboardController {
+
+            private final DashboardService dashboardService;
+
+            public DashboardController(DashboardService dashboardService) {
+                this.dashboardService = dashboardService;
+            }
+
+            @GetMapping
+            public String index(Model model) {
+                model.addAttribute("dashboardData", dashboardService.loadDashboard());
+                model.addAttribute("dashboardPages", ${dashboardPagesJava});
+
+                return "dashboard/index";
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
