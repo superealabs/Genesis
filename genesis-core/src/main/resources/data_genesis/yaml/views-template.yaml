@@ -9,6 +9,7 @@
   formTemplate: "FormViewTemplate"
   detailTemplate: "DetailViewTemplate"
   errorTemplate: "ErrorViewTemplate"
+  dashboardTemplate: "DashboardViewTemplate"
 
   templateFilesEdits:
     - fileType: "Variable"

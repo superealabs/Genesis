@@ -58,6 +58,7 @@ public class FrameworkMVC extends Framework {
         private Form form;
         private Detail detail;
         private Error error;
+        private Dashboard dashboard;
         private java.util.List<FilesEdit> templateEngineFilesEdits;
         private java.util.List<Project.ProjectFiles> templateEngineFiles;
         private java.util.List<Project.ProjectFolders> templateEngineFolders;
@@ -228,6 +229,16 @@ public class FrameworkMVC extends Framework {
         private String viewAnnotations;
         private String previousLink;
         private String errorMessage;
+        private String viewEnd;
+        private String destinationPath;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Dashboard {
+        private String name;
+        private String viewAnnotations;
         private String viewEnd;
         private String destinationPath;
     }

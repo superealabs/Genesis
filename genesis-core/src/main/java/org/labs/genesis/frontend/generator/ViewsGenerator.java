@@ -533,6 +533,10 @@ public class ViewsGenerator implements IViewsGenerator {
         return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/DjangoHomeTemplate." + Constantes.TEMPLATE_EXT);
     }
 
+    private String loadViewDashboardTemplate(ViewsTemplate viewsTemplate) throws IOException {
+        return FileUtils.getFileContent(Constantes.TEMPLATES_PATH + "/" + viewsTemplate.getTemplate() + "/" + viewsTemplate.getDashboardTemplate() + "." + Constantes.TEMPLATE_EXT);
+    }
+
     /**
      * Génère les templates d'authentification (login et register)
      */
@@ -599,5 +603,51 @@ public class ViewsGenerator implements IViewsGenerator {
 
     private String loadRegisterTemplate(ViewsTemplate viewsTemplate) throws IOException {
         return FileUtils.getFileContent(Constantes.TEMPLATES_PATH+ "/" + viewsTemplate.getTemplate() + "/DjangoRegisterTemplate." + Constantes.TEMPLATE_EXT);
+    }
+
+    @Override
+    public String generateDashboardView(FrameworkMVC framework, Map<String, Object> frameworkOptions, Language language, ViewsTemplate viewsTemplate, Map<String, Object> dashboardMetadata, TableMetadata[] tableMetadata, String destinationFolder, String projectName, String groupLink) throws Exception {
+        if (framework.getView() == null || framework.getView().getDashboard() == null) {
+            return "";
+        }
+
+        if (viewsTemplate == null || viewsTemplate.getDashboardTemplate() == null || viewsTemplate.getDashboardTemplate().isBlank()) {
+            return "";
+        }
+
+        String templateContent = loadViewDashboardTemplate(viewsTemplate);
+
+        HashMap<String, Object> metadataPrimary = getAltViewDashboardHashMap(framework);
+
+        String primaryResult = engine.simpleRender(templateContent, metadataPrimary);
+
+        HashMap<String, Object> metadataFinally = getViewMainLayoutHashMap(framework, frameworkOptions, Arrays.stream(tableMetadata).toList(), projectName, destinationFolder, groupLink);
+
+        if (dashboardMetadata != null) {
+            metadataFinally.putAll(dashboardMetadata);
+        }
+
+        HashMap<String, Object> layoutMetadata = FrameworkFrontendMetadataProvider.getLayoutHashMap(framework.getFrontendLayout());
+
+        HashMap<String, Object> brandingMetadata = FrameworkFrontendMetadataProvider.getBrandingHashMap(framework.getProjectBranding());
+
+        metadataFinally.putAll(layoutMetadata);
+        metadataFinally.putAll(brandingMetadata);
+
+        String fileSavePath = framework.getView().getDashboard().getDestinationPath();
+        fileSavePath = engine.simpleRender(fileSavePath, metadataFinally);
+
+        FileUtils.createDirectory(fileSavePath);
+
+        String fileName = framework.getView().getDashboard().getName();
+        fileName = engine.simpleRender(fileName, metadataFinally);
+
+        String result = engine.render(primaryResult, metadataFinally);
+
+        result = engine.simpleRenderAlt(result, Map.of("thymeleafDollar", "$"));
+
+        FileUtils.createFile(fileSavePath, fileName, framework.getView().getViewExtension(), result);
+
+        return "";
     }
 }

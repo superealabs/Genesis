@@ -1289,6 +1289,16 @@ public class FrameworkMetadataProvider {
         return altMap;
     }
 
+    public static HashMap<String, Object> getAltViewDashboardHashMap(FrameworkMVC frameworkMVC) {
+        HashMap<String, Object> altMap = new HashMap<>(getGeneralViewHashMap(frameworkMVC));
+        if (frameworkMVC.getView().getDashboard() == null) {
+            return altMap;
+        }
+        altMap.put("viewAnnotations", frameworkMVC.getView().getDashboard().getViewAnnotations());
+        altMap.put("viewEnd", frameworkMVC.getView().getDashboard().getViewEnd());
+        return altMap;
+    }
+
     private static String getDefaultSortColumn(TableMetadata tableMetadata) {
         if (tableMetadata.hasCompositePrimaryKey()) {
             return tableMetadata.getPrimaryColumns().get(0).getName();
