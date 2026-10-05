@@ -1,6 +1,6 @@
 import {useParams, useNavigate, useLocation} from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { Box, Paper, Typography, Button, Chip, Divider, Grid } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { Box, Paper, Typography, Button, Chip, Divider, Grid, Dialog, DialogContent, IconButton } from '@mui/material';
 import { pageContainerSx } from '@/styles/mui-patterns';
 import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
 import type { ApiResponse } from '@/services/api';
@@ -8,9 +8,15 @@ import {ArrowBack} from "@mui/icons-material";
 import { Tabs, Tab } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { base64ToUrl } from "@/utils/imageUtil";
+import Download from '@mui/icons-material/Download';
+import ZoomIn from '@mui/icons-material/ZoomIn';
+import Close from '@mui/icons-material/Close';
+import { buildFileSource, downloadFile, getFileSize, getGeneratedFileName, isImageContent } from "@/utils/file-utils";
 
 type AnyRecord = Record<string, any>;
+
+const isFileType = (type?: string) => ['file', 'uint8array', 'bytea', 'blob', 'varbinary', 'byte[]', 'bytearray']
+    .includes((type ?? '').replace(/\s/g, '').toLowerCase());
 
 export type DetailAction<T> = {
     label: string;
@@ -48,6 +54,20 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
         const [loading, setLoading] = useState(true);
         const [tabIndex, setTabIndex] = useState(0);
         const [searchParams] = useSearchParams();
+        const [preview, setPreview] = useState<{ source: string; alt: string } | null>(null);
+        const [downloadedFile, setDownloadedFile] = useState<string | null>(null);
+        const downloadFeedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+        useEffect(() => () => {
+            if (downloadFeedbackTimeout.current) clearTimeout(downloadFeedbackTimeout.current);
+        }, []);
+
+        const handleDownload = (content: unknown, fileName: string) => {
+            downloadFile(content, fileName);
+            setDownloadedFile(fileName);
+            if (downloadFeedbackTimeout.current) clearTimeout(downloadFeedbackTimeout.current);
+            downloadFeedbackTimeout.current = setTimeout(() => setDownloadedFile(null), 1600);
+        };
 
         // priorité : paramètre URL, puis state, puis backRoute
         const backTo =
@@ -70,6 +90,7 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
         const bottomActions = config.actions ?? [];
 
         return (
+            <>
             <Box sx={pageContainerSx}>
                 <Paper
                     elevation={2}
@@ -110,20 +131,23 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
                                         <Box>
                                             {typeof value === 'boolean' ? (
                                                 <Chip label={value ? 'Yes' : 'No'} color={value ? 'success' : 'default'} size="small" />
+                                            ) : isFileType(type) ? (
+                                                value == null || value === '' ? <Typography fontWeight={500}>-</Typography> : isImageContent(value) ? (
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                                            <img src={buildFileSource(value)} alt={header} style={{ maxWidth: 200, maxHeight: 200, objectFit: 'contain' }} />
+                                                            <IconButton size="small" aria-label={`Prévisualiser ${header}`} onClick={() => setPreview({ source: buildFileSource(value), alt: header })}><ZoomIn fontSize="small" /></IconButton>
+                                                            <Typography variant="caption" color="text.secondary">{getFileSize(value)}</Typography>
+                                                            <Button size="small" startIcon={<Download />} onClick={() => handleDownload(value, getGeneratedFileName(value, header))}>{downloadedFile === getGeneratedFileName(value, header) ? 'Téléchargement…' : 'Télécharger'}</Button>
+                                                        </Box>
+                                                    ) : (
+                                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                                                            <Typography variant="body2">{getGeneratedFileName(value, header)}</Typography>
+                                                            <Typography variant="caption" color="text.secondary">{getFileSize(value)}</Typography>
+                                                            <Button size="small" startIcon={<Download />} onClick={() => handleDownload(value, getGeneratedFileName(value, header))}>{downloadedFile === getGeneratedFileName(value, header) ? 'Téléchargement…' : 'Télécharger'}</Button>
+                                                        </Box>
+                                                    )
                                             ) : (
-                                                <Typography fontWeight={500}>
-                                                    { type == 'file' ? (
-                                                        <img
-                                                            src={base64ToUrl(value as string)}
-                                                            alt={header}
-                                                            style={{
-                                                                maxWidth: "200px",
-                                                                maxHeight: "200px",
-                                                                objectFit: "contain"
-                                                            }}
-                                                        />) :
-                                                    (value === null || value === undefined ? '-' : String(value))}
-                                                </Typography>
+                                                <Typography fontWeight={500}>{value === null || value === undefined ? '-' : String(value)}</Typography>
                                             )}
                                         </Box>
                                     </Box>
@@ -166,6 +190,15 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
                     </>
                 )}
             </Box>
+            <Dialog open={Boolean(preview)} onClose={() => setPreview(null)} maxWidth={false}>
+                <DialogContent sx={{ p: 2, bgcolor: 'black', position: 'relative', display: 'grid', placeItems: 'center' }}>
+                    <IconButton aria-label="Fermer l'aperçu" onClick={() => setPreview(null)} sx={{ position: 'absolute', top: 8, right: 8, color: 'white', zIndex: 1 }}>
+                        <Close />
+                    </IconButton>
+                    {preview && <img src={preview.source} alt={preview.alt} style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain' }} />}
+                </DialogContent>
+            </Dialog>
+            </>
         );
     };
 }

@@ -2,18 +2,26 @@
   <div class="detail-item" *ngFor="let item of entries">
     <label>{{ this.langService.makeItReadable(item[0])}}</label>
     <ng-container *ngIf="isFileField(item[0]); else normalValue">
-      <img
-        *ngIf="item[1] && isImageContent(item[1]); else unavailableFile"
-        class="file-preview"
-        [src]="buildFileSource(item[1])"
-        [alt]="getGeneratedFileName(item[1])"
-      />
-      <ng-template #unavailableFile>
-        <input
-          type="text"
-          [value]="item[1] ? 'Fichier non prévisualisable' : 'Aucun fichier'"
-          readonly
-        />
+      <ng-container *ngIf="item[1] && isImageContent(item[1]); else nonImageFile">
+        <div class="file-download">
+          <button type="button" class="preview-trigger" (click)="openPreview(item[1], getGeneratedFileName(item[1]))" title="Prévisualiser l'image">
+            <img class="file-preview" [src]="buildFileSource(item[1])" [alt]="getGeneratedFileName(item[1])" />
+          </button>
+          <span class="file-size">{{ getFileSize(item[1]) }}</span>
+          <button type="button" (click)="downloadAsset(item[1])" title="Télécharger l'image" aria-label="Télécharger l'image">
+            <i class="bi bi-download"></i> {{ downloadedFile === getGeneratedFileName(item[1]) ? 'Téléchargement…' : 'Télécharger' }}
+          </button>
+        </div>
+      </ng-container>
+      <ng-template #nonImageFile>
+        <div class="file-download" *ngIf="item[1]; else noFile">
+          <span>{{ getGeneratedFileName(item[1]) }}</span>
+          <span class="file-size">{{ getFileSize(item[1]) }}</span>
+          <button type="button" (click)="downloadAsset(item[1])" title="Télécharger" aria-label="Télécharger le fichier">
+            <i class="bi bi-download"></i> {{ downloadedFile === getGeneratedFileName(item[1]) ? 'Téléchargement…' : 'Télécharger' }}
+          </button>
+        </div>
+        <ng-template #noFile><input type="text" value="Aucun fichier" readonly /></ng-template>
       </ng-template>
     </ng-container>
     <ng-template #normalValue>
@@ -43,4 +51,8 @@
     [onConfirm]="confirmDelete"
     [onCancel]="cancelDelete">
   </app-confirmation-box>
+</div>
+<div *ngIf="previewSource" class="image-preview-overlay" role="dialog" aria-modal="true" [attr.aria-label]="previewAlt" (click)="closePreview()">
+  <button type="button" class="preview-close" aria-label="Fermer la prévisualisation" (click)="closePreview()">×</button>
+  <img [src]="previewSource" [alt]="previewAlt" (click)="$event.stopPropagation()" />
 </div>
