@@ -1,0 +1,55 @@
+${viewAnnotations}
+
+<section class="dashboard-page">
+
+    <div class="dashboard-header">
+        <div>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">
+                Vue d'ensemble des données
+            </p>
+        </div>
+    </div>
+
+    {{#each dashboardPages}}
+    <section class="dashboard-section">
+
+        <div class="dashboard-section-header">
+            <h2>${this.title}</h2>
+        </div>
+
+        <div class="dashboard-grid">
+
+            {{#each this.visualizations}}
+            <article class="dashboard-widget"
+                    data-dashboard-id="${this.id}"
+                    data-dashboard-type="${this.typeLowerCase}">
+
+                <div class="dashboard-widget-header">
+                    <h3>${this.title}</h3>
+                </div>
+
+                <div class="dashboard-widget-content">
+
+                    <div class="dashboard-widget-data" th:attr="data-widget-id='${this.id}'">
+                        <span class="dashboard-empty" th:if="$[thymeleafDollar]{dashboardData['${this.id}'] == null or #lists.isEmpty(dashboardData['${this.id}'])}">
+                            Aucune donnée disponible
+                        </span>
+
+                        <div class="dashboard-data-container" th:unless="$[thymeleafDollar]{dashboardData['${this.id}'] == null or #lists.isEmpty(dashboardData['${this.id}'])}">
+                        </div>
+                    </div>
+
+                </div>
+
+            </article>
+            {{/each}}
+
+        </div>
+
+    </section>
+    {{/each}}
+
+</section>
+
+${viewEnd}
