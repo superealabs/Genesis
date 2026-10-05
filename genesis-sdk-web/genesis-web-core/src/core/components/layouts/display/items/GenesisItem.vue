@@ -25,7 +25,9 @@
         @info="$emit('info')"
         @close="$emit('close')"
     >
-        <template #logo><slot name="logo" /></template>
+        <slot name="logo">
+            <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" />
+        </slot>
         <template #header><slot name="header" /></template>
         <template #complementary><slot name="complementary" /></template>
     </GenesisLine>
@@ -145,7 +147,7 @@ const containerClasses = computed(() => {
     }
     // List : même principe que grid (pas de changement de fond à la sélection)
     if (display.value === 'list') {
-        return 'bg-bg-light hover:bg-bg-light/50';
+        return 'bg-bg-light';
     }
     // Table : comportement inchangé (fond accent à la sélection)
     return props.selected ? 'bg-accent/10' : 'bg-bg-light hover:bg-bg-light/50';

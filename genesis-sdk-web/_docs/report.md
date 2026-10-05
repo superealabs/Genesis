@@ -50,3 +50,9 @@ corriger l'interface de configuration de relation
 
 DRY
 UR
+
+
+
+Faire correspondre le padding de genesis Dropdown et de genesis input
+
+ouvrir une disclosure affiche les tutoriels correspondant

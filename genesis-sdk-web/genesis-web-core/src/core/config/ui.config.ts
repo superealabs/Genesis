@@ -13,7 +13,7 @@ export type UI_Size_Unit = typeof UI_SIZE_UNITS[number];
 /**
  * Variantes de style standardisées pour les composants d'action (Boutons, etc.).
  */
-export const UI_VARIANTS = ['accent', 'primary', 'secondary', 'tertiary'] as const;
+export const UI_VARIANTS = ['accent', 'primary', 'secondary', 'tertiary', 'neutral'] as const;
 export type UI_Variant = typeof UI_VARIANTS[number];
 
 /**
@@ -30,55 +30,142 @@ export const MENU_SIZES = {
 export type MenuSize = keyof typeof MENU_SIZES;
 
 // ============================================================================
-// CONFIGURATION DES BOUTONS (GenesisButton)
+// ÉCHELLE UNIQUE DES CONTRÔLES (GenesisButton, GenesisButtonIcon, GenesisInput…)
+// ============================================================================
+//
+// RÈGLE : une taille = une hauteur, quel que soit le composant.
+// La hauteur est IMPOSÉE (et non déduite du contenu). Avec `box-sizing: border-box`
+// (défaut de Tailwind), la bordure est comprise dedans : ajouter ou retirer une
+// bordure ne change donc jamais la hauteur.
+//
+//   xs 24px · sm 28px · md 32px · lg 40px · xl 48px · 2xl 56px
+//
+// Tous les composants lisent cette table : pour changer une taille, un seul endroit.
 // ============================================================================
 
-export const BUTTON_SIZES = {
-  rectangle: {
-    xs: 'text-[10px] h-fit [&_svg]:!w-3.5 [&_svg]:!h-3.5 [&_.right-part_svg]:!w-3 [&_.right-part_svg]:!h-3',
-    sm: 'text-xs h-fit [&_svg]:!w-4 [&_svg]:!h-4 [&_.right-part_svg]:!w-3.5 [&_.right-part_svg]:!h-3.5',
-    md: 'text-sm h-fit [&_svg]:!w-5 [&_svg]:!h-5 [&_.right-part_svg]:!w-4 [&_.right-part_svg]:!h-4',
-    lg: 'text-base h-fit [&_svg]:!w-6 [&_svg]:!h-6 [&_.right-part_svg]:!w-5 [&_.right-part_svg]:!h-5',
-    xl: 'text-lg h-fit [&_svg]:!w-7 [&_svg]:!h-7 [&_.right-part_svg]:!w-6 [&_.right-part_svg]:!h-6',
-    '2xl': 'text-xl h-fit [&_svg]:!w-8 [&_svg]:!h-8 [&_.right-part_svg]:!w-7 [&_.right-part_svg]:!h-7',
-  },
-  square: {
-    xs: 'w-6 h-6 [&_svg]:!w-3.5 [&_svg]:!h-3.5',
-    sm: 'w-7 h-7 [&_svg]:!w-4 [&_svg]:!h-4',
-    md: 'w-8 h-8 [&_svg]:!w-5 [&_svg]:!h-5',
-    lg: 'w-9 h-9 [&_svg]:!w-6 [&_svg]:!h-6',
-    xl: 'w-10 h-10 [&_svg]:!w-7 [&_svg]:!h-7',
-    '2xl': 'w-11 h-11 [&_svg]:!w-8 [&_svg]:!h-8',
-  },
-} as const;
+export interface ControlSizeTokens {
+  /** Hauteur imposée (rectangle : bouton texte, input, select) */
+  box: string;
+  /** Largeur + hauteur imposées (bouton carré / bouton icône) */
+  square: string;
+  /** Taille du texte */
+  text: string;
+  /** Taille des icônes (tous les <svg> descendants) */
+  icon: string;
+  /** Taille des icônes de la partie droite d'un bouton (chevron) */
+  rightIcon: string;
+  /** Padding horizontal d'un bouton sans icône à droite */
+  px: string;
+  /** Padding horizontal d'un bouton avec icône à droite */
+  pxWithRight: string;
+  /** Padding gauche / droit de l'input natif quand aucun slot n'occupe le côté */
+  pl: string;
+  pr: string;
+  /** Padding horizontal des slots d'un input (left / right) */
+  slotPx: string;
+  /** Espacement entre les éléments */
+  gap: string;
+}
 
-export const BUTTON_PADDINGS = {
-  withRightIcon: {
-    xs: 'px-2 py-0.5',
-    sm: 'px-2.5 py-1',
-    md: 'px-3 py-1.5',
-    lg: 'px-4 py-2',
-    xl: 'px-5 py-2.5',
-    '2xl': 'px-6 py-3',
+export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
+  xs: {
+    box: 'h-6',
+    square: 'w-6 h-6',
+    text: 'text-[10px]',
+    icon: '[&_svg]:!w-3.5 [&_svg]:!h-3.5',
+    rightIcon: '[&_.right-part_svg]:!w-3 [&_.right-part_svg]:!h-3',
+    px: 'px-2.5',
+    pxWithRight: 'px-2',
+    pl: 'pl-2.5',
+    pr: 'pr-2.5',
+    slotPx: 'px-1.5',
+    gap: 'gap-1.5',
   },
-  withoutRightIcon: {
-    xs: 'px-2.5 py-0.5',
-    sm: 'px-3.5 py-1',
-    md: 'px-4 py-1.5',
-    lg: 'px-5 py-2',
-    xl: 'px-6 py-2.5',
-    '2xl': 'px-7 py-3',
+  sm: {
+    box: 'h-7',
+    square: 'w-7 h-7',
+    text: 'text-xs',
+    icon: '[&_svg]:!w-4 [&_svg]:!h-4',
+    rightIcon: '[&_.right-part_svg]:!w-3.5 [&_.right-part_svg]:!h-3.5',
+    px: 'px-3.5',
+    pxWithRight: 'px-2.5',
+    pl: 'pl-3.5',
+    pr: 'pr-3.5',
+    slotPx: 'px-2',
+    gap: 'gap-2',
   },
-} as const;
+  md: {
+    box: 'h-8',
+    square: 'w-8 h-8',
+    text: 'text-sm',
+    icon: '[&_svg]:!w-5 [&_svg]:!h-5',
+    rightIcon: '[&_.right-part_svg]:!w-4 [&_.right-part_svg]:!h-4',
+    px: 'px-4',
+    pxWithRight: 'px-3',
+    pl: 'pl-4',
+    pr: 'pr-4',
+    slotPx: 'px-2.5',
+    gap: 'gap-2',
+  },
+  lg: {
+    box: 'h-10',
+    square: 'w-10 h-10',
+    text: 'text-base',
+    icon: '[&_svg]:!w-6 [&_svg]:!h-6',
+    rightIcon: '[&_.right-part_svg]:!w-5 [&_.right-part_svg]:!h-5',
+    px: 'px-5',
+    pxWithRight: 'px-4',
+    pl: 'pl-5',
+    pr: 'pr-5',
+    slotPx: 'px-3',
+    gap: 'gap-2.5',
+  },
+  xl: {
+    box: 'h-12',
+    square: 'w-12 h-12',
+    text: 'text-lg',
+    icon: '[&_svg]:!w-7 [&_svg]:!h-7',
+    rightIcon: '[&_.right-part_svg]:!w-6 [&_.right-part_svg]:!h-6',
+    px: 'px-6',
+    pxWithRight: 'px-5',
+    pl: 'pl-6',
+    pr: 'pr-6',
+    slotPx: 'px-3.5',
+    gap: 'gap-3',
+  },
+  '2xl': {
+    box: 'h-14',
+    square: 'w-14 h-14',
+    text: 'text-xl',
+    icon: '[&_svg]:!w-8 [&_svg]:!h-8',
+    rightIcon: '[&_.right-part_svg]:!w-7 [&_.right-part_svg]:!h-7',
+    px: 'px-7',
+    pxWithRight: 'px-6',
+    pl: 'pl-7',
+    pr: 'pr-7',
+    slotPx: 'px-4',
+    gap: 'gap-3',
+  },
+};
 
-export const BUTTON_GAPS = {
-  xs: 'gap-1.5',
-  sm: 'gap-2',
-  md: 'gap-2',
-  lg: 'gap-2.5',
-  xl: 'gap-3',
-  '2xl': 'gap-3',
-} as const;
+/**
+ * Taille du bouton d'action placé À L'INTÉRIEUR d'un input (dossier, ajout…).
+ * Elle suit la taille de l'input, pour ne jamais imposer sa propre hauteur.
+ * (xs : le bouton xs de 24px dépasse de 2px dans un input de 24px ; GenesisInput
+ * applique alors une surcharge de 20px.)
+ */
+export const INPUT_ACTION_SIZES: Record<UI_Size_Unit, UI_Size_Unit> = {
+  xs: 'xs',
+  sm: 'xs',
+  md: 'xs',
+  lg: 'sm',
+  xl: 'md',
+  '2xl': 'lg',
+};
+
+// ============================================================================
+// CONFIGURATION DES BOUTONS (GenesisButton)
+// ============================================================================
 
 export const BUTTON_RIGHT_ICON_POSITIONS = {
   xs: 'absolute right-2',
@@ -95,19 +182,23 @@ export const BUTTON_RIGHT_ICON_POSITIONS = {
  */
 export const BUTTON_VARIANTS = {
   accent: {
-    hover: 'bg-accent text-accent-900 font-medium hover:bg-accent/80 disabled:hover:bg-accent disabled:hover:shadow-none',
-    default: 'bg-accent text-accent-900 font-medium',
+    hover: 'bg-accent font-medium text-accent-900 hover:bg-accent/80 disabled:hover:bg-accent disabled:hover:shadow-none',
+    default: 'bg-accent text-accent-900',
   },
   primary: {
-    hover: 'bg-primary text-text font-medium hover:bg-primary/80 disabled:hover:bg-primary disabled:hover:shadow-none',
-    default: 'bg-primary text-text font-medium',
+    hover: 'bg-primary font-medium text-text hover:bg-primary/80 disabled:hover:bg-primary disabled:hover:shadow-none',
+    default: 'bg-primary text-text',
   },
   secondary: {
-    hover: 'bg-bg-secondary text-secondary font-medium disabled:hover:bg-transparent',
-    default: 'bg-transparent text-secondary font-medium',
+    hover: 'bg-bg-secondary font-medium text-secondary disabled:hover:bg-transparent',
+    default: 'bg-transparent text-secondary',
   },
   tertiary: {
-    hover: 'bg-transparent text-text hover:bg-white hover:text-secondary',
+    hover: 'bg-transparent font-medium text-muted hover:bg-hover-ghost hover:text-secondary',
     default: 'bg-transparent text-text',
   },
+  neutral: {
+    hover: 'bg-bg-neutral-genesis font-medium text-gray-800 disabled:hover:bg-transparent',
+    default: 'neutral-light-genesis text-gray-800',
+  }
 } as const;

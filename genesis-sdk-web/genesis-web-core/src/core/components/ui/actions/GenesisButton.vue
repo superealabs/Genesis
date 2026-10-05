@@ -51,12 +51,10 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
-import { 
-    type UI_Size_Unit, 
+import {
+    type UI_Size_Unit,
     type UI_Variant,
-    BUTTON_SIZES, 
-    BUTTON_PADDINGS, 
-    BUTTON_GAPS, 
+    CONTROL_SIZES,
     BUTTON_RIGHT_ICON_POSITIONS,
     BUTTON_VARIANTS
 } from '@genesis-labs/web-core/core/config/ui.config';
@@ -94,6 +92,9 @@ const shouldShowDefaultText = computed(() =>
     props.useDefaultText && isEmpty.value && props.shape === 'rectangle'
 );
 
+// ═══ Tokens de la taille courante (échelle unique, voir ui.config.ts) ═══
+const tokens = computed(() => CONTROL_SIZES[props.size]);
+
 // ═══ Variants (Depuis la config centralisée) ═══
 const variantClasses = computed(() => {
     const state = props.useDefaultHover ? 'hover' : 'default';
@@ -106,23 +107,24 @@ const shapeClasses = computed(() => ({
     'aspect-square rounded overflow-hidden min-w-0 min-h-0': props.shape === 'square'
 }));
 
-// ═══ Sizes (Depuis la config centralisée) ═══
+// ═══ Sizes : hauteur IMPOSÉE (rectangle) ou côté imposé (carré) ═══
 const sizeClasses = computed(() => {
-    return BUTTON_SIZES[props.shape][props.size];
+    const t = tokens.value;
+    return props.shape === 'square'
+        ? `${t.square} ${t.icon}`
+        : `${t.box} ${t.text} ${t.icon} ${t.rightIcon}`;
 });
 
-// ═══ Paddings (Depuis la config centralisée) ═══
+// ═══ Paddings : horizontal uniquement (la hauteur est imposée, pas de py) ═══
 const paddingClasses = computed(() => {
     if (props.shape === 'square') return '';
-    
-    const paddingType = hasRightIcon.value ? 'withRightIcon' : 'withoutRightIcon';
-    return BUTTON_PADDINGS[paddingType][props.size];
+    return hasRightIcon.value ? tokens.value.pxWithRight : tokens.value.px;
 });
 
-// ═══ Gaps (Depuis la config centralisée) ═══
+// ═══ Gaps ═══
 const wrapperGapClasses = computed(() => {
     if (!hasRightIcon.value || props.shape !== 'rectangle') return '';
-    return BUTTON_GAPS[props.size];
+    return tokens.value.gap;
 });
 
 const wrapperClasses = computed(() => {

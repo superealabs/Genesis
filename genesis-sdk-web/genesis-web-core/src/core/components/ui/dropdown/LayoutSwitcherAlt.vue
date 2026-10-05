@@ -6,6 +6,7 @@
     :trigger-size="'lg'"
     :close-on-select="true"
     :open-at-hover="true"
+    :trigger-variant="'secondary'"
     :positioning="'absolute'"
   >
     <template #triggerIcon>

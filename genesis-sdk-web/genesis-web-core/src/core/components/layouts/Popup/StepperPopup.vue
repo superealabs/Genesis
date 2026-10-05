@@ -33,9 +33,9 @@
                         :key="step"
                         class="h-2 rounded-full transition-all duration-200"
                         :class="{
-                            'w-6 bg-accent': step === currentStep,
-                            'w-2 bg-accent/40': step < currentStep,
-                            'w-2 bg-secondary': step > currentStep
+                            'w-6 bg-primary': step === currentStep,
+                            'w-2 bg-primary/40': step < currentStep,
+                            'w-2 bg-neutral-light': step > currentStep
                         }"
                     />
                 </div>
@@ -50,7 +50,7 @@
                         Passer
                     </GenesisButton>
                     
-                    <GenesisButton @click="$emit('next')">
+                    <GenesisButton @click="$emit('next')" :variant="'accent'">
                         {{ currentStep === totalSteps ? 'Générer' : 'Suivant' }}
                     </GenesisButton>
                 </div>
@@ -79,7 +79,7 @@ withDefaults(defineProps<{
     isClosable: true,
     draggable: true,
     position: 'center',
-    contentClass: 'overflow-y-auto',
+    contentClass: 'overflow-hidden',
     isSkippable: false
 });
 

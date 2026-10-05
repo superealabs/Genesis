@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-16 w-full">
+    <div class="flex flex-col gap-12 w-full bg-bg-dark">
             <Carrousel
                 v-if="showCarousel"
                 :slides="carouselSlides"
@@ -11,7 +11,7 @@
                     <div 
                         class="flex gap-4 rounded-b-lg" 
                         id="background-header"
-                        :class="isStuck ? 'bg-white shadow-sm' : 'bg-transparent'"
+                        :class="isStuck ? 'bg-white shadow-sm shadow-hover-ghost/10' : 'bg-transparent'"
                         >
                         <div class="flex items-center gap-4 px-8 pb-4 pt-2">
                             <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
@@ -55,7 +55,7 @@
                                 <GenesisButtonIcon
                                     v-if="showFilter"
                                     variant="secondary"
-                                    size="xl"
+                                    size="lg"
                                     :hide-chevron="true"
                                     @click="$emit('openFilter')"
                                     class="shrink-0"
@@ -70,7 +70,7 @@
                                     dropdownSize="lg"
                                     :closeOnSelect="false"
                                     triggerVariant="secondary"
-                                    trigger-size="xl"
+                                    trigger-size="lg"
                                     :hide-chevron="true"
                                 >
                                     <template #triggerIcon>
@@ -88,7 +88,7 @@
                                         { label: 'Selection', value: 'selection', icon: IconCursor },
                                         { label: 'Compare', value: 'compare', icon: IconGitCompare }
                                     ]"
-                                    size="md" 
+                                    size="lg" 
                                 />
                                 <LayoutSwitcherAlt v-model="internalDisplayMode" />
                             </div>
@@ -97,7 +97,7 @@
                 </template>
             </Carrousel>
 
-        <div class="flex-1 min-h-0">
+        <div class="flex-1 min-h-0 bg-bg-dark px-6">
             <slot />
             <SimpleSelectionPopup
                 v-if="showReplacePopup"

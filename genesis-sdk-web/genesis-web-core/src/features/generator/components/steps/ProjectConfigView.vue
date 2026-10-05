@@ -1,305 +1,148 @@
 <template>
-  <div class="p-6 space-y-6">
-    
-    <!-- 1. CONFIGURATION DE BASE -->
-    <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
-        Configuration du Projet
-      </h3>
+  <main class="flex gap-4 h-full overflow-hidden">
+    <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
       
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GenesisInput 
-          v-model="config.projectName" 
-          variant="secondary" 
-          label="Nom du projet" 
-          placeholder="mon-super-projet"
-          size="lg"
-          is-mandatory
-          fill-width
-        />
-        <GenesisInput
-          v-model="config.projectPort"
-          type="number"
-          variant="secondary"
-          size="lg"
-          label="Port d'exécution"
-          placeholder="ex: 8080"
-          fill-width
-        />
-      </div>
-
-      <div class="w-full">
-        <GenesisInput 
-          v-model="config.projectDescription" 
-          variant="secondary" 
-          label="Description du projet"
-          size="lg"
-          placeholder="Une brève description de l'application..."
-          type="textarea"
-          fill-width
-        />
-      </div>
-
-      <div class="w-full">
-        <GenesisInput
-          v-model="config.projectLocation"
-          type="path"
-          variant="secondary"
-          label="Emplacement"
-          fill-width
-          size="lg"
-          @request-folder-path="handleSelectFolderPath"
-        />
-      </div>
-    </div>
-
-    <div class="border-t border-secondary"></div>
-
-    <!-- 2. CONFIGURATION DU FRAMEWORK (STACK TECHNIQUE) -->
-    <div class="space-y-4">
-      <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
-        Stack Technique ({{ framework?.name || 'Non sélectionné' }})
-      </h3>
-      
-      <div class="flex flex-row justify-between">
+      <!-- 1. CONFIGURATION DE BASE -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-text border-b border-neutral-light pb-2">
+          Configuration du Projet
+        </h3>
+        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <GenesisInput
-            v-model="config.languageVersion"
-            type="select"
-            variant="secondary"
-            label="Version du Language"
-            placeholder="Sélectionner..."
+          <GenesisInput 
+            v-model="config.projectName" 
+            
+            label="Nom du projet" 
+            placeholder="mon-super-projet"
+            size="lg"
+            is-mandatory
             fill-width
-          >
-            <template #default="{ close }">
-              <div class="p-1 space-y-1">
-                <button
-                  v-for="v in availableLanguageVersions"
-                  :key="v"
-                  type="button"
-                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                  :class="{ 'text-accent font-medium': config.languageVersion === v }"
-                  @click="() => { updateConfig('languageVersion', v); close(); }"
-                >
-                  {{ v }}
-                </button>
-              </div>
-            </template>
-          </GenesisInput>
-
+          />
           <GenesisInput
-            v-model="config.buildTool"
-            type="select"
-            variant="secondary"
-            label="Build Tool"
-            placeholder="Sélectionner..."
+            v-model="config.projectPort"
+            type="number"
+            
+            size="lg"
+            label="Port d'exécution"
+            placeholder="ex: 8080"
             fill-width
-          >
-            <template #default="{ close }">
-              <div class="p-1 space-y-1">
-                <button
-                  v-for="tool in availableBuildTools"
-                  :key="tool"
-                  type="button"
-                  class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                  :class="{ 'text-accent font-medium': config.buildTool === tool }"
-                  @click="() => { updateConfig('buildTool', tool); close(); }"
-                >
-                  {{ tool.charAt(0).toUpperCase() + tool.slice(1) }}
-                </button>
-              </div>
-            </template>
-          </GenesisInput>
+          />
+        </div>
 
-          <div v-if="showGroupId" class="space-y-1">
-            <GenesisInput 
-              v-model="config.groupId"
-              variant="secondary"
-              label="Group ID"
-              placeholder="com.example"
-              fill-width
-            />
-          </div>
+        <div class="w-full">
+          <GenesisInput 
+            v-model="config.projectDescription" 
+            
+            label="Description du projet"
+            size="lg"
+            placeholder="Une brève description de l'application..."
+            type="textarea"
+            fill-width
+          />
+        </div>
 
-          <div class="space-y-1">
-            <GenesisInput 
-              v-model="config.frameworkVersion"
+        <div class="w-full">
+          <GenesisInput
+            v-model="config.projectLocation"
+            type="path"
+            
+            label="Emplacement"
+            fill-width
+            size="lg"
+            @request-folder-path="handleSelectFolderPath"
+          />
+        </div>
+      </div>
+
+      <div class="border-t border-secondary"></div>
+
+      <!-- 2. CONFIGURATION DU FRAMEWORK (STACK TECHNIQUE) -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
+          Stack Technique ({{ framework?.name || 'Non sélectionné' }})
+        </h3>
+        
+        <div class="flex flex-row justify-between">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GenesisInput
+              v-model="config.languageVersion"
               type="select"
-              variant="secondary"
-              label="Version du Framework"
+              :size="'lg'"
+              
+              label="Version du Language"
               placeholder="Sélectionner..."
               fill-width
             >
               <template #default="{ close }">
                 <div class="p-1 space-y-1">
                   <button
-                    v-for="v in availableFrameworkVersions"
+                    v-for="v in availableLanguageVersions"
                     :key="v"
                     type="button"
                     class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                    :class="{ 'text-accent font-medium': config.frameworkVersion === v }"
-                    @click="() => { updateConfig('frameworkVersion', v); close(); }"
+                    :class="{ 'text-accent font-medium': config.languageVersion === v }"
+                    @click="() => { updateConfig('languageVersion', v); close(); }"
                   >
                     {{ v }}
                   </button>
                 </div>
               </template>
             </GenesisInput>
-          </div>
-        </div>
 
-        <!-- Panneau de gestion des configurations Stack Technique -->
-        <div class="mt-4 pt-4 border-t border-secondary/50">
-          <div class="flex flex-col lg:flex-row gap-6">
-            <div class="flex-1"></div> <!-- Spacer pour aligner avec la colonne de droite -->
-            
-            <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-              <GenesisConfigurationPanel
-                :configurations="techStackConfigManager.configurations.value"
-                :selected-config-id="techStackConfigManager.selectedConfigId.value"
-                :filtered-configs="techStackConfigManager.filteredConfigs.value"
-                :search-query="techStackConfigManager.searchQuery.value"
-                :can-move-up="techStackConfigManager.canMoveUp.value"
-                :can-move-down="techStackConfigManager.canMoveDown.value"
-                @update:search-query="(val) => techStackConfigManager.searchQuery.value = val"
-                @add="handleAddTechStackConfig"
-                @delete="handleDeleteTechStackConfig"
-                @rename="handleRenameTechStackConfig"
-                @toggle-visibility="techStackConfigManager.toggleVisibility"
-                @move-up="techStackConfigManager.moveUp"
-                @move-down="techStackConfigManager.moveDown"
-                @select-configuration="handleSelectTechStackConfig"
+            <GenesisInput
+              v-model="config.buildTool"
+              type="select"
+              :size="'lg'"
+              label="Build Tool"
+              placeholder="Sélectionner..."
+              fill-width
+            >
+              <template #default="{ close }">
+                <div class="p-1 space-y-1">
+                  <button
+                    v-for="tool in availableBuildTools"
+                    :key="tool"
+                    type="button"
+                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                    :class="{ 'text-accent font-medium': config.buildTool === tool }"
+                    @click="() => { updateConfig('buildTool', tool); close(); }"
+                  >
+                    {{ tool.charAt(0).toUpperCase() + tool.slice(1) }}
+                  </button>
+                </div>
+              </template>
+            </GenesisInput>
+
+            <div v-if="showGroupId" class="space-y-1">
+              <GenesisInput 
+                v-model="config.groupId"
+                :size="'lg'"
+                label="Group ID"
+                placeholder="com.example"
+                fill-width
               />
-              
-              <div class="flex gap-2 justify-end">
-                <GenesisButtonIcon 
-                  variant="secondary" 
-                  title="Exporter la configuration stack technique sélectionnée"
-                  :disabled="!techStackConfigManager.selectedConfigId.value"
-                  @click="handleExportTechStackConfig"
-                >
-                  <IconUpload />
-                </GenesisButtonIcon>
-              </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="border-t border-secondary"></div>
-
-    <!-- 3. CONFIGURATION AVANCÉE -->
-    <div class="space-y-4">
-      <GenesisDisclosure 
-        title="Configuration Avancée du Backend" 
-        :default-open="false"
-        variant="secondary"
-      >
-        <div class="flex flex-col lg:flex-row gap-6">
-          
-          <!-- COLONNE GAUCHE : INPUTS DE CONFIGURATION -->
-          <div class="flex-1 flex flex-col gap-4">
-            <GenesisInput
-              v-model="config.loggingLevel"
-              type="select"
-              variant="secondary"
-              label="Niveau de Logging"
-              placeholder="INFO"
-              fill-width
-            >
-              <template #default="{ close }">
-                <div class="p-1 space-y-1">
-                  <button
-                    v-for="opt in availableLoggingLevels"
-                    :key="opt"
-                    type="button"
-                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                    :class="{ 'text-accent font-medium': config.loggingLevel === opt }"
-                    @click="() => { updateConfig('loggingLevel', opt); close(); }"
-                  >
-                    {{ opt }}
-                  </button>
-                </div>
-              </template>
-            </GenesisInput>
-
-            <GenesisInput
-              v-model="config.securityType"
-              type="select"
-              variant="secondary"
-              label="Type de Sécurité"
-              placeholder="Aucune"
-              fill-width
-            >
-              <template #default="{ close }">
-                <div class="p-1 space-y-1">
-                  <button
-                    type="button"
-                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                    :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }"
-                    @click="() => { updateConfig('securityType', 'NONE'); close(); }"
-                  >
-                    Aucune
-                  </button>
-                  <button
-                    v-for="opt in availableSecurityTypes"
-                    :key="opt"
-                    type="button"
-                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                    :class="{ 'text-accent font-medium': config.securityType === opt }"
-                    @click="() => { updateConfig('securityType', opt); close(); }"
-                  >
-                    {{ opt }}
-                  </button>
-                </div>
-              </template>
-            </GenesisInput>
-
-            <GenesisInput
-              v-model="config.cacheProvider"
-              type="select"
-              variant="secondary"
-              label="Fournisseur de Cache"
-              placeholder="Aucun"
-              fill-width
-            >
-              <template #default="{ close }">
-                <div class="p-1 space-y-1">
-                  <button
-                    v-for="opt in availableCacheProviders"
-                    :key="opt"
-                    type="button"
-                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                    :class="{ 'text-accent font-medium': config.cacheProvider === opt }"
-                    @click="() => { updateConfig('cacheProvider', opt); close(); }"
-                  >
-                    {{ opt }}
-                  </button>
-                </div>
-              </template>
-            </GenesisInput>
-
-            <div v-if="showHibernateDdl" class="space-y-1">
-              <GenesisInput
-                v-model="config.hibernateDdlAuto"
+            <div class="space-y-1">
+              <GenesisInput 
+                v-model="config.frameworkVersion"
                 type="select"
-                variant="secondary"
-                label="Hibernate DDL Auto"
-                placeholder="none"
+                :size="'lg'"
+                label="Version du Framework"
+                placeholder="Sélectionner..."
                 fill-width
               >
                 <template #default="{ close }">
                   <div class="p-1 space-y-1">
                     <button
-                      v-for="opt in availableHibernateDdlAutoOptions"
-                      :key="opt"
+                      v-for="v in availableFrameworkVersions"
+                      :key="v"
                       type="button"
                       class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
-                      :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }"
-                      @click="() => { updateConfig('hibernateDdlAuto', opt); close(); }"
+                      :class="{ 'text-accent font-medium': config.frameworkVersion === v }"
+                      @click="() => { updateConfig('frameworkVersion', v); close(); }"
                     >
-                      {{ opt }}
+                      {{ v }}
                     </button>
                   </div>
                 </template>
@@ -307,50 +150,213 @@
             </div>
           </div>
 
-          <!-- COLONNE DROITE : PANNEAU ET ACTIONS -->
-          <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-            
-            <GenesisConfigurationPanel
-              :configurations="configManager.configurations.value"
-              :selected-config-id="configManager.selectedConfigId.value"
-              :filtered-configs="configManager.filteredConfigs.value"
-              :search-query="configManager.searchQuery.value"
-              :can-move-up="configManager.canMoveUp.value"
-              :can-move-down="configManager.canMoveDown.value"
-              @update:search-query="(val) => configManager.searchQuery.value = val"
-              @add="handleAddConfig"
-              @delete="handleDeleteConfig"
-              @rename="handleRenameConfig"
-              @toggle-visibility="configManager.toggleVisibility"
-              @move-up="configManager.moveUp"
-              @move-down="configManager.moveDown"
-              @select-configuration="handleSelectConfig"
-            />
-
-            <div class="flex gap-2 justify-end">
-              <GenesisButtonIcon 
-                variant="secondary" 
-                title="Exporter la configuration avancée sélectionnée"
-                :disabled="!configManager.selectedConfigId.value"
-                @click="handleExportConfig"
-              >
-                <IconUpload />
-              </GenesisButtonIcon>
-
-              <GenesisButtonIcon 
-                variant="secondary" 
-                title="Exporter toutes les configurations avancées"
-                @click="handleExportAllConfigs"
-              >
-                <IconSave />
-              </GenesisButtonIcon>
+          <!-- Panneau de gestion des configurations Stack Technique -->
+          <div class="mt-4 pt-4 border-t border-secondary/50">
+            <div class="flex flex-col lg:flex-row gap-6">
+              <div class="flex-1"></div> <!-- Spacer pour aligner avec la colonne de droite -->
+              
+              <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+                <GenesisConfigurationPanel
+                  :configurations="techStackConfigManager.configurations.value"
+                  :selected-config-id="techStackConfigManager.selectedConfigId.value"
+                  :filtered-configs="techStackConfigManager.filteredConfigs.value"
+                  :search-query="techStackConfigManager.searchQuery.value"
+                  :can-move-up="techStackConfigManager.canMoveUp.value"
+                  :can-move-down="techStackConfigManager.canMoveDown.value"
+                  @update:search-query="(val) => techStackConfigManager.searchQuery.value = val"
+                  @add="handleAddTechStackConfig"
+                  @delete="handleDeleteTechStackConfig"
+                  @rename="handleRenameTechStackConfig"
+                  @toggle-visibility="techStackConfigManager.toggleVisibility"
+                  @move-up="techStackConfigManager.moveUp"
+                  @move-down="techStackConfigManager.moveDown"
+                  @select-configuration="handleSelectTechStackConfig"
+                />
+                
+                <div class="flex gap-2 justify-end">
+                  <GenesisButtonIcon 
+                    
+                    title="Exporter la configuration stack technique sélectionnée"
+                    :disabled="!techStackConfigManager.selectedConfigId.value"
+                    @click="handleExportTechStackConfig"
+                  >
+                    <IconUpload />
+                  </GenesisButtonIcon>
+                </div>
+              </div>
             </div>
-
           </div>
         </div>
-      </GenesisDisclosure>
+      </div>
+
+      <div class="border-t border-secondary"></div>
+
+      <!-- 3. CONFIGURATION AVANCÉE -->
+      <div class="space-y-4">
+        <GenesisDisclosure 
+          title="Configuration Avancée du Backend" 
+          :default-open="false"
+          
+        >
+          <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- COLONNE GAUCHE : INPUTS DE CONFIGURATION -->
+            <div class="flex-1 flex flex-col gap-4">
+              <GenesisInput
+                v-model="config.loggingLevel"
+                type="select"
+                
+                label="Niveau de Logging"
+                placeholder="INFO"
+                fill-width
+              >
+                <template #default="{ close }">
+                  <div class="p-1 space-y-1">
+                    <button
+                      v-for="opt in availableLoggingLevels"
+                      :key="opt"
+                      type="button"
+                      class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                      :class="{ 'text-accent font-medium': config.loggingLevel === opt }"
+                      @click="() => { updateConfig('loggingLevel', opt); close(); }"
+                    >
+                      {{ opt }}
+                    </button>
+                  </div>
+                </template>
+              </GenesisInput>
+
+              <GenesisInput
+                v-model="config.securityType"
+                type="select"
+                
+                label="Type de Sécurité"
+                placeholder="Aucune"
+                fill-width
+              >
+                <template #default="{ close }">
+                  <div class="p-1 space-y-1">
+                    <button
+                      type="button"
+                      class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                      :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }"
+                      @click="() => { updateConfig('securityType', 'NONE'); close(); }"
+                    >
+                      Aucune
+                    </button>
+                    <button
+                      v-for="opt in availableSecurityTypes"
+                      :key="opt"
+                      type="button"
+                      class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                      :class="{ 'text-accent font-medium': config.securityType === opt }"
+                      @click="() => { updateConfig('securityType', opt); close(); }"
+                    >
+                      {{ opt }}
+                    </button>
+                  </div>
+                </template>
+              </GenesisInput>
+
+              <GenesisInput
+                v-model="config.cacheProvider"
+                type="select"
+                
+                label="Fournisseur de Cache"
+                placeholder="Aucun"
+                fill-width
+              >
+                <template #default="{ close }">
+                  <div class="p-1 space-y-1">
+                    <button
+                      v-for="opt in availableCacheProviders"
+                      :key="opt"
+                      type="button"
+                      class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                      :class="{ 'text-accent font-medium': config.cacheProvider === opt }"
+                      @click="() => { updateConfig('cacheProvider', opt); close(); }"
+                    >
+                      {{ opt }}
+                    </button>
+                  </div>
+                </template>
+              </GenesisInput>
+
+              <div v-if="showHibernateDdl" class="space-y-1">
+                <GenesisInput
+                  v-model="config.hibernateDdlAuto"
+                  type="select"
+                  
+                  label="Hibernate DDL Auto"
+                  placeholder="none"
+                  fill-width
+                >
+                  <template #default="{ close }">
+                    <div class="p-1 space-y-1">
+                      <button
+                        v-for="opt in availableHibernateDdlAutoOptions"
+                        :key="opt"
+                        type="button"
+                        class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                        :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }"
+                        @click="() => { updateConfig('hibernateDdlAuto', opt); close(); }"
+                      >
+                        {{ opt }}
+                      </button>
+                    </div>
+                  </template>
+                </GenesisInput>
+              </div>
+            </div>
+
+            <!-- COLONNE DROITE : PANNEAU ET ACTIONS -->
+            <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+              
+              <GenesisConfigurationPanel
+                :configurations="configManager.configurations.value"
+                :selected-config-id="configManager.selectedConfigId.value"
+                :filtered-configs="configManager.filteredConfigs.value"
+                :search-query="configManager.searchQuery.value"
+                :can-move-up="configManager.canMoveUp.value"
+                :can-move-down="configManager.canMoveDown.value"
+                @update:search-query="(val) => configManager.searchQuery.value = val"
+                @add="handleAddConfig"
+                @delete="handleDeleteConfig"
+                @rename="handleRenameConfig"
+                @toggle-visibility="configManager.toggleVisibility"
+                @move-up="configManager.moveUp"
+                @move-down="configManager.moveDown"
+                @select-configuration="handleSelectConfig"
+              />
+
+              <div class="flex gap-2 justify-end">
+                <GenesisButtonIcon 
+                  
+                  title="Exporter la configuration avancée sélectionnée"
+                  :disabled="!configManager.selectedConfigId.value"
+                  @click="handleExportConfig"
+                >
+                  <IconUpload />
+                </GenesisButtonIcon>
+
+                <GenesisButtonIcon 
+                  
+                  title="Exporter toutes les configurations avancées"
+                  @click="handleExportAllConfigs"
+                >
+                  <IconSave />
+                </GenesisButtonIcon>
+              </div>
+
+            </div>
+          </div>
+        </GenesisDisclosure>
+      </div>
     </div>
-  </div>
+    <div class="w-1/2 h-full shrink-0">
+      <CarrouselPanel :slides="panelSlides" />
+    </div>
+  </main>
 </template>
 
 <script setup lang="ts">
@@ -368,6 +374,16 @@ import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions
 import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
 import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
 
+import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
+
+
+import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+
+const panelSlides: CarouselSlide[] = [
+  { color: '#3B82F6', label: 'Slide 1' },
+  { color: '#EF4444', label: 'Slide 2' },
+  { color: '#10B981', label: 'Slide 3' },
+];
 // ============================================================================
 // 1. EMITS & CONSTANTES
 // ============================================================================

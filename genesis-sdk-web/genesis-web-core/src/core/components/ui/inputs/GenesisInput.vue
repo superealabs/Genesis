@@ -38,7 +38,7 @@
         <!-- ═══ CAS SELECT ═══ -->
         <template v-else-if="type === 'select'">
             <GenesisDropdown
-                :trigger-variant="variant === 'secondary' ? 'secondary' : 'primary'"
+                :trigger-variant="variant"
                 :trigger-size="size"
                 :trigger-disabled="disabled"
                 match-trigger-width
@@ -72,7 +72,7 @@
                 <Combobox v-model="internalSelected" @update:modelValue="handleComboboxSelect" nullable>
                     <div class="relative">
                         <div
-                            class="relative w-full cursor-default overflow-hidden rounded border transition-all duration-200 focus-within:ring-1 focus-within:ring-accent"
+                            class="relative w-full cursor-default overflow-hidden rounded border transition-all duration-200"
                             :class="[
                                 containerSizeClasses,
                                 containerShapeClasses,
@@ -80,11 +80,11 @@
                                 { 'opacity-50': disabled }
                             ]"
                         >
-                            <div class="flex pl-2 items-center">
+                            <div class="flex h-full pl-2 items-center">
                                 <IconSearch />
                                 <ComboboxInput
-                                    class="w-full bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed pl-0"
-                                    :class="[inputSizeClasses, inputPaddingClasses]"
+                                    class="w-full h-full bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed pl-0"
+                                    :class="inputPaddingClasses"
                                     :disabled="disabled"
                                     :placeholder="placeholder"
                                     :displayValue="(item: any) => item ? getOptionLabel(item) : (multiChoice ? comboboxQuery : '')"
@@ -105,7 +105,7 @@
                             @after-leave="comboboxQuery = ''"
                         >
                             <ComboboxOptions
-                                class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md bg-bg-light dark:bg-bg-dark border border-secondary py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
+                                class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 text-base sm:text-sm"
                             >
                                 <div
                                     v-if="filteredOptions.length === 0 && comboboxQuery !== ''"
@@ -165,7 +165,7 @@
         <!-- ═══ CAS TEXTAREA (Multi-ligne redimensionnable) ═══ -->
         <template v-else-if="type === 'textarea'">
             <div
-                class="flex flex-col min-h-0 overflow-hidden border border-secondary rounded-lg bg-bg-dark/30 relative transition-all duration-200 focus-within:ring-1 focus-within:ring-accent"
+                class="flex flex-col min-h-0 overflow-hidden border rounded-lg relative transition-all duration-200"
                 :class="[containerVariantClasses, { 'opacity-50': disabled }]"
                 :style="resizeStyle"
             >
@@ -180,11 +180,11 @@
                 
                 <!-- Handle de redimensionnement vertical -->
                 <div 
-                    class="absolute bottom-0 left-0 right-0 h-3 py-3 cursor-ns-resize flex items-center justify-center hover:bg-accent/20 transition-colors z-20 rounded-b-lg"
+                    class="absolute bottom-0 left-0 right-0 h-3 py-3 cursor-ns-resize flex items-center justify-center transition-colors z-20 rounded-b-lg"
                     @mousedown="startResizeBottom"
                     title="Redimensionner verticalement"
                 >
-                    <IconDragY class="text-text-muted opacity-50 hover:opacity-100" :size="20" />
+                    <IconDragY class="text-neutral-light hover:text-primary hover:opacity-100" :size="20" />
                 </div>
             </div>
         </template>
@@ -198,9 +198,9 @@
                         <slot name="outer-left" />
                     </span>
 
-                    <!-- Container input -->
+                    <!-- Container input : hauteur imposée (bordure comprise), texte et icônes via CONTROL_SIZES -->
                     <div
-                        class="inline-flex items-center flex-1 border transition-all duration-200 focus-within:ring-1 focus-within:ring-accent"
+                        class="inline-flex items-center flex-1 border transition-all duration-200"
                         :class="[
                             containerSizeClasses,
                             containerShapeClasses,
@@ -213,10 +213,10 @@
                             <slot name="left" />
                         </span>
 
-                        <!-- Input natif -->
+                        <!-- Input natif : prend la hauteur du conteneur, hérite de sa taille de texte -->
                         <input
-                            class="flex-1 min-w-0 bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed"
-                            :class="[inputSizeClasses, inputPaddingClasses]"
+                            class="flex-1 min-w-0 h-full bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed"
+                            :class="inputPaddingClasses"
                             :disabled="disabled"
                             :placeholder="placeholder"
                             :type="type === 'color' || type === 'file' ? 'text' : type"
@@ -228,13 +228,13 @@
                         <!-- Slot droit intérieur -->
                         <span class="flex items-center flex-shrink-0 text-muted" :class="slotPaddingClasses">
                             <template v-if="type === 'file'">
-                                <GenesisButtonIcon size="xs" variant="tertiary" :disabled="disabled" @click.stop="$emit('browse', accept)">
+                                <GenesisButtonIcon :size="actionButtonSize" :class="actionButtonClass" variant="tertiary" :disabled="disabled" @click.stop="$emit('browse', accept)">
                                     <IconFolder />
                                 </GenesisButtonIcon>
                             </template>
 
                             <template v-else-if="type === 'path'">
-                                <GenesisButtonIcon size="xs" variant="tertiary" :disabled="disabled" @click.stop="$emit('request-folder-path')">
+                                <GenesisButtonIcon :size="actionButtonSize" :class="actionButtonClass" variant="tertiary" :disabled="disabled" @click.stop="$emit('request-folder-path')">
                                     <IconFolder />
                                 </GenesisButtonIcon>
                             </template>
@@ -242,7 +242,8 @@
                             <template v-else-if="type === 'color'">
                                 <input
                                     type="color"
-                                    class="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
+                                    class="p-0 border-0 rounded cursor-pointer bg-transparent"
+                                    :class="colorPickerClass"
                                     :value="String(modelValue)"
                                     :disabled="disabled"
                                     @input="handleColorWheelInput"
@@ -250,7 +251,7 @@
                             </template>
 
                             <template v-else-if="multiChoice">
-                                <GenesisButtonIcon size="xs" variant="tertiary" :disabled="!modelValue" @click.stop="handleAddChoice">
+                                <GenesisButtonIcon :size="actionButtonSize" :class="actionButtonClass" variant="tertiary" :disabled="!modelValue" @click.stop="handleAddChoice">
                                     <IconPlus />
                                 </GenesisButtonIcon>
                             </template>
@@ -292,6 +293,12 @@ import IconFolder from '@genesis-labs/web-core/core/components/ui/icons/IconFold
 import IconSearch from '../icons/IconSearch.vue';
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable.ts';
 import IconDragY from '../icons/IconDragY.vue';
+import {
+    CONTROL_SIZES,
+    INPUT_ACTION_SIZES,
+    type UI_Variant,
+    type UI_Size_Unit
+} from '@genesis-labs/web-core/core/config/ui.config';
 
 // ✅ AJOUT : 'combobox' au type
 export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean' | 'color' | 'select' | 'file' | 'checkbox-3-state' | 'path' | 'textarea' | 'combobox';
@@ -301,9 +308,9 @@ interface Props {
     placeholder?: string;
     type?: InputType;
     disabled?: boolean;
-    variant?: 'primary' | 'secondary';
+    variant?: UI_Variant;
     shape?: 'rectangle' | 'pill';
-    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+    size?: UI_Size_Unit;
     fillWidth?: boolean;
     label?: string;
     isMandatory?: boolean;
@@ -322,7 +329,7 @@ const props = withDefaults(defineProps<Props>(), {
     placeholder: '',
     type: 'text',
     disabled: false,
-    variant: 'primary',
+    variant: 'neutral',
     shape: 'rectangle',
     size: 'md',
     fillWidth: false,
@@ -432,55 +439,54 @@ function handleAddChoice() {
     emit('update:modelValue', '');
 }
 
-// ═══ Classes ═══
+// ═══ Tokens de la taille courante (échelle unique, voir ui.config.ts) ═══
+const tokens = computed(() => CONTROL_SIZES[props.size]);
+
 const hasRightContent = computed(() =>
     hasRightSlot.value || props.multiChoice || props.type === 'color' || props.type === 'file' || props.type === 'path'
 );
 
-const inputSizeClasses = computed(() => ({
-    xs:   'text-[10px] [&_svg]:!w-3.5 [&_svg]:!h-3.5',
-    sm:   'text-xs     [&_svg]:!w-4   [&_svg]:!h-4',
-    md:   'text-sm     [&_svg]:!w-5   [&_svg]:!h-5',
-    lg:   'text-base   [&_svg]:!w-6   [&_svg]:!h-6',
-    xl:   'text-lg     [&_svg]:!w-7   [&_svg]:!h-7',
-    '2xl':'text-xl     [&_svg]:!w-8   [&_svg]:!h-8',
-}[props.size]));
-
-const inputPaddingClasses = computed(() => {
-    const left  = hasLeftSlot.value;
-    const right = hasRightContent.value;
-    const pxLeft  = left  ? '' : ({ xs: 'pl-2', sm: 'pl-3', md: 'pl-4', lg: 'pl-5', xl: 'pl-6', '2xl': 'pl-7' })[props.size];
-    const pxRight = right ? '' : ({ xs: 'pr-2', sm: 'pr-3', md: 'pr-4', lg: 'pr-5', xl: 'pr-6', '2xl': 'pr-7' })[props.size];
-    return `${pxLeft} ${pxRight}`.trim();
+/**
+ * Conteneur : hauteur IMPOSÉE (bordure comprise), taille de texte et d'icônes.
+ * Les `[&_svg]` sont posés ici (et non sur l'<input> natif, qui ne peut pas
+ * contenir de svg) : ils atteignent donc les icônes des slots et des boutons internes.
+ */
+const containerSizeClasses = computed(() => {
+    const t = tokens.value;
+    return `${t.box} ${t.text} ${t.icon}`;
 });
 
-const slotPaddingClasses = computed(() => ({
-    xs:   'px-1.5',
-    sm:   'px-2',
-    md:   'px-2.5',
-    lg:   'px-3',
-    xl:   'px-3.5',
-    '2xl':'px-4',
-}[props.size]));
+/** Padding de l'<input> natif : uniquement côté sans slot (sinon c'est le slot qui espace) */
+const inputPaddingClasses = computed(() => {
+    const t = tokens.value;
+    return `${hasLeftSlot.value ? '' : t.pl} ${hasRightContent.value ? '' : t.pr}`.trim();
+});
 
-const containerSizeClasses = computed(() => ({
-    xs:   'h-fit py-0.5',
-    sm:   'h-fit py-1',
-    md:   'h-fit py-1.5',
-    lg:   'h-fit py-2',
-    xl:   'h-fit py-2.5',
-    '2xl':'h-fit py-3',
-}[props.size]));
+const slotPaddingClasses = computed(() => tokens.value.slotPx);
+
+/** Bouton d'action interne (dossier, ajout) : proportionné à l'input, jamais source de hauteur */
+const actionButtonSize = computed(() => INPUT_ACTION_SIZES[props.size]);
+// En xs, l'intérieur de l'input fait 22px (24px - bordure) : on réduit le bouton à 20px
+const actionButtonClass = computed(() => props.size === 'xs' ? '!w-5 !h-5' : '');
+const colorPickerClass = computed(() => props.size === 'xs' ? 'w-5 h-5' : 'w-6 h-6');
 
 const containerShapeClasses = computed(() => ({
     rectangle: 'rounded',
     pill:      'rounded-full',
 }[props.shape]));
 
-const containerVariantClasses = computed(() => ({
-    primary:   'bg-transparent border-secondary hover:border-accent',
-    secondary: 'bg-transparent border-bg-light hover:border-secondary',
-}[props.variant]));
+const containerVariantClasses = computed(() => {
+    // Note: 'focus-within' est utilisé car la bordure est sur le div conteneur, pas sur l'input natif.
+    const variants = {
+        accent: 'bg-accent/5 border-accent text-accent-900 placeholder:text-accent-700 hover:border-accent focus-within:border-accent focus-within:ring-1 focus-within:ring-accent',
+        primary: 'bg-transparent ',
+        secondary: 'bg-bg-secondary',
+        tertiary: 'bg-transparent', // Style souligné
+        neutral: 'bg-transparent border-neutral-light-genesis'
+    };
+
+    return variants[props.variant] || variants.neutral;
+});
 
 const fillWidthClasses = computed(() => props.fillWidth ? 'w-full' : 'w-fit');
 const layoutClasses = computed(() => props.oneLine ? 'flex-row items-center' : 'flex-col');

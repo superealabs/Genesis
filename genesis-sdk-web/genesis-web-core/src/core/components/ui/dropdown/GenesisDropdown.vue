@@ -128,11 +128,11 @@ const props = withDefaults(defineProps<{
   forceDown?: boolean;
 }>(), {
   align: 'right',
-  dropdownSize: 'md',
+  dropdownSize: 'lg',
   hideChevron: false,
   matchTriggerWidth: false,
-  triggerVariant: 'secondary',
-  triggerSize: 'md',
+  triggerVariant: 'neutral',
+  triggerSize: 'lg',
   triggerDisabled: false,
   openAtHover: false,
   label: '',
@@ -163,11 +163,27 @@ watch(internalOpen, (newValue) => {
 // 3. COMPUTEDS & LOGIQUE DE POSITIONNEMENT
 // ============================================================================
 
+/**
+ * Détermine les classes de couleur (fond et bordure) du menu déroulant 
+ * en fonction de la variante du trigger pour une cohérence visuelle totale.
+ */
+const menuItemsVariantClasses = computed(() => {
+  const variants = {
+    accent: 'bg-accent text-accent-900 border border-accent',
+    primary: 'bg-primary text-text border border-primary',
+    secondary: 'bg-bg-secondary text-text border border-secondary',
+    tertiary: 'bg-bg-secondary text-text border border-secondary',
+    neutral: 'bg-bg-neutral-genesis text-text'
+  };
+  return variants[props.triggerVariant] || variants.neutral;
+});
+
 const menuItemsClasses = computed(() => {
-  // ✅ Uniquement absolute, plus de condition 'fixed'
-  const base = `absolute z-50 bg-bg-secondary rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto`;
+  const base = `absolute z-50 rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto`;
   const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
-  return `${base} ${size}`;
+  
+  // ✅ Ajout des classes de variante au style de base
+  return `${base} ${size} ${menuItemsVariantClasses.value}`;
 });
 
 const dropdownStyle = computed(() => {

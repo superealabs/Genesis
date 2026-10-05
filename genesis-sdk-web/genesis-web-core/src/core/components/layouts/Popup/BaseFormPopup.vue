@@ -6,7 +6,7 @@
         @click.self="handleOverlayClick()"
     >
         <div
-            class="bg-bg-dark text-text rounded-lg w-full flex flex-col relative"
+            class="bg-bg-light text-text rounded-lg w-full flex flex-col relative"
             :class="[sizeClasses, { 'pointer-events-auto': !showOverlay }]"
             :style="[draggableStyle, resizeStyle]"
         >
@@ -37,7 +37,7 @@
             </div>
 
             <!-- Contenu -->
-            <div :class="[paddingClasses.content, 'flex flex-col flex-1 overflow-y-auto min-h-0']">
+            <div :class="[paddingClasses.content, 'flex flex-col flex-1 min-h-0']">
                 <slot />
             </div>
         </div>

@@ -5,8 +5,14 @@
     as="div"
     class="inline-flex flex-col gap-4"
   >
-    <!-- Conteneur du Segmented Control -->
-    <TabList class="inline-flex rounded-md p-1 gap-1 bg-bg-secondary" role="group">
+    <!-- Conteneur du Segmented Control :
+         sa hauteur EXTÉRIEURE est celle de l'échelle unique (CONTROL_SIZES), comme un bouton ou un input
+         de la même taille. Le padding est compris dedans (box-border). -->
+    <TabList
+      class="inline-flex rounded-md gap-1 bg-bg-secondary"
+      :class="[tokens.box, paddingClasses]"
+      role="group"
+    >
       <Tab
         v-for="option in options"
         :key="String(option.value)"
@@ -14,7 +20,10 @@
         v-slot="{ selected }"
         as="template"
       >
+        <!-- Même `size` que le conteneur : texte, icônes et padding horizontal viennent de la même table.
+             `!h-auto` remplace la hauteur fixe du bouton : il remplit l'espace restant (hauteur - padding). -->
         <GenesisButton
+          class="!h-auto"
           :variant="selected ? 'primary' : 'tertiary'"
           :size="size"
           :disabled="disabled || option.disabled"
@@ -47,8 +56,9 @@
 <script setup lang="ts">
 import { computed, type Component } from 'vue';
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
-// 👇 Import du composant source de vérité
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import { CONTROL_SIZES, type UI_Size_Unit } from '@genesis-labs/web-core/core/config/ui.config';
+
 
 interface SegmentedOption {
   label?: string;
@@ -60,19 +70,36 @@ interface SegmentedOption {
 interface Props {
   modelValue: string | number;
   options: SegmentedOption[];
-  // 👇 On reprend exactement les mêmes tailles que GenesisButton
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  /** Hauteur extérieure du composant : même échelle que GenesisButton / GenesisInput */
+  size?: UI_Size_Unit;
   disabled?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  size: 'sm',
+  size: 'md',
   disabled: false
 });
 
 const emit = defineEmits<{
   'update:modelValue': [value: string | number];
 }>();
+
+// ═══ Tokens de la taille courante (échelle unique, voir ui.config.ts) ═══
+const tokens = computed(() => CONTROL_SIZES[props.size]);
+
+/**
+ * Marge entre le conteneur et les boutons internes.
+ * Hauteur interne obtenue : xs 20 · sm 24 · md 24 · lg 32 · xl 40 · 2xl 48 px.
+ */
+const SEGMENT_PADDING: Record<UI_Size_Unit, string> = {
+  xs: 'p-0.5',
+  sm: 'p-0.5',
+  md: 'p-1',
+  lg: 'p-1',
+  xl: 'p-1',
+  '2xl': 'p-1',
+};
+const paddingClasses = computed(() => SEGMENT_PADDING[props.size]);
 
 // ═══ Logique Headless UI : Conversion valeur ↔ index ═══
 const selectedIndex = computed(() => {
