@@ -13,7 +13,8 @@ extra["versions"] = mapOf(
     "kotlin" to "1.9.24",
     "jackson" to "2.18.1",
     "intellijPlugin" to "1.17.4",
-    "javaparser" to "3.25.4"
+    "javaparser" to "3.25.4",
+    "jooq" to "3.21.7"
 )
 
 subprojects {
@@ -39,6 +40,7 @@ subprojects {
 
         implementation("org.jetbrains:annotations:24.0.1")
         implementation("com.github.javaparser:javaparser-core:${versions["javaparser"]}")
+        implementation("org.jooq:jooq:${versions["jooq"]}")
 
 
         // Testing

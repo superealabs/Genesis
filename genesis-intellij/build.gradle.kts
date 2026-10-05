@@ -26,13 +26,13 @@ intellijPlatform {
     pluginConfiguration {
         id.set("org.labs.genesis")
         name.set("Genesis")
-        
+
         ideaVersion {
             sinceBuild.set("251")
             untilBuild.set("262.*")
         }
     }
-    
+
     signing {
         certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
         privateKey.set(System.getenv("PRIVATE_KEY"))
