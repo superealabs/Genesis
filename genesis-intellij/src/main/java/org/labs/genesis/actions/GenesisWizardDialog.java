@@ -102,4 +102,10 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         }
         super.doOKAction();
     }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    protected String getHelpID() {
+        return null;
+    }
 }

@@ -14,10 +14,10 @@ dependencies {
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${versions["jackson"]}")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
     implementation("com.mysql:mysql-connector-j:9.0.0")
-    implementation("org.postgresql:postgresql:42.7.3")
-    implementation("com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11")
+    implementation("org.postgresql:postgresql:42.7.12")
+    implementation("com.microsoft.sqlserver:mssql-jdbc:12.8.2.jre11")
     implementation("com.oracle.database.jdbc:ojdbc8:23.5.0.24.07")
-    implementation("org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r")
+    implementation("org.eclipse.jgit:org.eclipse.jgit:6.10.1.202505221210-r")
 
     // Logging
     testImplementation("org.slf4j:slf4j-simple:2.0.12")

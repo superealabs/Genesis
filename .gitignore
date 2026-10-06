@@ -17,6 +17,7 @@ generated
 *.ipr
 out/
 **/out/
+*.log
 
 ### Eclipse ###
 .apt_generated
@@ -48,4 +49,11 @@ bin/
 
 ### Ny Antema logfix
 /_log-fix/
+
+
+genesis-vsc\node_modules
+genesis-vsc\webview-ui\node_modules
+
 genesis-sdk-web
+
+genesis-vsc

@@ -1,3 +1,4 @@
+import org.jetbrains.intellij.platform.gradle.tasks.VerifyPluginTask
 val projectVersion = rootProject.version
 
 plugins {
@@ -47,5 +48,16 @@ intellijPlatform {
 tasks {
     buildSearchableOptions {
         enabled = false
+    }
+
+    // Configuration du vérificateur pour la version 2.x du plugin
+    verifyPlugin {
+        failureLevel.set(listOf(
+            VerifyPluginTask.FailureLevel.COMPATIBILITY_PROBLEMS,
+            VerifyPluginTask.FailureLevel.INVALID_PLUGIN,
+            VerifyPluginTask.FailureLevel.INTERNAL_API_USAGES,
+            VerifyPluginTask.FailureLevel.MISSING_DEPENDENCIES
+            // DEPRECATED_API et SCHEDULED_FOR_REMOVAL_API_USAGES sont volontairement exclus
+        ))
     }
 }

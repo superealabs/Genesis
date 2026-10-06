@@ -214,8 +214,13 @@ public class InitializationWizardStep extends ModuleWizardStep {
                 updateProjectCounterLabel();
 
             }
-        } catch (ConfigurationException ex) {
-            JOptionPane.showMessageDialog(newProjectPanel.getMainPanel(), ex.getMessage(), "Validation Error", JOptionPane.ERROR_MESSAGE);
+        }  catch (ConfigurationException ex) {
+            JOptionPane.showMessageDialog(
+                newProjectPanel.getMainPanel(),
+                ex.getLocalizedMessage(),
+                "Validation Error",
+                JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 

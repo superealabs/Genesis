@@ -7345,9 +7345,9 @@
       import { BaseModel } from './BaseModel'
       import { type EntitySearchField } from './EntityModel'{{#if containsForeignKey}}
       import { createSelectSearchFunction, createMulticriteriatSearchFunction } from './SelectOption'{{/if}}
-      {{#each fieldsFK}}{{#if this.type != className}}
-      import { ${majStart(this.type)} } from './${majStart(this.type)}Model'{{/if}}
-      import * as ${minStart(this.type)}Service from '@/services/${majStart(this.type)}Service'
+      {{#each fkTypes}}{{#if this != className}}
+      import { ${majStart(this)} } from './${majStart(this)}Model'{{/if}}
+      import * as ${minStart(this)}Service from '@/services/${majStart(this)}Service'
       {{/each}}{{removeLine}}
     exports: |
       export interface I${majStart(className)} {

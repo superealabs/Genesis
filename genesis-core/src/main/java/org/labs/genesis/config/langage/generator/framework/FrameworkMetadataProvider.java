@@ -184,10 +184,17 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
+        List<String> fkTypes = fkList.stream()
+                .map(fk -> fk.get("type").toString())
+                .distinct()
+                .toList();
+
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
-        metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
+        metadata.put("fieldsFK", fkList);
+        metadata.put("fkTypes", fkTypes);
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
@@ -196,10 +203,17 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata, language);
+        List<String> fkTypes = fkList.stream()
+                .map(fk -> fk.get("type").toString())
+                .distinct()
+                .toList();
+
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("fields", getFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
-        metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+        metadata.put("fieldsFK", fkList);
+        metadata.put("fkTypes", fkTypes);
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
