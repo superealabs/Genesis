@@ -54,6 +54,10 @@ bin/
 genesis-vsc\node_modules
 genesis-vsc\webview-ui\node_modules
 
+
+genesis-vsc\node_modules
+genesis-vsc\webview-ui\node_modules
+
 genesis-sdk-web
 
 genesis-vsc
