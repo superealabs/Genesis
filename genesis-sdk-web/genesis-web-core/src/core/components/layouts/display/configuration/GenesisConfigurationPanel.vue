@@ -45,13 +45,7 @@
                 </div>
 
                 <!-- Handle déplacé ICI, à l'intérieur de la colonne gauche -->
-                <div 
-                    class="absolute bottom-0 left-0 right-0 py-2 h-3 cursor-ns-resize flex items-center justify-center hover:bg-accent/20 transition-colors z-20 rounded-b-lg"
-                    @mousedown="startResizeBottom"
-                    title="Redimensionner verticalement"
-                >
-                    <IconDragY class="text-text-muted opacity-50 hover:opacity-100" :size="20" />
-                </div>
+                <GenesisResizeHandle @resize-start="startResizeBottom" />
             </div>
 
             <!-- COLONNE DROITE : Boutons de configuration (Exclusivement GenesisButtonIcon) -->
@@ -125,8 +119,7 @@ import GenesisItemConfig from './GenesisItemConfig.vue';
 import type { ConfigurationItem } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
 
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
-import IconDragY from '@genesis-labs/web-core/core/components/ui/icons/IconDragY.vue';
-
+import GenesisResizeHandle from '../../../ui/actions/GenesisResizeHandle.vue';
 
 const props = defineProps<{
     configurations: ConfigurationItem[];

@@ -71,7 +71,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
   xs: {
     box: 'h-6',
     square: 'w-6 h-6',
-    text: 'text-[10px]',
+    text: 'text-[8px]',
     icon: '[&_svg]:!w-3.5 [&_svg]:!h-3.5',
     rightIcon: '[&_.right-part_svg]:!w-3 [&_.right-part_svg]:!h-3',
     px: 'px-2.5',
@@ -84,7 +84,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
   sm: {
     box: 'h-7',
     square: 'w-7 h-7',
-    text: 'text-xs',
+    text: 'text-[8px]',
     icon: '[&_svg]:!w-4 [&_svg]:!h-4',
     rightIcon: '[&_.right-part_svg]:!w-3.5 [&_.right-part_svg]:!h-3.5',
     px: 'px-3.5',
@@ -97,7 +97,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
   md: {
     box: 'h-8',
     square: 'w-8 h-8',
-    text: 'text-sm',
+    text: 'text-xs',
     icon: '[&_svg]:!w-5 [&_svg]:!h-5',
     rightIcon: '[&_.right-part_svg]:!w-4 [&_.right-part_svg]:!h-4',
     px: 'px-4',
@@ -110,7 +110,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
   lg: {
     box: 'h-10',
     square: 'w-10 h-10',
-    text: 'text-base',
+    text: 'text-xs',
     icon: '[&_svg]:!w-6 [&_svg]:!h-6',
     rightIcon: '[&_.right-part_svg]:!w-5 [&_.right-part_svg]:!h-5',
     px: 'px-5',
@@ -123,7 +123,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
   xl: {
     box: 'h-12',
     square: 'w-12 h-12',
-    text: 'text-lg',
+    text: 'text-sm',
     icon: '[&_svg]:!w-7 [&_svg]:!h-7',
     rightIcon: '[&_.right-part_svg]:!w-6 [&_.right-part_svg]:!h-6',
     px: 'px-6',
@@ -136,7 +136,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
   '2xl': {
     box: 'h-14',
     square: 'w-14 h-14',
-    text: 'text-xl',
+    text: 'text-md',
     icon: '[&_svg]:!w-8 [&_svg]:!h-8',
     rightIcon: '[&_.right-part_svg]:!w-7 [&_.right-part_svg]:!h-7',
     px: 'px-7',
@@ -164,6 +164,57 @@ export const INPUT_ACTION_SIZES: Record<UI_Size_Unit, UI_Size_Unit> = {
 };
 
 // ============================================================================
+// STYLE DES CHAMPS (GenesisInput : texte, select, combobox)
+// ============================================================================
+//
+// Source unique du look d'un champ, par variante. Elle est lue par :
+//  - le conteneur des inputs texte, textarea et combobox  -> `container`
+//  - le déclencheur d'un select (qui est un bouton)       -> `container` + `trigger`
+//  - le panneau déroulant d'un select / d'un combobox     -> `menu`
+//
+// Ainsi un champ, son déclencheur et son menu restent toujours cohérents.
+// ============================================================================
+
+export interface FieldVariantTokens {
+  /** Fond, bordure, couleur du texte et états du champ (inclut `border`) */
+  container: string;
+  /** Compléments pour un déclencheur de type bouton : focus clavier et état « ouvert » */
+  trigger: string;
+  /** Panneau déroulant (inclut `border`). Un fond opaque est nécessaire : il se superpose au contenu. */
+  menu: string;
+}
+
+export const FIELD_VARIANTS: Record<UI_Variant, FieldVariantTokens> = {
+  accent: {
+    container: 'border bg-accent/5 border-accent text-accent-900 placeholder:text-accent-700 hover:border-accent focus-within:border-accent focus-within:ring-1 focus-within:ring-accent',
+    // `focus-within` ne se déclenche pas sur un bouton : focus-visible + aria-expanded (posé par Headless UI)
+    trigger: 'focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent focus-visible:ring-offset-0 [&[aria-expanded=true]]:border-accent [&[aria-expanded=true]]:ring-1 [&[aria-expanded=true]]:ring-accent [&[aria-expanded=true]]:ring-offset-0',
+    // Fond clair opaque + voile accent par-dessus (un simple bg-accent/10 laisserait voir le contenu dessous)
+    menu: 'border border-accent text-accent-test bg-bg-light bg-gradient-to-b from-accent/10 to-accent/10',
+  },
+  primary: {
+    container: 'border bg-transparent',
+    trigger: 'text-primary-text',
+    menu: 'border border-primary text-text bg-bg-light',
+  },
+  secondary: {
+    container: 'border bg-bg-secondary',
+    trigger: 'text-text',
+    menu: 'border border-secondary text-text bg-bg-secondary',
+  },
+  tertiary: {
+    container: 'border bg-transparent',
+    trigger: 'text-text',
+    menu: 'border border-secondary text-text bg-bg-light',
+  },
+  neutral: {
+    container: 'border bg-transparent border-neutral-light-genesis',
+    trigger: 'text-text',
+    menu: 'border border-neutral-light-genesis text-text bg-bg-dark',
+  },
+};
+
+// ============================================================================
 // CONFIGURATION DES BOUTONS (GenesisButton)
 // ============================================================================
 
@@ -179,26 +230,36 @@ export const BUTTON_RIGHT_ICON_POSITIONS = {
 /**
  * Styles des variantes de boutons.
  * Sépare les états 'hover' (survol activé) et 'default' (survol désactivé).
+ *
+ * 'none' : aucune couleur. Le bouton garde sa taille (CONTROL_SIZES) mais le style
+ * visuel est fourni de l'extérieur (ex. déclencheur d'un select, voir FIELD_VARIANTS).
  */
 export const BUTTON_VARIANTS = {
   accent: {
-    hover: 'bg-accent font-medium text-accent-900 hover:bg-accent/80 disabled:hover:bg-accent disabled:hover:shadow-none',
-    default: 'bg-accent text-accent-900',
+    hover: '',
+    default: 'bg-accent text-accent-text font-medium hover:bg-accent/80 disabled:hover:bg-accent disabled:hover:shadow-none',
   },
   primary: {
-    hover: 'bg-primary font-medium text-text hover:bg-primary/80 disabled:hover:bg-primary disabled:hover:shadow-none',
-    default: 'bg-primary text-text',
+    hover: '',
+    default: 'bg-primary font-medium text-primary-text hover:bg-primary/80 disabled:hover:bg-primary disabled:hover:shadow-none',
   },
   secondary: {
-    hover: 'bg-bg-secondary font-medium text-secondary disabled:hover:bg-transparent',
-    default: 'bg-transparent text-secondary',
+    hover: '',
+    default: 'bg-bg-secondary font-medium text-secondary disabled:hover:bg-transparent',
   },
   tertiary: {
-    hover: 'bg-transparent font-medium text-muted hover:bg-hover-ghost hover:text-secondary',
-    default: 'bg-transparent text-text',
+    hover: '',
+    default: 'font-medium text-muted hover:bg-bg-light hover:text-text',
   },
   neutral: {
-    hover: 'bg-bg-neutral-genesis font-medium text-gray-800 disabled:hover:bg-transparent',
-    default: 'neutral-light-genesis text-gray-800',
-  }
+    hover: '',
+    default: 'bg-bg-secondary font-medium text-gray-800 disabled:hover:bg-transparent',
+  },
+  none: {
+    hover: '',
+    default: '',
+  },
 } as const;
+
+/** Toutes les variantes acceptées par un bouton : les variantes UI + 'none' */
+export type ButtonVariant = keyof typeof BUTTON_VARIANTS;

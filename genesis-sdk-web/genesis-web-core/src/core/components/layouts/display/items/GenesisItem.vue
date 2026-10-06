@@ -143,17 +143,17 @@ const initials = computed(() => {
 const containerClasses = computed(() => {
     // Grid : la sélection est signalée par le remplissage animé du logo + texte + mascotte
     if (display.value === 'grid') {
-        return 'bg-bg-light hover:border-primary/50';
+        return 'bg-bg-light border-b-4 border-bg hover:border-primary/50 active:border active:border-transparent';
     }
     // List : même principe que grid (pas de changement de fond à la sélection)
     if (display.value === 'list') {
-        return 'bg-bg-light';
+        return 'bg-bg-light border-b-4 border-bg hover:border-primary/50 active:border active:border-transparent';
     }
     // Table : comportement inchangé (fond accent à la sélection)
     return props.selected ? 'bg-accent/10' : 'bg-bg-light hover:bg-bg-light/50';
 });
 
-const badgeClasses = 'w-5 h-5 rounded-full bg-accent text-bg text-xs font-bold flex items-center justify-center shadow-sm';
+const badgeClasses = 'w-5 h-5 rounded-full bg-primary text-bg text-xs text-text font-bold flex items-center justify-center shadow-sm';
 
 const layoutClasses = computed(() => {
     const hasComp = props.showComplementary && hasComplementary.value;

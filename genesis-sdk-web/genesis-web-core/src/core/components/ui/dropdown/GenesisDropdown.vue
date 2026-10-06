@@ -30,6 +30,7 @@
             :size="triggerSize"
             :disabled="triggerDisabled"
             :use-default-text="false"
+            :class="triggerClass"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
@@ -53,6 +54,7 @@
             :size="triggerSize"
             :disabled="triggerDisabled"
             :use-default-text="false"
+            :class="triggerClass"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
@@ -73,6 +75,7 @@
             :variant="triggerVariant"
             :size="triggerSize"
             :disabled="triggerDisabled"
+            :class="triggerClass"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <slot name="triggerIcon" />
@@ -108,7 +111,7 @@ import { Menu, MenuButton, MenuItems } from '@headlessui/vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
-import { MENU_SIZES, type MenuSize, type UI_Size_Unit, type UI_Variant } from '@genesis-labs/web-core/core/config/ui.config';
+import { MENU_SIZES, type MenuSize, type UI_Size_Unit, type ButtonVariant } from '@genesis-labs/web-core/core/config/ui.config';
 
 // ============================================================================
 // 1. PROPS
@@ -119,9 +122,14 @@ const props = withDefaults(defineProps<{
   dropdownSize?: MenuSize | '3xl';
   hideChevron?: boolean;
   matchTriggerWidth?: boolean;
-  triggerVariant?: UI_Variant;
+  /** Variante du déclencheur. 'none' = aucune couleur (le style vient de `triggerClass`). */
+  triggerVariant?: ButtonVariant;
   triggerSize?: UI_Size_Unit;
   triggerDisabled?: boolean;
+  /** Classes ajoutées au déclencheur (ex. style de champ fourni par GenesisInput) */
+  triggerClass?: string;
+  /** Classes de couleur du panneau : remplacent celles déduites de `triggerVariant` */
+  menuClass?: string;
   openAtHover?: boolean;
   label?: string;
   isMandatory?: boolean;
@@ -134,6 +142,8 @@ const props = withDefaults(defineProps<{
   triggerVariant: 'neutral',
   triggerSize: 'lg',
   triggerDisabled: false,
+  triggerClass: '',
+  menuClass: '',
   openAtHover: false,
   label: '',
   isMandatory: false,
@@ -164,26 +174,27 @@ watch(internalOpen, (newValue) => {
 // ============================================================================
 
 /**
- * Détermine les classes de couleur (fond et bordure) du menu déroulant 
- * en fonction de la variante du trigger pour une cohérence visuelle totale.
+ * Couleurs (fond et bordure) du menu déduites de la variante du trigger.
+ * Utilisé seulement quand aucun `menuClass` n'est fourni.
  */
 const menuItemsVariantClasses = computed(() => {
-  const variants = {
-    accent: 'bg-accent text-accent-900 border border-accent',
-    primary: 'bg-primary text-text border border-primary',
-    secondary: 'bg-bg-secondary text-text border border-secondary',
-    tertiary: 'bg-bg-secondary text-text border border-secondary',
-    neutral: 'bg-bg-neutral-genesis text-text'
+  const variants: Record<string, string> = {
+    accent: 'bg-bg-dark text-text',
+    primary: 'bg-bg-dark text-text',
+    secondary: 'bg-bg-dark text-text',
+    tertiary: 'bg-bg-dark text-text',
+    neutral: 'bg-bg-dark text-text'
   };
   return variants[props.triggerVariant] || variants.neutral;
 });
 
 const menuItemsClasses = computed(() => {
-  const base = `absolute z-50 rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto`;
+  const base = `absolute z-50 rounded-lg p-1 max-h-[40vh] overflow-y-auto border-2 border-bg-neutral-genesis`;
   const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
-  
-  // ✅ Ajout des classes de variante au style de base
-  return `${base} ${size} ${menuItemsVariantClasses.value}`;
+
+  // Un style fourni de l'extérieur (ex. champ de formulaire) prime sur celui du bouton
+  const colors = props.menuClass || menuItemsVariantClasses.value;
+  return `${base} ${size} ${colors}`;
 });
 
 const dropdownStyle = computed(() => {

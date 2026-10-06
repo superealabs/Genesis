@@ -9,7 +9,7 @@
             class="text-sm font-medium text-muted"
             :class="labelClasses"
         >
-            {{ label }}<span v-if="isMandatory" class="text-accent ml-0.5">*</span>
+            {{ label }}<span v-if="isMandatory" class="text-primary ml-0.5">*</span>
         </label>
 
         <!-- ═══ CAS BOOLEAN ═══ -->
@@ -35,10 +35,14 @@
             />
         </template>
 
-        <!-- ═══ CAS SELECT ═══ -->
+        <!-- ═══ CAS SELECT ═══
+             Le dropdown est indifférent au style : le déclencheur et le panneau reçoivent
+             le look du champ (FIELD_VARIANTS), identique à celui d'un input texte. -->
         <template v-else-if="type === 'select'">
             <GenesisDropdown
-                :trigger-variant="variant"
+                trigger-variant="none"
+                :trigger-class="selectTriggerClasses"
+                :menu-class="fieldMenuClasses"
                 :trigger-size="size"
                 :trigger-disabled="disabled"
                 match-trigger-width
@@ -72,7 +76,7 @@
                 <Combobox v-model="internalSelected" @update:modelValue="handleComboboxSelect" nullable>
                     <div class="relative">
                         <div
-                            class="relative w-full cursor-default overflow-hidden rounded border transition-all duration-200"
+                            class="relative w-full cursor-default overflow-hidden rounded transition-all duration-200"
                             :class="[
                                 containerSizeClasses,
                                 containerShapeClasses,
@@ -104,8 +108,10 @@
                             leaveTo="opacity-0"
                             @after-leave="comboboxQuery = ''"
                         >
+                            <!-- Panneau : même look que le champ (FIELD_VARIANTS) -->
                             <ComboboxOptions
-                                class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border py-1 text-base sm:text-sm"
+                                class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md py-1 text-base sm:text-sm shadow-lg"
+                                :class="fieldMenuClasses"
                             >
                                 <div
                                     v-if="filteredOptions.length === 0 && comboboxQuery !== ''"
@@ -124,7 +130,7 @@
                                     <li
                                         class="relative cursor-default select-none py-2 pl-3 pr-9"
                                         :class="{
-                                            'bg-accent/20 text-accent': active,
+                                            'bg-hover-ghost text-secondary': active,
                                             'text-text': !active,
                                         }"
                                     >
@@ -165,7 +171,7 @@
         <!-- ═══ CAS TEXTAREA (Multi-ligne redimensionnable) ═══ -->
         <template v-else-if="type === 'textarea'">
             <div
-                class="flex flex-col min-h-0 overflow-hidden border rounded-lg relative transition-all duration-200"
+                class="flex flex-col min-h-0 overflow-hidden rounded-lg relative transition-all duration-200"
                 :class="[containerVariantClasses, { 'opacity-50': disabled }]"
                 :style="resizeStyle"
             >
@@ -179,13 +185,7 @@
                 />
                 
                 <!-- Handle de redimensionnement vertical -->
-                <div 
-                    class="absolute bottom-0 left-0 right-0 h-3 py-3 cursor-ns-resize flex items-center justify-center transition-colors z-20 rounded-b-lg"
-                    @mousedown="startResizeBottom"
-                    title="Redimensionner verticalement"
-                >
-                    <IconDragY class="text-neutral-light hover:text-primary hover:opacity-100" :size="20" />
-                </div>
+                <GenesisResizeHandle @resize-start="startResizeBottom" />
             </div>
         </template>
 
@@ -200,7 +200,7 @@
 
                     <!-- Container input : hauteur imposée (bordure comprise), texte et icônes via CONTROL_SIZES -->
                     <div
-                        class="inline-flex items-center flex-1 border transition-all duration-200"
+                        class="inline-flex items-center flex-1 transition-all duration-200"
                         :class="[
                             containerSizeClasses,
                             containerShapeClasses,
@@ -226,7 +226,7 @@
                         />
 
                         <!-- Slot droit intérieur -->
-                        <span class="flex items-center flex-shrink-0 text-muted" :class="slotPaddingClasses">
+                        <span v-if="hasRightContent" class="flex items-center shrink-0 text-muted" :class="slotPaddingClasses">
                             <template v-if="type === 'file'">
                                 <GenesisButtonIcon :size="actionButtonSize" :class="actionButtonClass" variant="tertiary" :disabled="disabled" @click.stop="$emit('browse', accept)">
                                     <IconFolder />
@@ -292,9 +292,13 @@ import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.v
 import IconFolder from '@genesis-labs/web-core/core/components/ui/icons/IconFolder.vue';
 import IconSearch from '../icons/IconSearch.vue';
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable.ts';
-import IconDragY from '../icons/IconDragY.vue';
+
+import GenesisResizeHandle from '../actions/GenesisResizeHandle.vue';
+
+
 import {
     CONTROL_SIZES,
+    FIELD_VARIANTS,
     INPUT_ACTION_SIZES,
     type UI_Variant,
     type UI_Size_Unit
@@ -475,18 +479,19 @@ const containerShapeClasses = computed(() => ({
     pill:      'rounded-full',
 }[props.shape]));
 
-const containerVariantClasses = computed(() => {
-    // Note: 'focus-within' est utilisé car la bordure est sur le div conteneur, pas sur l'input natif.
-    const variants = {
-        accent: 'bg-accent/5 border-accent text-accent-900 placeholder:text-accent-700 hover:border-accent focus-within:border-accent focus-within:ring-1 focus-within:ring-accent',
-        primary: 'bg-transparent ',
-        secondary: 'bg-bg-secondary',
-        tertiary: 'bg-transparent', // Style souligné
-        neutral: 'bg-transparent border-neutral-light-genesis'
-    };
+// ═══ Look du champ : source unique FIELD_VARIANTS (voir ui.config.ts) ═══
+const fieldTokens = computed(() => FIELD_VARIANTS[props.variant] ?? FIELD_VARIANTS.neutral);
 
-    return variants[props.variant] || variants.neutral;
-});
+/** Fond, bordure et états du champ (input texte, textarea, combobox) */
+const containerVariantClasses = computed(() => fieldTokens.value.container);
+
+/** Déclencheur d'un select : même look que le champ + états adaptés à un bouton */
+const selectTriggerClasses = computed(() =>
+    `${fieldTokens.value.container} ${fieldTokens.value.trigger} ${containerShapeClasses.value}`
+);
+
+/** Panneau déroulant (select et combobox) : suit la variante du champ */
+const fieldMenuClasses = computed(() => fieldTokens.value.menu);
 
 const fillWidthClasses = computed(() => props.fillWidth ? 'w-full' : 'w-fit');
 const layoutClasses = computed(() => props.oneLine ? 'flex-row items-center' : 'flex-col');

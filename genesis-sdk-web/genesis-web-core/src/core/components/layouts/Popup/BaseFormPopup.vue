@@ -6,7 +6,7 @@
         @click.self="handleOverlayClick()"
     >
         <div
-            class="bg-bg-light text-text rounded-lg w-full flex flex-col relative"
+            class="bg-bg-dark text-text rounded-lg w-full flex flex-col relative"
             :class="[sizeClasses, { 'pointer-events-auto': !showOverlay }]"
             :style="[draggableStyle, resizeStyle]"
         >

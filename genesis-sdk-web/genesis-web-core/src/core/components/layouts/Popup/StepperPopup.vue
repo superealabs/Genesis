@@ -11,7 +11,7 @@
         <div class="flex flex-col flex-1 min-h-0 h-full">
             
             <!-- Zone de contenu scrollable -->
-            <div class="flex-1 min-h-0" :class="contentClass">
+            <div class="flex-1 min-h-0 bg-bg-dark" :class="contentClass">
                 <slot />
             </div>
 
@@ -35,7 +35,7 @@
                         :class="{
                             'w-6 bg-primary': step === currentStep,
                             'w-2 bg-primary/40': step < currentStep,
-                            'w-2 bg-neutral-light': step > currentStep
+                            'w-2 bg-neutral-light-genesis': step > currentStep
                         }"
                     />
                 </div>

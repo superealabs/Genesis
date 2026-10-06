@@ -11,7 +11,7 @@
                     <div 
                         class="flex gap-4 rounded-b-lg" 
                         id="background-header"
-                        :class="isStuck ? 'bg-white shadow-sm shadow-hover-ghost/10' : 'bg-transparent'"
+                        :class="isStuck ? 'bg-bg-dark border-b-2 border-neutral-light-genesis shadow-sm shadow-hover-ghost/10' : 'bg-transparent'"
                         >
                         <div class="flex items-center gap-4 px-8 pb-4 pt-2">
                             <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
@@ -29,7 +29,7 @@
 
                             <div 
                                 class="bar-shape absolute inset-0 pointer-events-none" aria-hidden="true"
-                                :class="isStuck ? 'bg-white' : 'bg-bg-dark'"
+                                :class="isStuck ? 'bg-bg-dark' : 'bg-bg-dark'"
                                 />
 
                             <div class="relative flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6">
@@ -38,7 +38,6 @@
                                     @update:modelValue="$emit('update:searchValue', $event as string)"
                                     type="text"
                                     :placeholder="searchPlaceholder"
-                                    variant="primary"
                                     shape="rectangle"
                                     size="lg" 
                                     fill-width
@@ -50,7 +49,7 @@
                                 </GenesisInput>
                             </div>
 
-                            <div class="relative flex gap-2 items-center flex-shrink-0 pr-6">
+                            <div class="relative flex gap-2 items-center shrink-0 pr-6">
                                 <!-- ═══ BOUTON FILTRE (Émet un événement) ═══ -->
                                 <GenesisButtonIcon
                                     v-if="showFilter"

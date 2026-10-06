@@ -53,7 +53,7 @@
 import { computed, useSlots } from 'vue';
 import {
     type UI_Size_Unit,
-    type UI_Variant,
+    type ButtonVariant,
     CONTROL_SIZES,
     BUTTON_RIGHT_ICON_POSITIONS,
     BUTTON_VARIANTS
@@ -61,7 +61,7 @@ import {
 
 interface Props {
     disabled?: boolean;
-    variant?: UI_Variant;
+    variant?: ButtonVariant;
     shape?: 'rectangle' | 'square';
     size?: UI_Size_Unit;
     fillWidth?: boolean;
@@ -97,7 +97,7 @@ const tokens = computed(() => CONTROL_SIZES[props.size]);
 
 // ═══ Variants (Depuis la config centralisée) ═══
 const variantClasses = computed(() => {
-    const state = props.useDefaultHover ? 'hover' : 'default';
+    const state = props.useDefaultHover ? 'default' : 'default';
     return BUTTON_VARIANTS[props.variant][state];
 });
 

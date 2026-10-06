@@ -16,11 +16,11 @@
 
 <script setup lang="ts">
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
-import type { UI_Variant, UI_Size_Unit } from '@genesis-labs/web-core/core/config/ui.config';
+import type { ButtonVariant, UI_Size_Unit } from '@genesis-labs/web-core/core/config/ui.config';
 
 interface Props {
     disabled?: boolean;
-    variant?: UI_Variant;
+    variant?: ButtonVariant;
     shape?: 'rectangle' | 'square';
     size?: UI_Size_Unit;
     /**

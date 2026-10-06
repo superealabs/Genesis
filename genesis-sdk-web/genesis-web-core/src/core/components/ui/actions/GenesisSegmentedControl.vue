@@ -9,7 +9,7 @@
          sa hauteur EXTÉRIEURE est celle de l'échelle unique (CONTROL_SIZES), comme un bouton ou un input
          de la même taille. Le padding est compris dedans (box-border). -->
     <TabList
-      class="inline-flex rounded-md gap-1 bg-bg-secondary"
+      class="inline-flex rounded-md gap-1 bg-bg-light"
       :class="[tokens.box, paddingClasses]"
       role="group"
     >

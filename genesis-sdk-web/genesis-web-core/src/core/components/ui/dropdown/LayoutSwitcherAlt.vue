@@ -6,7 +6,7 @@
     :trigger-size="'lg'"
     :close-on-select="true"
     :open-at-hover="true"
-    :trigger-variant="'secondary'"
+    :trigger-variant="dropdownVariant"
     :positioning="'absolute'"
   >
     <template #triggerIcon>
@@ -18,7 +18,7 @@
       <MenuItem v-slot="{ active }" as="template">
         <GenesisButton
           :class="[active ? 'active' : '']"
-          variant="tertiary"
+          :variant="'tertiary'"
           :fill-width="true"
           size="lg"
           @click="selectView('grid')"
@@ -34,7 +34,7 @@
       <MenuItem v-slot="{ active }" as="template">
         <GenesisButton
           :class="[active ? 'active' : '']"
-          variant="tertiary"
+          :variant="'tertiary'"
           :fill-width="true"
           size="lg"
           @click="selectView('table')"
@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { MenuItem } from '@headlessui/vue'; 
 
 import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
@@ -76,6 +76,9 @@ import IconGrid from '@genesis-labs/web-core/core/components/ui/icons/IconGrid.v
 import IconTable from '@genesis-labs/web-core/core/components/ui/icons/IconTable.vue'; // ✅ À adapter si le nom est différent
 import IconListUl from '@genesis-labs/web-core/core/components/ui/icons/IconListUl.vue';
 import { DisplayMode } from '../../layouts/display/items/GenesisItem.types';
+import { ButtonVariant } from '@genesis-labs/web-core/core/config/ui.config';
+
+const dropdownVariant = ref<ButtonVariant>('primary')
 
 const props = withDefaults(defineProps<{
     modelValue: DisplayMode; // ✅ Mis à jour
