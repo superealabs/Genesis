@@ -204,7 +204,7 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
-        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata, language);
         List<String> fkTypes = fkList.stream()
                 .map(fk -> fk.get("type").toString())
                 .distinct()
