@@ -43,12 +43,17 @@ public class FrameworkFrontendMetadataProvider {
 
         List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
         List<Map<String, Object>> fields = getFieldsList(tableMetadata);
+        List<String> fkTypes = fkList.stream()
+                .map(fk -> fk.get("type").toString())
+                .distinct()
+                .toList();
         boolean containsFile = fields.stream()
                 .anyMatch(field -> "file".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
         metadata.put("fields", fields);
         metadata.put("containsFile", containsFile);
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
         metadata.put("fieldsFK", fkList);
+        metadata.put("fkTypes", fkTypes);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
         metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
         metadata.put("containsForeignKey",!fkList.isEmpty());
