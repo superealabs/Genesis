@@ -333,6 +333,17 @@ public class FrameworkMetadataProvider {
             }
         }
         metadata.put("enableAuth", enableAuth);
+        boolean dashboardEnabled = false;
+        if (frameworkOptions != null && frameworkOptions.containsKey("dashboardEnabled")) {
+            Object dashboardEnabledValue = frameworkOptions.get("dashboardEnabled");
+
+            if (dashboardEnabledValue instanceof Boolean) {
+                dashboardEnabled = (Boolean) dashboardEnabledValue;
+            } else if (dashboardEnabledValue instanceof String) {
+                dashboardEnabled = Boolean.parseBoolean((String) dashboardEnabledValue);
+            }
+        }
+        metadata.put("dashboardEnabled", dashboardEnabled);
     }
 
 
@@ -1131,6 +1142,15 @@ public class FrameworkMetadataProvider {
         altMap.put("pageName", frameworkMVC.getView().getLayout().getPageName());
         altMap.put("pageNameTagHelper", frameworkMVC.getView().getLayout().getPageNameTagHelper());
         altMap.put("navLink", frameworkMVC.getView().getLayout().getNavLink());
+        String dashboardLink = "";
+        if (frameworkMVC.getView() != null
+                && frameworkMVC.getView().getLayout() != null
+                && frameworkMVC.getView()
+                .getLayout()
+                .getDashboardLink() != null) {
+            dashboardLink = frameworkMVC.getView().getLayout().getDashboardLink();
+        }
+        altMap.put("dashboardLink", dashboardLink);
         altMap.put("callContent", frameworkMVC.getView().getLayout().getCallContent());
         altMap.put("logoutLink", frameworkMVC.getView().getLayout().getLogoutLink());
         return altMap;

@@ -5867,6 +5867,10 @@
       pageNameTagHelper: "th:text=\"|${projectName} - $[thymeleafDollar]{pageTitle}|\""
 #      navLink: "th:classappend=\"${#httpServletRequest.requestURI == '/${this.entityName}'} ? 'active'\" th:href=\"@{/${this.entityName}}\""
       navLink: "class=\"nav-item\" th:href=\"@{/${minStart(this.entityName)}}\""
+      dashboardLink: >
+        class="nav-item"
+        th:classappend="$[thymeleafDollar]{pageTitle == 'Dashboard'} ? ' active'"
+        th:href="@{/dashboard}"
       callContent: |
         <div layout:fragment="content"></div>
       logoutLink: "th:action=\"@{/logout}\""

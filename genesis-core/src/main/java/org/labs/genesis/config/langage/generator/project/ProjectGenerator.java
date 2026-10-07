@@ -823,7 +823,8 @@ public class ProjectGenerator {
         FrameworkMVC framework = (FrameworkMVC) context.getFramework();
         Language language = context.getLanguage();
 
-        Map<String, Object> frameworkOptions = context.getFrameworkConfiguration();
+        Map<String, Object> frameworkOptions = new HashMap<>(context.getFrameworkConfiguration());
+        frameworkOptions.put("dashboardEnabled", framework.getId() == Constantes.Spring_MVC_ID && isDashboardEnabled(context));
         ViewsTemplate viewsTemplate = context.getViewsTemplate();
         String groupLink = context.getGroupLink();
 

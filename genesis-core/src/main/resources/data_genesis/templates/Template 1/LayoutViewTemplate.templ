@@ -70,6 +70,11 @@ ${viewAnnotations}
             {{/if}}
 
             <div class="nav-content" id="navContent">
+                {{#if dashboardEnabled}}
+                <a ${dashboardLink}>
+                    <span>Dashboard</span>
+                </a>
+                {{/if}}
                 <div class="project-description"><span data-i18n="entities"></span></div>
                 {{#each entities}}{{#if !this.isView}}
                 <a ${navLink}>

@@ -80,6 +80,7 @@ public class FrameworkMVC extends Framework {
         private String callContent;
         private String logoutLink;
         private String destinationPath;
+        private String dashboardLink;
     }
 
     @Getter
