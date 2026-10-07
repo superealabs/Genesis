@@ -56,9 +56,18 @@ public class FrameworkFrontendMetadataProvider {
                 .anyMatch(field -> "file".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
         boolean useMap = fields.stream()
             .anyMatch(field -> "map".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean useCurrency = fields.stream()
+                .anyMatch(field -> "currency".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean usePhone = fields.stream()
+                .anyMatch(field -> "phone".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean useQuantity = fields.stream()
+                .anyMatch(field -> "quantity".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
         metadata.put("fields", fields);
         metadata.put("containsFile", containsFile);
         metadata.put("useMap", useMap);
+        metadata.put("useCurrency", useCurrency);
+        metadata.put("usePhone", usePhone);
+        metadata.put("useQuantity", useQuantity);
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, formConfiguration));
         metadata.put("fieldsFK", fkList);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata, formConfiguration));

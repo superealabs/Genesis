@@ -6664,9 +6664,9 @@
         {{#if isParentTable=true and hasChildrenForm=true}} import { ref, computed, onMounted } from 'vue'{{elseIf containsFile=true}}import { computed, ref } from 'vue'{{else}}import { ref } from 'vue'{{/if}} 
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model.ts'
         import GenesisButton from '@/components/button/GenesisButton.vue'
-        import GenesisCurrency from '@/components/form/GenesisCurrency.vue'
-        import GenesisPhone from '@/components/form/GenesisPhone.vue'
-        import GenesisQuantity from '@/components/form/GenesisQuantity.vue'
+        {{#if useCurrency}}import GenesisCurrency from '@/components/form/GenesisCurrency.vue'{{/if}}
+        {{#if usePhone}}import GenesisPhone from '@/components/form/GenesisPhone.vue'{{/if}}
+        {{#if useQuantity}}import GenesisQuantity from '@/components/form/GenesisQuantity.vue'{{/if}}
         {{#if useMap}}import GenesisMap from '@/components/form/GenesisMap.vue'
         import GenesisPopup from '@/components/popup/GenesisPopup.vue'{{/if}}
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
@@ -7624,9 +7624,9 @@
         <script setup lang="ts">
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'
-        import GenesisCurrency from '@/components/form/GenesisCurrency.vue'
-        import GenesisPhone from '@/components/form/GenesisPhone.vue'
-        import GenesisQuantity from '@/components/form/GenesisQuantity.vue'
+        {{#if useCurrency}}import GenesisCurrency from '@/components/form/GenesisCurrency.vue'{{/if}}
+        {{#if usePhone}}import GenesisPhone from '@/components/form/GenesisPhone.vue'{{/if}}
+        {{#if useQuantity}}import GenesisQuantity from '@/components/form/GenesisQuantity.vue'{{/if}}
         {{#if useMap}}import GenesisMap from '@/components/form/GenesisMap.vue'
         import GenesisPopup from '@/components/popup/GenesisPopup.vue'{{/if}}
         import { ref, onMounted{{#if useMap}}, type Ref, toRef{{/if}}} from 'vue'
