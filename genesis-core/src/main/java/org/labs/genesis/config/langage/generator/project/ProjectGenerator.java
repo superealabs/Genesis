@@ -831,6 +831,10 @@ public class ProjectGenerator {
         viewsGenerator.generateMainLayout(framework, frameworkOptions, language, viewsTemplate, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
         viewsGenerator.generateErrorPage(framework, frameworkOptions, language, viewsTemplate, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
         viewsGenerator.generateResources(framework, frameworkOptions, language, viewsTemplate, allEntities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), groupLink);
+        if (framework.getId() == Constantes.Spring_MVC_ID) {
+            generateDashboardView(context, viewsGenerator, allEntities);
+        }
+
         for (TableMetadata tableMetadata : allEntities) {
             generateViewsComponents(
                     context,
@@ -995,5 +999,43 @@ public class ProjectGenerator {
         indicator.setProgress(0.9, "Finalisation generation","generating genesis file context");
         GenesisContextBuilder contextBuilder = new GenesisContextBuilder();
         return contextBuilder.generateGenesisfile(context);
+    }
+
+    private void generateDashboardView(ProjectGenerationContext context, IViewsGenerator viewsGenerator, List<TableMetadata> entities) throws Exception {
+        if (!(context.getFramework() instanceof FrameworkMVC framework)) {
+            return;
+        }
+
+        if (!isDashboardEnabled(context)) {
+            return;
+        }
+
+        if (!context.isGenerateViewsTemplates()) {
+            return;
+        }
+
+        if (framework.getView() == null
+                || framework.getView().getDashboard() == null) {
+            return;
+        }
+
+        ViewsTemplate viewsTemplate =
+                context.getViewsTemplate();
+
+        if (viewsTemplate == null) {
+            return;
+        }
+
+        List<TableMetadata> availableTables = resolveDashboardTables(context, entities);
+
+        DashboardGenerationModel dashboardModel = DashboardGenerationModelBuilder.build(context.getDashboardConfiguration(), availableTables);
+
+        if (!dashboardModel.isEnabled() || dashboardModel.isEmpty()) {
+            return;
+        }
+
+        HashMap<String, Object> dashboardMetadata = SpringMvcDashboardMetadataProvider.getDashboardHashMap(dashboardModel);
+
+        viewsGenerator.generateDashboardView(framework, context.getFrameworkConfiguration(), context.getLanguage(), viewsTemplate, dashboardMetadata, entities.toArray(new TableMetadata[0]), context.getDestinationFolder(), context.getProjectName(), context.getGroupLink());
     }
 }
