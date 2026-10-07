@@ -81,6 +81,7 @@ public class FrameworkMVC extends Framework {
         private String logoutLink;
         private String destinationPath;
         private String dashboardLink;
+        private String pageScripts;
     }
 
     @Getter

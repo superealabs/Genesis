@@ -825,6 +825,17 @@ public class ProjectGenerator {
 
         Map<String, Object> frameworkOptions = new HashMap<>(context.getFrameworkConfiguration());
         frameworkOptions.put("dashboardEnabled", framework.getId() == Constantes.Spring_MVC_ID && isDashboardEnabled(context));
+        if (framework.getId() == Constantes.Spring_MVC_ID && isDashboardEnabled(context)) {
+            frameworkOptions.put(
+                    "pageScripts",
+                    """
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+                    <script th:src="@{/js/dashboard.js}"></script>
+                    """
+            );
+        } else {
+            frameworkOptions.put("pageScripts", "");
+        }
         ViewsTemplate viewsTemplate = context.getViewsTemplate();
         String groupLink = context.getGroupLink();
 

@@ -344,6 +344,14 @@ public class FrameworkMetadataProvider {
             }
         }
         metadata.put("dashboardEnabled", dashboardEnabled);
+        String pageScripts = "";
+        if (frameworkOptions != null && frameworkOptions.containsKey("pageScripts")) {
+            Object value = frameworkOptions.get("pageScripts");
+            if (value != null) {
+                pageScripts = value.toString();
+            }
+        }
+        metadata.put("pageScripts", pageScripts);
     }
 
 
@@ -1153,6 +1161,7 @@ public class FrameworkMetadataProvider {
         altMap.put("dashboardLink", dashboardLink);
         altMap.put("callContent", frameworkMVC.getView().getLayout().getCallContent());
         altMap.put("logoutLink", frameworkMVC.getView().getLayout().getLogoutLink());
+        altMap.put("pageScripts", frameworkMVC.getView().getLayout().getPageScripts());
         return altMap;
     }
 

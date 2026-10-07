@@ -31,15 +31,52 @@ ${viewAnnotations}
 
                 <div class="dashboard-widget-content">
 
-                    <div class="dashboard-widget-data" th:attr="data-widget-id='${this.id}'">
-                        <span class="dashboard-empty" th:if="$[thymeleafDollar]{dashboardData['${this.id}'] == null or #lists.isEmpty(dashboardData['${this.id}'])}">
-                            Aucune donnée disponible
+                     <!-- Métadonnées nécessaires au renderer JS -->
+                    <div class="dashboard-fields" hidden>
+                        {{#each this.fields}}
+                        <span class="dashboard-field"
+                              data-key="${this.key}"
+                              data-column="${this.columnName}"
+                              data-role="${this.role}">
                         </span>
-
-                        <div class="dashboard-data-container" th:unless="$[thymeleafDollar]{dashboardData['${this.id}'] == null or #lists.isEmpty(dashboardData['${this.id}'])}">
-                        </div>
+                        {{/each}}{{removeLine}}
                     </div>
 
+                    <!-- KPI -->
+                    {{#if this.type = KPI}}
+                    <div class="dashboard-kpi">
+                        <span class="dashboard-kpi-value" data-dashboard-target>
+                            -
+                        </span>
+                    </div>
+
+                    <!-- TABLE -->
+                    {{elseIf this.type = TABLE}}
+                    <div class="dashboard-table-container">
+                        <table class="dashboard-table">
+                            <thead></thead>
+                            <tbody data-dashboard-target></tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tous les graphiques Chart.js -->
+                    {{else}}
+                    <div class="dashboard-chart-container">
+                        <canvas data-dashboard-target></canvas>
+                    </div>
+                    {{/if}}
+
+                    <div class="dashboard-empty"
+                         data-dashboard-empty
+                         hidden>
+                        Aucune donnée disponible
+                    </div>
+
+                    <script type="application/json"
+                            id="dashboard-data-${this.id}"
+                            th:inline="javascript">
+                        /*[[$[thymeleafDollar]{dashboardData['${this.id}']}]]*/ []
+                    </script>
                 </div>
 
             </article>
@@ -51,5 +88,8 @@ ${viewAnnotations}
     {{/each}}
 
 </section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script th:src="@{/js/dashboard.js}"></script>
 
 ${viewEnd}

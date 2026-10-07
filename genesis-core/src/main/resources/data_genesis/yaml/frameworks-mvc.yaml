@@ -4904,6 +4904,310 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
 
+    - fileType: "DashboardJavascript"
+      fileName: "dashboard"
+      extension: "js"
+      content: |
+        document.addEventListener("DOMContentLoaded", function () {
+            const widgets = document.querySelectorAll(".dashboard-widget");
+            widgets.forEach(function (widget) {
+                renderDashboardWidget(widget);
+            });
+        });
+
+        function renderDashboardWidget(widget) {
+            const visualizationId = widget.dataset.dashboardId;
+            const visualizationType = (widget.dataset.dashboardType || "").toUpperCase();
+            const dataElement = document.getElementById("dashboard-data-" + visualizationId);
+            if (!dataElement) {
+                showDashboardEmpty(widget);
+                return;
+            }
+            let rows;
+            try {
+                rows = JSON.parse(dataElement.textContent.trim());
+            } catch (error) {
+                console.error(
+                        "Unable to parse dashboard data:",
+                        visualizationId,
+                        error
+                );
+                showDashboardEmpty(widget);
+                return;
+            }
+            if (!Array.isArray(rows) || rows.length === 0) {
+                showDashboardEmpty(widget);
+                return;
+            }
+
+            const fields = readDashboardFields(widget);
+            switch (visualizationType) {
+                case "KPI":
+                    renderKpi(widget, rows, fields);
+                    break;
+
+                case "TABLE":
+                    renderTable(widget, rows,fields);
+                    break;
+
+                case "BAR_VERTICAL":
+                    renderCategoryChart(widget, rows, fields, "bar", false);
+                    break;
+
+                case "BAR_HORIZONTAL":
+                    renderCategoryChart(widget, rows, fields, "bar",true);
+                    break;
+
+                case "LINE":
+                    renderCategoryChart(widget, rows, fields, "line", false);
+                    break;
+
+                case "PIE":
+                    renderCategoryChart(widget, rows, fields, "pie", false);
+                    break;
+
+                case "DONUT":
+                    renderCategoryChart(widget, rows, fields, "doughnut", false);
+                    break;
+
+                case "SCATTER":
+                    renderScatter(widget, rows, fields);
+                    break;
+
+                default:
+                    console.warn(
+                            "Unsupported dashboard visualization:",
+                            visualizationType
+                    );
+
+                    showDashboardEmpty(widget);
+                    break;
+            }
+        }
+
+        function readDashboardFields(widget) {
+
+            return Array
+                    .from(widget.querySelectorAll(".dashboard-field"))
+                    .map(function (field) {
+
+                        return {
+                            key: field.dataset.key,
+                            column: field.dataset.column,
+                            role: field.dataset.role
+                        };
+                    });
+        }
+
+        function findField(fields, role, index) {
+            const matchingFields =
+                    fields.filter(
+                            function (field) {
+                                return field.role === role;
+                            }
+                    );
+            return matchingFields[index || 0];
+        }
+
+        function renderKpi(widget, rows, fields) {
+            const measure = findField(fields, "MEASURE");
+
+            if (!measure) {
+                showDashboardEmpty(widget);
+                return;
+            }
+
+            const value = rows[0][measure.key];
+            const target = widget.querySelector("[data-dashboard-target]");
+
+            target.textContent = formatDashboardValue(value);
+        }
+
+        function renderTable(widget, rows, fields) {
+
+            const columns = fields.filter(
+                                function (field) {
+                                    return field.role === "COLUMN";
+                                }
+                            );
+
+            if (columns.length === 0) {
+                showDashboardEmpty(widget);
+                return;
+            }
+
+            const table = widget.querySelector(
+                              ".dashboard-table"
+                          );
+
+            const head = table.querySelector("thead");
+            const body = table.querySelector("tbody");
+            const headerRow = document.createElement("tr");
+
+            columns.forEach(function (column) {
+                const th = document.createElement("th");
+                th.textContent = column.column || column.key;
+                headerRow.appendChild(th);
+            });
+
+            head.appendChild(headerRow);
+
+            rows.forEach(function (row) {
+                const tr = document.createElement("tr");
+                columns.forEach(function (column) {
+                    const td = document.createElement("td");
+                    td.textContent = formatDashboardValue(row[column.key]);
+                    tr.appendChild(td);
+                });
+                body.appendChild(tr);
+            });
+        }
+
+        function renderCategoryChart(widget, rows, fields, chartType, horizontal) {
+            const dimension = findField(fields, "DIMENSION");
+            const measure = findField(fields, "MEASURE");
+
+            if (!dimension || !measure) {
+                showDashboardEmpty(widget);
+                return;
+            }
+
+            const labels = rows.map(
+                                function (row) {
+                                    return row[dimension.key];
+                                }
+                            );
+
+            const values = rows.map(
+                              function (row) {
+                                  return toDashboardNumber(
+                                          row[measure.key]
+                                  );
+                              }
+                            );
+
+            const canvas = widget.querySelector("canvas[data-dashboard-target]");
+            new Chart(
+                    canvas,
+                    {
+                        type: chartType,
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label:
+                                            measure.column
+                                            || measure.key,
+
+                                    data: values
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis:
+                                    horizontal
+                                            ? "y"
+                                            : "x",
+                            plugins: {
+                                legend: {
+                                    display:
+                                            chartType === "pie"
+                                            || chartType === "doughnut"
+                                }
+                            }
+                        }
+                    }
+            );
+        }
+
+        function renderScatter(widget, rows, fields) {
+            const xField = findField(fields, "VALUE", 0);
+            const yField = findField(fields, "VALUE", 1);
+
+            if (!xField || !yField) {
+                showDashboardEmpty(widget);
+                return;
+            }
+
+            const values =
+                    rows.map(
+                            function (row) {
+                                return {
+                                    x:
+                                            toDashboardNumber(row[xField.key]),
+
+                                    y:
+                                            toDashboardNumber(row[yField.key])
+                                };
+                            }
+                    );
+
+            const canvas = widget.querySelector(
+                              "canvas[data-dashboard-target]"
+                          );
+
+            new Chart(
+                    canvas,
+                    {
+                        type: "scatter",
+                        data: {
+                            datasets: [
+                                {
+                                    label:
+                                            yField.column
+                                            || yField.key,
+                                    data: values
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    }
+            );
+        }
+
+        function showDashboardEmpty(widget) {
+            const empty = widget.querySelector(
+                            "[data-dashboard-empty]"
+                          );
+
+            const target = widget.querySelector(
+                            "[data-dashboard-target]"
+                          );
+
+            if (target) {
+                target.hidden = true;
+            }
+
+            if (empty) {
+                empty.hidden = false;
+            }
+        }
+
+        function toDashboardNumber(value) {
+            if (value == null) {
+                return 0;
+            }
+            const number = Number(value);
+            return Number.isFinite(number) ? number : 0;
+        }
+
+        function formatDashboardValue(value) {
+            if (value == null) {
+                return "-";
+            }
+            if (typeof value === "number") {
+                return new Intl.NumberFormat().format(value);
+            }
+
+            return String(value);
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/js"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -5871,6 +6175,7 @@
         class="nav-item"
         th:classappend="$[thymeleafDollar]{pageTitle == 'Dashboard'} ? ' active'"
         th:href="@{/dashboard}"
+      pageScripts: ""
       callContent: |
         <div layout:fragment="content"></div>
       logoutLink: "th:action=\"@{/logout}\""

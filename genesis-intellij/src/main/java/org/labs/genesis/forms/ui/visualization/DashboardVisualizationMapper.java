@@ -78,7 +78,7 @@ public final class DashboardVisualizationMapper {
         DashboardLogicalOperator relation = condition.getRelationToPrevious() == FilterLogicalOperator.OR
                         ? DashboardLogicalOperator.OR
                         : DashboardLogicalOperator.AND;
-        return new DashboardFilter(condition.getColumn(), condition.getOperator(), condition.getValue(), relation);
+        return new DashboardFilter(normalizeColumnReference(condition.getColumn()), condition.getOperator(), condition.getValue(), relation);
     }
 
     private static DashboardFilterGroup mapGroup(VisualizationFilterGroup group) {
@@ -166,7 +166,7 @@ public final class DashboardVisualizationMapper {
             if (dashboardRole == null) {
                 continue;
             }
-            DashboardField field = new DashboardField(parameter.getKey(), value.toString(), dashboardRole);
+            DashboardField field = new DashboardField(parameter.getKey(), normalizeColumnReference(value.toString()), dashboardRole);
             if (dashboardRole == DashboardFieldRole.MEASURE) {
                 field.setStatistic(resolveStatistic(config));
             }
@@ -179,7 +179,7 @@ public final class DashboardVisualizationMapper {
         if (value == null || value.toString().isBlank()) {
             return;
         }
-        result.getFields().add(new DashboardField(key, value.toString(), DashboardFieldRole.COLUMN));
+        result.getFields().add(new DashboardField(key, normalizeColumnReference(value.toString()), DashboardFieldRole.COLUMN));
     }
 
     private static void mapColumns(DashboardVisualization result, List<?> values) {
@@ -187,7 +187,7 @@ public final class DashboardVisualizationMapper {
             if (value == null || value.toString().isBlank()) {
                 continue;
             }
-            String column = value.toString();
+            String column = normalizeColumnReference(value.toString());
             String key = simpleColumnName(column);
             result.getFields().add(new DashboardField(key, column, DashboardFieldRole.COLUMN));
         }
@@ -251,7 +251,7 @@ public final class DashboardVisualizationMapper {
         DashboardSortDirection direction = "DESC".equalsIgnoreCase(directionValue) ? DashboardSortDirection.DESC : DashboardSortDirection.ASC;
         result.getQueryOptions()
                 .getSorts()
-                .add(new DashboardSort(columnValue.toString(), direction));
+                .add(new DashboardSort(normalizeColumnReference(columnValue.toString()), direction));
     }
 
     private static void mapFilters(VisualizationConfig config, DashboardVisualization result) {
@@ -270,6 +270,22 @@ public final class DashboardVisualizationMapper {
                         .add(mapped);
             }
         }
+    }
+
+    private static String normalizeColumnReference(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String result = value.trim();
+
+        int colon = result.lastIndexOf(':');
+
+        if (colon >= 0) {
+            result = result.substring(colon + 1);
+        }
+
+        return result;
     }
 
 }

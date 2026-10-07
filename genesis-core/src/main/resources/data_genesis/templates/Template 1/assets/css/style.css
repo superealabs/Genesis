@@ -2317,3 +2317,121 @@ th:hover .sort-icons {
     border-radius: 6px;
     display: block;
 }
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.dashboard-page {
+    width: 100%;
+}
+
+.dashboard-header {
+    margin-bottom: 24px;
+}
+
+.dashboard-header .page-title {
+    margin-bottom: 6px;
+}
+
+.dashboard-page .page-subtitle {
+    margin: 0;
+    opacity: 0.7;
+}
+
+.dashboard-section {
+    margin-bottom: 32px;
+}
+
+.dashboard-section-header {
+    margin-bottom: 16px;
+}
+
+.dashboard-section-header h2 {
+    margin: 0;
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.dashboard-widget {
+    grid-column: span 6;
+    min-width: 0;
+
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 10px;
+
+    background: var(--background-color, #ffffff);
+
+    overflow: hidden;
+}
+
+.dashboard-widget-header {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.dashboard-widget-header h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.dashboard-widget-content {
+    position: relative;
+    padding: 18px;
+}
+
+.dashboard-chart-container {
+    position: relative;
+    min-height: 320px;
+    height: 320px;
+}
+
+.dashboard-kpi {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 140px;
+}
+
+.dashboard-kpi-value {
+    font-size: 2.4rem;
+    font-weight: 700;
+}
+
+.dashboard-table-container {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.dashboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+.dashboard-table th {
+    font-weight: 600;
+}
+
+.dashboard-empty {
+    padding: 32px 16px;
+    text-align: center;
+    opacity: 0.65;
+}
+
+@media (max-width: 900px) {
+    .dashboard-widget {
+        grid-column: span 12;
+    }
+}
