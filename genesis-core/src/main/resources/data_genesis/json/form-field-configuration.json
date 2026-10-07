@@ -18,7 +18,12 @@
         "email",
         "phone",
         "password",
-        "color",
+        "color"
+      ]
+    },
+
+    "binary": {
+      "components": [
         "file"
       ]
     },
@@ -28,14 +33,6 @@
         "text",
         "json-editor",
         "textarea"
-      ]
-    },
-
-    "enum": {
-      "components": [
-        "select",
-        "radio",
-        "autocomplete"
       ]
     }
   },
@@ -149,10 +146,6 @@
     "file": {
       "configuration": {
         "fields": [
-          {
-            "name": "upload directory",
-            "type": "text"
-          },
           {
             "name": "accept",
             "type": "multi-select",

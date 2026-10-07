@@ -55,7 +55,6 @@ public class FormConfigurationForm {
     private static final String CARD_EMPTY = "empty";
     private static final String CARD_CONFIG = "config";
 
-    private static final String TYPE_ENUM = "enum";
     private static final String TYPE_GEOGRAPHIC = "geographic";
     private static final String TYPE_JSON = "json";
     private static final String TYPE_BINARY = "binary";
@@ -1822,7 +1821,7 @@ public class FormConfigurationForm {
             ColumnMetadata column
     ) {
         if (column.isForeign()) {
-            return TYPE_ENUM;
+            return null;
         }
 
         String databaseType =
@@ -1833,9 +1832,7 @@ public class FormConfigurationForm {
             String type =
                     databaseType.toLowerCase();
 
-            if (type.contains("geography")
-                    || type.contains("geometry")) {
-
+            if (column.isGeographic()) {
                 return TYPE_GEOGRAPHIC;
             }
 
@@ -1849,26 +1846,6 @@ public class FormConfigurationForm {
 
                 return TYPE_BINARY;
             }
-
-            if (type.contains("boolean")) {
-                return TYPE_BOOLEAN;
-            }
-        }
-
-        if (column.isDateTime()
-                || column.isDateTimeTz()) {
-
-            return TYPE_DATETIME;
-        }
-
-        if (column.isDate()) {
-            return TYPE_DATE;
-        }
-
-        if (column.isTime()
-                || column.isTimeTz()) {
-
-            return TYPE_TIME;
         }
 
         if (column.isNumeric()) {

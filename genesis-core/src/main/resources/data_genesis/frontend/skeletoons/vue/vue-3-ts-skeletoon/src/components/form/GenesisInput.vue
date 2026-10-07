@@ -20,7 +20,7 @@
     </div>
 
     <div class="flex-grow w-full">
-      <div class="flex items-center relative overflow-hidden">
+      <div class="flex items-center relative overflow-hidden gap-2">
         <slot name="prefix"></slot>
 
         <input
@@ -30,6 +30,13 @@
           :value="modelValue ?? ''"
           @input="onInput"
         />
+
+        <!-- Valeur affichée pour le range -->
+        <span
+          v-if="inputType === 'range'"
+        >
+          {{ rangeDisplayValue }}
+        </span>
 
         <slot name="suffix"></slot>
       </div>
@@ -63,7 +70,9 @@ const emit = defineEmits<{
 
 const attrs = useAttrs()
 
-const inputType = computed(() => (typeof attrs.type === 'string' ? attrs.type : 'text'))
+const inputType = computed(() =>
+  typeof attrs.type === 'string' ? attrs.type : 'text',
+)
 
 const inputFormId = computed(() => {
   if (props.inputId) return props.inputId
@@ -73,6 +82,31 @@ const inputFormId = computed(() => {
   }
 
   return 'inpt-' + Math.random().toString(36).substring(2, 8)
+})
+
+/**
+ * Valeur affichée à droite du range.
+ *
+ * Priorité :
+ *  1. modelValue si défini
+ *  2. attribut value
+ *  3. min
+ *  4. 0
+ */
+const rangeDisplayValue = computed(() => {
+  if (props.modelValue !== null && props.modelValue !== undefined) {
+    return String(props.modelValue)
+  }
+
+  if (attrs.value !== undefined && attrs.value !== null) {
+    return String(attrs.value)
+  }
+
+  if (attrs.min !== undefined && attrs.min !== null) {
+    return String(attrs.min)
+  }
+
+  return '0'
 })
 
 const inputClasses = computed(() => {
@@ -119,8 +153,4 @@ const onInput = (e: Event) => {
 }
 </script>
 
-<style scoped>
-.square {
-  max-width: 20px;
-}
-</style>
+<style scoped>=</style>
