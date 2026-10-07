@@ -6452,7 +6452,7 @@
                   {{#each fields}}
                   <div>
                     <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadable(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
-                    <div id="${minStart(className)}${majStart(this.name)}" class="input w-full bg-base-100 cursor-default">
+                    <div id="${minStart(className)}${majStart(this.name)}" class="{{#if this.uiType=map}}w-full rounded-lg border border-base-300 overflow-hidden{{else}}input w-full bg-base-100 cursor-default{{/if}}">
                       {{#if this.uiType=file}}
                       <img :src="getUrl(${minStart(className)}.${this.name})"
                       alt="${formatReadable(this.name)}"
@@ -6463,6 +6463,19 @@
                       <span>{{ ${minStart(className)}.${this.name} ? $d(${minStart(className)}.${this.name}, 'long') : '--/--/--' }}</span>
                       {{elseIf this.isNumeric}}
                       <span>{{ ${minStart(className)}.${this.name} ? $n(${minStart(className)}.${this.name}, 'decimal') : '--' }}</span>
+                      {{elseIf this.isGeographic and this.uiType=map}}
+                      <GenesisMap
+                          :latitude="${minStart(className)}.${this.name} ? ${minStart(className)}.${this.name}.latitude : null"
+                          :longitude="${minStart(className)}.${this.name} ? ${minStart(className)}.${this.name}.longitude : null"
+                          :clickable="false"
+                          :draggable="false"/>
+                      {{elseIf this.uiType=map}}
+                      <GenesisMap
+                          :latitude="${minStart(className)}.${this.latitude}"
+                          :longitude="${minStart(className)}.${this.longitude}"
+                          :clickable="false"
+                          :draggable="false"/>
+                      {{elseIf this.uiType=none}}
                       {{else}}
                       <span>{{ ${minStart(className)}.${this.name} ?? '' }}</span>
                       {{/if}}
