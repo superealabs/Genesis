@@ -568,6 +568,8 @@ public class FrameworkMetadataProvider {
             uiType = "time";
         } else if (field.isNumeric()) {
             uiType = "number";
+        } else if (field.isGeographic()) {
+            uiType = "map";
         }
         String type = getFormConfiguration(fieldMap, field, tableName, formConfiguration);
         uiType = type != null ? type : uiType;
@@ -661,11 +663,11 @@ public class FrameworkMetadataProvider {
             String latitude = configuredField.getLatitude();
             if(latitude != null) {
                 fieldMap.put("longitude", "${minStart(this.name)}");
-                fieldMap.put("latitude", "${minStart(" + StringUtils.toCamelCase(latitude) + ")}");
+                fieldMap.put("latitude", StringUtils.minStart(StringUtils.toCamelCase(latitude)));
             } else {
                 String longitude = configuredField.getLongitude();
                 if(longitude != null) {
-                    fieldMap.put("longitude", "${minStart(" + StringUtils.toCamelCase(longitude) + ")}");
+                    fieldMap.put("longitude", StringUtils.minStart(StringUtils.toCamelCase(longitude)));
                     fieldMap.put("latitude", "${minStart(this.name)}");
                 }
             }

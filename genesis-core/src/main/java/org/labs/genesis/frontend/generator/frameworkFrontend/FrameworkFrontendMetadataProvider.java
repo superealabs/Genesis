@@ -225,9 +225,11 @@ public class FrameworkFrontendMetadataProvider {
             uiType = "date"; // date reste date
         } else if (field.isNumeric()) {
             uiType = "number"; // Au cas où
+        } else if (field.isGeographic()) {
+            uiType = "map";
         }
 
-        FieldConfiguration configuredField = formConfiguration == null || tableName == null
+            FieldConfiguration configuredField = formConfiguration == null || tableName == null
                 ? null
                 : formConfiguration.getOrDefault(tableName, Map.of()).get(field.getReferencedColumn());
         if (configuredField != null) {
@@ -237,11 +239,11 @@ public class FrameworkFrontendMetadataProvider {
             String latitude = configuredField.getLatitude();
             if(latitude != null) {
                 fieldMap.put("longitude", "${minStart(this.name)}");
-                fieldMap.put("latitude", "${minStart(" + StringUtils.toCamelCase(latitude) + ")}");
+                fieldMap.put("latitude", StringUtils.minStart(StringUtils.toCamelCase(latitude)));
             } else {
                 String longitude = configuredField.getLongitude();
                 if(longitude != null) {
-                    fieldMap.put("longitude", "${minStart(" + StringUtils.toCamelCase(longitude) + ")}");
+                    fieldMap.put("longitude", StringUtils.minStart(StringUtils.toCamelCase(longitude)));
                     fieldMap.put("latitude", "${minStart(this.name)}");
                 }
             }

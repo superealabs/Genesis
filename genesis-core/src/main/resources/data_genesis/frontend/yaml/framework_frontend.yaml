@@ -6654,6 +6654,8 @@
         import GenesisCurrency from '@/components/form/GenesisCurrency.vue'
         import GenesisPhone from '@/components/form/GenesisPhone.vue'
         import GenesisQuantity from '@/components/form/GenesisQuantity.vue'
+        {{#if useMap}}import GenesisMap from '@/components/form/GenesisMap.vue'
+        import GenesisPopup from '@/components/popup/GenesisPopup.vue'{{/if}}
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}{{#if isParentTable=true and hasChildrenForm=true}}
         {{#each childrenWithForm}}
@@ -6748,15 +6750,17 @@
                   />
                   {{elseIf this.uiType=none}}
                   {{elseIf this.uiType=map and this.isGeographic}}
+                  <!-- ${formatReadable(this.name)} | Map -->
                   <GenesisMap
                     label="${formatReadable(this.name)}"
-                    :violation="violations ? violations['${formatReadable(this.name)}'] : undefined"
-                    v-model:latitude="formModel.${minStart(this.name)}.latitude"
-                    v-model:longitude="formModel.${minStart(this.name)}.longitude"/>
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    v-model:latitude="formModel.${minStart(this.name)}!.latitude"
+                    v-model:longitude="formModel.${minStart(this.name)}!.longitude"/>
                   {{elseIf this.uiType=map}}
+                  <!-- ${formatReadable(this.name)} | Map -->
                   <GenesisMap
                     label="${formatReadable(this.name)}"
-                    :violation="violations ? violations['${formatReadable(this.name)}'] : undefined"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     v-model:latitude="formModel.${this.latitude}"
                     v-model:longitude="formModel.${this.longitude}"/>
                   {{elseIf this.uiType = checkbox}}
@@ -6942,7 +6946,12 @@
             data.${this.name} = await fileToBase64(data.${this.name})
           }{{/if}}
           {{/each}}
-          {{#if isParentTable=true and hasChildrenForm=true}}emit('submit', { ${minStart(className)}: data{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s.value{{/each}} })
+          {{#each childrenWithForm}}
+          const ${minStart(this.className)}sFiltrees = ${minStart(this.className)}s.value.filter(
+            (${minStart(this.className)}) => Object.keys(${minStart(this.className)}).length > 0,
+          )
+          {{/each}}
+          {{#if isParentTable=true and hasChildrenForm=true}}emit('submit', { ${minStart(className)}: data{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}sFiltrees{{/each}} })
           {{else}}emit('submit', data){{/if}}
         }
 
@@ -7422,13 +7431,13 @@
     exports: |
       export interface I${majStart(className)} {
         {{#each fields}}
-        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
       }
 
       export class ${majStart(className)} extends BaseModel implements I${majStart(className)} {
         {{#each fields}}
-        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
         constructor(data?: Partial<I${majStart(className)}>) {
@@ -7437,7 +7446,8 @@
           {{#if this.isForeignKey}}
           this.${minStart(this.name)} = data?.${minStart(this.name)}
             ? new ${majStart(this.type)}(data?.${minStart(this.name)})
-            : undefined{{else}}
+            : undefined{{elseIf this.isGeographic}}
+          this.${minStart(this.name)} = data?.${minStart(this.name)} ?? { latitude: null, longitude: null }{{else}}
           this.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
           {{/each}}{{removeLine}}
         }
@@ -7532,7 +7542,7 @@
         {{#if this.isForeignKey}}
         ${minStart(this.name)}?: string
         {{elseIf this.isDate}}${minStart(this.name)}?: string
-        {{elseif}}${minStart(this.name)}?: {latitude: number, longitude: number}{{else}}
+        {{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}
         ${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
@@ -7540,6 +7550,7 @@
           {{#each fields}}
           {{#if this.isForeignKey}}this.${minStart(this.name)} = data?.${minStart(this.name)} ?? ""
           {{elseIf this.isDate}}this.${minStart(this.name)} = data?.${minStart(this.name)} ? data.${minStart(this.name)} : undefined
+          {{elseIf this.isGeographic}}this.${minStart(this.name)} = data?.${minStart(this.name)} ?? { latitude: null, longitude: null } 
           {{else}}this.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
           {{/each}}{{removeLine}}
         }
@@ -7548,6 +7559,7 @@
           const instance = new ${majStart(className)}FormDTO()
           {{#each fields}}
           {{#if this.isForeignKey}}instance.${minStart(this.name)} = data?.${minStart(this.name)}?.getKeyValue()?.toString()
+          {{elseIf this.isGeographic}}instance.${minStart(this.name)} = data?.${minStart(this.name)} ?? { latitude: null, longitude: null }
           {{else}}instance.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
           {{/each}}{{removeLine}}
           return instance
@@ -7563,6 +7575,7 @@
             {{#each fieldsNotFK}}
             {{#if this.isDate}}
             ${minStart(this.name)}: this.${minStart(this.name)} ? this.${minStart(this.name)}.split('T')[0] : undefined,
+            {{elseIf this.isGeographic}}${minStart(this.name)}: this.${minStart(this.name)} ?? { latitude: null, longitude: null }
             {{else}}
             ${minStart(this.name)}: this.${minStart(this.name)},
             {{/if}}
@@ -7601,6 +7614,8 @@
         import GenesisCurrency from '@/components/form/GenesisCurrency.vue'
         import GenesisPhone from '@/components/form/GenesisPhone.vue'
         import GenesisQuantity from '@/components/form/GenesisQuantity.vue'
+        {{#if useMap}}import GenesisMap from '@/components/form/GenesisMap.vue'
+        import GenesisPopup from '@/components/popup/GenesisPopup.vue'{{/if}}
         import { ref, onMounted{{#if useMap}}, type Ref, toRef{{/if}}} from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
@@ -7748,16 +7763,16 @@
               <button type="button" class="btn btn-outline btn-primary" 
                 @click="openMap(toRef(formModel.${minStart(this.name)}, 'latitude'), toRef(formModel.${minStart(this.name)}, 'longitude'))">
               {{ formModel.${minStart(this.name)}.latitude != null && formModel.${minStart(this.name)}.longitude != null
-                ? formModel.${minStart(this.name)}.latitude.toFixed(6) + ',' + formModel.${minStart(this.name)}.longitude.toFixed(6)
+                ? formModel.${minStart(this.name)}.latitude.toFixed(6) + '\n' + formModel.${minStart(this.name)}.longitude.toFixed(6)
                 : 'Choose location' }}
               </button>
             </td>
             {{elseIf this.uiType=map}}
             <td class="text-center">
               <button type="button" class="btn btn-outline btn-primary" 
-                @click="openMap(toRef(formModel, '${this.latitude}'), toRef(formModel, '${this.longitude}')">
+                @click="openMap(toRef(formModel, '${this.latitude}'), toRef(formModel, '${this.longitude}'))">
               {{ formModel.${this.latitude} != null && formModel.${this.longitude} != null
-                ? formModel.${this.latitude}.toFixed(6) + ',' + formModel.${this.longitude}.toFixed(6)
+                ? formModel.${this.latitude}.toFixed(6) + '\n' + formModel.${this.longitude}.toFixed(6)
                 : 'Choose location' }}
               </button>
             </td>
@@ -7816,6 +7831,7 @@
                     <th class="">#</th>
                     {{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
                     {{elseIf this.isParentForeignKey}}{{removeLine}}
+                    {{elseIf this.type=none}}{{removeLine}}
                     {{else}}
                     <th class="">${formatReadable(this.name)}</th>
                     {{/if}}{{/each}}{{removeLine}}  
