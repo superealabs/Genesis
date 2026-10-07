@@ -142,6 +142,8 @@ const initials = computed(() => {
 
 const containerClasses = computed(() => {
     // Grid : la sélection est signalée par le remplissage animé du logo + texte + mascotte
+
+    // correction à apporter ici concernant la sélection
     if (display.value === 'grid') {
         return 'bg-bg-light border-b-4 border-bg hover:border-primary/50 active:border active:border-transparent';
     }
@@ -150,7 +152,7 @@ const containerClasses = computed(() => {
         return 'bg-bg-light border-b-4 border-bg hover:border-primary/50 active:border active:border-transparent';
     }
     // Table : comportement inchangé (fond accent à la sélection)
-    return props.selected ? 'bg-accent/10' : 'bg-bg-light hover:bg-bg-light/50';
+    return props.selected ? 'bg-accent/10 border-primary' : 'bg-bg-light hover:bg-bg-light/50';
 });
 
 const badgeClasses = 'w-5 h-5 rounded-full bg-primary text-bg text-xs text-text font-bold flex items-center justify-center shadow-sm';

@@ -30,7 +30,7 @@
                     v-if="modelValue" 
                     key="checked" 
                     :size="iconPixelSize" 
-                    class="absolute inset-0 text-accent" 
+                    class="absolute inset-0 text-primary" 
                 />
 
                 <!-- État NEUTRE (false) -->

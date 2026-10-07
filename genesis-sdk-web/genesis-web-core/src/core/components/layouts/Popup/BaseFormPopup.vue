@@ -1,6 +1,6 @@
 <template>
     <div 
-        class="fixed inset-0 bg-black/50 flex p-4"
+        class="fixed inset-0 bg-black flex p-4"
         :class="[positionClasses, overlayClasses]"
         :style="{ zIndex }"
         @click.self="handleOverlayClick()"

@@ -42,10 +42,24 @@ export function useConfigManagerLogic<TPayload = any>(params: ConfigLogicParams<
 
   const handleSelect = (id: string | number | null) => {
     if (manager.selectedConfigId.value === id) {
+      // Cas 1 : On clique sur la config déjà sélectionnée -> On désélectionne
       manager.selectConfiguration(null);
       applyValues(defaultValues);
     } else {
+      // Cas 2 : On sélectionne une NOUVELLE config
       manager.selectConfiguration(id);
+      
+      // ✅ CORRECTION : On récupère la config et on applique ses valeurs aux dropdowns
+      const selectedConfig = manager.configurations.value.find(
+        c => String(c.id) === String(id)
+      );
+      
+      if (selectedConfig) {
+        applyValues(selectedConfig.components);
+      } else {
+        // Fallback de sécurité si la config n'est pas trouvée
+        applyValues(defaultValues);
+      }
     }
   };
 

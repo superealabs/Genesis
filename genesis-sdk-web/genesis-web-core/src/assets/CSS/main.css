@@ -36,6 +36,7 @@
     --color-accent-text: hsl(48, 100%, 18%);
 
     --color-primary: hsl(138, 100%, 48%);
+    --color-primary-shadow: hsl(138, 100%, 30%);
     --color-primary-text: hsl(180, 100%, 6%);
 
     --color-bg-secondary: hsl(197, 100%, 92%);
@@ -73,6 +74,7 @@ body.theme-genesis.genesis-dark {
 
 
     --color-primary:    hsl(138, 100%, 44%);
+    --color-primary-shadow: hsl(138, 100%, 30%);
     --color-primary-text: hsl(180, 100%, 8%);
 
     --color-bg-secondary: hsl(197, 100%, 80%);
@@ -97,6 +99,7 @@ body.theme-genesis.genesis-light {
     --color-accent-text: hsl(48, 100%, 12%);
 
     --color-primary: hsl(138, 100%, 48%);
+    --color-primary-shadow: hsl(138, 100%, 30%);
     --color-primary-text: hsl(180, 100%, 6%);
 
     --color-bg-secondary: hsl(197, 100%, 92%);

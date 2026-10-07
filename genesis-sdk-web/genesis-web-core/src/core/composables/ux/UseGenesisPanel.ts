@@ -143,6 +143,17 @@ const cloneView = (v: PanelView): PanelView => ({
 });
 const createLeaf = (editor: string): PanelLeaf => ({ id: uid(), kind: 'leaf', editor, view: createView() });
 
+// ── Constructeurs pour écrire une disposition par défaut de façon lisible ──
+// panelSplit('column', 0.4, panelLeaf('import'), panelLeaf('code'))
+export const panelLeaf = (editor: string): PanelLeaf => createLeaf(editor);
+
+export const panelSplit = (
+    direction: PanelDirection,
+    ratio: number,
+    first: PanelNode,
+    second: PanelNode
+): PanelSplit => ({ id: uid(), kind: 'split', direction, ratio, first, second });
+
 function applyViewPatch(view: PanelView, patch: PanelViewPatch) {
     if (patch.scrollTop !== undefined) view.scrollTop = patch.scrollTop;
     if (patch.scrollLeft !== undefined) view.scrollLeft = patch.scrollLeft;
@@ -193,8 +204,13 @@ function sanitize(raw: any): PanelNode | null {
 export interface UseGenesisPanelOptions {
     /** Éditeur du panneau unique créé quand il n'y a ni sauvegarde ni initialLayout */
     defaultEditor: string;
-    /** Disposition de départ (arbre) */
-    initialLayout?: PanelNode;
+    /**
+     * Disposition de départ. Un arbre simplifié suffit : les `id` et `view` manquants
+     * sont générés, et un arbre invalide est ignoré (retour au panneau unique).
+     * Ex. { kind: 'split', direction: 'column', ratio: 0.4,
+     *       first: { kind: 'leaf', editor: 'a' }, second: { kind: 'leaf', editor: 'b' } }
+     */
+    initialLayout?: unknown;
     /** Taille minimale d'un panneau, en px (défaut 240 x 120) */
     minWidth?: number;
     minHeight?: number;

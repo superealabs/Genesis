@@ -21,11 +21,24 @@ const LOG_CHANNEL = 'Genesis Generator Service';
 
 // ═══ DONNÉES STATIQUES (FALLBACK) ═══
 const MOCK_TABLES: TableMetadataDto[] = [
-    { tableName: 'utilisateur', className: 'Utilisateur', isView: false },
-    { tableName: 'produit', className: 'Produit', isView: false },
-    { tableName: 'categorie', className: 'Categorie', isView: false },
-    { tableName: 'vue_clients_actifs', className: 'VueClientsActifs', isView: true },
-    { tableName: 'commande', className: 'Commande', isView: false },
+  // --- Données existantes ---
+  { tableName: 'utilisateur', className: 'Utilisateur', isView: false },
+  { tableName: 'produit', className: 'Produit', isView: false },
+  { tableName: 'categorie', className: 'Categorie', isView: false },
+  { tableName: 'vue_clients_actifs', className: 'VueClientsActifs', isView: true },
+  { tableName: 'commande', className: 'Commande', isView: false },
+  
+  // --- 10 Nouvelles entrées pour le test de charge ---
+  { tableName: 'adresse', className: 'Adresse', isView: false },
+  { tableName: 'paiement', className: 'Paiement', isView: false },
+  { tableName: 'facture', className: 'Facture', isView: false },
+  { tableName: 'vue_chiffre_affaires_mensuel', className: 'VueChiffreAffairesMensuel', isView: true },
+  { tableName: 'employe', className: 'Employe', isView: false },
+  { tableName: 'departement', className: 'Departement', isView: false },
+  { tableName: 'vue_statistiques_produits', className: 'VueStatistiquesProduits', isView: true },
+  { tableName: 'journal_connexion', className: 'JournalConnexion', isView: false },
+  { tableName: 'parametre_systeme', className: 'ParametreSysteme', isView: false },
+  { tableName: 'vue_utilisateurs_inactifs', className: 'VueUtilisateursInactifs', isView: true },
 ];
 
 const MOCK_PARENT_TABLES: TableMetadataDto[] = [

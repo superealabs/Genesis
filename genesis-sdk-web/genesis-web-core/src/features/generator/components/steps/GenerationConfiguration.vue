@@ -30,7 +30,7 @@
       </div>
     </div>
 
-    <div class="border-t border-secondary"></div>
+    <div class=""></div>
 
     <!-- 2. TABLES ET VUES -->
     <div class="space-y-3">
@@ -54,7 +54,7 @@
         Choisissez les entités de votre base de données à inclure dans la génération.
       </p>
 
-      <div class="border border-secondary rounded-md overflow-hidden bg-bg-light">
+      <div class="border border-neutral-light-genesis rounded-md overflow-hidden">
         
         <!-- État de chargement -->
         <div v-if="isLoading" class="p-6 text-center text-text-muted text-sm flex items-center justify-center gap-2">
@@ -70,7 +70,7 @@
           <div 
             v-for="item in combinedItems" 
             :key="item.tableName"
-            class="flex items-center justify-between p-3 border-b border-secondary last:border-b-0 hover:bg-secondary/30 transition-colors cursor-pointer"
+            class="flex items-center justify-between p-3 last:border-b-0 hover:bg-secondary/30 transition-colors cursor-pointer"
             @click="toggleItem(item)"
           >
             <div class="flex items-center gap-3 flex-1 min-w-0">

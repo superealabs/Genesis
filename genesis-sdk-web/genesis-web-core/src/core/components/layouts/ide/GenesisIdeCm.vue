@@ -74,12 +74,12 @@ function getCssVar(name: string): string {
 }
 
 function buildGenesisTheme(dark: boolean) {
-    const bg       = dark ? 'hsl(175,100%,4%)'  : 'hsl(145,100%,92%)';
-    const bgPanel  = dark ? 'hsl(175,100%,6%)'  : 'hsl(145,100%,94%)';
-    const fg       = dark ? 'hsl(145,100%,94%)' : 'hsl(175,100%,4%)';
-    const fgMuted  = dark ? 'hsl(145,100%,88%)' : 'hsl(175,100%,15%)';
-    const accent   = getCssVar('--color-accent') || 'hsl(145,100%,44%)';
-    const border   = dark ? 'hsl(175,100%,10%)' : 'hsl(160,100%,40%)';
+    const bg       = getCssVar('--color-bg-dark');
+    const bgPanel  = getCssVar('--color-bg-dark');
+    const fg       = getCssVar('--color-text'); // Assure-toi que --color-text existe, sinon utilise --color-text-muted ou #f8fafc
+    const fgMuted  = getCssVar('--color-text-muted');
+    const accent   = getCssVar('--color-accent');
+    const border   = getCssVar('--color-neutral-light-genesis');
 
     return EditorView.theme({
         // Conteneur principal — prend tout l'espace disponible
@@ -102,7 +102,7 @@ function buildGenesisTheme(dark: boolean) {
         // Gouttière numéros de ligne
         '.cm-gutters': {
             backgroundColor: bgPanel,
-            borderRight:     `1px solid ${border}`,
+            borderRight:     `none`,
             color:           fgMuted,
             paddingRight:    '8px',
         },
@@ -289,7 +289,7 @@ onBeforeUnmount(() => editorView.value?.destroy());
     flex-direction: column;
     height:         100%;      /* Prend toute la hauteur du parent */
     min-height:     0;         /* Indispensable dans un flex parent */
-    border:         1px solid var(--color-secondary);
+    border:         none;
     border-radius:  8px;
     overflow:       hidden;
     background:     var(--color-bg-dark);
@@ -305,20 +305,19 @@ onBeforeUnmount(() => editorView.value?.destroy());
     align-items:     center;
     gap:             10px;
     padding:         6px 12px;
-    background:      var(--color-bg);
-    border-bottom:   1px solid var(--color-secondary);
+    border-bottom:   2px solid var(--color-bg-neutral-genesis);
     flex-shrink:     0;
 }
 
 .genesis-ide-cm__lang-badge {
-    font-size:      10px;
+    font-size:      8px;
     font-weight:    700;
     letter-spacing: 0.08em;
-    padding:        2px 7px;
+    padding:        2px 8px;
     border-radius:  4px;
-    background:     var(--color-accent);
-    color:          var(--color-bg-dark);
-    font-family:    var(--font-mono);
+    background:     var(--color-bg-secondary);
+    color:          var(--color-secondary);
+    font-family:    var(--font-body);
 }
 
 .genesis-ide-cm__filename {
@@ -359,8 +358,8 @@ onBeforeUnmount(() => editorView.value?.destroy());
     align-items:   center;
     gap:           16px;
     padding:       4px 12px;
-    background:    var(--color-bg);
-    border-top:    1px solid var(--color-secondary);
+    background:    var(--color-bg-dark);
+    border-top:    2px solid var(--color-neutral-light-genesis);
     flex-shrink:   0;
 }
 

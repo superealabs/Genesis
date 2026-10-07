@@ -182,12 +182,21 @@ export function useConfigurationManager(
     });
   }
 
-  function removeFromConfig(id: string | number, items: string[]): void {
+function removeFromConfig(id: string | number, items: string[]): void {
+  if (singleConfiguration) {
+    // Mode exclusif : on cherche dans TOUTES les configurations
+    // car l'item pourrait être dans une config différente de celle sélectionnée
+    configurations.value.forEach(config => {
+      config.components = config.components.filter(c => !items.includes(c));
+    });
+  } else {
+    // Mode libre : on retire uniquement de la configuration ciblée
     const config = configurations.value.find(c => c.id === id);
     if (config) {
       config.components = config.components.filter(c => !items.includes(c));
     }
   }
+}
 
   // --- 4. Retour ---
   return {
