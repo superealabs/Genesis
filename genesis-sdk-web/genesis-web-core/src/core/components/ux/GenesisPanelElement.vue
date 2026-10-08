@@ -2,7 +2,7 @@
     <!-- Pas d'overflow-hidden sur la racine ni de z-index sur l'en-tête : le menu déroulant
          de l'en-tête doit pouvoir déborder sur le contenu et sur les panneaux voisins. -->
     <section
-        class="flex flex-col min-w-0 min-h-0 rounded-lg bg-bg-dark p-2"
+        class="flex flex-col gap-2 min-w-0 min-h-0 rounded-lg bg-bg-dark p-2"
         :aria-label="current?.label"
     >
         <!-- ═══ En-tête : sélecteur d'éditeur, puis bouton de fermeture à sa droite ═══ -->

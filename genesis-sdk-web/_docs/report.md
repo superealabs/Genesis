@@ -56,3 +56,6 @@ UR
 Faire correspondre le padding de genesis Dropdown et de genesis input
 
 ouvrir une disclosure affiche les tutoriels correspondant
+
+
+CORRIGE LE SYSTEME DE GENESIS_INPUT AVEC UN TYPE SELECT INTELLIGENT

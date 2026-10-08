@@ -39,27 +39,104 @@
              Le dropdown est indifférent au style : le déclencheur et le panneau reçoivent
              le look du champ (FIELD_VARIANTS), identique à celui d'un input texte. -->
         <template v-else-if="type === 'select'">
-            <GenesisDropdown
-                trigger-variant="none"
-                :trigger-class="selectTriggerClasses"
-                :menu-class="fieldMenuClasses"
-                :trigger-size="size"
-                :trigger-disabled="disabled"
-                match-trigger-width
-                :class="inputWrapperClasses"
-                :align="'left'"
-                :force-down="true"
-            >
-                <template #trigger>
-                    <span class="truncate">
-                        {{ modelValue || placeholder || 'Sélectionner...' }}
-                    </span>
-                </template>
-                <template #default="{ close }">
-                    <slot :close="close" />
-                </template>
-            </GenesisDropdown>
+            
+            <!-- MODE COMBOBOX AUTOMATIQUE (>= 10 éléments) -->
+            <template v-if="useComboboxForSelect">
+                <div class="relative w-full">
+                    <Combobox v-model="internalSelected" @update:modelValue="handleComboboxSelect" nullable>
+                        <div class="relative">
+                            <div
+                                class="relative w-full cursor-default overflow-hidden rounded transition-all duration-200"
+                                :class="[
+                                    containerSizeClasses,
+                                    containerShapeClasses,
+                                    containerVariantClasses,
+                                    { 'opacity-50': disabled }
+                                ]"
+                            >
+                                <div class="flex h-full pl-2 items-center">
+                                    <IconSearch />
+                                    <ComboboxInput
+                                        class="w-full h-full bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed pl-0"
+                                        :class="inputPaddingClasses"
+                                        :disabled="disabled"
+                                        :placeholder="placeholder"
+                                        :displayValue="(item: any) => item ? getOptionLabel(item) : (multiChoice ? comboboxQuery : '')"
+                                        @change="handleComboboxChange"
+                                    />
+                                </div>
+                                <ComboboxButton class="absolute inset-y-0 right-0 flex items-center pr-2 text-muted">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5" aria-hidden="true">
+                                        <path fill-rule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" clip-rule="evenodd" />
+                                    </svg>
+                                </ComboboxButton>
+                            </div>
+                            
+                            <TransitionRoot leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0" @after-leave="comboboxQuery = ''">
+                                <ComboboxOptions class="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md py-1 text-base sm:text-sm shadow-lg" :class="fieldMenuClasses">
+                                    <div v-if="filteredOptions.length === 0 && comboboxQuery !== ''" class="relative cursor-default select-none px-4 py-2 text-text-muted">
+                                        Aucun résultat trouvé.
+                                    </div>
+                                    <ComboboxOption v-for="option in filteredOptions" as="template" :key="getOptionValue(option)" :value="option" v-slot="{ selected, active }">
+                                        <li class="relative cursor-default select-none py-2 pl-3 pr-9" :class="{ 'bg-hover-ghost text-secondary': active, 'text-text': !active }">
+                                            <span class="block truncate" :class="{ 'font-medium': selected, 'font-normal': !selected }">
+                                                {{ getOptionLabel(option) }}
+                                            </span>
+                                            <span v-if="selected" class="absolute inset-y-0 right-0 flex items-center pr-4" :class="{ 'text-accent': active, 'text-muted': !active }">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5" aria-hidden="true">
+                                                    <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
+                                                </svg>
+                                            </span>
+                                        </li>
+                                    </ComboboxOption>
+                                </ComboboxOptions>
+                            </TransitionRoot>
+                        </div>
+                    </Combobox>
+                </div>
+            </template>
 
+            <!-- MODE DROPDOWN CLASSIQUE (< 10 éléments ou utilisation de Slot) -->
+            <template v-else>
+                <GenesisDropdown
+                    trigger-variant="none"
+                    :trigger-class="selectTriggerClasses"
+                    :menu-class="fieldMenuClasses"
+                    :trigger-size="size"
+                    :trigger-disabled="disabled"
+                    match-trigger-width
+                    :class="inputWrapperClasses"
+                    :align="'left'"
+                    :force-down="true"
+                >
+                    <template #trigger>
+                        <span class="truncate">
+                            {{ selectedOptionLabel || modelValue || placeholder || 'Sélectionner...' }}
+                        </span>
+                    </template>
+                    <template #default="{ close }">
+                        <!-- Si des options sont fournies, on les génère automatiquement -->
+                        <template v-if="options && options.length > 0">
+                            <div class="p-1 space-y-1">
+                                <button
+                                    v-for="opt in options"
+                                    :key="getOptionValue(opt)"
+                                    type="button"
+                                    class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                                    :class="{ 'text-accent font-medium': getOptionValue(opt) === modelValue }"
+                                    @click="() => handleDropdownSelect(opt, close)"
+                                >
+                                    {{ getOptionLabel(opt) }}
+                                </button>
+                            </div>
+                        </template>
+                        <!-- Sinon, on utilise le slot personnalisé du parent (rétrocompatibilité) -->
+                        <slot v-else :close="close" />
+                    </template>
+                </GenesisDropdown>
+            </template>
+
+            <!-- Chips multiChoice (commun aux deux modes) -->
             <div v-if="multiChoice && choices && choices.length > 0" class="flex flex-wrap gap-1.5 mt-1.5">
                 <GenesisLabel
                     v-for="(choice, index) in choices"
@@ -363,6 +440,7 @@ const hasOuterLeftSlot  = computed(() => !!slots['outer-left']);
 const hasOuterRightSlot = computed(() => !!slots['outer-right']);
 
 const MIN_HEIGHT = 100;
+const MAXIMAL_DROPDOWN_OPTION = 2;
 
 // gestion du resizer
 const { resizeStyle, startResizeBottom } = useResizable({
@@ -378,7 +456,8 @@ const internalSelected = ref<any>(null);
 
 // Synchronise la sélection interne avec le modelValue pour le mode choix unique
 watch(() => props.modelValue, (newVal) => {
-    if (!props.multiChoice && props.type === 'combobox') {
+    // On synchronise si c'est un combobox explicite OU un select qui est devenu un combobox
+    if (!props.multiChoice && (props.type === 'combobox' || useComboboxForSelect.value)) {
         internalSelected.value = props.options?.find(opt => getOptionValue(opt) === newVal) || newVal;
     }
 }, { immediate: true });
@@ -513,4 +592,32 @@ const checkboxSize = computed(() => {
     if (props.size === 'xl' || props.size === '2xl' || props.size === 'lg') return 'lg';
     return 'md';
 });
+
+const useComboboxForSelect = computed(() => {
+    return props.type === 'select' && props.options && props.options.length >= MAXIMAL_DROPDOWN_OPTION;
+});
+
+/**
+ * Récupère le label de l'option actuellement sélectionnée pour l'afficher dans le trigger du dropdown.
+ */
+const selectedOptionLabel = computed(() => {
+    if (!props.options || props.modelValue === undefined || props.modelValue === null) return '';
+    
+    // Si c'est un multi-choix, on affiche le nombre d'éléments sélectionnés
+    if (Array.isArray(props.modelValue)) {
+        return props.modelValue.length > 0 ? `${props.modelValue.length} élément(s) sélectionné(s)` : '';
+    }
+
+    // Sinon, on cherche le label correspondant à la valeur unique
+    const selected = props.options.find(opt => getOptionValue(opt) === props.modelValue);
+    return selected ? getOptionLabel(selected) : '';
+});
+
+/**
+ * Handler pour la sélection via le Dropdown classique (quand < 10 éléments)
+ */
+function handleDropdownSelect(option: any, close: () => void) {
+    emit('update:modelValue', getOptionValue(option));
+    close();
+};
 </script>
