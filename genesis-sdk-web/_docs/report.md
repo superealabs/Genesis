@@ -59,3 +59,6 @@ ouvrir une disclosure affiche les tutoriels correspondant
 
 
 CORRIGE LE SYSTEME DE GENESIS_INPUT AVEC UN TYPE SELECT INTELLIGENT
+
+
+Correction du genesisDropdownInput

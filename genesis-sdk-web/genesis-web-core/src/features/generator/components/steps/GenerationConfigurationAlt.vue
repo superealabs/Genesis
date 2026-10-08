@@ -56,13 +56,13 @@
                 <div 
                   v-for="item in filteredCombinedItems" 
                   :key="item.tableName"
-                  class="flex items-center justify-between p-3 border-b border-neutral-light-genesis last:border-b-0 hover:bg-bg-secondary transition-colors cursor-pointer"
+                  class="flex items-center justify-between p-3 border-b border-neutral-light-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
                   @click="toggleItem(item)"
                 >
                   <div class="flex items-center gap-3 flex-1 min-w-0">
                     <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
                     <div class="flex flex-col min-w-0">
-                      <span class="text-sm font-medium text-text truncate">{{ item.tableName }}</span>
+                      <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
                       <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
                     </div>
                   </div>

@@ -42,17 +42,50 @@
           </div>
         </div>
 
+        <!-- ✅ CORRECTION : Remplacement de v-model par :model-value + @update:model-value -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <GenesisInput v-model="config.projectName" label="Nom du projet" placeholder="mon-super-projet" size="lg" is-mandatory fill-width />
-          <GenesisInput v-model="config.projectPort" type="number" size="lg" label="Port d'exécution" placeholder="ex: 8080" fill-width />
+          <GenesisInput 
+            :model-value="config.projectName" 
+            @update:model-value="(val) => updateConfig('projectName', val)"
+            label="Nom du projet" 
+            placeholder="mon-super-projet" 
+            size="lg" 
+            is-mandatory 
+            fill-width 
+          />
+          <GenesisInput 
+            :model-value="config.projectPort" 
+            @update:model-value="(val) => updateConfig('projectPort', val)"
+            type="number" 
+            size="lg" 
+            label="Port d'exécution" 
+            placeholder="ex: 8080" 
+            fill-width 
+          />
         </div>
 
         <div class="w-full">
-          <GenesisInput v-model="config.projectDescription" label="Description du projet" size="lg" placeholder="Une brève description de l'application..." type="textarea" fill-width />
+          <GenesisInput 
+            :model-value="config.projectDescription" 
+            @update:model-value="(val) => updateConfig('projectDescription', val)"
+            label="Description du projet" 
+            size="lg" 
+            placeholder="Une brève description de l'application..." 
+            type="textarea" 
+            fill-width 
+          />
         </div>
 
         <div class="w-full">
-          <GenesisInput v-model="config.projectLocation" type="path" label="Emplacement" fill-width size="lg" @request-folder-path="handleSelectFolderPath" />
+          <GenesisInput 
+            :model-value="config.projectLocation" 
+            @update:model-value="(val) => updateConfig('projectLocation', val)"
+            type="path" 
+            label="Emplacement" 
+            fill-width 
+            size="lg" 
+            @request-folder-path="handleSelectFolderPath" 
+          />
         </div>
       </div>
 
@@ -66,41 +99,51 @@
         
         <div class="flex flex-col lg:flex-row gap-6">
           <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <GenesisInput v-model="config.languageVersion" type="select" size="lg" label="Version du Language" placeholder="Sélectionner..." fill-width>
-              <template #default="{ close }">
-                <div class="p-1 space-y-1">
-                  <button v-for="v in availableLanguageVersions" :key="v" type="button" class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors" :class="{ 'text-accent font-medium': config.languageVersion === v }" @click="() => { updateConfig('languageVersion', v); close(); }">
-                    {{ v }}
-                  </button>
-                </div>
-              </template>
-            </GenesisInput>
+            
+            <GenesisInput 
+              :model-value="config.languageVersion" 
+              type="select" 
+              :options="languageVersionOptions"
+              @update:model-value="(val) => updateConfig('languageVersion', val)"
+              size="lg" 
+              label="Version du Language" 
+              placeholder="Sélectionner..." 
+              fill-width 
+            />
 
-            <GenesisInput v-model="config.buildTool" type="select" size="lg" label="Build Tool" placeholder="Sélectionner..." fill-width>
-              <template #default="{ close }">
-                <div class="p-1 space-y-1">
-                  <button v-for="tool in availableBuildTools" :key="tool" type="button" class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors" :class="{ 'text-accent font-medium': config.buildTool === tool }" @click="() => { updateConfig('buildTool', tool); close(); }">
-                    {{ tool.charAt(0).toUpperCase() + tool.slice(1) }}
-                  </button>
-                </div>
-              </template>
-            </GenesisInput>
+            <GenesisInput 
+              :model-value="config.buildTool" 
+              type="select" 
+              :options="buildToolOptions"
+              @update:model-value="(val) => updateConfig('buildTool', val)"
+              size="lg" 
+              label="Build Tool" 
+              placeholder="Sélectionner..." 
+              fill-width 
+            />
 
             <div v-if="showGroupId" class="space-y-1">
-              <GenesisInput v-model="config.groupId" size="lg" label="Group ID" placeholder="com.example" fill-width />
+              <GenesisInput 
+                :model-value="config.groupId" 
+                @update:model-value="(val) => updateConfig('groupId', val)"
+                size="lg" 
+                label="Group ID" 
+                placeholder="com.example" 
+                fill-width 
+              />
             </div>
 
-            <div class="space-y-1">
-              <GenesisInput v-model="config.frameworkVersion" type="select" size="lg" label="Version du Framework" placeholder="Sélectionner..." fill-width>
-                <template #default="{ close }">
-                  <div class="p-1 space-y-1">
-                    <button v-for="v in availableFrameworkVersions" :key="v" type="button" class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors" :class="{ 'text-accent font-medium': config.frameworkVersion === v }" @click="() => { updateConfig('frameworkVersion', v); close(); }">
-                      {{ v }}
-                    </button>
-                  </div>
-                </template>
-              </GenesisInput>
-            </div>
+            <GenesisInput 
+              :model-value="config.frameworkVersion" 
+              type="select" 
+              :options="frameworkVersionOptions"
+              @update:model-value="(val) => updateConfig('frameworkVersion', val)"
+              size="lg" 
+              label="Version du Framework" 
+              placeholder="Sélectionner..." 
+              fill-width 
+            />
+
           </div>
 
           <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
@@ -137,49 +180,47 @@
           <div class="flex flex-col lg:flex-row gap-6">
             
             <div class="flex-1 flex flex-col gap-4">
-              <GenesisInput v-model="config.loggingLevel" type="select" label="Niveau de Logging" placeholder="INFO" fill-width>
-                <template #default="{ close }">
-                  <div class="p-1 space-y-1">
-                    <button v-for="opt in availableLoggingLevels" :key="opt" type="button" class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors" :class="{ 'text-accent font-medium': config.loggingLevel === opt }" @click="() => { updateConfig('loggingLevel', opt); close(); }">
-                      {{ opt }}
-                    </button>
-                  </div>
-                </template>
-              </GenesisInput>
+              
+              <GenesisInput 
+                :model-value="config.loggingLevel" 
+                type="select" 
+                :options="loggingLevelOptions"
+                @update:model-value="(val) => updateConfig('loggingLevel', val)"
+                label="Niveau de Logging" 
+                placeholder="INFO" 
+                fill-width 
+              />
 
-              <GenesisInput v-model="config.securityType" type="select" label="Type de Sécurité" placeholder="Aucune" fill-width>
-                <template #default="{ close }">
-                  <div class="p-1 space-y-1">
-                    <button type="button" class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors" :class="{ 'text-accent font-medium': !config.securityType || config.securityType === 'NONE' }" @click="() => { updateConfig('securityType', 'NONE'); close(); }">
-                      Aucune
-                    </button>
-                    <button v-for="opt in availableSecurityTypes" :key="opt" type="button" class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors" :class="{ 'text-accent font-medium': config.securityType === opt }" @click="() => { updateConfig('securityType', opt); close(); }">
-                      {{ opt }}
-                    </button>
-                  </div>
-                </template>
-              </GenesisInput>
+              <GenesisInput 
+                :model-value="config.securityType" 
+                type="select" 
+                :options="securityTypeOptions"
+                @update:model-value="(val) => updateConfig('securityType', val)"
+                label="Type de Sécurité" 
+                placeholder="Aucune" 
+                fill-width 
+              />
 
-              <GenesisInput v-model="config.cacheProvider" type="select" label="Fournisseur de Cache" placeholder="Aucun" fill-width>
-                <template #default="{ close }">
-                  <div class="p-1 space-y-1">
-                    <button v-for="opt in availableCacheProviders" :key="opt" type="button" class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors" :class="{ 'text-accent font-medium': config.cacheProvider === opt }" @click="() => { updateConfig('cacheProvider', opt); close(); }">
-                      {{ opt }}
-                    </button>
-                  </div>
-                </template>
-              </GenesisInput>
+              <GenesisInput 
+                :model-value="config.cacheProvider" 
+                type="select" 
+                :options="cacheProviderOptions"
+                @update:model-value="(val) => updateConfig('cacheProvider', val)"
+                label="Fournisseur de Cache" 
+                placeholder="Aucun" 
+                fill-width 
+              />
 
               <div v-if="showHibernateDdl" class="space-y-1">
-                <GenesisInput v-model="config.hibernateDdlAuto" type="select" label="Hibernate DDL Auto" placeholder="none" fill-width>
-                  <template #default="{ close }">
-                    <div class="p-1 space-y-1">
-                      <button v-for="opt in availableHibernateDdlAutoOptions" :key="opt" type="button" class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors" :class="{ 'text-accent font-medium': config.hibernateDdlAuto === opt }" @click="() => { updateConfig('hibernateDdlAuto', opt); close(); }">
-                        {{ opt }}
-                      </button>
-                    </div>
-                  </template>
-                </GenesisInput>
+                <GenesisInput 
+                  :model-value="config.hibernateDdlAuto" 
+                  type="select" 
+                  :options="hibernateDdlAutoOptions"
+                  @update:model-value="(val) => updateConfig('hibernateDdlAuto', val)"
+                  label="Hibernate DDL Auto" 
+                  placeholder="none" 
+                  fill-width 
+                />
               </div>
             </div>
 
@@ -227,7 +268,7 @@ import { useGenerator } from '@genesis-labs/web-core/features/generator/composab
 import { useConfigurationManager } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
 import { useConfig } from '@genesis-labs/web-core/core/features/config/composables/useConfig';
 import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
-import { useConfigManagerLogic } from '@genesis-labs/web-core/features/generator/composables/useConfigManagerLogic'; // ✅ NOUVEAU IMPORT
+import { useConfigManagerLogic } from '@genesis-labs/web-core/features/generator/composables/useConfigManagerLogic';
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
@@ -303,6 +344,37 @@ watch(isEditingFramework, (isEditing) => {
   if (isEditing) setTimeout(() => window.addEventListener('mousedown', handleClickOutside), 0);
   else window.removeEventListener('mousedown', handleClickOutside);
 });
+
+// ============================================================================
+// 3.5. MAPPING DES OPTIONS POUR LE BASCULEMENT AUTOMATIQUE
+// ============================================================================
+const languageVersionOptions = computed(() => 
+  availableLanguageVersions.value.map(v => ({ label: v, value: v }))
+);
+
+const buildToolOptions = computed(() => 
+  availableBuildTools.value.map(t => ({ label: t.charAt(0).toUpperCase() + t.slice(1), value: t }))
+);
+
+const frameworkVersionOptions = computed(() => 
+  availableFrameworkVersions.value.map(v => ({ label: v, value: v }))
+);
+
+const loggingLevelOptions = computed(() => 
+  availableLoggingLevels.value.map(opt => ({ label: opt, value: opt }))
+);
+
+const securityTypeOptions = computed(() => 
+  [{ label: 'Aucune', value: 'NONE' }, ...availableSecurityTypes.value.map(opt => ({ label: opt, value: opt }))]
+);
+
+const cacheProviderOptions = computed(() => 
+  availableCacheProviders.value.map(opt => ({ label: opt, value: opt }))
+);
+
+const hibernateDdlAutoOptions = computed(() => 
+  availableHibernateDdlAutoOptions.value.map(opt => ({ label: opt, value: opt }))
+);
 
 // ============================================================================
 // 4. INITIALISATION DES LOGIQUES DE CONFIGURATION (Via le Composable DRY)

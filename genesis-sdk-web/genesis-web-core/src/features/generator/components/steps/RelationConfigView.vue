@@ -10,62 +10,28 @@
         <div class="flex flex-wrap items-end gap-3">
 
           <!-- Sélection Table Parent -->
-          <GenesisDropdown 
-            dropdown-size="lg" 
-            trigger-size="md" 
-            align="left" 
+          <GenesisInput
+            v-model="newRelation.parentTable"
+            type="select"
+            :options="parentTableOptions"
             label="Table Parent (Mère)"
+            placeholder="Sélectionner une table..."
+            size="lg"
+            fill-width
             class="flex-1 min-w-[200px]"
-          >
-            <template #trigger>
-              <span class="truncate text-sm">
-                {{ getTablesParents.find(t => t.className === newRelation.parentTable)?.className || 'Sélectionner une table...' }}
-              </span>
-            </template>
-            <div class="p-1 max-h-60 overflow-y-auto">
-              <MenuItem v-for="table in getTablesParents" :key="table.tableName" v-slot="{ active }" as="template">
-                <GenesisButton
-                  :class="[active ? 'bg-accent/10 text-accent' : '']"
-                  variant="tertiary" 
-                  fill-width 
-                  size="md"
-                  @click="newRelation.parentTable = table.className"
-                >
-                  {{ table.className }}
-                  <span v-if="table.isView" class="text-muted text-xs ml-1">(Vue)</span>
-                </GenesisButton>
-              </MenuItem>
-            </div>
-          </GenesisDropdown>
+          />
 
           <!-- Sélection Table Child -->
-          <GenesisDropdown 
-            dropdown-size="lg" 
-            trigger-size="md" 
-            align="right" 
+          <GenesisInput
+            v-model="newRelation.childTable"
+            type="select"
+            :options="childTableOptions"
             label="Table Child (Fille)"
+            placeholder="Sélectionner une table..."
+            size="lg"
+            fill-width
             class="flex-1 min-w-[200px]"
-          >
-            <template #trigger>
-              <span class="truncate text-sm">
-                {{ getTablesChilds.find(t => t.className === newRelation.childTable)?.className || 'Sélectionner une table...' }}
-              </span>
-            </template>
-            <div class="p-1 max-h-60 overflow-y-auto">
-              <MenuItem v-for="table in getTablesChilds" :key="table.tableName" v-slot="{ active }" as="template">
-                <GenesisButton
-                  :class="[active ? 'bg-accent/10 text-accent' : '']"
-                  variant="tertiary" 
-                  fill-width 
-                  size="md"
-                  @click="newRelation.childTable = table.className"
-                >
-                  {{ table.className }}
-                  <span v-if="table.isView" class="text-muted text-xs ml-1">(Vue)</span>
-                </GenesisButton>
-              </MenuItem>
-            </div>
-          </GenesisDropdown>
+          />
 
           <!-- Bouton d'ajout et Switcher de vue -->
           <GenesisButton 
@@ -146,14 +112,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { MenuItem } from '@headlessui/vue';
 import type { RelationParameter } from '@genesis-labs/shared-types';
 
 // Composables
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 
 // UI Components
-import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
 import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.vue';
 import LayoutSwitcherAlt from '@genesis-labs/web-core/core/components/ui/dropdown/LayoutSwitcherAlt.vue';
@@ -163,7 +127,6 @@ import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/Genes
 import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
 import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
-// ✅ NOUVEAUX IMPORTS POUR LE CARROUSEL
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 
@@ -193,7 +156,6 @@ const newRelation = ref<Partial<RelationParameter>>({
 
 const internalDisplayMode = ref<DisplayMode>('grid');
 
-// ✅ CONSTANTES POUR LE TUTORIEL
 const panelSlides: CarouselSlide[] = [
   { color: '#3B82F6', label: 'Étape 1 : Sélection des entités' },
   { color: '#EF4444', label: 'Étape 2 : Configuration des relations' },
@@ -207,6 +169,21 @@ const listDisplay = computed(() => internalDisplayMode.value);
 
 const canAddRelation = computed(() => 
   !!newRelation.value.parentTable && !!newRelation.value.childTable
+);
+
+// ✅ Options formatées pour GenesisInput (avec indication visuelle pour les Vues)
+const parentTableOptions = computed(() => 
+  getTablesParents.value.map(t => ({ 
+    label: `${t.className}${t.isView ? ' (Vue)' : ''}`, 
+    value: t.className 
+  }))
+);
+
+const childTableOptions = computed(() => 
+  getTablesChilds.value.map(t => ({ 
+    label: `${t.className}${t.isView ? ' (Vue)' : ''}`, 
+    value: t.className 
+  }))
 );
 
 // ============================================================================

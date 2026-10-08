@@ -30,6 +30,11 @@ export const MENU_SIZES = {
 export type MenuSize = keyof typeof MENU_SIZES;
 
 // ============================================================================
+// TYPES D'INPUT PARTAGÉS
+// ============================================================================
+export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean' | 'color' | 'select' | 'file' | 'checkbox-3-state' | 'path' | 'textarea' | 'combobox';
+
+// ============================================================================
 // ÉCHELLE UNIQUE DES CONTRÔLES (GenesisButton, GenesisButtonIcon, GenesisInput…)
 // ============================================================================
 //
