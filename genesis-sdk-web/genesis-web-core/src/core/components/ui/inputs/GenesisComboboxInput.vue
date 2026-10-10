@@ -31,7 +31,7 @@
                             Aucun résultat trouvé.
                         </div>
                         <ComboboxOption v-for="option in filteredOptions" as="template" :key="getOptionValue(option)" :value="option" v-slot="{ selected, active }">
-                            <li class="relative cursor-default select-none py-2 pl-3 pr-9" :class="{ 'bg-hover-ghost text-secondary': active, 'text-text': !active }">
+                            <li class="relative cursor-default select-none py-2 pl-3 pr-9" :class="{ 'bg-bg-secondary text-secondary': active, 'text-text': !active }">
                                 <span class="block truncate" :class="{ 'font-medium': selected, 'font-normal': !selected }">
                                     {{ getOptionLabel(option) }}
                                 </span>

@@ -4,7 +4,7 @@
       v-model="internalValue"
       :disabled="disabled"
       :class="[
-        internalValue ? 'bg-accent' : 'bg-bg border border-secondary',
+        internalValue ? 'bg-primary' : 'bg-bg border',
         disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
         sizeClasses.container
       ]"

@@ -141,18 +141,18 @@ const initials = computed(() => {
 // ═══ SOURCE DE VÉRITÉ UNIQUE POUR LE CSS (DRY) ═══
 
 const containerClasses = computed(() => {
-    // Grid : la sélection est signalée par le remplissage animé du logo + texte + mascotte
+    if (props.selected) {
+        // Exemple : fond accentué + bordure primaire + léger anneau de focus
+        return 'bg-bg-light border-b-4 border-primary';
+    }
 
-    // correction à apporter ici concernant la sélection
-    if (display.value === 'grid') {
+    // Mode Grid et List : état par défaut (non sélectionné)
+    if (display.value === 'grid' || display.value === 'list') {
         return 'bg-bg-light border-b-4 border-bg hover:border-primary/50 active:border active:border-transparent';
     }
-    // List : même principe que grid (pas de changement de fond à la sélection)
-    if (display.value === 'list') {
-        return 'bg-bg-light border-b-4 border-bg hover:border-primary/50 active:border active:border-transparent';
-    }
-    // Table : comportement inchangé (fond accent à la sélection)
-    return props.selected ? 'bg-accent/10 border-primary' : 'bg-bg-light hover:bg-bg-light/50';
+    
+    // Mode Table : état par défaut (non sélectionné)
+    return 'bg-bg-light hover:bg-bg-light/50';
 });
 
 const badgeClasses = 'w-5 h-5 rounded-full bg-primary text-bg text-xs text-text font-bold flex items-center justify-center shadow-sm';

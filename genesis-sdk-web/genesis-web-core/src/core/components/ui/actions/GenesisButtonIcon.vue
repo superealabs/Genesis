@@ -35,7 +35,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
     disabled: false,
-    variant: 'primary',
+    variant: 'neutral',
     shape: 'square',
     size: 'md',
     hoverHimself: false

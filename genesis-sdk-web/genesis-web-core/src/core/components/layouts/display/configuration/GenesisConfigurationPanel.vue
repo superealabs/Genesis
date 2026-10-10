@@ -21,7 +21,7 @@
         <!-- ═══ CONTENU : Deux colonnes ═══ -->
         <div class="flex flex-1 min-h-0 gap-4 overflow-hidden">
             
-            <div class="flex-1 flex flex-col min-h-0 overflow-hidden border border-neutral-light-genesis rounded-lg relative">
+            <div class="flex-1 flex flex-col min-h-0 overflow-hidden border border-bg-neutral-genesis rounded-lg relative">
                 <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
                     
                     <!-- Dans le template, mettre à jour l'écouteur @rename -->
@@ -54,16 +54,15 @@
                 <!-- Groupe 1 : Gestion (Ajout / Suppression) -->
                 <div class="flex flex-col gap-2">
                     <GenesisButtonIcon 
-                        variant="secondary" 
                         size="lg" 
                         title="Ajouter une configuration"
+                        variant="secondary"
                         @click="handleAdd"
                     >
                         <IconPlus />
                     </GenesisButtonIcon>
 
                     <GenesisButtonIcon 
-                        variant="secondary" 
                         size="lg" 
                         title="Supprimer la configuration sélectionnée"
                         :disabled="!selectedConfigId"
@@ -80,7 +79,6 @@
                 <div class="flex flex-col gap-2">
                     <!-- Groupe 2 : Navigation (Réordonnancement) -->
                     <GenesisButtonIcon 
-                        variant="secondary" 
                         size="lg" 
                         title="Monter la configuration"
                         :disabled="!canMoveUp"
@@ -91,7 +89,6 @@
                     </GenesisButtonIcon>
 
                     <GenesisButtonIcon 
-                        variant="secondary" 
                         size="lg" 
                         title="Descendre la configuration"
                         :disabled="!canMoveDown"

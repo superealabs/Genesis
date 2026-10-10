@@ -72,7 +72,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     disabled: false,
-    variant: 'primary',
+    variant: 'neutral',
     shape: 'rectangle',
     size: 'md',
     fillWidth: false,

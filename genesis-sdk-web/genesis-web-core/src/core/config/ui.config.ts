@@ -213,9 +213,9 @@ export const FIELD_VARIANTS: Record<UI_Variant, FieldVariantTokens> = {
     menu: 'border border-secondary text-text bg-bg-light',
   },
   neutral: {
-    container: 'border bg-transparent border-neutral-light-genesis',
+    container: 'border bg-transparent border-bg-neutral-genesis',
     trigger: 'text-text',
-    menu: 'border border-neutral-light-genesis text-text bg-bg-dark',
+    menu: 'border border-bg-neutral-genesis text-text bg-bg-dark',
   },
 };
 
@@ -258,7 +258,7 @@ export const BUTTON_VARIANTS = {
   },
   neutral: {
     hover: '',
-    default: 'bg-bg-secondary font-medium text-gray-800 disabled:hover:bg-transparent',
+    default: 'bg-bg-neutral-genesis/50 font-medium text-neutral-light-genesis disabled:hover:bg-transparent',
   },
   none: {
     hover: '',
