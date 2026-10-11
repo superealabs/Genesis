@@ -11,9 +11,9 @@
     @next="emit('next')"
     @skip="emit('skip')" 
   >
-    <!-- ÉTAPE 1 : FRAMEWORK -->
+    <!-- ÉTAPE : FRAMEWORK -->
     <FrameworkLayout
-      v-if="props.currentStep === 1"
+      v-if="currentStepId === 'framework'"
       v-bind="frameworkLayoutProps"
       :group-by="frameworkGroupBy"
       :languages="languages"
@@ -30,17 +30,18 @@
       @update:display-mode="setDisplayMode"
       @update:mode="handleModeChange"
       @update:filters="setFilters"
+      @select-framework="(fw: Framework) => emit('select-framework', fw)"
     />
 
-    <!-- ÉTAPE 2 : CONFIGURATION PROJET -->
+    <!-- ÉTAPE : CONFIGURATION PROJET -->
     <ProjectConfigView 
-      v-else-if="props.currentStep === 2" 
+      v-else-if="currentStepId === 'project_config'" 
       @request-folder-path="handleRequestFolderPath" 
     />
 
-    <!-- ÉTAPE 3 : SÉLECTION BASE DE DONNÉES -->
+    <!-- ÉTAPE : SÉLECTION BASE DE DONNÉES -->
     <DatabaseLayout 
-      v-else-if="props.currentStep === 3"
+      v-else-if="currentStepId === 'database_select'"
       v-bind="databaseLayoutProps"
       @back="emit('close')"
       @update:display-mode="setDisplayModeDb"
@@ -48,29 +49,30 @@
       @select-replace="handleReplaceSelectionDb"
       @close-replace="cancelReplaceDb"
       @select="handleSelectWrapperDb"
+      @select-database="(db: DatabaseEngineDto) => emit('select-database', db)"
     />
 
-    <!-- ÉTAPE 4 : CONFIGURATION BASE DE DONNÉES -->
+    <!-- ÉTAPE : CONFIGURATION BASE DE DONNÉES -->
     <DatabaseConfigView 
-      v-else-if="props.currentStep === 4" 
+      v-else-if="currentStepId === 'database_config'" 
       @test-connection-error="handleChildError" 
     />
 
-    <!-- ÉTAPE 5 : SCRIPT / IA -->
+    <!-- ÉTAPE : SCRIPT / IA -->
     <ScriptConfigView 
-      v-else-if="props.currentStep === 5" 
+      v-else-if="currentStepId === 'script'" 
       @request-file-path="handleRequestFilePath" 
     />
 
-    <!-- ÉTAPE 6 : SÉLECTION TABLES/VUES -->
-    <GenerationConfigurationAlt v-else-if="props.currentStep === 6" />
+    <!-- ÉTAPE : SÉLECTION TABLES/VUES -->
+    <GenerationConfigurationAlt v-else-if="currentStepId === 'tables'" />
 
-    <!-- ÉTAPE 7 : RELATIONS -->
-    <RelationConfigView v-else-if="props.currentStep === 7" />
+    <!-- ÉTAPE : RELATIONS -->
+    <RelationConfigView v-else-if="currentStepId === 'relations'" />
 
-    <!-- ÉTAPE 8 : SÉLECTION FRONTEND -->
+    <!-- ÉTAPE : SÉLECTION FRONTEND -->
     <FrontendLayout 
-      v-else-if="props.currentStep === 8"
+      v-else-if="currentStepId === 'frontend_select'"
       v-bind="frontendLayoutProps"
       @back="emit('close')"
       @update:search-value="setSearchFe"
@@ -80,16 +82,17 @@
       @close-replace="cancelReplaceFe"
       @select="handleSelectWrapperFe"
       @info="handleInfoFe"
+      @select-frontend="(fe: FrontendFramework) => emit('select-frontend', fe)"
     />
     
-    <!-- ÉTAPE 9 : CONFIGURATION LAYOUT FRONTEND -->
+    <!-- ÉTAPE : CONFIGURATION LAYOUT FRONTEND -->
     <FrontendLayoutConfigView 
-      v-else-if="props.currentStep === 9" 
+      v-else-if="currentStepId === 'frontend_layout'" 
       @request-file-path="handleRequestFilePath" 
     />
 
-    <!-- ÉTAPE 10 : CONFIGURATION GIT -->
-    <GitConfigView v-else-if="props.currentStep === 10" />
+    <!-- ÉTAPE : CONFIGURATION GIT -->
+    <GitConfigView v-else-if="currentStepId === 'git_config'" />
 
   </StepperPopup>
 
@@ -131,6 +134,9 @@ import { useWizardFrontend } from '@genesis-labs/web-core/features/frontend/comp
 // Store
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 
+// ✅ IMPORT POUR LE MAPPING SÉMANTIQUE
+import { getStepIdByNumber } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
+
 // ============================================================================
 // 1. PROPS & EMITS
 // ============================================================================
@@ -158,10 +164,8 @@ const emit = defineEmits<{
 const store = useGeneratorStore();
 const stepContentClass = 'overflow-y-auto';
 
-// État de regroupement spécifique au framework (persisté pendant la session du wizard)
 const frameworkGroupBy = ref<keyof Framework | null>('coreFramework'); 
 
-// État de gestion des erreurs globales du wizard
 const showError = ref(false);
 const errorMessage = ref('');
 const errorStackTrace = ref('');
@@ -170,11 +174,6 @@ const isDevMode = import.meta.env.DEV;
 // ============================================================================
 // 3. INJECTION DES COMPOSABLES (PONTS WIZARD)
 // ============================================================================
-
-/**
- * Pont Framework : Adaptation de la logique métier des frameworks pour le Stepper.
- * Déclenche l'émission 'select-framework' lors de la validation.
- */
 const {
   searchQuery, displayMode, compareMode, frameworks, selectedId, frameworkSlots,
   replaceOptions, showReplacePopup, mouseX, mouseY, filters, detailFramework,
@@ -185,10 +184,6 @@ const {
   emit('select-framework', framework);
 });
 
-/**
- * Pont Database : Adaptation de la logique métier des bases de données pour le Stepper.
- * Déclenche l'émission 'select-database' lors de la validation.
- */
 const {
   engines, selectedId: dbSelectedId, databaseSlots, displayMode: dbDisplayMode,
   compareMode: dbCompareMode, showReplacePopup: dbShowReplacePopup, mouseX: dbMouseX,
@@ -199,10 +194,6 @@ const {
   emit('select-database', engine);
 });
 
-/**
- * Pont Frontend : Adaptation de la logique métier du frontend pour le Stepper.
- * Déclenche l'émission 'select-frontend' lors de la validation.
- */
 const {
   frontends, selectedId: feSelectedId, frontendFrameworkSlots: feSlots, displayMode: feDisplayMode,
   searchQuery: feSearchQuery, compareMode: feCompareMode, showReplacePopup: feShowReplacePopup,
@@ -215,14 +206,15 @@ const {
 });
 
 // ============================================================================
-// 4. COMPUTEDS (CONSTRUCTEURS DE PROPS)
+// 4. COMPUTEDS (IDENTIFIANT D'ÉTAPE & PROPS)
 // ============================================================================
 
 /**
- * Regroupe toutes les propriétés réactives nécessaires au FrameworkLayout.
- * Cela évite une imbrication excessive de props dans le template et garantit 
- * que toutes les dépendances sont correctement suivies par Vue.
+ * Détermine l'ID sémantique de l'étape actuelle à partir du numéro.
+ * C'est la seule source de vérité pour le rendu conditionnel du template.
  */
+const currentStepId = computed(() => getStepIdByNumber(props.currentStep));
+
 const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
   searchQuery: searchQuery.value,
   displayMode: displayMode.value,
@@ -244,9 +236,6 @@ const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
   groupBy: frameworkGroupBy.value,
 }));
 
-/**
- * Regroupe toutes les propriétés réactives nécessaires au DatabaseLayout.
- */
 const databaseLayoutProps = computed<DatabaseLayoutProps>(() => ({
   engines: engines.value,
   selectedId: dbSelectedId.value,
@@ -261,9 +250,6 @@ const databaseLayoutProps = computed<DatabaseLayoutProps>(() => ({
   isLoading: dbIsLoading.value
 }));
 
-/**
- * Regroupe toutes les propriétés réactives nécessaires au FrontendLayout.
- */
 const frontendLayoutProps = computed<FrontendLayoutProps>(() => ({
   frontends: frontends.value,
   selectedId: feSelectedId.value,
@@ -282,7 +268,6 @@ const frontendLayoutProps = computed<FrontendLayoutProps>(() => ({
 // ============================================================================
 // 5. ACTIONS & HANDLERS
 // ============================================================================
-
 function handleClose() { 
   emit('close'); 
 }
@@ -295,19 +280,12 @@ function handleRequestFilePath(payload: FileRequestPayload) {
   emit('request-file-path', payload); 
 }
 
-/**
- * Capture les erreurs remontées par les composants enfants (ex: échec de test de connexion BDD)
- * et les affiche via le popup d'erreur global.
- */
 function handleChildError(message: string) {
   errorMessage.value = message;
   errorStackTrace.value = ''; 
   showError.value = true;
 }
 
-/**
- * Réinitialise l'état d'erreur global et nettoie l'erreur stockée dans le store.
- */
 function clearError() {
   showError.value = false;
   errorMessage.value = '';
@@ -318,11 +296,6 @@ function clearError() {
 // ============================================================================
 // 6. WATCHERS
 // ============================================================================
-
-/**
- * Surveille les erreurs définies dans le store du générateur (ex: erreurs de validation 
- * lors du clic sur "Suivant") et déclenche l'affichage du popup d'erreur global.
- */
 watch(() => store.wizardError, (newError) => {
   if (newError) {
     errorMessage.value = newError;

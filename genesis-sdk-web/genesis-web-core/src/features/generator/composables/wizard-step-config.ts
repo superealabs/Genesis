@@ -13,7 +13,7 @@ import { useDatabaseStore } from '../../database/store/useDatabase.store';
 import { useFrontendStore } from '../../frontend/store/useFrontend.store';
 
 // ============================================================================
-// INTERFACES
+// INTERFACES & TYPES
 // ============================================================================
 
 export interface WizardServices {
@@ -26,20 +26,56 @@ export interface WizardServices {
 export interface StepConfig {
   onEnter?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<void> | void;
   beforeNext?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<boolean> | boolean;
+  /**
+   * Si cette étape est ignorée (skippée), quelles autres étapes doivent l'être aussi ?
+   * Remplace la logique fragile des tableaux de numéros en dur (ex: 8: [9]).
+   */
+  skipCascade?: StepId[];
 }
 
+// Identifiants sémantiques des étapes (Le contrat TypeScript)
+export type StepId = 
+  | 'framework'
+  | 'project_config'
+  | 'database_select'
+  | 'database_config'
+  | 'script'
+  | 'tables'
+  | 'relations'
+  | 'frontend_select'
+  | 'frontend_layout'
+  | 'git_config';
+
 // ============================================================================
-// CONFIGURATION DES ÉTAPES DU WIZARD
+// SOURCE DE VÉRITÉ : ORDRE DES ÉTAPES
 // ============================================================================
 
-export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
+/**
+ * L'ordre de ce tableau définit l'ordre d'exécution du wizard.
+ * Pour réorganiser le wizard, il suffit de réorganiser ce tableau.
+ */
+export const WIZARD_STEP_ORDER: StepId[] = [
+  'framework',
+  'project_config',
+  'database_select',
+  'database_config',
+  'script',
+  'tables',
+  'relations',
+  'frontend_select',
+  'frontend_layout',
+  'git_config'
+];
+
+// ============================================================================
+// CONFIGURATION MÉTIER PAR ÉTAPE
+// ============================================================================
+
+export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   
-  // ==========================================================================
-  // ÉTAPE 1 : SÉLECTION DU FRAMEWORK
-  // ==========================================================================
-  1: {
+  framework: {
     onEnter: async (_store, { fsvc }) => {
-      console.log("[Étape 1] Chargement des frameworks et langues...");
+      console.log("[Wizard: framework] Chargement des frameworks et langues...");
       const frameworkStore = useFrameworkStore();
       
       try { 
@@ -51,9 +87,9 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
         frameworkStore.setFrameworks(frameworksData);
         frameworkStore.setLanguages(languagesData);
         
-        console.log(`[Étape 1] Chargement réussi : ${frameworksData.length} frameworks, ${languagesData.length} langues`);
+        console.log(`[Wizard: framework] Chargement réussi : ${frameworksData.length} frameworks, ${languagesData.length} langues`);
       } catch (error) {
-        console.error("[Étape 1] Échec du chargement:", error);
+        console.error("[Wizard: framework] Échec du chargement:", error);
         _store.setWizardError("Impossible de charger la liste des frameworks.");
       }
     },
@@ -68,7 +104,7 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
 
       try {
         store.setFramework(framework);
-        console.log(`[Étape 1] Framework sélectionné :`, framework.name);
+        console.log(`[Wizard: framework] Framework sélectionné :`, framework.name);
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du framework.");
@@ -77,15 +113,12 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     }
   },
 
-  // ==========================================================================
-  // ÉTAPE 2 : CONFIGURATION DU PROJET
-  // ==========================================================================
-  2: {
+  project_config: {
     onEnter: async (store, { fsvc }) => {
       const framework = store.stepperData.framework;
       if (!framework) return;
       
-      console.log("[Étape 2] Chargement des options de configuration...");
+      console.log("[Wizard: project_config] Chargement des options de configuration...");
       
       try {
         await Promise.all([
@@ -96,9 +129,9 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
           fsvc.fetchFrameworkVersions(framework.id).then(data => store.setAvailableFrameworkVersions(data)),
           fsvc.fetchBuildTools(framework.id).then(data => store.setAvailableBuildTools(data)),
         ]);
-        console.log("[Étape 2] Options de configuration chargées");
+        console.log("[Wizard: project_config] Options de configuration chargées");
       } catch (error) {
-        console.error("[Étape 2] Échec du chargement des options:", error);
+        console.error("[Wizard: project_config] Échec du chargement des options:", error);
       }
     },
     
@@ -111,8 +144,7 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
       }
 
       try {
-        console.log("[Étape 2] Configuration du projet validée");
-        console.log("Valeur de la configuration : " + JSON.stringify(config));
+        console.log("[Wizard: project_config] Configuration du projet validée");
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde de la configuration.");
@@ -121,20 +153,17 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     }
   },
 
-  // ==========================================================================
-  // ÉTAPE 3 : SÉLECTION DE LA BASE DE DONNÉES
-  // ==========================================================================
-  3: {
+  database_select: {
     onEnter: async (_store, { dbsvc }) => {
-      console.log("[Étape 3] Chargement des moteurs de base de données...");
+      console.log("[Wizard: database_select] Chargement des moteurs de base de données...");
       const databaseStore = useDatabaseStore();
       
       try {
         const engines = await dbsvc.fetchDatabaseEngines();
         databaseStore.setAvailableEngines(engines);
-        console.log(`[Étape 3] ${engines.length} moteurs chargés`);
+        console.log(`[Wizard: database_select] ${engines.length} moteurs chargés`);
       } catch (error) {
-        console.error("[Étape 3] Échec du chargement des moteurs DB:", error);
+        console.error("[Wizard: database_select] Échec du chargement des moteurs DB:", error);
         _store.setWizardError("Impossible de charger la liste des bases de données.");
       }
     },
@@ -146,10 +175,8 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
       }
 
       try {
-        // Engagement du choix dans stepperData
         store.setDatabaseEngine(store.pendingDatabaseEngine);
 
-        // Recherche de l'ID du moteur pour l'appel API
         const databaseStore = useDatabaseStore();
         const matchedEngine = databaseStore.availableEngines.find(eng => {
           const normalizedName = eng.name.toLowerCase().replace(/\s+/g, '');
@@ -162,7 +189,7 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
           return false;
         }
 
-        console.log(`[Étape 3] Sélection BDD validée. ID : ${matchedEngine.id}`);
+        console.log(`[Wizard: database_select] Sélection BDD validée. ID : ${matchedEngine.id}`);
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection de la base de données.");
@@ -171,14 +198,10 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     }
   },
 
-  // ==========================================================================
-  // ÉTAPE 4 : CONFIGURATION DE LA BASE DE DONNÉES
-  // ==========================================================================
-  4: {
+  database_config: {
     beforeNext: async (store) => {
       try {
-        console.log("[Étape 4] Configuration BDD validée");
-        console.log("Configuration de la base de donnée actuelle : " + JSON.stringify(store.stepperData.database))
+        console.log("[Wizard: database_config] Configuration BDD validée");
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des credentials.");
@@ -187,10 +210,7 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     }
   },
 
-  // ==========================================================================
-  // ÉTAPE 5 : SCRIPT / IA (Skippable)
-  // ==========================================================================
-  5: {
+  script: {
     beforeNext: async (store, { svc }) => {
       const script = store.stepperData.script;
       
@@ -198,33 +218,31 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
         try { 
           await svc.saveScriptConfig(script); 
         } catch (error) { 
-          console.warn("[Étape 5] Échec sauvegarde script (non bloquant):", error); 
+          console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error); 
         }
       }
       
       return true;
-    }
+    },
+    skipCascade: [] // Peut être sauté sans conséquence sur les autres
   },
 
-  // ==========================================================================
-  // ÉTAPE 6 : SÉLECTION DES TABLES ET VUES
-  // ==========================================================================
-  6: {
+  tables: {
     onEnter: async (store, { svc }) => {
-      console.log("[Étape 6] Chargement des tables et vues...");
+      console.log("[Wizard: tables] Chargement des tables et vues...");
       
       try {
         const tables = await svc.fetchTablesMetadata();
         store.setAvailableTables(tables);
-        console.log(`[Étape 6] ${tables.length} tables/vues chargées`);
+        console.log(`[Wizard: tables] ${tables.length} tables/vues chargées`);
       } catch (error) {
-        console.error("[Étape 6] Échec du chargement des tables:", error);
+        console.error("[Wizard: tables] Échec du chargement des tables:", error);
       }
     },
     
     beforeNext: async (store) => {
       try {
-        console.log("[Étape 6] Sélection des tables validée");
+        console.log("[Wizard: tables] Sélection des tables validée");
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des tables.");
@@ -233,13 +251,10 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     }
   },
 
-  // ==========================================================================
-  // ÉTAPE 7 : RELATIONS
-  // ==========================================================================
-  7: {
+  relations: {
     beforeNext: async (store) => {
       try {
-        console.log("[Étape 7] Configuration des relations validée");
+        console.log("[Wizard: relations] Configuration des relations validée");
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des relations.");
@@ -248,12 +263,9 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     }
   },
 
-  // ==========================================================================
-  // ÉTAPE 8 : SÉLECTION DU FRONTEND (Skippable)
-  // ==========================================================================
-  8: {
+  frontend_select: {
     onEnter: async (_store, { fdsvc }) => {
-      console.log("[Étape 8] Chargement des options Frontend...");
+      console.log("[Wizard: frontend_select] Chargement des options Frontend...");
       const frontendStore = useFrontendStore();
       
       try {
@@ -261,27 +273,25 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
           fdsvc.fetchFrontendFrameworks().then(data => frontendStore.setAvailableFrontendFrameworks(data)),
           fdsvc.fetchInterfaceLanguages().then(data => frontendStore.setAvailableInterfaceLanguages(data)),
         ]);
-        console.log("[Étape 8] Options Frontend chargées");
+        console.log("[Wizard: frontend_select] Options Frontend chargées");
       } catch (error) {
-        console.error("[Étape 8] Échec du chargement des options Frontend:", error);
+        console.error("[Wizard: frontend_select] Échec du chargement des options Frontend:", error);
         _store.setWizardError("Impossible de charger les options frontend.");
       }
     },
     
     beforeNext: async (store) => {
-      // Si aucun framework n'est sélectionné, l'étape est considérée comme skippée
       if (!store.pendingFrontendFramework) {
-        console.log("[Étape 8] Frontend ignoré (skippable)");
+        console.log("[Wizard: frontend_select] Frontend ignoré (skippable)");
         return true;
       }
 
       try {
-        // Engagement du choix dans stepperData
         store.setSelectedFrontendFramework(store.pendingFrontendFramework);
 
         const frontendId = store.stepperData.frontend?.id;
         if (frontendId) {
-          console.log(`[Étape 8] Sélection Frontend validée. ID : ${frontendId}`);
+          console.log(`[Wizard: frontend_select] Sélection Frontend validée. ID : ${frontendId}`);
         }
         
         return true;
@@ -289,16 +299,15 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du frontend.");
         return false;
       }
-    }
+    },
+    // ✅ CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
+    skipCascade: ['frontend_layout'] 
   },
 
-  // ==========================================================================
-  // ÉTAPE 9 : CONFIGURATION DU LAYOUT FRONTEND
-  // ==========================================================================
-  9: {
+  frontend_layout: {
     beforeNext: async (store) => {
       try {
-        console.log("[Étape 9] Configuration layout Frontend validée");
+        console.log("[Wizard: frontend_layout] Configuration layout Frontend validée");
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde du layout frontend.");
@@ -307,13 +316,10 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
     }
   },
 
-  // ==========================================================================
-  // ÉTAPE 10 : CONFIGURATION GIT
-  // ==========================================================================
-  10: {
+  git_config: {
     beforeNext: async (store) => {
       try {
-        console.log("[Étape 10] Configuration Git validée");
+        console.log("[Wizard: git_config] Configuration Git validée");
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde Git.");
@@ -321,4 +327,47 @@ export const WIZARD_STEP_CONFIG: Record<number, StepConfig> = {
       }
     }
   }
+};
+
+// ============================================================================
+// UTILITAIRES D'ADAPTATION (Pont entre Noms et Numéros)
+// ============================================================================
+
+/**
+ * Retourne le nombre total d'étapes (dynamique, basé sur le tableau d'ordre)
+ */
+export const getTotalSteps = (): number => WIZARD_STEP_ORDER.length;
+
+/**
+ * Convertit un numéro d'étape (1-based) en identifiant sémantique
+ */
+export const getStepIdByNumber = (num: number): StepId | undefined => {
+  return WIZARD_STEP_ORDER[num - 1];
+};
+
+/**
+ * Convertit un identifiant sémantique en numéro d'étape (1-based)
+ */
+export const getStepNumberById = (id: StepId): number => {
+  return WIZARD_STEP_ORDER.indexOf(id) + 1;
+};
+
+/**
+ * Génère le format Record<number, number[]> attendu par useGenesisWizard
+ * en se basant sur les dépendances (skipCascade) définies dans la config.
+ */
+export const getSkippableStepsConfig = (): Record<number, number[]> => {
+  const config: Record<number, number[]> = {};
+  
+  WIZARD_STEP_ORDER.forEach((stepId, index) => {
+    const stepConfig = WIZARD_STEP_CONFIG[stepId];
+    const stepNum = index + 1;
+    
+    // On vérifie si la propriété 'skipCascade' existe explicitement dans la config de l'étape
+    if (stepConfig && 'skipCascade' in stepConfig) {
+      config[stepNum] = (stepConfig.skipCascade || []).map(cascadeId => getStepNumberById(cascadeId));
+    }
+  });
+  
+  return config;
 };
