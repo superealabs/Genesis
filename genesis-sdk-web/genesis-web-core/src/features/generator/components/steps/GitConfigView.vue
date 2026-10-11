@@ -1,35 +1,27 @@
 <template>
   <div class="flex flex-col gap-6 p-4 max-w-3xl mx-auto">
     
-    <!-- 1. ACTIVATION GIT -->
+    <!-- 1. EN-TÊTE GIT -->
     <div class="space-y-3">
       <h3 class="text-lg font-semibold text-text flex items-center gap-2">
         Configuration Git
       </h3>
       <p class="text-sm text-text-muted">
-        Configurez l'initialisation du dépôt Git pour votre projet.
+        Un dépôt Git local sera initialisé par défaut. 
+        Utilisez les options ci-dessous pour configurer un dépôt distant (GitHub, GitLab, etc.).
       </p>
 
-      <div class="flex flex-col gap-2">
-        <GenesisInput
-          v-model="gitConfig.useGit"
-          type="boolean"
-          label="Initialiser un dépôt Git"
-          one-line
-        />
-
-        <GenesisInput
-          v-if="gitConfig.useGit"
-          v-model="gitConfig.useRemoteRepo"
-          type="boolean"
-          label="Utiliser un dépôt distant (Remote)"
-          one-line
-        />
-      </div>
+      <!-- On garde uniquement le switch pour le Remote -->
+      <GenesisInput
+        v-model="gitConfig.useRemoteRepo"
+        type="boolean"
+        label="Utiliser un dépôt distant (Remote)"
+        one-line
+      />
     </div>
 
     <!-- 2. CONFIGURATION REMOTE (Conditionnelle) -->
-    <div v-if="gitConfig.useGit && gitConfig.useRemoteRepo" class="space-y-4 p-4 bg-bg-light/50 rounded-lg border border-secondary">
+    <div v-if="gitConfig.useRemoteRepo" class="space-y-4 p-4 bg-bg-light/50 rounded-lg border border-secondary">
       
       <!-- Choix : Nouveau repo ou existant -->
       <GenesisInput
@@ -116,19 +108,7 @@ import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 
-// ============================================================================
-// 1. COMPOSABLES
-// ============================================================================
 const { stepperData } = useGenerator();
 
-// ============================================================================
-// 2. COMPUTEDS (Liaison réactive)
-// ============================================================================
-
-/**
- * Fournit un accès réactif direct à l'objet de configuration Git dans le store.
- * Toute modification via v-model dans ce composant mettra à jour instantanément 
- * l'état global du wizard, sans nécessiter de fonctions intermédiaires.
- */
 const gitConfig = computed(() => stepperData.value.git);
 </script>

@@ -26,6 +26,8 @@ export interface WizardServices {
 export interface StepConfig {
   onEnter?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<void> | void;
   beforeNext?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<boolean> | boolean;
+  onSkip?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<void> | void;
+
   /**
    * liste des éléments skippés après ce dernier
    */
@@ -316,14 +318,53 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   },
 
   git_config: {
-    beforeNext: async (store) => {
-      try {
-        console.log("[Wizard: git_config] Configuration Git validée");
-        return true;
-      } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde Git.");
-        return false;
+    onEnter: (store) => {
+      // Par défaut, on considère que Git local est voulu, mais pas de remote
+      // Cela garde l'interface propre tout en préparant le terrain pour "Suivant"
+      store.stepperData.git.useGit = true;
+      // On s'assure que les valeurs par défaut sont propres
+      if (!store.stepperData.git.useRemoteRepo) {
+        store.stepperData.git.isNewRemoteRepo = true;
+        store.stepperData.git.separateRepositories = false;
       }
+    },
+    
+    onSkip: (store) => {
+      // L'utilisateur a cliqué sur "Passer" : on désactive Git et on nettoie
+      store.skipGitConfig();
+    },
+
+    beforeNext: (store) => {
+      // L'utilisateur clique sur "Suivant" : on valide que Git est actif
+      store.stepperData.git.useGit = true;
+      
+      const git = store.stepperData.git;
+
+      // Si l'utilisateur a activé le remote, on valide les champs obligatoires
+      if (git.useRemoteRepo) {
+        if (!git.githubUsername) {
+          store.setWizardError("Le nom d'utilisateur GitHub est obligatoire pour un dépôt distant.");
+          return false;
+        }
+        if (git.isNewRemoteRepo && !git.githubToken) {
+          store.setWizardError("Le Personal Access Token est obligatoire pour créer un nouveau dépôt.");
+          return false;
+        }
+        if (git.separateRepositories) {
+          if (!git.backendRepositoryName || !git.frontendRepositoryName) {
+            store.setWizardError("Les noms des dépôts Backend et Frontend sont obligatoires.");
+            return false;
+          }
+        } else {
+          if (!git.repositoryName) {
+            store.setWizardError("Le nom du dépôt est obligatoire.");
+            return false;
+          }
+        }
+      }
+      
+      console.log("[Wizard: git_config] Configuration Git validée");
+      return true;
     }
   }
 };

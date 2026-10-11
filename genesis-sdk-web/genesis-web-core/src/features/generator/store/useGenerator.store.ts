@@ -245,6 +245,20 @@ export const useGeneratorStore = defineStore('generator', () => {
     }
   }
 
+  function skipGitConfig() {
+    stepperData.value.git = {
+      useGit: false, // C'est ici qu'on désactive Git globalement
+      useRemoteRepo: false,
+      isNewRemoteRepo: true,
+      separateRepositories: false,
+      repositoryName: '',
+      backendRepositoryName: '',
+      frontendRepositoryName: '',
+      githubUsername: '',
+      githubToken: ''
+    };
+  }
+
 
   // ==========================================================================
   // 4. RETURN - Ordre identique à la déclaration
@@ -286,5 +300,6 @@ export const useGeneratorStore = defineStore('generator', () => {
 
     // Étape 10 : Git
     updateGitConfig,
+    skipGitConfig
   };
 });
