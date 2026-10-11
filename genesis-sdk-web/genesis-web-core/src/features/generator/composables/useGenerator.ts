@@ -22,7 +22,13 @@ import { FRAMEWORK_SERVICE_KEY } from '../../frameworks/manifest';
 
 // Core & Config
 import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/useGenesisWizard';
-import { WIZARD_STEP_CONFIG, type WizardServices } from './wizard-step-config';
+import { 
+  WIZARD_STEP_CONFIG, 
+  type WizardServices,
+  getTotalSteps,
+  getStepIdByNumber,
+  getSkippableStepsConfig
+} from './wizard-step-config';
 
 export function useGenerator() {
   // ==========================================================================
@@ -42,45 +48,44 @@ export function useGenerator() {
   const frontendStore = useFrontendStore();
 
   // ==========================================================================
-  // 2. CONFIGURATION DU WIZARD
+  // 2. CONFIGURATION DU WIZARD (DYNAMIQUE)
   // ==========================================================================
-  const SKIPPABLE_CONFIG = { 
-    5: [], 
-    8: [9], 
-    10: [] 
-  };
-
   const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc };
 
   const wizard = useGenesisWizard({
-    totalSteps: 10,
-    skippableStepsConfig: SKIPPABLE_CONFIG,
+    totalSteps: getTotalSteps(),
+    skippableStepsConfig: getSkippableStepsConfig(),
     
     /**
      * Hook déclenché à l'entrée d'une étape.
-     * Délègue le chargement des données spécifiques à l'étape à la configuration.
+     * Traduit le numéro d'étape en ID sémantique avant d'exécuter la logique.
      */
     onStepEnter: async (currentStep: number) => {
-      const stepConfig = WIZARD_STEP_CONFIG[currentStep];
+      const stepId = getStepIdByNumber(currentStep);
+      if (!stepId) return;
+
+      const stepConfig = WIZARD_STEP_CONFIG[stepId];
       if (stepConfig?.onEnter) {
-        console.log(`[Wizard] Entrée dans l'étape ${currentStep} : Chargement...`);
+        console.log(`[Wizard] Entrée dans l'étape : ${stepId} (Étape ${currentStep})`);
         await stepConfig.onEnter(store, wizardServices);
       }
     },
 
     /**
      * Hook déclenché avant de passer à l'étape suivante.
-     * Délègue la validation des données à la configuration.
+     * Traduit le numéro d'étape en ID sémantique avant de valider.
      */
     onBeforeNext: async (currentStep: number) => {
       store.clearWizardError();
-      const stepConfig = WIZARD_STEP_CONFIG[currentStep];
+      const stepId = getStepIdByNumber(currentStep);
+      if (!stepId) return true;
       
+      const stepConfig = WIZARD_STEP_CONFIG[stepId];
       if (stepConfig?.beforeNext) {
-        console.log(`[Wizard] Validation de l'étape ${currentStep}...`);
+        console.log(`[Wizard] Validation de l'étape : ${stepId} (Étape ${currentStep})...`);
         const canProceed = await stepConfig.beforeNext(store, wizardServices);
         if (!canProceed) {
-          console.warn(`[Wizard] Navigation bloquée à l'étape ${currentStep}.`);
+          console.warn(`[Wizard] Navigation bloquée à l'étape : ${stepId}.`);
           return false;
         }
       }
@@ -114,10 +119,12 @@ export function useGenerator() {
   
   /**
    * Détermine si l'étape actuelle peut être ignorée (skippée) par l'utilisateur.
+   * Vérifie dynamiquement si le numéro de l'étape actuelle est une clé dans la config de saut.
    */
-  const isCurrentStepSkippable = computed(() => 
-    Object.keys(SKIPPABLE_CONFIG).map(Number).includes(wizard.currentStep.value)
-  );
+  const isCurrentStepSkippable = computed(() => {
+    const skippableConfig = getSkippableStepsConfig();
+    return Object.keys(skippableConfig).map(Number).includes(wizard.currentStep.value);
+  });
 
   // ==========================================================================
   // 5. ACTIONS

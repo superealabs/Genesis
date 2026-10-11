@@ -9,21 +9,8 @@ export interface WizardConfig {
   totalSteps: number;
   skippableStepsConfig?: Record<number, number[]>;
   
-  /** 
-   * Hook appelé AVANT de passer à l'étape suivante (sauf en cas de saut explicite).
-   * Permet de valider les données de l'étape actuelle.
-   */
   onBeforeNext?: (currentStep: number, context: { skippedSteps: Set<number> }) => boolean | Promise<boolean>;
-  
-  /** 
-   * Hook appelé AVANT de revenir à l'étape précédente.
-   */
   onBeforePrevious?: (currentStep: number) => boolean | Promise<boolean>;
-
-  /** 
-   * Hook appelé À CHAQUE FOIS qu'on arrive sur une étape (après le changement d'index).
-   * Idéal pour déclencher le chargement des données spécifiques à cette étape.
-   */
   onStepEnter?: (step: number) => void | Promise<void>;
 }
 
@@ -38,17 +25,22 @@ export function useGenesisWizard(config: WizardConfig) {
   const skippedSteps = ref<Set<number>>(new Set());
   const stepDependencies = config.skippableStepsConfig || {};
 
+  // NOUVEAU : Map inverse pour retrouver le déclencheur d'une étape sautée
+  // Exemple : si skippableStepsConfig est { 5: [6] }, cette map contiendra { 6: 5 }
+  const reverseDependencies = new Map<number, number>();
+  for (const [triggerStr, deps] of Object.entries(stepDependencies)) {
+    const trigger = Number(triggerStr);
+    for (const dep of deps) {
+      reverseDependencies.set(dep, trigger);
+    }
+  }
+
   // --- 2. Computeds (Données dérivées) ---
   const isFirstStep = computed(() => currentStep.value === 1);
   const isLastStep = computed(() => currentStep.value === totalSteps.value);
 
   // --- 3. Fonctions Utilitaires ---
 
-  /**
-   * Résout toutes les dépendances d'une étape donnée en utilisant un parcours en largeur (BFS).
-   * Cela permet de savoir quelles étapes doivent être ignorées (ou réactivées) en cascade 
-   * lorsqu'une étape parente est ignorée (ou revisitée).
-   */
   function resolveDependencies(startStep: number): number[] {
     const steps = new Set<number>();
     const queue: number[] = [startStep];
@@ -68,17 +60,11 @@ export function useGenesisWizard(config: WizardConfig) {
     return Array.from(steps);
   }
 
-  /**
-   * Réactive (unskip) une branche entière d'étapes dépendantes.
-   */
   function unskipBranch(startStep: number) {
     const stepsToUnskip = resolveDependencies(startStep);
     stepsToUnskip.forEach(step => skippedSteps.value.delete(step));
   }
 
-  /**
-   * Déclenche le hook onStepEnter de manière centralisée pour éviter la duplication de code.
-   */
   async function triggerStepEnter(step: number) {
     if (config.onStepEnter) {
       await config.onStepEnter(step);
@@ -88,7 +74,6 @@ export function useGenesisWizard(config: WizardConfig) {
   // --- 4. Actions de Navigation ---
 
   async function goToNextStep(isSkip = false): Promise<boolean> {
-    // Validation avant de passer à l'étape suivante (sauf si c'est un saut forcé)
     if (!isSkip && config.onBeforeNext) {
       const canProceed = await config.onBeforeNext(currentStep.value, { skippedSteps: skippedSteps.value });
       if (!canProceed) return false;
@@ -97,13 +82,10 @@ export function useGenesisWizard(config: WizardConfig) {
     if (currentStep.value < totalSteps.value) {
       let nextStep = currentStep.value + 1;
       
-      // Si on n'a pas explicitement ignoré l'étape, mais qu'elle est marquée comme ignorée,
-      // on réactive sa branche de dépendances.
       if (!isSkip && skippedSteps.value.has(nextStep)) {
         unskipBranch(nextStep);
       }
 
-      // Avance jusqu'à la prochaine étape qui n'est pas ignorée
       while (nextStep <= totalSteps.value && skippedSteps.value.has(nextStep)) {
         nextStep++;
       }
@@ -117,6 +99,7 @@ export function useGenesisWizard(config: WizardConfig) {
     return false;
   }
   
+  // ✅ CORRECTION MAJEURE : Gestion intelligente du retour arrière
   async function goToPreviousStep(): Promise<boolean> {
     if (config.onBeforePrevious) {
       const canProceed = await config.onBeforePrevious(currentStep.value);
@@ -126,11 +109,24 @@ export function useGenesisWizard(config: WizardConfig) {
     if (currentStep.value > 1) {
       let targetStep = currentStep.value - 1;
       
-      // Recule jusqu'à trouver la première étape qui n'est pas ignorée
-      while (targetStep >= 1 && skippedSteps.value.has(targetStep)) {
-        targetStep--;
+      // Si l'étape précédente immédiate est sautée, on applique la logique de retour au déclencheur
+      if (targetStep >= 1 && skippedSteps.value.has(targetStep)) {
+        // On regarde si cette étape sautée est une dépendance d'un déclencheur précédent
+        const trigger = reverseDependencies.get(targetStep);
+        
+        if (trigger !== undefined) {
+          // C'est une dépendance (ex: étape 6), on remonte directement au déclencheur (ex: étape 5)
+          targetStep = trigger;
+        }
+        
+        // Dans tous les cas (que targetStep soit la dépendance ou le déclencheur lui-même),
+        // on réactive la branche pour que l'utilisateur puisse reconsidérer son choix.
+        unskipBranch(targetStep);
       }
       
+      // Sécurité : ne pas descendre en dessous de 1
+      if (targetStep < 1) targetStep = 1;
+
       currentStep.value = targetStep;
       await triggerStepEnter(currentStep.value);
       return true;
@@ -151,8 +147,6 @@ export function useGenesisWizard(config: WizardConfig) {
   }
 
   // --- 5. Initialisation ---
-  
-  // Déclenche le hook pour l'étape initiale dès la création du composable
   triggerStepEnter(currentStep.value);
 
   // --- 6. Retour ---
