@@ -663,6 +663,7 @@ public class DataProvider {
 
         return convertChartResult(
                 result,
+                item,
                 dimensions,
                 measures,
                 values
@@ -1343,6 +1344,7 @@ public class DataProvider {
 
     private ChartData convertChartResult(
             Result<?> result,
+            VisualizationItem item,
             List<VisualizationParameter> dimensions,
             List<VisualizationParameter> measures,
             List<VisualizationParameter> values
@@ -1364,19 +1366,19 @@ public class DataProvider {
         if (!dimensions.isEmpty()
                 && !measures.isEmpty()) {
 
-            Field<?> dimensionField =
-                    result.field(0);
+            VisualizationParameter dimensionParameter = dimensions.get(0);
+            VisualizationParameter measureParameter = measures.get(0);
 
-            Field<?> measureField =
-                    result.field(
-                            dimensions.size()
-                    );
+            Field<?> dimensionField = findResultField(result, dimensionParameter.getKey());
+            Field<?> measureField = findResultField(result, measureParameter.getKey());
 
-            if (dimensionField == null
-                    || measureField == null) {
-
+            if (dimensionField == null || measureField == null) {
                 throw new IllegalStateException(
                         "Required fields missing from query result"
+                                + " dimension="
+                                + dimensionParameter.getKey()
+                                + ", measure="
+                                + measureParameter.getKey()
                 );
             }
 
@@ -1597,6 +1599,7 @@ public class DataProvider {
             return null;
         }
     }
+
 
     // =========================================================================
     // NUMERIC CONVERSION
