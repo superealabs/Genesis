@@ -53,12 +53,7 @@ UR
 
 
 
-Faire correspondre le padding de genesis Dropdown et de genesis input
-
-ouvrir une disclosure affiche les tutoriels correspondant
-
-
-CORRIGE LE SYSTEME DE GENESIS_INPUT AVEC UN TYPE SELECT INTELLIGENT
-
-
-Correction du genesisDropdownInput
+Corriger la gestion des étapes
+    : un composant est associé à un Nom
+    : un traitement est associé à un nom
+    : un numéro est associé à un nom
