@@ -27,8 +27,7 @@ export interface StepConfig {
   onEnter?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<void> | void;
   beforeNext?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<boolean> | boolean;
   /**
-   * Si cette étape est ignorée (skippée), quelles autres étapes doivent l'être aussi ?
-   * Remplace la logique fragile des tableaux de numéros en dur (ex: 8: [9]).
+   * liste des éléments skippés après ce dernier
    */
   skipCascade?: StepId[];
 }

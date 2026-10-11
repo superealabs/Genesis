@@ -53,8 +53,8 @@ export function useGenerator() {
   const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc };
 
   const wizard = useGenesisWizard({
-    totalSteps: getTotalSteps(), // ✅ Plus de "10" en dur
-    skippableStepsConfig: getSkippableStepsConfig(), // ✅ Plus de "{ 5: [], 8: [9], 10: [] }" en dur
+    totalSteps: getTotalSteps(),
+    skippableStepsConfig: getSkippableStepsConfig(),
     
     /**
      * Hook déclenché à l'entrée d'une étape.

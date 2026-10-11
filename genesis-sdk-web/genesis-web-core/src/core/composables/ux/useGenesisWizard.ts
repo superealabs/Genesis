@@ -25,7 +25,7 @@ export function useGenesisWizard(config: WizardConfig) {
   const skippedSteps = ref<Set<number>>(new Set());
   const stepDependencies = config.skippableStepsConfig || {};
 
-  // ✅ NOUVEAU : Map inverse pour retrouver le déclencheur d'une étape sautée
+  // NOUVEAU : Map inverse pour retrouver le déclencheur d'une étape sautée
   // Exemple : si skippableStepsConfig est { 5: [6] }, cette map contiendra { 6: 5 }
   const reverseDependencies = new Map<number, number>();
   for (const [triggerStr, deps] of Object.entries(stepDependencies)) {
