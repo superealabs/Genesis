@@ -164,6 +164,23 @@ export function useConfig() {
         }
     }
 
+    async function loadFrontendLanguagesConfigurations(frontendFrameworkId: number, frontendFrameworkName: string) {
+        store.setLoading(true);
+        store.clearError();
+        try {
+            const data = await svc.getAll('frontend_languages-configuration');
+            return data.filter(c => {
+                const p = c.payload as any;
+                return p.frontendFrameworkId === frontendFrameworkId || p.frontendFrameworkName === frontendFrameworkName;
+            });
+        } catch (err) {
+            store.setError((err as Error).message || 'Erreur lors du chargement des configurations de langues.');
+            return [];
+        } finally {
+            store.setLoading(false);
+        }
+    }
+
     // 4. Retour
     return {
         // État réactif (depuis le store)
@@ -184,6 +201,7 @@ export function useConfig() {
         loadAdvancedConfigurations,
         loadTechnicalStackConfigurations,
         loadGenerationOptionsConfigurations,
+        loadFrontendLanguagesConfigurations,
         setSelectedConfig: store.setSelectedConfig,
         clearError: store.clearError
     };

@@ -6,8 +6,9 @@
  */
 export type ConfigType = 
   | 'framework_technical-stack' 
-  | 'framework_advanced-configuration' // <-- Ajouté pour cet exemple
-  | 'generator_generation-options'     // <-- Ajouté pour le futur
+  | 'framework_advanced-configuration'
+  | 'generator_generation-options'
+  | 'frontend_languages-configuration';
 
 export interface FrameworkAdvancedConfigurationPayload {
   frameworkId: number;        // NOUVEAU : Lien vers le framework
@@ -31,5 +32,12 @@ export interface FrameworkTechnicalStackPayload {
 
 export interface GeneratorGenerationOptionsPayload {
   components: string[]; // Ex: ['model', 'dao', 'service', 'controller']
+  [key: string]: unknown;
+}
+
+export interface FrontendLanguagesConfigurationPayload {
+  frontendFrameworkId: number;
+  frontendFrameworkName: string;
+  languages: string[]; // Tableau des codes de langue (ex: ['fr', 'en'])
   [key: string]: unknown;
 }

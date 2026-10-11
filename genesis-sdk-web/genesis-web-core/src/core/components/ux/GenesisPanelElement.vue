@@ -26,7 +26,7 @@
                             v-for="editor in editors"
                             :key="editor.id"
                             type="button"
-                            class="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors"
+                            class="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-text hover:bg-bg-secondary hover:text-secondary rounded-md transition-colors"
                             :class="{ 'text-accent font-medium': editor.id === editorId }"
                             @click="select(editor.id, close)"
                         >
@@ -36,7 +36,7 @@
                     </div>
                 </template>
             </GenesisDropdown>
-
+        
             <GenesisButtonIcon
                 variant="tertiary"
                 size="sm"

@@ -21,11 +21,11 @@
         </template>
 
         <template v-else-if="type === 'combobox'">
-            <GenesisComboboxInput v-bind="sharedSelectProps" />
+            <GenesisComboboxInput v-bind="sharedSelectProps" v-on="choiceListeners" />
         </template>
 
         <template v-else-if="type === 'textarea'">
-            <GenesisTextareaInput v-bind="sharedTextareaProps" />
+            <GenesisTextareaInput v-bind="sharedTextareaProps" v-on="valueListeners" />
         </template>
 
         <!-- ✅ CAS STANDARD : Délégué proprement au nouveau composant -->
@@ -95,6 +95,7 @@ const valueListeners = {
 };
 const choiceListeners = {
     ...valueListeners,
+    'add-choice': (value: string) => emit('add-choice', value),
     'remove-choice': (value: string) => emit('remove-choice', value),
 };
 

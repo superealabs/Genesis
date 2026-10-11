@@ -114,9 +114,16 @@ watch(() => props.modelValue, (newVal) => {
 
 const filteredOptions = computed(() => {
     if (!props.options || props.options.length === 0) return [];
-    if (comboboxQuery.value === '') return props.options;
+
+    // En multiChoice, `choices` contient des libellés : on masque les options déjà choisies
+    const chosen = new Set(props.choices);
+    const available = props.multiChoice
+        ? props.options.filter(option => !chosen.has(getOptionLabel(option)))
+        : props.options;
+
+    if (comboboxQuery.value === '') return available;
     const query = comboboxQuery.value.toLowerCase().replace(/\s+/g, '');
-    return props.options.filter((option) => getOptionLabel(option).toLowerCase().replace(/\s+/g, '').includes(query));
+    return available.filter((option) => getOptionLabel(option).toLowerCase().replace(/\s+/g, '').includes(query));
 });
 
 function getOptionLabel(option: any): string {
