@@ -1,18 +1,8 @@
 import type { InjectionKey } from 'vue';
-import type { TableMetadataDto, RelationParameter, LanguageDto, /*GeneratorData,*/ DatabaseConfig } from '@genesis-labs/shared-types';
+import type { IGeneratorService } from '@genesis-labs/shared-types';
 
-export interface IGeneratorService {    
-    // Fetching de données avec Promises (plus de onMessage global qui mute le store)
-    fetchTablesMetadataParents(): Promise<TableMetadataDto[]>;
-    fetchTablesMetadataChilds(): Promise<TableMetadataDto[]>;
-    fetchRelations(): Promise<RelationParameter[]>;
-    fetchAvailableLanguages(): Promise<LanguageDto[]>;
-    fetchTablesMetadata(): Promise<TableMetadataDto[]>;
+// On réexporte le type pour la commodité locale des composants Vue
+export type { IGeneratorService };
 
-    testDatabaseConnection(config: DatabaseConfig): Promise<{ success: boolean; message: string }>;
-
-    // Action finale de génération
-    // generateProject(data: GeneratorData): Promise<{ success: boolean; message?: string }>;
-}
-
+// ═══ Clé d'injection typée (Obligatoire pour provide/inject dans Vue) ═══
 export const GENERATOR_SERVICE_KEY: InjectionKey<IGeneratorService> = Symbol('GeneratorService');

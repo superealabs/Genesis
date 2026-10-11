@@ -13,7 +13,7 @@ export interface DatabaseEngineDto {
 }
 
 export interface DatabaseConfig {
-    engine: 'mysql' | 'postgre' | 'sqlserver' | 'oracle' | string;
+    engine: string;
     host: string;
     port: number | string;
     databaseName: string;

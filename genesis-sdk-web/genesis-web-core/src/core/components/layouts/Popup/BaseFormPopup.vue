@@ -1,6 +1,6 @@
 <template>
     <div 
-        class="fixed inset-0 bg-black/50 flex p-4"
+        class="fixed inset-0 bg-black flex p-4"
         :class="[positionClasses, overlayClasses]"
         :style="{ zIndex }"
         @click.self="handleOverlayClick()"
@@ -37,7 +37,7 @@
             </div>
 
             <!-- Contenu -->
-            <div :class="[paddingClasses.content, 'flex flex-col flex-1 overflow-y-auto min-h-0']">
+            <div :class="[paddingClasses.content, 'flex flex-col flex-1 min-h-0']">
                 <slot />
             </div>
         </div>

@@ -18,8 +18,8 @@
                        focus:outline-none focus:ring-2 focus:ring-accent/50"
                 :class="[
                     isSelected(option.id)
-                        ? 'bg-accent/15 border border-accent'
-                        : 'border border-transparent hover:bg-[var(--color-hover-ghost)]',
+                        ? 'bg-primary'
+                        : 'border border-transparent hover:bg-bg-secondary',
                     option.disabled
                         ? 'opacity-50 cursor-not-allowed pointer-events-none'
                         : ''

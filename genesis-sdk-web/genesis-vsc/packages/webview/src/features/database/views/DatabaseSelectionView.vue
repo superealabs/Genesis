@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { 
-  DatabaseSelection as CoreDatabaseSelection, 
+  DatabaseView as CoreDatabaseSelection, 
   type DatabaseEngineDto 
 } from '@genesis-labs/web-core/features/database/manifest';
 

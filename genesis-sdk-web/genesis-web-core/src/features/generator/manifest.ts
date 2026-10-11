@@ -6,7 +6,6 @@ export type {
     ComponentType,
     TableSelectionConfig,
     RelationParameter,
-    LanguageDto,
     FrontendLayoutConfig,
     GitConfiguration,
     GeneratorData,

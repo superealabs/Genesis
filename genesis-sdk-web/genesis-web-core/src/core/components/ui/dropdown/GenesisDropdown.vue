@@ -1,14 +1,16 @@
 <template>
-  <Menu
-    v-slot="{ open, close }"
-    as="div"
+  <Menu 
+    v-slot="{ open, close }" 
+    as="div" 
+    :model-value="internalOpen" 
+    @update:model-value="internalOpen = $event"
   >
     <div
       class="inline-flex flex-col gap-1"
       @mouseenter="handleMouseEnter(open)"
       @mouseleave="handleMouseLeave(open, close)"
     >
-      <!-- ═══ Label ═══ -->
+      <!-- Label -->
       <label
         v-if="label"
         class="text-sm font-medium text-muted"
@@ -16,10 +18,11 @@
         {{ label }}<span v-if="isMandatory" class="text-accent ml-0.5">*</span>
       </label>
 
-      <!-- ═══ Wrapper trigger + dropdown (le relative est ici) ═══ -->
+      <!-- Wrapper trigger + dropdown -->
       <div class="relative inline-block">
-        <MenuButton as="template" @click="onTriggerClick">
-
+        <MenuButton as="template">
+          
+          <!-- Cas 1 : Slot trigger personnalisé -->
           <GenesisButton
             v-if="$slots.trigger"
             ref="triggerRef"
@@ -27,7 +30,8 @@
             :size="triggerSize"
             :disabled="triggerDisabled"
             :use-default-text="false"
-            :class="{ '!border !border-secondary': open }"
+            :class="triggerClass"
+            @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
               <slot name="triggerIcon" />
@@ -42,6 +46,7 @@
             </template>
           </GenesisButton>
 
+          <!-- Cas 2 : Trigger par défaut avec texte et chevron -->
           <GenesisButton
             v-else-if="!hideChevron"
             ref="triggerRef"
@@ -49,7 +54,8 @@
             :size="triggerSize"
             :disabled="triggerDisabled"
             :use-default-text="false"
-            :class="{ '!border !border-secondary': open }"
+            :class="triggerClass"
+            @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
               <slot name="triggerIcon" />
@@ -62,13 +68,15 @@
             </template>
           </GenesisButton>
 
+          <!-- Cas 3 : Trigger icône uniquement -->
           <GenesisButtonIcon
             v-else
             ref="triggerRef"
             :variant="triggerVariant"
             :size="triggerSize"
             :disabled="triggerDisabled"
-            :class="{ '!border !border-secondary': open }"
+            :class="triggerClass"
+            @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
             <slot name="triggerIcon" />
           </GenesisButtonIcon>
@@ -88,7 +96,7 @@
             :style="dropdownStyle"
             class="focus:outline-none"
           >
-            <slot />
+            <slot :close="close" />
           </MenuItems>
         </transition>
       </div>
@@ -97,137 +105,193 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick, type ComponentPublicInstance } from 'vue';
+import { ref, computed, watch, onMounted, nextTick, type ComponentPublicInstance, onUnmounted } from 'vue';
 import { Menu, MenuButton, MenuItems } from '@headlessui/vue';
+
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
-import { MENU_SIZES, type MenuSize } from '@genesis-labs/web-core/core/config/ui.config';
+import { MENU_SIZES, type MenuSize, type UI_Size_Unit, type ButtonVariant } from '@genesis-labs/web-core/core/config/ui.config';
 
+// ============================================================================
+// 1. PROPS
+// ============================================================================
 const props = withDefaults(defineProps<{
-    position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-    align?: 'left' | 'right';
-    dropdownSize?: MenuSize | '3xl';
-    hideChevron?: boolean;
-    matchTriggerWidth?: boolean;
-    triggerVariant?: 'primary' | 'secondary' | 'tertiary';
-    triggerSize?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
-    triggerDisabled?: boolean;
-    openAtHover?: boolean;
-    label?: string;
-    isMandatory?: boolean;
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  align?: 'left' | 'right';
+  dropdownSize?: MenuSize | '3xl';
+  hideChevron?: boolean;
+  matchTriggerWidth?: boolean;
+  /** Variante du déclencheur. 'none' = aucune couleur (le style vient de `triggerClass`). */
+  triggerVariant?: ButtonVariant;
+  triggerSize?: UI_Size_Unit;
+  triggerDisabled?: boolean;
+  /** Classes ajoutées au déclencheur (ex. style de champ fourni par GenesisInput) */
+  triggerClass?: string;
+  /** Classes de couleur du panneau : remplacent celles déduites de `triggerVariant` */
+  menuClass?: string;
+  openAtHover?: boolean;
+  label?: string;
+  isMandatory?: boolean;
+  forceDown?: boolean;
 }>(), {
-    align: 'right',
-    dropdownSize: 'md',
-    hideChevron: false,
-    matchTriggerWidth: false,
-    triggerVariant: 'secondary',
-    triggerSize: 'md',
-    triggerDisabled: false,
-    openAtHover: false,
-    label: '',
-    isMandatory: false,
+  align: 'right',
+  dropdownSize: 'lg',
+  hideChevron: false,
+  matchTriggerWidth: false,
+  triggerVariant: 'neutral',
+  triggerSize: 'lg',
+  triggerDisabled: false,
+  triggerClass: '',
+  menuClass: '',
+  openAtHover: false,
+  label: '',
+  isMandatory: false,
+  forceDown: false
 });
 
 const emit = defineEmits<{ close: [] }>();
 
+// ============================================================================
+// 2. ÉTAT LOCAL
+// ============================================================================
+const internalOpen = ref(false);
+const isPersistent = ref(false); // Verrouille le menu contre la fermeture au survol après un clic
 const triggerRef = ref<ComponentPublicInstance | HTMLElement | null>(null);
 const triggerWidth = ref<number | null>(null);
-const fixedPosition = ref({ top: 0, left: 0, right: 0 });
 let hoverTimeout: number | null = null; 
 
+// Surveille la fermeture du menu pour réinitialiser l'état de persistance
+watch(internalOpen, (newValue) => {
+  if (!newValue) {
+    isPersistent.value = false;
+    clearHoverTimeout();
+  }
+});
 
-async function onTriggerClick() {
-    // D'abord mettre à jour la position
-    updateFixedPosition();
-    // Puis attendre que Headless UI ait rendu le MenuItems
-    await nextTick();
-    // Recalculer au cas où le DOM a bougé
-    updateFixedPosition();
-}
+// ============================================================================
+// 3. COMPUTEDS & LOGIQUE DE POSITIONNEMENT
+// ============================================================================
 
-function updateFixedPosition() {
-    const el = getMenuButtonEl();
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    fixedPosition.value = {
-        top: rect.bottom + 8,        // 8px sous le trigger
-        left: rect.left,
-        right: window.innerWidth - rect.right,
-    };
-}
+/**
+ * Couleurs (fond et bordure) du menu déduites de la variante du trigger.
+ * Utilisé seulement quand aucun `menuClass` n'est fourni.
+ */
+const menuItemsVariantClasses = computed(() => {
+  const variants: Record<string, string> = {
+    accent: 'bg-bg-dark text-text',
+    primary: 'bg-bg-dark text-text',
+    secondary: 'bg-bg-dark text-text',
+    tertiary: 'bg-bg-dark text-text',
+    neutral: 'bg-bg-dark text-text'
+  };
+  return variants[props.triggerVariant] || variants.neutral;
+});
 
-// Remplacer menuItemsClasses
 const menuItemsClasses = computed(() => {
-    const base = 'fixed z-[9999] bg-bg-light border border-bg-light rounded-lg shadow-lg p-1 max-h-[40vh] overflow-y-auto divide-y divide-slate-400';
-    const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
-    return `${base} ${size}`;
+  const base = `absolute z-50 rounded-lg p-1 max-h-[40vh] overflow-y-auto border-2 border-bg-neutral-genesis`;
+  const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
+
+  // Un style fourni de l'extérieur (ex. champ de formulaire) prime sur celui du bouton
+  const colors = props.menuClass || menuItemsVariantClasses.value;
+  return `${base} ${size} ${colors}`;
 });
 
-// Remplacer dropdownStyle
 const dropdownStyle = computed(() => {
-    const el = getMenuButtonEl();
-    const rect = el?.getBoundingClientRect();
-    const goesUp = rect && (window.innerHeight - rect.bottom) < 150;
+  const style: Record<string, string> = {};
 
-    const style: Record<string, string> = goesUp
-        ? { bottom: `${window.innerHeight - (rect?.top ?? 0) + 8}px` }
-        : { top: `${fixedPosition.value.top}px` };
+  const el = getMenuButtonEl();
+  const rect = el?.getBoundingClientRect();
+  const goesUp = !props.forceDown && rect ? (window.innerHeight - rect.bottom) < 150 : false;
 
-    if (props.align === 'right') {
-        style.right = `${fixedPosition.value.right}px`;
-    } else {
-        style.left = `${fixedPosition.value.left}px`;
-    }
+  if (goesUp) {
+    style.bottom = '100%';
+    style.marginBottom = '8px';
+  } else {
+    style.top = '100%';
+    style.marginTop = '8px';
+  }
 
-    if (props.matchTriggerWidth && triggerWidth.value !== null) {
-        style.width = `${triggerWidth.value}px`;
-        style.minWidth = `${triggerWidth.value}px`;
-    }
+  if (props.align === 'right') {
+    style.right = '0';
+  } else {
+    style.left = '0';
+  }
 
-    return style;
+  // Gestion de la largeur identique au trigger
+  if (props.matchTriggerWidth && triggerWidth.value !== null) {
+    style.width = `${triggerWidth.value}px`;
+    style.minWidth = `${triggerWidth.value}px`;
+  }
+
+  return style;
 });
+
+// ============================================================================
+// 4. ACTIONS
+// ============================================================================
 
 function getMenuButtonEl(): HTMLElement | null {
-    const el = (triggerRef.value as ComponentPublicInstance)?.$el || triggerRef.value;
-    return (el as HTMLElement) ?? null;
+  const el = (triggerRef.value as ComponentPublicInstance)?.$el || triggerRef.value;
+  return (el as HTMLElement) ?? null;
 }
 
 function measureTriggerWidth() {
-    const el = getMenuButtonEl();
-    if (el) triggerWidth.value = el.offsetWidth;
+  const el = getMenuButtonEl();
+  if (el) triggerWidth.value = el.offsetWidth;
 }
 
-// Modifier handleMouseEnter et MenuButton pour appeler updateFixedPosition
-function handleMouseEnter(open: boolean) {
-    if (!props.openAtHover) return;
-    clearHoverTimeout();
-    if (!open) {
-        updateFixedPosition();   // ← calculer avant d'ouvrir
-        if (props.matchTriggerWidth) measureTriggerWidth();
-        getMenuButtonEl()?.click();
-    }
+/**
+ * Intercepte le mousedown pour empêcher Headless UI de fermer le menu 
+ * si l'utilisateur clique sur le trigger alors qu'il est déjà ouvert via hover.
+ */
+function handleTriggerMouseDown(e: MouseEvent, isOpen: boolean) {
+  if (props.openAtHover && isOpen) {
+    e.preventDefault();
+    e.stopImmediatePropagation(); // Empêche Headless UI de recevoir l'événement et de fermer le menu
+    isPersistent.value = true;    // Active la persistance
+    clearHoverTimeout();          // Annule tout timer de fermeture en attente
+  }
 }
 
-function handleMouseLeave(open: boolean, close: () => void) {
-    if (!props.openAtHover) return;
-    if (open) {
-        hoverTimeout = window.setTimeout(() => {
-            close();
-            emit('close');
-        }, 150);
-    }
+function handleMouseEnter(isOpen: boolean) {
+  if (!props.openAtHover || props.triggerDisabled) return;
+  clearHoverTimeout();
+  if (!isOpen) {
+    if (props.matchTriggerWidth) measureTriggerWidth();
+    getMenuButtonEl()?.click(); // Simule un clic pour ouvrir via Headless UI
+  }
+}
+
+function handleMouseLeave(isOpen: boolean, close: () => void) {
+  if (!props.openAtHover) return;
+  
+  // Ne ferme le menu au survol que s'il n'est PAS en mode persistant (déclenché par un clic)
+  if (isOpen && !isPersistent.value) {
+    hoverTimeout = window.setTimeout(() => {
+      close();
+      emit('close');
+    }, 150);
+  }
 }
 
 function clearHoverTimeout() {
-    if (hoverTimeout !== null) { clearTimeout(hoverTimeout); hoverTimeout = null; }
+  if (hoverTimeout !== null) { 
+    clearTimeout(hoverTimeout); 
+    hoverTimeout = null; 
+  }
 }
 
+// ============================================================================
+// 5. LIFECYCLE
+// ============================================================================
 onMounted(() => {
-    if (props.matchTriggerWidth) nextTick(measureTriggerWidth);
-    // ← Calculer la position initiale dès le montage
-    nextTick(() => updateFixedPosition());
+  if (props.matchTriggerWidth) {
+    nextTick(measureTriggerWidth);
+  }
 });
 
-onUnmounted(clearHoverTimeout);
+onUnmounted(() => {
+  clearHoverTimeout();
+});
 </script>

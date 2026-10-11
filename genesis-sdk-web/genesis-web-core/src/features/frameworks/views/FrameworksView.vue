@@ -1,110 +1,171 @@
 <template>
-  <GenesisCollectionLayout
-    title="Frameworks"
-    v-model:searchValue="searchQuery"
-    v-model:displayMode="displayMode"
-    :mode="compareMode"
-    searchPlaceholder="Rechercher par nom, core, type..."
-    :showBackButton="showBackButton"
+  <FrameworkLayout
+    v-bind="layoutProps"
+    :group-by="groupBy"
+    :languages="languages"
+    @update:group-by="groupBy = $event"
     @back="$emit('back')"
-    @openFilter="isFilterOpen = true"
     @update:mode="handleModeChange"
-
-    :replace-options="replaceOptions"
-    :show-replace-popup="showReplacePopup"
-    :mouse-x="mouseX"
-    :mouse-y="mouseY"
+    @update:searchValue="setSearch"
+    @update:displayMode="setDisplayMode"
+    @update:filters="setFilters"
+    @openFilter="isFilterOpen = true"
+    @closeFilter="isFilterOpen = false"
+    @closeDetail="detailFramework = null"
     @select-replace="handleReplaceSelection"
     @close-replace="cancelReplace"
-  >
-    <FrameworkList
-      :frameworks="frameworks"
-      :selectedId="selectedId"
-      :display="displayMode"
-      :frameworkSlots="frameworkSlots"
-      @select="handleSelectWrapper"
-      @info="handleInfo"
-    />
-  </GenesisCollectionLayout>
-
-  <!-- ═══ POPUP DE FILTRE ═══ -->
-  <BaseFormPopup
-    v-if="isFilterOpen"
-    title="Filtres des Frameworks"
-    :size="'lg'"
-    @close="isFilterOpen = false"
-  >
-    <FrameworkFilter 
-      v-model:filters="filters" 
-      @close="isFilterOpen = false" 
-    />
-  </BaseFormPopup>
-
-  <FrameworkDetail
-    v-if="detailFramework"
-    :framework="detailFramework"
-    @close="detailFramework = null"
+    @select="handleSelectWrapper"
+    @info="handleInfo"
   />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useFrameworks } from '@genesis-labs/web-core/features/frameworks/composables/useFrameworks';
-import { 
-  FrameworkList, 
-  FrameworkFilter, 
-  FrameworkDetail 
-} from '@genesis-labs/web-core/features/frameworks/components';
-import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
-import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
-import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { Framework } from '@genesis-labs/shared-types';
 
-withDefaults(defineProps<{ showBackButton?: boolean }>(), { showBackButton: true });
+import { useFrameworks } from '@genesis-labs/web-core/features/frameworks/composables/useFrameworks';
+import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-core/features/frameworks/components/FrameworkLayout.vue';
+
+// ============================================================================
+// 1. PROPS & EMITS
+// ============================================================================
+const props = withDefaults(defineProps<{ 
+  showBackButton?: boolean; 
+}>(), { 
+  showBackButton: true 
+});
 
 const emit = defineEmits<{
   'back': [];
   'select': [result: { action: string; framework: Framework; event?: MouseEvent }];
 }>();
 
+// ============================================================================
+// 2. INJECTION DU COMPOSABLE MÉTIER
+// ============================================================================
 const {
-  frameworks, selectedId, displayMode, compareMode, frameworkSlots, filters, searchQuery,
-  handleModeChange, handleSelect, handleReplace, compare, initialize,
-  // États du popup fournis par le composable
-  showReplacePopup, pendingFramework, mouseX, mouseY, cancelReplace, triggerReplace
+  frameworks,
+  selectedId,
+  displayMode,
+  compareMode,
+  frameworkSlots,
+  filters,
+  searchQuery,
+  isLoading,
+  showReplacePopup,
+  pendingFramework,
+  mouseX,
+  mouseY,
+  compare,
+  initialize,
+  setSearch,
+  setFilters,
+  setDisplayMode,
+  handleModeChange,
+  handleSelect,
+  handleReplace,
+  cancelReplace,
+  triggerReplace,
+  languages //  RÉCUPÉRATION DES LANGUES POUR LE GROUPEMENT
 } = useFrameworks();
 
+// ============================================================================
+// 3. ÉTAT LOCAL (UI Spécifique à cette vue)
+// ============================================================================
 const detailFramework = ref<Framework | null>(null);
-const isFilterOpen = ref(false); //  État du popup de filtre
+const isFilterOpen = ref(false);
 
-const replaceOptions = computed<SelectionOption[]>(() => {
+//  ÉTAT DE REGROUPEMENT LOCAL (Rend le composant autonome)
+const groupBy = ref<keyof Framework | null>('coreFramework');
+
+// ============================================================================
+// 4. COMPUTEDS (Données dérivées)
+// ============================================================================
+
+/**
+ * Transforme les slots de comparaison actifs en une liste d'options 
+ * exploitables par le popup de remplacement.
+ */
+const replaceOptions = computed(() => {
   if (!compare?.slots?.value) return [];
+  
   return Object.entries(compare.slots.value)
-    .filter(([, framework]) => framework !== null)
-    .map(([slot, framework]) => ({
+    .filter(([, fw]) => fw !== null)
+    .map(([slot, fw]) => ({
       id: slot,
       label: `Slot ${slot}`,
-      description: (framework as Framework).name
+      description: (fw as Framework).name
     }));
 });
 
-function handleInfo(framework: Framework) { detailFramework.value = framework; }
+/**
+ * Regroupe toutes les propriétés réactives nécessaires au composant 
+ * FrameworkLayout pour éviter une imbrication excessive dans le template.
+ */
+const layoutProps = computed<FrameworkLayoutProps>(() => ({
+  frameworks: frameworks.value,
+  selectedId: selectedId.value,
+  displayMode: displayMode.value,
+  compareMode: compareMode.value,
+  frameworkSlots: frameworkSlots.value,
+  filters: filters.value,
+  searchQuery: searchQuery.value,
+  showReplacePopup: showReplacePopup.value,
+  replaceOptions: replaceOptions.value,
+  mouseX: mouseX.value,
+  mouseY: mouseY.value,
+  pendingFramework: pendingFramework.value,
+  detailFramework: detailFramework.value,
+  isFilterOpen: isFilterOpen.value,
+  isLoading: isLoading.value,
+  showBackButton: props.showBackButton,
+  groupBy: groupBy.value,
+  languages: languages.value
+}));
+
+// ============================================================================
+// 5. ACTIONS & HANDLERS
+// ============================================================================
+
+function handleInfo(framework: Framework) { 
+  detailFramework.value = framework; 
+}
+
+/**
+ * Gère le remplacement d'un framework dans un slot de comparaison.
+ * Vérifie d'abord qu'un framework est en attente de remplacement avant d'agir.
+ */
 function handleReplaceSelection(slotId: string | number) {
-  if (pendingFramework.value) handleReplace(slotId, pendingFramework.value);
+  if (pendingFramework.value) {
+    handleReplace(slotId, pendingFramework.value);
+  }
   cancelReplace();
 }
 
-
+/**
+ * Wrapper autour de handleSelect pour intercepter le résultat, 
+ * gérer les erreurs potentielles et émettre l'événement vers le parent.
+ */
 async function handleSelectWrapper(framework: Framework, event?: MouseEvent) {
-  const result = await handleSelect(framework, event);
-  
-  emit('select', result);
+  try {
+    await handleSelect(framework, event);
+    emit('select', { action: 'select', framework: framework, event }); 
+  } catch (error) {
+    console.error("[FrameworksView] Erreur lors de la sélection du framework :", error);
+  }
 }
 
+// ============================================================================
+// 6. LIFECYCLE & EXPOSE
+// ============================================================================
 
-defineExpose({
-  triggerReplace
+// Permet aux composants parents de déclencher manuellement ces actions si nécessaire
+defineExpose({ 
+  initialize,
+  triggerReplace 
 });
 
-onMounted(() => { initialize(); });
+onMounted(() => { 
+  initialize(); 
+});
 </script>

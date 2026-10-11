@@ -10,6 +10,7 @@ export function useGeneratorVsc() {
     const base = useGenerator();
     const store = useGeneratorStore();
 
+    // dqjhdkqjshd
     async function handleSelectFolderPath() {
         const path = await selectFolderPathVsc();
         if (path) {

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
 import { useGeneratorVsc } from '@/features/generator/composables/useGeneratorVsc';
-import type { FileRequestPayload } from '@genesis-labs/web-core/features/generator/manifest';
-import type { Framework } from '@genesis-labs/web-core/features/frameworks/manifest';
-import type { FrontendFramework } from '@genesis-labs/web-core/features/frontend/manifest';
+
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
+
+import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
+import { FrontendFramework } from '@genesis-labs/shared-types';
 
 const {
     currentStep,
@@ -12,21 +12,23 @@ const {
     isCurrentStepSkippable,
     goToPreviousStep,
     goToNextStep,
-    setFramework,
-    setDatabaseEngine,
     setSelectedFrontendFramework,
     reset,
     handleSelectFolderPath,
     handleFileRequest,
     skipCurrentStep,
+    stepperData,
+    setPendingFramework,
+    setPendingDatabaseEngine,
+    setPendingFrontendFramework
 } = useGeneratorVsc();
 
 function handleClose() {
     reset();
 }
 
-function handleNextStep() {
-    const finalData = goToNextStep();
+async function handleNextStep() {
+    const finalData = await goToNextStep();
     if (finalData) {
         // Déclencher la génération du projet ici si nécessaire
         console.log("Prêt à générer :", finalData);
@@ -34,16 +36,21 @@ function handleNextStep() {
 }
 
 // ═══ ORCHESTRATION UI (Sélection + Avancement) ═══
-function onSelectFramework(framework: Framework) {
-    setFramework(framework);
+// Dans packages/webview/src/features/generator/views/GeneratorViewVsc.vue
+
+function onSelectFramework(framework: any) {
+    // setFramework(framework);
+    setPendingFramework(framework);
+    // Vérifier immédiatement après
+    console.log('[onSelectFramework] store après setFramework =', stepperData.value.framework);
 }
 
 function onSelectDatabase(engine: DatabaseEngineDto) {
-    setDatabaseEngine(engine);
+    setPendingDatabaseEngine(engine);
 }
 
 function onSelectFrontend(framework: FrontendFramework) {
-    setSelectedFrontendFramework(framework);
+    setPendingFrontendFramework(framework);
 }
 </script>
 

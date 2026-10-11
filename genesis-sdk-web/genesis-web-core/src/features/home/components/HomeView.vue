@@ -1,6 +1,6 @@
 <template>
     <div class="p-4 flex flex-col gap-3">
-        <GenesisButton @click="emit('open-generator')">
+        <GenesisButton @click="emit('open-generator')" :variant="'accent'">
             <template #leftIcon><IconFolderPlus /></template>
             Créer un nouveau projet
         </GenesisButton>
@@ -9,15 +9,15 @@
             Design System
         </GenesisButton>
 
-        <GenesisButton variant="secondary" @click="emit('navigate', 'frameworks')">
+        <GenesisButton variant="primary" @click="emit('navigate', 'frameworks')">
             Frameworks
         </GenesisButton>
 
-        <GenesisButton variant="secondary" @click="emit('navigate', 'frontend')">
+        <GenesisButton variant="primary" @click="emit('navigate', 'frontend')">
             Frontend
         </GenesisButton>
 
-        <GenesisButton variant="secondary" @click="emit('navigate', 'database')">
+        <GenesisButton variant="primary" @click="emit('navigate', 'database')">
             Database
         </GenesisButton>
     </div>

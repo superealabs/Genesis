@@ -4,7 +4,7 @@
 
     * Filtre
     - chargement de la liste des languages
-    - chargement de la liste des architectures
+    - chargement de la liste des architectures(FrontEnd managed)
     - chargement de la liste des coresFramework
     - chargement des option d'intégration(Eureka)
     - chargement des templates Engine
@@ -18,10 +18,21 @@
 # step 2
 - onMounted
     - chargement des configs liés aux framework choisis. getConfigFramework()
+    - chargement des loggings level
+    - chargement des securityTypes(dépends du framework)
+    - chargement des cacheproviders(dépends du framework ou du language)
+    - chargement des buildTool(dépends du language ou du framework)
 
 - Notabene
-    - Les inputs peuvent différés selon le framework choisit
+    - Les inputs peuvent différés selon le framework choisit (buildTool par exemple)
+        - groupID
+            - présent pour java
+            - absent pour C#
 
+        - Hibernate DDL Auto
+            - présent pour springboot
+            - absent pour C#
+    
 - validator
     - ProjectName
     - Location
@@ -47,8 +58,14 @@
     payload received from api :
         exceptions or success message
 
+- Notabene
+    - MYSQL a besoin des champs : useSSLTificate, allowkeyRetrieval
+    - ORACLE a besoin des champs : DriverName, SID
+
+- toujours vérifier la connexion avant de continuer
+
 - afterNext
-    setCredentials
+    setDatabaseConfig
 
 # step 5 (skippable)
 - onMounted
@@ -65,7 +82,7 @@
         NewFileContent
 
 - afterNext
-    setModification
+    setScriptMOdification
 
 # step 6
 - onMounted
@@ -87,7 +104,7 @@
     - chargement de la liste des frontEnds disponible en fonction du framework dans la mémoire
         - Si framework vide, on renvoie la liste de tout les frontends
 
-    - chargement des languages disponibles en fonction du framework choisit
+    - chargement des languages(frontend) disponibles en fonction du framework choisit
 
 - afterNext
     - setFrontend()
@@ -99,6 +116,7 @@ Choix
 # step 9
 - onMounted
     - chargement des languages disponibles
+    - chargement des languages de programmation disponible
     - chargement des types de NavbarDisponible
 
 - afterNext

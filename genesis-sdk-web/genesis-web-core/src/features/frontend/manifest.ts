@@ -12,4 +12,4 @@ export { FRONTEND_SERVICE_KEY } from '@genesis-labs/web-core/features/frontend/t
 // ═══ STORE, COMPOSABLE & VUE ═══
 export { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store';
 export { useFrontend } from '@genesis-labs/web-core/features/frontend/composables/useFrontend';
-export { default as FrontendSelectionView } from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';
+export { default as FrontendsView } from '@genesis-labs/web-core/features/frontend/views//FrontendsView.vue';

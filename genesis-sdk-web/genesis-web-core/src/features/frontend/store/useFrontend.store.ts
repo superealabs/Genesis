@@ -1,60 +1,101 @@
+// genesis-sdk-web/genesis-web-core/src/features/frontend/store/useFrontend.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { FrontendFramework } from '@genesis-labs/shared-types';
-import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/GenesisItem.types';
+
+// Types
+import type { FrontendFramework, InterfaceLanguage } from '@genesis-labs/shared-types';
+import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 export const useFrontendStore = defineStore('frontend', () => {
-    // ═══ État Métier ═══
-    const availableFrameworks = ref<FrontendFramework[]>([]);
-    const selectedFramework = ref<FrontendFramework | null>(null);
 
-    // ═══ État UI (Nécessaire pour l'autonomie de la vue) ═══
-    const displayMode = ref<DisplayMode>('grid');
-    const searchQuery = ref('');
+  // ==========================================================================
+  // 1. ÉTAT (STATE) - Groupé par domaine
+  // ==========================================================================
+  
+  // Domaine : Données métier
+  const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
+  const selectedFrontendFramework = ref<FrontendFramework | null>(null);
+  const availableInterfaceLanguages = ref<InterfaceLanguage[]>([]);
 
-    // ═══ Getters ═══
-    const hasSelectedFramework = computed(() => selectedFramework.value !== null);
+  // Domaine : Interface Utilisateur (UI)
+  const displayMode = ref<DisplayMode>('grid');
+  const searchQuery = ref('');
+  const isLoading = ref(false);
 
-    // ═══ Actions Métier ═══
-    function setAvailableFrameworks(frameworks: FrontendFramework[]) {
-        availableFrameworks.value = frameworks;
-    }
 
-    function selectFramework(framework: FrontendFramework) {
-        selectedFramework.value = framework;
-    }
+  // ==========================================================================
+  // 2. GETTERS (COMPUTED) - Dérivés de l'état
+  // ==========================================================================
+  
+  const hasSelectedFrontendFramework = computed(() => selectedFrontendFramework.value !== null);
+  
+  const getAvailableInterfaceLanguages = computed(() => availableInterfaceLanguages.value);
 
-    // ═══ Actions UI ═══
-    function setDisplayMode(mode: 'grid' | 'list') {
-        displayMode.value = mode;
-    }
 
-    function setSearch(query: string) {
-        searchQuery.value = query;
-    }
+  // ==========================================================================
+  // 3. ACTIONS - Groupées par domaine
+  // ==========================================================================
+  
+  // Actions : Données métier
+  function setAvailableFrontendFrameworks(frameworks: FrontendFramework[]) {
+    availableFrontendFrameworks.value = frameworks;
+  }
 
-    function reset() {
-        availableFrameworks.value = [];
-        selectedFramework.value = null;
-        displayMode.value = 'grid';
-        searchQuery.value = '';
-    }
+  function selectFrontendFramework(framework: FrontendFramework) {
+    selectedFrontendFramework.value = framework;
+  }
 
-    return {
-        // État
-        availableFrameworks,
-        selectedFramework,
-        displayMode,
-        searchQuery,
-        
-        // Getters
-        hasSelectedFramework,
-        
-        // Actions
-        setAvailableFrameworks,
-        selectFramework,
-        setDisplayMode,
-        setSearch,
-        reset
-    };
+  function setAvailableInterfaceLanguages(languages: InterfaceLanguage[]) {
+    availableInterfaceLanguages.value = languages;
+  }
+
+  // Actions : Interface Utilisateur (UI)
+  function setDisplayMode(mode: DisplayMode) {
+    displayMode.value = mode;
+  }
+
+  function setSearch(query: string) {
+    searchQuery.value = query;
+  }
+
+  function setLoading(state: boolean) {
+    isLoading.value = state;
+  }
+
+  // Action : Réinitialisation complète du store
+  function reset() {
+    availableFrontendFrameworks.value = [];
+    selectedFrontendFramework.value = null;
+    availableInterfaceLanguages.value = [];
+    displayMode.value = 'grid';
+    searchQuery.value = '';
+    isLoading.value = false;
+  }
+
+
+  // ==========================================================================
+  // 4. RETURN - Ordre identique à la déclaration
+  // ==========================================================================
+  return {
+    // État
+    availableFrontendFrameworks,
+    selectedFrontendFramework,
+    availableInterfaceLanguages,
+    displayMode,
+    searchQuery,
+    isLoading,
+    
+    // Getters
+    hasSelectedFrontendFramework,
+    getAvailableInterfaceLanguages,
+    
+    // Actions
+    setAvailableFrontendFrameworks,
+    selectFrontendFramework,
+    setAvailableInterfaceLanguages,
+    setDisplayMode,
+    setSearch,
+    setLoading,
+    reset
+  };
 });

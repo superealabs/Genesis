@@ -1,44 +1,54 @@
-// 1. Import via le manifeste (meilleure pratique)
-import type { IFrontendService, FrontendFramework } from '@genesis-labs/core/features/frontend/manifest';
-
-//  2. Import de l'INSTANCE singleton (et non de la classe)
+import { 
+    FrontendFramework, 
+    IFrontendService, 
+    InterfaceLanguage, 
+    FrontendProgrammingLanguage //  NOUVEAU IMPORT
+} from '@genesis-labs/shared-types';
 import { vscodeService } from '../../../core/services/vscode.service';
 
 export class FrontendServiceVsc implements IFrontendService {
-    
-    // 3. Utilise l'instance singleton par défaut
     constructor(private vscode = vscodeService) {}
 
-    /**
-     * Demande la liste des frameworks frontend à l'extension
-     * Retourne une Promise et ne touche PAS au store
-     */
     fetchFrontendFrameworks(): Promise<FrontendFramework[]> {
         return new Promise((resolve) => {
             this.vscode.sendMessage('GET_FRONTEND_FRAMEWORKS');
-            
-            //  Écoute la réponse UNE SEULE FOIS, puis cleanup
             const cleanup = this.vscode.onMessage<FrontendFramework[]>('FRONTEND_FRAMEWORKS_LOADED', (data) => {
-                cleanup(); // Nettoie le listener pour éviter les fuites mémoire
-                resolve(data); // Retourne la donnée brute au composable
+                cleanup(); resolve(data);
             });
         });
     }
 
-    /**
-     * Enregistre le choix de l'utilisateur
-     *  Retourne une Promise
-     */
-    selectFrontendFramework(framework: FrontendFramework): Promise<void> {
+    //  NOUVEAU
+    fetchFrontendProgrammingLanguages(): Promise<FrontendProgrammingLanguage[]> {
         return new Promise((resolve) => {
-            // Envoie l'ID (ou l'objet complet) selon ce que ton Extension Host attend
-            this.vscode.sendMessage('SELECT_FRONTEND_FRAMEWORK', { id: framework.id });
-            
-            // Résout la promesse (fire-and-forget propre, ou écoute une confirmation si ton handler VSC en renvoie une)
-            resolve();
+            this.vscode.sendMessage('GET_FRONTEND_PROGRAMMING_LANGUAGES');
+            const cleanup = this.vscode.onMessage<FrontendProgrammingLanguage[]>('FRONTEND_PROGRAMMING_LANGUAGES_LOADED', (data) => {
+                cleanup(); resolve(data);
+            });
         });
     }
+
+    //  RENOMMÉ : fetchAvailableLanguages -> fetchInterfaceLanguages
+    fetchInterfaceLanguages(): Promise<InterfaceLanguage[]> {
+        return new Promise((resolve) => {
+            this.vscode.sendMessage('GET_INTERFACE_LANGUAGES');
+            const cleanup = this.vscode.onMessage<InterfaceLanguage[]>('INTERFACE_LANGUAGES_LOADED', (data) => {
+                cleanup(); resolve(data);
+            });
+        });
+    }
+
+    //  NOUVEAU
+    fetchNavbarTypes(): Promise<string[]> {
+        return new Promise((resolve) => {
+            this.vscode.sendMessage('GET_NAVBAR_TYPES');
+            const cleanup = this.vscode.onMessage<string[]>('NAVBAR_TYPES_LOADED', (data) => {
+                cleanup(); resolve(data);
+            });
+        });
+    }
+
+
 }
 
-// ✅ 4. Export de l'instance utilisant le singleton (plus de "new VscodeService()")
 export const frontendServiceVsc = new FrontendServiceVsc();

@@ -16,12 +16,13 @@
 
 <script setup lang="ts">
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import type { ButtonVariant, UI_Size_Unit } from '@genesis-labs/web-core/core/config/ui.config';
 
 interface Props {
     disabled?: boolean;
-    variant?: 'primary' | 'secondary' | 'tertiary';
-    shape?: 'rectangle' | 'square' | 'circle';
-    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+    variant?: ButtonVariant;
+    shape?: 'rectangle' | 'square';
+    size?: UI_Size_Unit;
     /**
      * Change le comportement du hover :
      * - false (défaut) : le background du bouton change au hover
@@ -34,7 +35,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
     disabled: false,
-    variant: 'primary',
+    variant: 'neutral',
     shape: 'square',
     size: 'md',
     hoverHimself: false

@@ -38,7 +38,7 @@ export class DatabaseServiceVsc implements IDatabaseService {
 
     /**
      * Teste la connexion à une base de données avec la configuration fournie.
-     * ✅ Retourne une Promise avec le résultat du test.
+     * Retourne une Promise avec le résultat du test.
      */
     testDatabaseConnection(config: DatabaseConfig): Promise<DatabaseConnectionTestResult> {
         return new Promise((resolve, reject) => {
@@ -57,7 +57,27 @@ export class DatabaseServiceVsc implements IDatabaseService {
             }, 15000); // 15 secondes
         });
     }
+
+
+    selectDatabase(engineId: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('SELECT_DATABASE', { id: engineId });
+            
+            const cleanup = this.vscode.onMessage<any>('DATABASE_SELECTED', (data) => {
+                cleanup();
+                if (data.success) resolve();
+                else reject(new Error('Échec de la sélection de la base de données'));
+            });
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'SELECT_DATABASE') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
 }
 
-// ✅ 4. Export de l'instance unique (Singleton) prête à être injectée
+// 4. Export de l'instance unique (Singleton) prête à être injectée
 export const databaseServiceVsc = new DatabaseServiceVsc();

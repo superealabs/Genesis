@@ -9,8 +9,8 @@ import ColorShowcase from '@genesis-labs/web-core/features/designSystem/componen
 import ErrorShowcase from '@genesis-labs/web-core/features/designSystem/components/ErrorShowcase.vue';
 import ProgressShowcase from '@genesis-labs/web-core/features/designSystem/components/ProgressShowcase.vue';
 import FrameworksView from '@genesis-labs/web-core/features/frameworks/views/FrameworksView.vue';
-import FrontEndSelectionView from '@genesis-labs/web-core/features/frontend/views/FrontEndSelectionView.vue';
-import DatabaseSelection from '@genesis-labs/web-core/features/database/views/DatabaseSelection.vue';
+import FrontendsView from '@genesis-labs/web-core/features/frontend/views/FrontendsView.vue';
+import DatabaseView from '@genesis-labs/web-core/features/database/views/DatabaseView.vue';
 
 // Routes communes à toutes les plateformes
 export const commonRoutes: RouteRecordRaw[] = [
@@ -27,12 +27,12 @@ export const commonRoutes: RouteRecordRaw[] = [
     {
         path: '/frontend',
         name: 'frontend',
-        component: FrontEndSelectionView
+        component: FrontendsView
     },
     {
         path: '/databases',
         name: 'database',
-        component: DatabaseSelection
+        component: DatabaseView
     }
 ];
 

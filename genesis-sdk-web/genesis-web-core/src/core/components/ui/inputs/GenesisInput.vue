@@ -1,176 +1,47 @@
 <template>
-    <div
-        class="inline-flex flex-col gap-1"
-        :class="[layoutClasses, fillWidthClasses, $attrs.class]"
-    >
-        <!-- ═══ Label ═══ -->
-        <label
-            v-if="label && type !== 'boolean' && type !== 'checkbox-3-state'"
-            class="text-sm font-medium text-muted"
-            :class="labelClasses"
-        >
-            {{ label }}<span v-if="isMandatory" class="text-accent ml-0.5">*</span>
+    <div class="inline-flex flex-col gap-1" :class="[layoutClasses, fillWidthClasses, $attrs.class]">
+        
+        <label v-if="label && type !== 'boolean' && type !== 'checkbox-3-state'" class="text-sm font-medium text-muted" :class="labelClasses">
+            {{ label }}<span v-if="isMandatory" class="text-primary ml-0.5">*</span>
         </label>
 
-        <!-- ═══ CAS BOOLEAN ═══ -->
         <template v-if="type === 'boolean'">
-            <GenesisSwitch
-                :modelValue="Boolean(modelValue)"
-                @update:modelValue="$emit('update:modelValue', $event)"
-                :disabled="disabled"
-                :size="switchSize"
-                :label="label"
-                v-bind="$attrs"
-            />
+            <GenesisSwitch :modelValue="Boolean(modelValue)" @update:modelValue="$emit('update:modelValue', $event)" :disabled="disabled" :size="switchSize" :label="label" v-bind="$attrs" />
         </template>
 
-        <!-- ═══ CAS CHECKBOX 3 ÉTATS (Neutre, Checked, Refused) ═══ -->
         <template v-else-if="type === 'checkbox-3-state'">
-            <GenesisCheckbox
-                :modelValue="(modelValue as CheckboxState) || 'neutral'"
-                @update:modelValue="$emit('update:modelValue', $event)"
-                :disabled="disabled"
-                :size="checkboxSize"
-                :label="label"
-            />
+            <GenesisCheckbox :modelValue="(modelValue as CheckboxState) || 'neutral'" @update:modelValue="$emit('update:modelValue', $event)" :disabled="disabled" :size="checkboxSize" :label="label" />
         </template>
 
-        <!-- ═══ CAS SELECT ═══ -->
         <template v-else-if="type === 'select'">
-            <GenesisDropdown
-                :trigger-variant="variant === 'secondary' ? 'secondary' : 'primary'"
-                :trigger-size="size"
-                :trigger-disabled="disabled"
-                match-trigger-width
-                :class="inputWrapperClasses"
-                :align="'left'"
-            >
-                <template #trigger>
-                    <span class="truncate">
-                        {{ modelValue || placeholder || 'Sélectionner...' }}
-                    </span>
-                </template>
-                <slot />
-            </GenesisDropdown>
+            <GenesisComboboxInput v-if="useComboboxForSelect" v-bind="sharedSelectProps" v-on="choiceListeners" />
+            <GenesisDropdownInput v-else v-bind="sharedSelectProps" v-on="choiceListeners">
+                <template #default="{ close }"><slot :close="close" /></template>
+            </GenesisDropdownInput>
         </template>
 
-        <!-- ═══ CAS STANDARD (text, password, number, date, color, file, multiChoice) ═══ -->
+        <template v-else-if="type === 'combobox'">
+            <GenesisComboboxInput v-bind="sharedSelectProps" v-on="choiceListeners" />
+        </template>
+
+        <template v-else-if="type === 'textarea'">
+            <GenesisTextareaInput v-bind="sharedTextareaProps" v-on="valueListeners" />
+        </template>
+
+        <!-- ✅ CAS STANDARD : Délégué proprement au nouveau composant -->
         <template v-else>
-            <div class="inline-flex flex-col gap-0" :class="inputWrapperClasses">
-
-                <div class="inline-flex items-center gap-1" :class="inputWrapperClasses">
-
-                    <!-- Slot gauche extérieur -->
-                    <span v-if="hasOuterLeftSlot" class="flex items-center flex-shrink-0">
-                        <slot name="outer-left" />
-                    </span>
-
-                    <!-- Container input -->
-                    <div
-                        class="inline-flex items-center flex-1
-                               border transition-all duration-200
-                               focus-within:ring-1 focus-within:ring-accent"
-                        :class="[
-                            containerSizeClasses,
-                            containerShapeClasses,
-                            containerVariantClasses,
-                            { 'opacity-50': disabled }
-                        ]"
-                    >
-                        <!-- Slot gauche intérieur -->
-                        <span
-                            v-if="hasLeftSlot"
-                            class="flex items-center flex-shrink-0 text-muted"
-                            :class="slotPaddingClasses"
-                        >
-                            <slot name="left" />
-                        </span>
-
-                        <!-- Input natif -->
-                        <input
-                            class="flex-1 min-w-0 bg-transparent outline-none text-text
-                                   placeholder:text-muted disabled:cursor-not-allowed"
-                            :class="[inputSizeClasses, inputPaddingClasses]"
-                            :disabled="disabled"
-                            :placeholder="placeholder"
-                            :type="type === 'color' || type === 'file' ? 'text' : type"
-                            :value="modelValue"
-                            v-bind="$attrs"
-                            @input="handleInput"
-                        />
-
-                        <!-- Slot droit intérieur -->
-                        <span
-                            class="flex items-center flex-shrink-0 text-muted"
-                            :class="slotPaddingClasses"
-                        >
-                            <!-- Mode file : bouton dossier -->
-                            <template v-if="type === 'file'">
-                                <GenesisButtonIcon
-                                    size="xs"
-                                    variant="tertiary"
-                                    :disabled="disabled"
-                                    @click.stop="$emit('browse', accept)"
-                                >
-                                    <IconFolder />
-                                </GenesisButtonIcon>
-                            </template>
-
-                            <template v-else-if="type === 'path'">
-                                <GenesisButtonIcon size="xs" variant="tertiary" :disabled="disabled" @click.stop="$emit('request-folder-path')">
-                                    <IconFolder />
-                                </GenesisButtonIcon>
-                            </template>
-
-                            <!-- Mode color : roue chromatique -->
-                            <template v-else-if="type === 'color'">
-                                <input
-                                    type="color"
-                                    class="w-6 h-6 p-0 border-0 rounded cursor-pointer bg-transparent"
-                                    :value="String(modelValue)"
-                                    :disabled="disabled"
-                                    @input="handleColorWheelInput"
-                                />
-                            </template>
-
-                            <!-- Mode multiChoice : bouton ajouter -->
-                            <template v-else-if="multiChoice">
-                                <GenesisButtonIcon
-                                    size="xs"
-                                    variant="tertiary"
-                                    :disabled="!modelValue"
-                                    @click.stop="handleAddChoice"
-                                >
-                                    <IconPlus />
-                                </GenesisButtonIcon>
-                            </template>
-
-                            <!-- Slot droit custom sinon -->
-                            <template v-else-if="hasRightSlot">
-                                <slot name="right" />
-                            </template>
-                        </span>
-                    </div>
-
-                    <!-- Slot droit extérieur -->
-                    <span v-if="hasOuterRightSlot" class="flex items-center flex-shrink-0">
-                        <slot name="outer-right" />
-                    </span>
-                </div>
-
-                <!-- Chips multiChoice -->
-                <div
-                    v-if="multiChoice && choices.length > 0"
-                    class="flex flex-wrap gap-1.5 mt-1.5"
-                >
-                    <GenesisLabel
-                        v-for="(choice, index) in choices"
-                        :key="index"
-                        :text="choice"
-                        @remove="$emit('remove-choice', choice)"
-                    />
-                </div>
-            </div>
+            <GenesisNativeInput 
+                v-bind="sharedNativeProps"
+                @update:model-value="(val) => $emit('update:modelValue', val)"
+                @add-choice="(val) => $emit('add-choice', val)"
+                @browse="(val) => $emit('browse', val)"
+                @request-folder-path="$emit('request-folder-path')"
+            >
+                <template #outer-left><slot name="outer-left" /></template>
+                <template #left><slot name="left" /></template>
+                <template #right><slot name="right" /></template>
+                <template #outer-right><slot name="outer-right" /></template>
+            </GenesisNativeInput>
         </template>
     </div>
 </template>
@@ -179,164 +50,101 @@
 import { computed, useSlots } from 'vue';
 import GenesisSwitch from './GenesisSwitch.vue';
 import GenesisCheckbox, { type CheckboxState } from './GenesisCheckbox.vue';
-import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
-import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
-import GenesisLabel from '@genesis-labs/web-core/core/components/ui/labels/GenesisLabel.vue';
-import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
-import IconFolder from '@genesis-labs/web-core/core/components/ui/icons/IconFolder.vue';
+import GenesisTextareaInput from './GenesisTextareaInput.vue';
+import GenesisComboboxInput from './GenesisComboboxInput.vue';
+import GenesisDropdownInput from './GenesisDropdownInput.vue';
+import GenesisNativeInput from './GenesisNativeInput.vue'; // ✅ NOUVEAU IMPORT
 
-export type InputType = 'text' | 'password' | 'number' | 'date' | 'boolean' | 'color' | 'select' | 'file' | 'checkbox-3-state' | 'path';
+import { type UI_Variant, type UI_Size_Unit, type InputType } from '@genesis-labs/web-core/core/config/ui.config';
 
 interface Props {
-    modelValue?: string | number | boolean | CheckboxState;
+    modelValue?: string | number | boolean | CheckboxState | string | string[];
     placeholder?: string;
     type?: InputType;
     disabled?: boolean;
-    variant?: 'primary' | 'secondary';
+    variant?: UI_Variant;
     shape?: 'rectangle' | 'pill';
-    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+    size?: UI_Size_Unit;
     fillWidth?: boolean;
     label?: string;
     isMandatory?: boolean;
     oneLine?: boolean;
-    // ─ multiChoice ─
     multiChoice?: boolean;
     choices?: string[];
-    // ─ file ─
     accept?: string;
+    options?: { label: string, value: any }[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    modelValue: '',
-    placeholder: '',
-    type: 'text',
-    disabled: false,
-    variant: 'primary',
-    shape: 'rectangle',
-    size: 'md',
-    fillWidth: false,
-    label: '',
-    isMandatory: false,
-    oneLine: false,
-    multiChoice: false,
-    choices: () => [],
-    accept: '*',
+    modelValue: '', placeholder: '', type: 'text', disabled: false, variant: 'neutral',
+    shape: 'rectangle', size: 'md', fillWidth: false, label: '', isMandatory: false,
+    oneLine: false, multiChoice: false, choices: () => [], accept: '*', options: () => [],
 });
 
 const emit = defineEmits<{
-    (e: 'update:modelValue', value: string | number | boolean | CheckboxState): void;
+    (e: 'update:modelValue', value: any): void;
     (e: 'add-choice', value: string): void;
     (e: 'remove-choice', value: string): void;
     (e: 'browse', accept: string): void;
     (e: 'request-folder-path'): void;
 }>();
 
+// Écouteurs communs aux champs délégués : sans eux, leurs événements ne remontent jamais
+const valueListeners = {
+    'update:modelValue': (value: any) => emit('update:modelValue', value),
+};
+const choiceListeners = {
+    ...valueListeners,
+    'add-choice': (value: string) => emit('add-choice', value),
+    'remove-choice': (value: string) => emit('remove-choice', value),
+};
+
 defineOptions({ inheritAttrs: false });
+useSlots(); // Conservé pour s'assurer que les slots sont enregistrés si besoin, bien que délégués
 
-const slots = useSlots();
-const hasLeftSlot       = computed(() => !!slots.left);
-const hasRightSlot      = computed(() => !!slots.right);
-const hasOuterLeftSlot  = computed(() => !!slots['outer-left']);
-const hasOuterRightSlot = computed(() => !!slots['outer-right']);
-
-// ═══ Handlers ═══
-
-function handleInput(event: Event) {
-    const target = event.target as HTMLInputElement;
-    emit('update:modelValue', props.type === 'number' && target.value !== ''
-        ? Number(target.value)
-        : target.value
-    );
-}
-
-function handleColorWheelInput(event: Event) {
-    const target = event.target as HTMLInputElement;
-    emit('update:modelValue', target.value);
-}
-
-function handleAddChoice() {
-    if (!props.modelValue) return;
-    emit('add-choice', String(props.modelValue));
-    emit('update:modelValue', '');
-}
-
-// ═══ Classes ═══
-
-const hasRightContent = computed(() =>
-    hasRightSlot.value || props.multiChoice || props.type === 'color' || props.type === 'file' || props.type === 'path' // AJOUTÉ
-);
-
-const inputSizeClasses = computed(() => ({
-    xs:   'text-[10px] [&_svg]:!w-3.5 [&_svg]:!h-3.5',
-    sm:   'text-xs     [&_svg]:!w-4   [&_svg]:!h-4',
-    md:   'text-sm     [&_svg]:!w-5   [&_svg]:!h-5',
-    lg:   'text-base   [&_svg]:!w-6   [&_svg]:!h-6',
-    xl:   'text-lg     [&_svg]:!w-7   [&_svg]:!h-7',
-    '2xl':'text-xl     [&_svg]:!w-8   [&_svg]:!h-8',
-}[props.size]));
-
-const inputPaddingClasses = computed(() => {
-    const left  = hasLeftSlot.value;
-    const right = hasRightContent.value;
-
-    const pxLeft  = left  ? '' : ({ xs: 'pl-2', sm: 'pl-3', md: 'pl-4', lg: 'pl-5', xl: 'pl-6', '2xl': 'pl-7' })[props.size];
-    const pxRight = right ? '' : ({ xs: 'pr-2', sm: 'pr-3', md: 'pr-4', lg: 'pr-5', xl: 'pr-6', '2xl': 'pr-7' })[props.size];
-
-    return `${pxLeft} ${pxRight}`.trim();
-});
-
-const slotPaddingClasses = computed(() => ({
-    xs:   'px-1.5',
-    sm:   'px-2',
-    md:   'px-2.5',
-    lg:   'px-3',
-    xl:   'px-3.5',
-    '2xl':'px-4',
-}[props.size]));
-
-const containerSizeClasses = computed(() => ({
-    xs:   'h-fit py-0.5',
-    sm:   'h-fit py-1',
-    md:   'h-fit py-1.5',
-    lg:   'h-fit py-2',
-    xl:   'h-fit py-2.5',
-    '2xl':'h-fit py-3',
-}[props.size]));
-
-const containerShapeClasses = computed(() => ({
-    rectangle: 'rounded',
-    pill:      'rounded-full',
-}[props.shape]));
-
-const containerVariantClasses = computed(() => ({
-    primary:   'bg-transparent border-secondary hover:border-accent',
-    secondary: 'bg-transparent border-bg-light hover:border-secondary',
-}[props.variant]));
+const MAXIMAL_DROPDOWN_OPTION = 7;
+const useComboboxForSelect = computed(() => props.type === 'select' && props.options && props.options.length >= MAXIMAL_DROPDOWN_OPTION);
 
 const fillWidthClasses = computed(() => props.fillWidth ? 'w-full' : 'w-fit');
+const layoutClasses = computed(() => props.oneLine ? 'flex-row items-center' : 'flex-col');
+const labelClasses = computed(() => props.oneLine ? 'whitespace-nowrap' : '');
 
-const layoutClasses = computed(() =>
-    props.oneLine ? 'flex-row items-center' : 'flex-col'
-);
+const switchSize = computed(() => (props.size === 'xs' || props.size === 'sm') ? 'sm' : (props.size === 'xl' || props.size === '2xl') ? 'lg' : 'md');
+const checkboxSize = computed(() => (props.size === 'xs' || props.size === 'sm') ? 'sm' : (props.size === 'xl' || props.size === '2xl' || props.size === 'lg') ? 'lg' : 'md');
 
-const labelClasses = computed(() =>
-    props.oneLine ? 'whitespace-nowrap' : ''
-);
+// ✅ PROPS DÉLÉGUÉES PROPRES ET TYÉES
+const sharedSelectProps = computed(() => ({
+    modelValue: props.modelValue as string | number | string[] | undefined,
+    placeholder: props.placeholder,
+    disabled: props.disabled,
+    variant: props.variant,
+    shape: props.shape,
+    size: props.size,
+    options: props.options,
+    multiChoice: props.multiChoice,
+    choices: props.choices,
+}));
 
-const inputWrapperClasses = computed(() => {
-    if (props.fillWidth && props.oneLine) return 'flex-1 min-w-0';
-    return props.fillWidth ? 'w-full' : 'w-fit';
-});
+const sharedTextareaProps = computed(() => ({
+    modelValue: props.modelValue as string | number | undefined,
+    placeholder: props.placeholder,
+    disabled: props.disabled,
+    variant: props.variant,
+    shape: props.shape,
+    size: props.size,
+}));
 
-const switchSize = computed(() => {
-    if (props.size === 'xs' || props.size === 'sm') return 'sm';
-    if (props.size === 'xl' || props.size === '2xl') return 'lg';
-    return 'md';
-});
-
-const checkboxSize = computed(() => {
-    if (props.size === 'xs' || props.size === 'sm') return 'sm';
-    if (props.size === 'xl' || props.size === '2xl' || props.size === 'lg') return 'lg';
-    return 'md';
-});
+const sharedNativeProps = computed(() => ({
+    modelValue: props.modelValue as string | number | undefined,
+    placeholder: props.placeholder,
+    type: props.type,
+    disabled: props.disabled,
+    variant: props.variant,
+    shape: props.shape,
+    size: props.size,
+    fillWidth: props.fillWidth,
+    oneLine: props.oneLine,
+    multiChoice: props.multiChoice,
+    accept: props.accept,
+}));
 </script>

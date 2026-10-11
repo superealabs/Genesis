@@ -6,6 +6,8 @@
     :trigger-size="'lg'"
     :close-on-select="true"
     :open-at-hover="true"
+    :trigger-variant="dropdownVariant"
+    :positioning="'absolute'"
   >
     <template #triggerIcon>
       <component :is="currentIcon" :size="24" aria-hidden="true" />
@@ -16,7 +18,7 @@
       <MenuItem v-slot="{ active }" as="template">
         <GenesisButton
           :class="[active ? 'active' : '']"
-          variant="tertiary"
+          :variant="'tertiary'"
           :fill-width="true"
           size="lg"
           @click="selectView('grid')"
@@ -32,7 +34,7 @@
       <MenuItem v-slot="{ active }" as="template">
         <GenesisButton
           :class="[active ? 'active' : '']"
-          variant="tertiary"
+          :variant="'tertiary'"
           :fill-width="true"
           size="lg"
           @click="selectView('table')"
@@ -65,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { MenuItem } from '@headlessui/vue'; 
 
 import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
@@ -73,9 +75,13 @@ import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/Gen
 import IconGrid from '@genesis-labs/web-core/core/components/ui/icons/IconGrid.vue';
 import IconTable from '@genesis-labs/web-core/core/components/ui/icons/IconTable.vue'; // ✅ À adapter si le nom est différent
 import IconListUl from '@genesis-labs/web-core/core/components/ui/icons/IconListUl.vue';
+import { DisplayMode } from '../../layouts/display/items/GenesisItem.types';
+import { ButtonVariant } from '@genesis-labs/web-core/core/config/ui.config';
+
+const dropdownVariant = ref<ButtonVariant>('primary')
 
 const props = withDefaults(defineProps<{
-    modelValue: 'grid' | 'table' | 'list'; // ✅ Mis à jour
+    modelValue: DisplayMode; // ✅ Mis à jour
     align?: 'left' | 'right';
     hideChevron?: boolean;
 }>(), {
@@ -84,7 +90,7 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-    'update:modelValue': [value: 'grid' | 'table' | 'list']; // ✅ Mis à jour
+    'update:modelValue': [value: DisplayMode]; // ✅ Mis à jour
 }>();
 
 const currentIcon = computed(() => {

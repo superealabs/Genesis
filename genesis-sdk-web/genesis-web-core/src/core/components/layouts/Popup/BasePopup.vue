@@ -2,7 +2,7 @@
     <div
         v-if="show"
         ref="popupRef"
-        class="bg-bg border border-secondary rounded-lg shadow-lg overflow-hidden"
+        class="bg-bg-dark rounded-lg overflow-hidden border-2 border-bg-neutral-genesis"
         :style="popupStyle"
     >
         <slot />

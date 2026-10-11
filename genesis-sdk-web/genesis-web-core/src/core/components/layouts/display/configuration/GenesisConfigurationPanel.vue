@@ -21,7 +21,7 @@
         <!-- ═══ CONTENU : Deux colonnes ═══ -->
         <div class="flex flex-1 min-h-0 gap-4 overflow-hidden">
             
-            <div class="flex-1 flex flex-col min-h-0 overflow-hidden border border-secondary rounded-lg bg-bg-dark/30 relative">
+            <div class="flex-1 flex flex-col min-h-0 overflow-hidden border border-bg-neutral-genesis rounded-lg relative">
                 <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
                     
                     <!-- Dans le template, mettre à jour l'écouteur @rename -->
@@ -45,13 +45,7 @@
                 </div>
 
                 <!-- Handle déplacé ICI, à l'intérieur de la colonne gauche -->
-                <div 
-                    class="absolute bottom-0 left-0 right-0 py-2 h-3 cursor-ns-resize flex items-center justify-center hover:bg-accent/20 transition-colors z-20 rounded-b-lg"
-                    @mousedown="startResizeBottom"
-                    title="Redimensionner verticalement"
-                >
-                    <IconDragY class="text-text-muted opacity-50 hover:opacity-100" :size="20" />
-                </div>
+                <GenesisResizeHandle @resize-start="startResizeBottom" />
             </div>
 
             <!-- COLONNE DROITE : Boutons de configuration (Exclusivement GenesisButtonIcon) -->
@@ -60,16 +54,15 @@
                 <!-- Groupe 1 : Gestion (Ajout / Suppression) -->
                 <div class="flex flex-col gap-2">
                     <GenesisButtonIcon 
-                        variant="secondary" 
                         size="lg" 
                         title="Ajouter une configuration"
+                        variant="secondary"
                         @click="handleAdd"
                     >
                         <IconPlus />
                     </GenesisButtonIcon>
 
                     <GenesisButtonIcon 
-                        variant="secondary" 
                         size="lg" 
                         title="Supprimer la configuration sélectionnée"
                         :disabled="!selectedConfigId"
@@ -86,7 +79,6 @@
                 <div class="flex flex-col gap-2">
                     <!-- Groupe 2 : Navigation (Réordonnancement) -->
                     <GenesisButtonIcon 
-                        variant="secondary" 
                         size="lg" 
                         title="Monter la configuration"
                         :disabled="!canMoveUp"
@@ -97,7 +89,6 @@
                     </GenesisButtonIcon>
 
                     <GenesisButtonIcon 
-                        variant="secondary" 
                         size="lg" 
                         title="Descendre la configuration"
                         :disabled="!canMoveDown"
@@ -125,8 +116,7 @@ import GenesisItemConfig from './GenesisItemConfig.vue';
 import type { ConfigurationItem } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
 
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
-import IconDragY from '@genesis-labs/web-core/core/components/ui/icons/IconDragY.vue';
-
+import GenesisResizeHandle from '../../../ui/actions/GenesisResizeHandle.vue';
 
 const props = defineProps<{
     configurations: ConfigurationItem[];
@@ -142,7 +132,7 @@ const emit = defineEmits<{
     'update:searchQuery': [value: string];
     add: [];
     delete: [id: string | number];
-    rename: [id: string | number, newName: string]; // ✅ MODIFIÉ
+    rename: [id: string | number, newName: string];
     edit: [id: string | number];
     toggleVisibility: [id: string | number];
     moveUp: [id: string | number];

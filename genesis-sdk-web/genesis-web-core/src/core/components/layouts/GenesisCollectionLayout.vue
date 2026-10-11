@@ -1,34 +1,43 @@
 <template>
-    <div class="flex flex-col gap-16 w-full">
-        <div class="flex flex-col w-full">
+    <div class="flex flex-col gap-12 w-full bg-bg-dark">
             <Carrousel
                 v-if="showCarousel"
                 :slides="carouselSlides"
                 slide-height="300px"
-                slot-height="100px"
                 :auto-play="true"
-                class="rounded-t-lg overflow-hidden shadow-sm flex-shrink-0"
+                class="rounded-t-lg flex-shrink-0"
             >
-                <template #bottom>
-                    <div class="flex gap-4">
+                <template #bottom="{ isStuck}">
+                    <div 
+                        class="flex gap-4 rounded-b-lg" 
+                        id="background-header"
+                        :class="isStuck ? 'bg-bg-dark border-b-2 border-neutral-light-genesis shadow-sm shadow-hover-ghost/10' : 'bg-transparent'"
+                        >
                         <div class="flex items-center gap-4 px-8 pb-4 pt-2">
                             <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
-                            <h2 class="font-semibold font-heading text-4xl text-white drop-shadow-md truncate">
+                            <h2 
+                                class="font-semibold font-heading text-4xl truncate transition-colors duration-300"
+                                :class="isStuck ? 'text-text' : 'text-white'"
+                            >
                                 <slot name="title">{{ title }}</slot>
                             </h2>
                         </div>
 
-                        <div class="relative flex items-center w-full">
+                        <div 
+                            class="relative flex items-stretch w-full"                        
+                        >
+
                             <div 
-                                class="flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6 py-4 bg-bg-dark"
-                                style="clip-path: polygon(10% 0, 101% 0, 100% 101%, 0 101%);"
-                            >
+                                class="bar-shape absolute inset-0 pointer-events-none" aria-hidden="true"
+                                :class="isStuck ? 'bg-bg-dark' : 'bg-bg-dark'"
+                                />
+
+                            <div class="relative flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6">
                                 <GenesisInput
                                     :modelValue="searchValue"
                                     @update:modelValue="$emit('update:searchValue', $event as string)"
                                     type="text"
                                     :placeholder="searchPlaceholder"
-                                    variant="primary"
                                     shape="rectangle"
                                     size="lg" 
                                     fill-width
@@ -40,12 +49,12 @@
                                 </GenesisInput>
                             </div>
 
-                            <div class="flex gap-2 items-center flex-shrink-0 pr-6 bg-bg-dark h-full">
+                            <div class="relative flex gap-2 items-center shrink-0 pr-6">
                                 <!-- ═══ BOUTON FILTRE (Émet un événement) ═══ -->
                                 <GenesisButtonIcon
                                     v-if="showFilter"
                                     variant="secondary"
-                                    size="xl"
+                                    size="lg"
                                     :hide-chevron="true"
                                     @click="$emit('openFilter')"
                                     class="shrink-0"
@@ -60,7 +69,7 @@
                                     dropdownSize="lg"
                                     :closeOnSelect="false"
                                     triggerVariant="secondary"
-                                    trigger-size="xl"
+                                    trigger-size="lg"
                                     :hide-chevron="true"
                                 >
                                     <template #triggerIcon>
@@ -78,7 +87,7 @@
                                         { label: 'Selection', value: 'selection', icon: IconCursor },
                                         { label: 'Compare', value: 'compare', icon: IconGitCompare }
                                     ]"
-                                    size="md" 
+                                    size="lg" 
                                 />
                                 <LayoutSwitcherAlt v-model="internalDisplayMode" />
                             </div>
@@ -86,9 +95,8 @@
                     </div>
                 </template>
             </Carrousel>
-        </div>
 
-        <div class="flex-1 min-h-0">
+        <div class="flex-1 min-h-0 bg-bg-dark px-6">
             <slot />
             <SimpleSelectionPopup
                 v-if="showReplacePopup"
@@ -120,7 +128,7 @@ import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/Genes
 import Carrousel, { type CarouselSlide } from '@genesis-labs/web-core/core/components/ui/carrousel/Carrousel.vue';
 import SimpleSelectionPopup from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
-import type { DisplayMode } from './display/GenesisItem.types.ts';
+import type { DisplayMode } from './display/items/GenesisItem.types.ts';
 
 export type CollectionMode = 'selection' | 'compare';
 
@@ -183,3 +191,19 @@ const internalMode = computed({
     set: (value) => emit('update:mode', value as CollectionMode)
 });
 </script>
+<style scoped>
+.bar-shape {
+    /* Largeur du capuchon (la partie incurvée à gauche) */
+    --cap: 96px;
+
+    /* Tracé du capuchon : viewBox 96 x 80, étiré à la hauteur de la barre */
+    --cap-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 80' preserveAspectRatio='none'%3E%3Cpath d='M96 0H90Q80 0 72.9 7.1L0 80H96Z'/%3E%3C/svg%3E");
+
+    -webkit-mask:
+        var(--cap-shape) left top / var(--cap) 100% no-repeat,
+        linear-gradient(#000, #000) right top / calc(100% - var(--cap) + 1px) 100% no-repeat;
+    mask:
+        var(--cap-shape) left top / var(--cap) 100% no-repeat,
+        linear-gradient(#000, #000) right top / calc(100% - var(--cap) + 1px) 100% no-repeat;
+}
+</style>

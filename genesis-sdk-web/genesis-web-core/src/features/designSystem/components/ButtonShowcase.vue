@@ -144,46 +144,6 @@
             </section>
 
             <!-- ═══════════════════════════════════════════════════════════ -->
-            <!-- CIRCLE (GenesisButtonIcon) -->
-            <!-- ═══════════════════════════════════════════════════════════ -->
-
-            <!-- Section 10 : Circle - Primary -->
-            <section>
-                <h3 class="text-xs font-semibold text-text-muted uppercase mb-3">Circle - Primary</h3>
-                <div class="grid grid-cols-8 gap-4">
-                    <div v-for="size in sizes" :key="size" class="aspect-square flex items-center justify-center bg-bg-light rounded p-2">
-                        <GenesisButtonIcon variant="primary" shape="circle" :size="size">
-                            <IconHome />
-                        </GenesisButtonIcon>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 11 : Circle - Secondary -->
-            <section>
-                <h3 class="text-xs font-semibold text-text-muted uppercase mb-3">Circle - Secondary</h3>
-                <div class="grid grid-cols-8 gap-4">
-                    <div v-for="size in sizes" :key="size" class="aspect-square flex items-center justify-center bg-bg-light rounded p-2">
-                        <GenesisButtonIcon variant="secondary" shape="circle" :size="size">
-                            <IconHome />
-                        </GenesisButtonIcon>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Section 12 : Circle - Ghost -->
-            <section>
-                <h3 class="text-xs font-semibold text-text-muted uppercase mb-3">Circle - Ghost</h3>
-                <div class="grid grid-cols-8 gap-4">
-                    <div v-for="size in sizes" :key="size" class="aspect-square flex items-center justify-center bg-bg-light rounded p-2">
-                        <GenesisButtonIcon variant="secondary" shape="circle" :size="size" :visibleBackground="false">
-                            <IconHome />
-                        </GenesisButtonIcon>
-                    </div>
-                </div>
-            </section>
-
-            <!-- ═══════════════════════════════════════════════════════════ -->
             <!-- ÉTATS SPÉCIAUX -->
             <!-- ═══════════════════════════════════════════════════════════ -->
 

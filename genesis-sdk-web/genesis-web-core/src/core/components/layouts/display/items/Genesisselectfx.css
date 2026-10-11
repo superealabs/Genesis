@@ -1,0 +1,47 @@
+/* ============================================================================
+   GENESIS — Effet de sélection de la marque (source unique)
+   Utilisé par GenesisSelectableIdentity (remplissage) et GenesisMascot.
+   Importé une seule fois par le bundler, quel que soit le nombre de composants.
+   ============================================================================ */
+
+:root {
+    --gfx-fill-duration: 300ms;         /* montée du fond */
+    --gfx-mascot-in-duration: 250ms;    /* la mascotte monte */
+    --gfx-mascot-out-duration: 150ms;   /* la mascotte redescend */
+}
+
+/* ── Fond (couche de remplissage) ──
+   Désélection : il attend que la mascotte soit redescendue (délai).
+   Sélection   : il démarre tout de suite. */
+.gfx-fill-layer {
+    clip-path: inset(100% 0 0 0);
+    transition: clip-path var(--gfx-fill-duration) cubic-bezier(0.4, 0, 0.2, 1) var(--gfx-mascot-out-duration);
+}
+.gfx-fill-layer.is-selected {
+    clip-path: inset(0 0 0 0);
+    transition-delay: 0ms;
+}
+
+/* Tout le contenu de la couche (textes, logo) prend la couleur de la couche */
+.gfx-fill-layer * {
+    color: inherit !important;
+}
+
+/* ── Mascotte ──
+   Désélection : elle descend immédiatement.
+   Sélection   : elle attend la fin du fond avant de monter. */
+.gfx-mascot {
+    transform: translateY(100%);
+    transition: transform var(--gfx-mascot-out-duration) ease-in 0ms;
+}
+.gfx-mascot.is-selected {
+    transform: translateY(0);
+    transition: transform var(--gfx-mascot-in-duration) cubic-bezier(0.2, 0.8, 0.2, 1) var(--gfx-fill-duration);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .gfx-fill-layer,
+    .gfx-mascot {
+        transition: none !important;
+    }
+}

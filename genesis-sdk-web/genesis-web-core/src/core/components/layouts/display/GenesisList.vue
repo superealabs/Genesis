@@ -31,10 +31,11 @@
     <!-- ═══ MODE LIST (anciennement LINE : liste verticale flex simple) ═══ -->
     <div
         v-else-if="display === 'list'"
-        class="flex flex-col w-full gap-2"
+        class="grid grid-cols-4 gap-8 w-full"
     >
         <slot />
     </div>
+
 
     <!-- ═══ MODE GRID ═══ -->
     <div v-else class="grid gap-3" :style="gridStyle">
@@ -44,10 +45,11 @@
 
 <script setup lang="ts">
 import { computed, provide } from 'vue';
-import { GENESIS_LIST_CONTEXT, type GenesisListContext } from './GenesisItem.types';
+import { GENESIS_LIST_CONTEXT, type GenesisListContext } from './items/GenesisItem.types';
+import { DisplayMode } from './items/GenesisItem.types';
 
 const props = withDefaults(defineProps<{
-    display?: 'grid' | 'table' | 'list';
+    display?: DisplayMode;
     minColWidth?: string;
     headers?: { label: string; class?: string }[];
     showHeader?: boolean;

@@ -1,207 +1,403 @@
 <template>
-    <div class="flex flex-col gap-4 p-4 max-w-3xl mx-auto">
+  <main class="flex gap-4 h-full overflow-hidden">
+    
+    <!-- PARTIE GAUCHE : CONTENU PRINCIPAL (Scrollable) -->
+    <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+      
+      <!-- 1. CONFIGURATION DE BASE (Framework, Port) -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-text border-b border-neutral-light pb-2">
+          Configuration Frontend
+        </h3>
         
-        <!-- ═══ Section 1 : Framework Sélectionné & Port ═══ -->
-        <GenesisDisclosure title="Framework & Port" default-open variant="primary">
-            <div class="flex flex-col md:flex-row md:items-end gap-4 p-4 bg-bg-light/50 rounded-lg border border-secondary">
-                <div class="flex-1 min-w-0">
-                    <span class="text-sm font-medium text-text-muted block mb-1.5">
-                        Framework Frontend choisi
-                    </span>
-                    <div class="flex items-center gap-2 text-text font-semibold truncate">
-                        <span class="w-2 h-2 rounded-full bg-accent flex-shrink-0"></span>
-                        {{ selectedFrontendName || 'Aucun framework sélectionné' }}
-                    </div>
-                </div>
-
-                <div class="w-full md:w-auto">
-                    <GenesisInput
-                        v-model="layoutConfig.port"
-                        type="number"
-                        label="Port"
-                        placeholder="ex: 3000"
-                        fill-width
-                    />
-                </div>
-            </div>
-        </GenesisDisclosure>
-
-        <!-- ═══ Section 2 : Langues Supportées ═══ -->
-        <GenesisDisclosure :title="'interface language'" :variant="'secondary'">
-            <template #title>
-                Langues Supportées <span class="text-accent text-sm font-normal">*</span>
-            </template>
-            
-            <p class="text-sm text-text-muted mb-3">
-                Sélectionnez les langues à inclure dans le projet.
-            </p>
-            
-            <GenesisInput
-                v-model="selectedLanguageToAdd"
-                type="select"
-                placeholder="Sélectionner une langue..."
-                label="Ajouter une langue"
+        <div ref="frontendSelectorRef" class="flex items-end gap-3 pb-4 border-b border-neutral-light">
+          <div class="flex-1">
+            <template v-if="isEditingFrontend">
+              <GenesisInput
+                type="combobox"
+                :options="availableFrontendsOptions"
+                :model-value="tempFrontendName"
+                @update:model-value="handleFrontendSelect"
+                label="Framework Frontend"
+                placeholder="Rechercher un framework..."
+                size="lg"
                 fill-width
-            >
-                <div class="p-1 space-y-1 max-h-60 overflow-y-auto">
-                    <button
-                        v-for="lang in availableLanguages"
-                        :key="lang.code"
-                        type="button"
-                        class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors flex items-center justify-between"
-                        :class="{ 'text-accent font-medium': selectedLanguageToAdd === lang.code }"
-                        @click="handleLanguageSelect(lang.code)"
-                    >
-                        <span>{{ lang.name }}</span>
-                        <svg v-if="selectedLanguageToAdd === lang.code" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                        </svg>
-                    </button>
+                variant="primary"
+              />
+            </template>
+            <template v-else>
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-muted">Framework Frontend sélectionné</label>
+                <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
+                  <span class="w-2 h-2 rounded-full bg-accent shrink-0"></span>
+                  <span class="truncate font-medium">{{ selectedFrontendName }}</span>
                 </div>
-            </GenesisInput>
+              </div>
+            </template>
+          </div>
+          
+          <div class="pb-0.5">
+            <GenesisButton v-if="!isEditingFrontend" variant="secondary" size="lg" @click="startEditingFrontend">
+              Modifier
+            </GenesisButton>
+            <GenesisButton v-else variant="tertiary" size="lg" @click="cancelEditingFrontend">
+              Annuler
+            </GenesisButton>
+          </div>
+        </div>
 
-            <div v-if="layoutConfig.selectedLanguages.length > 0" class="flex flex-wrap gap-1.5 mt-3">
-                <GenesisLabel
-                    v-for="code in layoutConfig.selectedLanguages"
-                    :key="code"
-                    :text="getLanguageName(code)"
-                    @remove="() => toggleLanguage(code)" 
-                />
+        <div class="w-full">
+          <GenesisInput 
+            :model-value="layoutConfig.port" 
+            @update:model-value="(val) => updateFrontendLayout('port', val)"
+            type="number" 
+            size="lg" 
+            label="Port d'exécution" 
+            placeholder="ex: 3000" 
+            fill-width 
+          />
+        </div>
+      </div>
+
+      <div class="border-t border-secondary"></div>
+
+      <!-- 2. LANGUES SUPPORTÉES (Avec Panneau de Configuration) -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
+          Langues Supportées
+        </h3>
+        
+        <div class="flex flex-col lg:flex-row gap-6">
+          <div class="flex-1">
+            <GenesisInput
+              type="combobox"
+              :options="availableLanguagesOptions"
+              :multiChoice="true"
+              :choices="layoutConfig.selectedInterfaceLanguages.map(code => getLanguageName(code))"
+              placeholder="Rechercher une langue..."
+              label="Ajouter une langue"
+              size="lg"
+              fill-width
+              @add-choice="(name) => {
+                const lang = availableLanguages.find(l => l.name === name);
+                if (lang && !layoutConfig.selectedInterfaceLanguages.includes(lang.code)) {
+                  toggleLanguage(lang.code);
+                }
+              }"
+              @remove-choice="(name) => {
+                const lang = availableLanguages.find(l => l.name === name);
+                if (lang) toggleLanguage(lang.code);
+              }"
+            />
+          </div>
+
+          <!-- Panneau de gestion des configurations de Langues -->
+          <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+            <GenesisConfigurationPanel
+              :configurations="languagesConfigManager.configurations.value"
+              :selected-config-id="languagesConfigManager.selectedConfigId.value"
+              :filtered-configs="languagesConfigManager.filteredConfigs.value"
+              :search-query="languagesConfigManager.searchQuery.value"
+              :can-move-up="languagesConfigManager.canMoveUp.value"
+              :can-move-down="languagesConfigManager.canMoveDown.value"
+              @update:search-query="(val) => languagesConfigManager.searchQuery.value = val"
+              @add="languagesLogic.handleAdd"
+              @delete="languagesLogic.handleDelete"
+              @rename="languagesLogic.handleRename"
+              @toggle-visibility="languagesConfigManager.toggleVisibility"
+              @move-up="languagesConfigManager.moveUp"
+              @move-down="languagesConfigManager.moveDown"
+              @select-configuration="languagesLogic.handleSelect"
+            />
+            
+            <div class="flex gap-2 justify-end">
+              <GenesisButtonIcon title="Exporter la configuration de langues sélectionnée" :disabled="!languagesConfigManager.selectedConfigId.value" @click="languagesLogic.handleExport">
+                <IconUpload />
+              </GenesisButtonIcon>
+              <GenesisButtonIcon title="Exporter toutes les configurations de langues" @click="languagesLogic.handleExportAll">
+                <IconSave />
+              </GenesisButtonIcon>
             </div>
-        </GenesisDisclosure>
+          </div>
+        </div>
+      </div>
 
-        <!-- ═══ Section 3 : Structure et Navigation ═══ -->
-        <GenesisDisclosure title="Structure et Navigation" variant="primary">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <GenesisInput
-                    v-model="layoutConfig.navbarType"
-                    type="select"
-                    label="Type de Navbar"
-                    is-mandatory
-                    fill-width
-                    placeholder="Sélectionner..."
-                >
-                    <div class="p-1 space-y-1">
-                        <button
-                            v-for="option in navbarOptions"
-                            :key="option.value"
-                            type="button"
-                            class="w-full text-left px-3 py-2 text-sm text-text hover:bg-[var(--color-hover-ghost)] rounded-md transition-colors flex items-center justify-between"
-                            :class="{ 'text-accent font-medium': layoutConfig.navbarType === option.value }"
-                            @click="updateFrontendLayout('navbarType', option.value)"
-                        >
-                            <span>{{ option.label }}</span>
-                            <svg v-if="layoutConfig.navbarType === option.value" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                </GenesisInput>
+      <div class="border-t border-secondary"></div>
 
-                <div class="flex items-end pb-2">
-                    <span class="text-sm text-text-muted italic">D'autres options de structure à venir...</span>
-                </div>
-            </div>
-        </GenesisDisclosure>
+      <!-- 3. CHARTE GRAPHIQUE & LAYOUT -->
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
+          Charte Graphique & Layout
+        </h3>
+        
+        <div class="space-y-4">
+          <GenesisInput
+            :model-value="layoutConfig.navbarType"
+            @update:model-value="(val) => updateFrontendLayout('navbarType', val)"
+            type="select"
+            :options="navbarOptions"
+            label="Type de Navbar"
+            is-mandatory
+            size="lg"
+            fill-width
+            placeholder="Sélectionner..."
+          />
 
-        <!-- ═══ Section 4 : Charte Graphique ═══ -->
-        <GenesisDisclosure title="Charte Graphique" variant="primary">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <GenesisInput
-                    v-model="layoutConfig.primaryColor"
-                    type="color"
-                    label="Couleur Primaire"
-                    placeholder="#3B82F6"
-                    is-mandatory
-                    fill-width
-                />
-                <GenesisInput
-                    v-model="layoutConfig.secondaryColor"
-                    type="color"
-                    label="Couleur Secondaire"
-                    placeholder="#64748B"
-                    is-mandatory
-                    fill-width
-                />
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GenesisInput
+              :model-value="layoutConfig.primaryColor"
+              @update:model-value="(val) => updateFrontendLayout('primaryColor', val)"
+              type="color"
+              label="Couleur Primaire"
+              placeholder="#3B82F6"
+              is-mandatory
+              size="lg"
+              fill-width
+            />
+            <GenesisInput
+              :model-value="layoutConfig.secondaryColor"
+              @update:model-value="(val) => updateFrontendLayout('secondaryColor', val)"
+              type="color"
+              label="Couleur Secondaire"
+              placeholder="#64748B"
+              is-mandatory
+              size="lg"
+              fill-width
+            />
+          </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <GenesisInput
-                    v-model="layoutConfig.logoPath"
-                    type="file"
-                    label="Fichier Logo"
-                    placeholder="Aucun fichier sélectionné"
-                    accept=".png,.jpg,.jpeg,.svg"
-                    fill-width
-                    @browse="() => emit('request-file-path', { field: 'logoPath', extensions: ['png', 'jpg', 'jpeg', 'svg'] })"
-                />
-                <GenesisInput
-                    v-model="layoutConfig.faviconPath"
-                    type="file"
-                    label="Fichier Favicon"
-                    placeholder="Aucun fichier sélectionné"
-                    accept=".ico,.png,.svg"
-                    fill-width
-                    @browse="() => emit('request-file-path', { field: 'faviconPath', extensions: ['ico', 'png', 'svg'] })"
-                />
-            </div>
-        </GenesisDisclosure>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GenesisInput
+              :model-value="layoutConfig.logoPath"
+              @update:model-value="(val) => updateFrontendLayout('logoPath', val)"
+              type="file"
+              label="Fichier Logo"
+              placeholder="Aucun fichier sélectionné"
+              accept=".png,.jpg,.jpeg,.svg"
+              size="lg"
+              fill-width
+              @browse="() => emit('request-file-path', { field: 'logoPath', extensions: ['png', 'jpg', 'jpeg', 'svg'] })"
+            />
+            <GenesisInput
+              :model-value="layoutConfig.faviconPath"
+              @update:model-value="(val) => updateFrontendLayout('faviconPath', val)"
+              type="file"
+              label="Fichier Favicon"
+              placeholder="Aucun fichier sélectionné"
+              accept=".ico,.png,.svg"
+              size="lg"
+              fill-width
+              @browse="() => emit('request-file-path', { field: 'faviconPath', extensions: ['ico', 'png', 'svg'] })"
+            />
+          </div>
+        </div>
+      </div>
     </div>
+    
+    <!-- PARTIE DROITE : CARROUSEL TUTORIEL (Fixe) -->
+    <div class="w-1/2 h-full shrink-0">
+      <CarrouselPanel :slides="panelSlides" />
+    </div>
+
+  </main>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch, onMounted, nextTick } from 'vue';
+
+import type { InterfaceLanguage } from '@genesis-labs/shared-types';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
-import type { LanguageDto } from '@genesis-labs/shared-types';
+import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store';
+import { useConfigurationManager } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
+import { useConfig } from '@genesis-labs/web-core/core/features/config/composables/useConfig';
+import { useConfigManagerLogic } from '@genesis-labs/web-core/features/generator/composables/useConfigManagerLogic';
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
-import GenesisLabel from '@genesis-labs/web-core/core/components/ui/labels/GenesisLabel.vue';
-import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
+import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
+import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
+import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
+import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 
+// ============================================================================
+// 1. EMITS
+// ============================================================================
 const emit = defineEmits<{
-    'request-file-path': [payload: { field: 'logoPath' | 'faviconPath', extensions: string[] }];
+  'request-file-path': [payload: { field: 'logoPath' | 'faviconPath', extensions: string[] }];
 }>();
 
+// ============================================================================
+// 2. COMPOSABLES & STORES
+// ============================================================================
 const { 
-    stepperData, 
-    availableLanguages,
-    fetchAvailableLanguages, 
-    updateFrontendLayout, 
-    toggleLanguage 
+  stepperData, 
+  fetchAvailableLanguages, 
+  updateFrontendLayout, 
+  toggleLanguage,
+  setSelectedFrontendFramework
 } = useGenerator();
 
-const layoutConfig = computed(() => stepperData.value.frontendLayout);
-const selectedFrontendName = computed(() => stepperData.value.frontend?.name || 'Non défini (Étape 7)');
+const { saveConfiguration, deleteConfiguration, configurations: persistedConfigs, loadFrontendLanguagesConfigurations } = useConfig();
+const frontendStore = useFrontendStore();
 
-const selectedLanguageToAdd = ref('');
-
+// ============================================================================
+// 3. ÉTAT LOCAL & CONSTANTES
+// ============================================================================
 type NavbarType = 'side' | 'top' | '';
+
 const navbarOptions: { label: string; value: NavbarType }[] = [
-    { label: 'Barre latérale (Side)', value: 'side' },
-    { label: 'Barre supérieure (Top)', value: 'top' }
+  { label: 'Barre latérale (Side)', value: 'side' },
+  { label: 'Barre supérieure (Top)', value: 'top' }
 ];
 
-function handleLanguageSelect(code: string) {
-    if (!code) return;
-    selectedLanguageToAdd.value = code;
+const panelSlides: CarouselSlide[] = [
+  { color: '#3B82F6', label: 'Étape 1 : Framework & Port' },
+  { color: '#EF4444', label: 'Étape 2 : Langues & Layout' },
+  { color: '#10B981', label: 'Étape 3 : Charte graphique' },
+];
+
+// État pour l'édition du framework
+const frontendSelectorRef = ref<HTMLElement | null>(null);
+const isEditingFrontend = ref(false);
+const tempFrontendName = ref('');
+
+// État pour la gestion des configurations de langues
+const isApplyingLanguagesConfig = ref(false);
+const languagesConfigManager = useConfigurationManager([], { singleConfiguration: false });
+
+// ============================================================================
+// 4. COMPUTEDS (Données dérivées)
+// ============================================================================
+const layoutConfig = computed(() => stepperData.value.frontendLayout);
+const frontend = computed(() => stepperData.value.frontend);
+
+const selectedFrontendName = computed(() => 
+  frontend.value?.name || 'Aucun framework sélectionné'
+);
+
+const availableLanguages = computed<InterfaceLanguage[]>(() => 
+  frontendStore.availableInterfaceLanguages
+);
+
+const availableFrontendsOptions = computed(() => 
+  frontendStore.availableFrontendFrameworks.map(f => ({ label: f.name, value: f }))
+);
+
+const availableLanguagesOptions = computed(() => 
+  availableLanguages.value.map(lang => ({ label: lang.name, value: lang.code }))
+);
+
+// ============================================================================
+// 5. ACTIONS : GESTION DE L'ÉDITION DU FRAMEWORK
+// ============================================================================
+function startEditingFrontend() {
+  tempFrontendName.value = '';
+  isEditingFrontend.value = true;
+}
+
+function cancelEditingFrontend() {
+  isEditingFrontend.value = false;
+  tempFrontendName.value = '';
+}
+
+function handleFrontendSelect(value: any) {
+  if (typeof value === 'string') return; 
+  if (value && value.id) { 
+    setSelectedFrontendFramework(value); 
+    isEditingFrontend.value = false; 
+  }
+}
+
+function handleClickOutside(event: MouseEvent) {
+  if (isEditingFrontend.value && frontendSelectorRef.value && !frontendSelectorRef.value.contains(event.target as Node)) {
+    cancelEditingFrontend();
+  }
+}
+
+watch(isEditingFrontend, (isEditing) => {
+  if (isEditing) {
+    setTimeout(() => window.addEventListener('mousedown', handleClickOutside), 0);
+  } else {
+    window.removeEventListener('mousedown', handleClickOutside);
+  }
+});
+
+// ============================================================================
+// 6. LOGIQUE DE CONFIGURATION DES LANGUES (Via le Composable DRY)
+// ============================================================================
+const languagesLogic = useConfigManagerLogic({
+  manager: languagesConfigManager,
+  configType: 'frontend_languages-configuration',
+  defaultValues: [],
+  getCurrentValues: () => layoutConfig.value.selectedInterfaceLanguages || [],
+  buildPayload: (values) => ({
+    frontendFrameworkId: frontend.value?.id || 0,
+    frontendFrameworkName: frontend.value?.name || 'Inconnu',
+    languages: values || layoutConfig.value.selectedInterfaceLanguages || []
+  }),
+  fileNamePrefix: 'languages',
+  watchSource: () => layoutConfig.value.selectedInterfaceLanguages,
+  applyValues: (vals) => {
+    isApplyingLanguagesConfig.value = true;
     
-    if (!layoutConfig.value.selectedLanguages.includes(code)) {
+    // 1. Retirer toutes les langues actuellement sélectionnées
+    const currentLangs = [...layoutConfig.value.selectedInterfaceLanguages];
+    currentLangs.forEach(code => toggleLanguage(code));
+    
+    // 2. Ajouter les nouvelles langues du profil sélectionné
+    vals.forEach(code => {
+      if (!layoutConfig.value.selectedInterfaceLanguages.includes(code)) {
         toggleLanguage(code);
-    }
+      }
+    });
     
-    // Petit délai pour permettre à l'UI de se mettre à jour avant de réinitialiser le input
-    setTimeout(() => {
-        selectedLanguageToAdd.value = '';
-    }, 150);
+    nextTick(() => { isApplyingLanguagesConfig.value = false; });
+  },
+  isApplyingRef: isApplyingLanguagesConfig,
+  framework: frontend,
+  saveConfiguration,
+  deleteConfiguration,
+  persistedConfigs
+});
+
+// ============================================================================
+// 7. UTILITAIRES & LIFECYCLE
+// ============================================================================
+function getLanguageName(code: string): string {
+  const lang = availableLanguages.value.find((l) => l.code === code);
+  return lang ? lang.name : code;
 }
 
-function getLanguageName(code: string) {
-    const lang = availableLanguages.value.find((l: LanguageDto) => l.code === code);
-    return lang ? lang.name : code;
+async function syncLanguagesConfigsToCurrentFrontend() {
+  if (!frontend.value) return;
+  const { id: fwId, name: fwName } = frontend.value;
+
+  const languagesData = await loadFrontendLanguagesConfigurations(fwId, fwName);
+  languagesConfigManager.configurations.value = languagesData.map(c => {
+    const p = c.payload as any;
+    return { 
+      id: c.id, 
+      name: c.name, 
+      isHidden: false, 
+      components: p.languages || [] 
+    };
+  });
+  
+  languagesConfigManager.selectConfiguration(null);
+  languagesLogic.handleSelect(null);
 }
 
-// ═══ Lifecycle ═══
-onMounted(() => {
-    fetchAvailableLanguages();
+onMounted(async () => {
+  await fetchAvailableLanguages();
+  await syncLanguagesConfigsToCurrentFrontend();
+});
+
+// Recharger les configs de langues si le framework frontend change
+watch(() => frontend.value?.id, async (newId, oldId) => {
+  if (newId && newId !== oldId && frontend.value) {
+    await syncLanguagesConfigsToCurrentFrontend();
+  }
 });
 </script>
