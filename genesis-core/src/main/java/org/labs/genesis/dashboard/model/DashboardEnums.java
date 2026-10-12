@@ -41,7 +41,6 @@ public final class DashboardEnums {
         PIE,
         DONUT,
         LINE,
-        GAUGE,
         KPI,
         TABLE,
         MAP,

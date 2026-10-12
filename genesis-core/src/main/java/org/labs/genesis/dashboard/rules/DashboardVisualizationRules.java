@@ -26,8 +26,7 @@ public final class DashboardVisualizationRules {
                          LINE ->
                             hasRole(visualization, DashboardFieldRole.DIMENSION, 1) && hasRole(visualization, DashboardFieldRole.MEASURE, 1);
 
-                    case KPI,
-                         GAUGE ->
+                    case KPI ->
                             hasRole(visualization, DashboardFieldRole.MEASURE, 1);
 
                     case TABLE ->

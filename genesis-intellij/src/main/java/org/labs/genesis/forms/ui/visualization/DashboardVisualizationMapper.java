@@ -39,7 +39,6 @@ public final class DashboardVisualizationMapper {
         KEYWORDS.put("LINE", DashboardVisualizationType.LINE);
         KEYWORDS.put("SCATTER", DashboardVisualizationType.SCATTER);
         KEYWORDS.put("KPI", DashboardVisualizationType.KPI);
-        KEYWORDS.put("GAUGE", DashboardVisualizationType.GAUGE);
         KEYWORDS.put("MAP", DashboardVisualizationType.MAP);
     }
 

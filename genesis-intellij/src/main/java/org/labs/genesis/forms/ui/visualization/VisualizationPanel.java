@@ -3,7 +3,6 @@ package org.labs.genesis.forms.ui.visualization;
 import com.intellij.icons.AllIcons;
 import org.labs.genesis.forms.renderer.chart.*;
 import org.labs.genesis.forms.renderer.map.MapRenderer;
-import org.labs.genesis.forms.renderer.metric.GaugeRenderer;
 import org.labs.genesis.forms.renderer.metric.KpiRenderer;
 import org.labs.genesis.forms.renderer.table.TableRenderer;
 import org.labs.genesis.forms.ui.visualization.configuration.VisualizationConfigurationPanel;
@@ -187,20 +186,6 @@ public class VisualizationPanel extends JPanel {
                                 VisualizationParameter.text("valuePrefix", "Value Prefix", false),
                                 VisualizationParameter.text("valueSuffix", "Value Suffix", false),
                                 VisualizationParameter.number("decimals", "Decimals", false)
-                        )
-                ),
-
-                // -----------------------------------------------------------------
-                // GAUGE
-                // -----------------------------------------------------------------
-                new VisualizationItem(
-                        "Gauge",
-                        "Single value with min/max range",
-                        "/data_genesis/img/jauge.png",
-                        GaugeRenderer.class,
-                        List.of(
-                                VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measure("value", "Value", true)
                         )
                 ),
 
