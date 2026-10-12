@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import type { ComponentType, TableMetadataDto, GenesisConfig, GeneratorGenerationOptionsPayload, GenerationAssociatedToConfig } from '@genesis-labs/shared-types';
 import { AVAILABLE_COMPONENTS } from '@genesis-labs/shared-types';
 
@@ -177,7 +177,6 @@ const configManager = useConfigurationManager([], { singleConfiguration: true })
 const localPersistedConfigs = ref<GenesisConfig[]>([]);
 const store = useGeneratorStore(); // ✅ AJOUTÉ
 
-// ❌ SUPPRIMÉ : toggleTable, toggleView ne sont plus utilisés ici
 const { tables, views, fetchTablesMetadata } = useGenerator();
 
 const isLoading = ref(false);
@@ -389,17 +388,27 @@ function getAssignedConfig(item: TableMetadataDto): string {
 // 5. LIFECYCLE
 // ============================================================================
 
+const validComponentValues = AVAILABLE_COMPONENTS.map(c => c.value);
+
 async function syncGenerationConfigs() {
   const data = await loadGenerationOptionsConfigurations();
   localPersistedConfigs.value = data;
   
   configManager.configurations.value = data.map(c => {
     const p = c.payload as unknown as GeneratorGenerationOptionsPayload;
+    
+    // CORRECTION CRUCIALE : On filtre pour ne garder QUE les ComponentType valides.
+    // Cela nettoie les anciennes données corrompues où les noms de tables étaient 
+    // accidentellement sauvegardés dans le tableau 'components'.
+    const cleanComponents = (p.components || []).filter((comp: string) => 
+      validComponentValues.includes(comp as ComponentType)
+    );
+
     return {
       id: c.id,
       name: c.name,
       isHidden: false,
-      components: p.components || []
+      components: cleanComponents // Maintenant garanti d'être uniquement ['model', 'dao', 'service', 'controller']
     };
   });
   
@@ -419,6 +428,21 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+watch(
+  () => configManager.configurations.value,
+  (newConfigs) => {
+    store.setGenerationProfiles(
+      newConfigs.map(c => ({
+        id: c.id,
+        name: c.name,
+        components: c.components as ComponentType[] // Contient déjà les ComponentType valides grâce à handleComponentToggle
+      }))
+    );
+  },
+  { deep: true, immediate: true } // immediate: true assure la synchro au chargement initial
+);
+
 </script>
 
 <style scoped>

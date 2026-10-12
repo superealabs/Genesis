@@ -4,7 +4,7 @@
 import type { IGeneratorService } from '../types/generator.service.interface';
 import type { IFrontendService } from '../../frontend/types/frontend.service.interface';
 import type { IDatabaseService } from '../../database/types/database.service.interface';
-import type { IFrameworkService } from '@genesis-labs/shared-types';
+import type { IFrameworkService, GenerationParameter, ComponentType } from '@genesis-labs/shared-types';
 
 // Stores
 import { useGeneratorStore } from '../store/useGenerator.store';
@@ -236,7 +236,6 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         const tables = await svc.fetchTablesMetadata();
         store.setAvailableTables(tables);
         console.log(`[Wizard: tables] ${tables.length} tables/vues chargées`);
-
       } catch (error) {
         console.error("[Wizard: tables] Échec du chargement des tables:", error);
       }
@@ -244,24 +243,32 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     
     beforeNext: async (store) => {
       try {
-
-        // ajouter profileName à TableSelectionConfig
-
-        // récupérer toutes les tables et vues assignés
-          // les tables et vues non assignés à une configuration ne sont pas considéré
-        // récupérer toutes les configurations actives
-        /*
-          Pour chaque Configuration
-            récupérer les vues correspondantes à cette configuration
-            récupérerles tables correspondante à cette configuration
-
-            créer l'objet TableSection avec pour paramètre : la liste des tables et vue associés à la configuration + les components associé à la configuration
-
-        */
+        // 1. Récupérer les données sources
+        const profiles = store.generationProfiles; // Type 1 : Les profils avec composants
+        const associations = store.generationAssociations; // Type 2 : Les liens tables/vues ↔ profils
         
-
-
-        console.log("[Wizard: tables] Sélection des tables validée");
+        // 2. Construire le tableau final (Type 3)
+        const generationParameters: GenerationParameter[] = [];
+        
+        for (const profile of profiles) {
+          // Trouver l'association correspondante
+          const assoc = associations.find(a => a.configId === profile.id);
+          
+          // Construire le GenerationParameter
+          const param: GenerationParameter = {
+            profileName: profile.name,
+            selectedTables: assoc?.associatedTables || [],
+            selectedViews: assoc?.associatedViews || [],
+            selectedComponents: profile.components as ComponentType[]
+          };
+          
+          generationParameters.push(param);
+        }
+        
+        // 3. Stocker dans stepperData pour l'envoi au backend
+        store.stepperData.generationParameters = generationParameters;
+        
+        console.log("[Wizard: tables] Sélection des tables validée. Profils générés :", generationParameters);
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des tables.");

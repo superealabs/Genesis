@@ -16,6 +16,7 @@ import type {
   GitConfiguration,
   DatabaseEngineDto,
   GenerationAssociatedToConfig,
+  ComponentType
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -52,6 +53,8 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   const generationAssociations = ref<GenerationAssociatedToConfig[]>([]);
   const selectedItemsInList = ref<string[]>([]);
+  const generationProfiles = ref<{ id: string | number; name: string; components: ComponentType[] }[]>([]);
+
 
 
   // Domaine : Étape 7 - Relations
@@ -164,6 +167,9 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setAvailableTables(data: TableMetadataDto[]) { availableTables.value = data; }
   function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
   function setTablesChilds(data: TableMetadataDto[]) { tablesChilds.value = data; }
+  function setGenerationProfiles(profiles: { id: string | number; name: string; components: ComponentType[] }[]) {
+    generationProfiles.value = profiles;
+  }
 
 
   function assignTableToConfig(configId: string | number, tableName: string, isView: boolean) {
@@ -345,6 +351,8 @@ export const useGeneratorStore = defineStore('generator', () => {
     updateScript,
 
     // Étape 6 : Tables, Vues & Composants
+    generationProfiles,
+    setGenerationProfiles,
     availableTables, tables, views, getAvailableTables, getAvailableViews,
     getTablesParents, getTablesChilds,
     setAvailableTables, setTablesParents, setTablesChilds,
