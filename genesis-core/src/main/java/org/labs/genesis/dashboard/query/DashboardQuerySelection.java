@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.labs.genesis.dashboard.model.DashboardEnums.DashboardFieldRole;
-import org.labs.genesis.dashboard.model.DashboardEnums.StatisticType;
 
 @Getter
 @Setter
