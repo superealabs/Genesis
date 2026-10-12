@@ -2455,3 +2455,34 @@ th:hover .sort-icons {
     width: 100%;
     height: 320px;
 }
+
+.dashboard-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+.dashboard-pagination-button {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 6px;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+.dashboard-pagination-button:hover:not(:disabled) {
+    background: #f2f4f7;
+}
+
+.dashboard-pagination-button.active {
+    font-weight: 700;
+}
+
+.dashboard-pagination-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

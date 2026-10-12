@@ -4908,12 +4908,133 @@
       fileName: "dashboard"
       extension: "js"
       content: |
-        document.addEventListener("DOMContentLoaded", function () {
-            const widgets = document.querySelectorAll(".dashboard-widget");
-            widgets.forEach(function (widget) {
-                renderDashboardWidget(widget);
-            });
+        document.addEventListener("DOMContentLoaded", function () {       
+            initializeDashboardPagination();       
         });
+        
+        function initializeDashboardPagination() {
+            const pages = Array.from(document.querySelectorAll("[data-dashboard-page]"));
+            const pagination = document.querySelector("[data-dashboard-pagination]");
+
+            if (pages.length === 0) {
+                return;
+            }
+
+            let currentPageIndex = 0;
+
+            const pageButtons =
+                pagination
+                ? Array.from(
+                    pagination.querySelectorAll(
+                        "[data-dashboard-page-button]"
+                    )
+                )
+                : [];
+
+            const previousButton =
+                pagination
+                ? pagination.querySelector(
+                    "[data-dashboard-page-previous]"
+                )
+                : null;
+
+            const nextButton =
+                pagination
+                ? pagination.querySelector(
+                    "[data-dashboard-page-next]"
+                )
+                : null;
+
+            function selectPage(pageIndex) {
+                if (pageIndex < 0 || pageIndex >= pages.length) {
+                    return;
+                }
+
+                currentPageIndex = pageIndex;
+
+                pages.forEach(
+                    function (page, index) {
+                        page.hidden = index !== currentPageIndex;
+                    }
+                );
+
+                pageButtons.forEach(
+                    function (button) {
+                        const buttonIndex = Number.parseInt(button.dataset.dashboardPageIndex, 10);
+                        button.classList.toggle("active",buttonIndex === currentPageIndex);
+                    }
+                );
+
+                if (previousButton) {
+                    previousButton.disabled = currentPageIndex === 0;
+                }
+
+                if (nextButton) {
+                    nextButton.disabled = currentPageIndex === pages.length - 1;
+                }
+
+                refreshDashboardPage(pages[currentPageIndex]);
+            }
+
+            pageButtons.forEach(
+                function (button) {
+                    button.addEventListener(
+                        "click",
+                        function () {
+                            const pageIndex = Number.parseInt(button.dataset.dashboardPageIndex, 10);
+
+                            if (Number.isFinite(pageIndex)) {
+                                selectPage(pageIndex);
+                            }
+                        }
+                    );
+                }
+            );
+
+            if (previousButton) {
+                previousButton.addEventListener(
+                    "click",
+                    function () {
+                        selectPage(currentPageIndex - 1);
+                    }
+                );
+            }
+
+            if (nextButton) {
+                nextButton.addEventListener(
+                    "click",
+                    function () {
+                        selectPage(currentPageIndex + 1);
+                    }
+                );
+            }
+
+            selectPage(
+                0
+            );
+        }
+        
+        function refreshDashboardPage(page) {
+
+            if (!page) {
+                return;
+            }
+
+            const widgets = page.querySelectorAll(".dashboard-widget");
+
+            widgets.forEach(
+                function (widget) {
+
+                    if (widget.dataset.dashboardRendered === "true") {
+                        return;
+                    }
+
+                    renderDashboardWidget(widget);
+
+                    widget.dataset.dashboardRendered = "true";
+                }
+            );
+        }
 
         function renderDashboardWidget(widget) {
             const visualizationId = widget.dataset.dashboardId;

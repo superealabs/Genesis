@@ -37,12 +37,16 @@ public final class SpringMvcDashboardMetadataProvider {
         List<Map<String, Object>> pages = new ArrayList<>();
         List<Map<String, Object>> visualizations = new ArrayList<>();
         List<Map<String, Object>> queries = new ArrayList<>();
+        int pageIndex = 0;
         for (DashboardPageGenerationModel page : dashboard.getPages()) {
             if (page == null) {
                 continue;
             }
             Map<String, Object> pageMetadata = buildPageMetadata(page, visualizations, queries);
+            pageMetadata.put("index", pageIndex);
+            pageMetadata.put("pageNumber", pageIndex + 1);
             pages.add(pageMetadata);
+            pageIndex++;
         }
         metadata.put("dashboardPages", pages);
         metadata.put("dashboardVisualizations", visualizations);
