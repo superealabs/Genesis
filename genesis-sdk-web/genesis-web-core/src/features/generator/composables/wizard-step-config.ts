@@ -365,7 +365,8 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       
       console.log("[Wizard: git_config] Configuration Git validée");
       return true;
-    }
+    },
+    skipCascade: []
   }
 };
 

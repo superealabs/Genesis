@@ -1,6 +1,6 @@
 <template>
     <div class="inline-flex flex-col gap-0" :class="inputWrapperClasses">
-        <div class="inline-flex items-center gap-1" :class="inputWrapperClasses">
+        <div class="inline-flex items-center" :class="inputWrapperClasses">
             <!-- Slot gauche extérieur -->
             <span v-if="hasOuterLeftSlot" class="flex items-center flex-shrink-0">
                 <slot name="outer-left" />

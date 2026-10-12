@@ -16,9 +16,9 @@
               v-if="tables.length > 0"
               type="button"
               class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-              @click="toggleAllTables"
+              @click="toggleAllVisibleItems"
             >
-              {{ areAllTablesSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+              {{ areAllVisibleSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
             </button>
           </div>
           
@@ -26,21 +26,23 @@
             Choisissez les entités de votre base de données à inclure.
           </p>
 
-          <div class="relative flex-shrink-0">
+          <div class="flex flex-row gap-2">
             <GenesisInput
               v-model="tableSearchQuery"
               type="text"
               placeholder="Rechercher une table ou une vue..."
-              size="sm"
+              size="md"
               fill-width
             >
               <template #left>
                 <IconSearch :size="16" class="text-text-muted" />
               </template>
             </GenesisInput>
+
+            <GenesisSegmentedControl v-model="activeFilter" :options="filterOptions" size="md" />
           </div>
 
-          <div class="rounded-md overflow-hidden min-h-[300px] h-[400px] flex flex-col border border-neutral-light-genesis relative" :style="resizeStyle">
+          <div class="rounded-md overflow-hidden min-h-[300px] h-[400px] flex flex-col border border-bg-neutral-genesis relative" :style="resizeStyle">
             <!-- État de chargement -->
             <div v-if="isLoading" class="p-6 text-center text-text-muted text-sm flex items-center justify-center gap-2">
               <svg class="animate-spin h-4 w-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -56,7 +58,7 @@
                 <div 
                   v-for="item in filteredCombinedItems" 
                   :key="item.tableName"
-                  class="flex items-center justify-between p-3 border-b border-neutral-light-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
+                  class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
                   @click="toggleItem(item)"
                 >
                   <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -159,11 +161,13 @@ import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/Genes
 import GenesisCheckboxSimple from '@genesis-labs/web-core/core/components/ui/inputs/GenesisCheckboxSimple.vue';
 import GenesisConfigurationSelector from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationSelector.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
-import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue'; // ✅ NOUVEAU IMPORT
-import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel'; // ✅ NOUVEAU IMPORT
+import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
+import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
 import GenesisResizeHandle from '@genesis-labs/web-core/core/components/ui/actions/GenesisResizeHandle.vue';
+
+import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
@@ -198,6 +202,14 @@ const panelSlides: CarouselSlide[] = [
   { color: '#10B981', label: 'Étape 3 : Composants' },
 ];
 
+const filterOptions = [
+  { label: 'Tous', value: 'all' },
+  { label: 'Tables', value: 'table' },
+  { label: 'Vues', value: 'view' }
+]
+
+const activeFilter = ref<'all' | 'table' | 'view'>('all');
+
 // ============================================================================
 // 3. COMPUTEDS (Données dérivées)
 // ============================================================================
@@ -218,14 +230,27 @@ const combinedItems = computed<(TableMetadataDto & { type: 'table' | 'view' })[]
 ]);
 
 const filteredCombinedItems = computed(() => {
-  if (!tableSearchQuery.value.trim()) return combinedItems.value;
-  const query = tableSearchQuery.value.toLowerCase();
-  return combinedItems.value.filter(item => item.tableName.toLowerCase().includes(query));
+  let items = combinedItems.value;
+
+  // A. Filtre par type (All / Table / Vue)
+  if (activeFilter.value === 'table') {
+    items = items.filter(item => !item.isView);
+  } else if (activeFilter.value === 'view') {
+    items = items.filter(item => item.isView);
+  }
+
+  // B. Filtre par recherche textuelle
+  if (tableSearchQuery.value.trim()) {
+    const query = tableSearchQuery.value.toLowerCase();
+    items = items.filter(item => item.tableName.toLowerCase().includes(query));
+  }
+
+  return items;
 });
 
-const areAllTablesSelected = computed(() => {
-  if (tables.value.length === 0) return false;
-  return tables.value.every(t => tableSelection.value.selectedTables.includes(t.tableName));
+const areAllVisibleSelected = computed(() => {
+  if (filteredCombinedItems.value.length === 0) return false;
+  return filteredCombinedItems.value.every(item => isItemSelected(item));
 });
 
 // ============================================================================
@@ -324,13 +349,36 @@ const toggleItem = (item: TableMetadataDto): void => {
   item.isView ? toggleView(item.tableName) : toggleTable(item.tableName);
 };
 
-const toggleAllTables = (): void => {
-  if (areAllTablesSelected.value) {
-    tableSelection.value.selectedTables = [];
-  } else {
-    tableSelection.value.selectedTables = tables.value.map(t => t.tableName);
-  }
+const toggleAllVisibleItems = (): void => {
+  const allSelected = areAllVisibleSelected.value;
+  
+  filteredCombinedItems.value.forEach(item => {
+    const isSelected = isItemSelected(item);
+    
+    if (allSelected && isSelected) {
+      // Désélectionner l'élément
+      if (item.isView) {
+        const idx = tableSelection.value.selectedViews.indexOf(item.tableName);
+        if (idx !== -1) tableSelection.value.selectedViews.splice(idx, 1);
+      } else {
+        const idx = tableSelection.value.selectedTables.indexOf(item.tableName);
+        if (idx !== -1) tableSelection.value.selectedTables.splice(idx, 1);
+      }
+    } else if (!allSelected && !isSelected) {
+      // Sélectionner l'élément (sans créer de doublons)
+      if (item.isView) {
+        if (!tableSelection.value.selectedViews.includes(item.tableName)) {
+          tableSelection.value.selectedViews.push(item.tableName);
+        }
+      } else {
+        if (!tableSelection.value.selectedTables.includes(item.tableName)) {
+          tableSelection.value.selectedTables.push(item.tableName);
+        }
+      }
+    }
+  });
 };
+
 
 function getAssignedConfig(item: TableMetadataDto): string {
   const assignedConfigs = configManager.configurations.value
