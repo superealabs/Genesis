@@ -168,14 +168,13 @@ import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/u
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
 import GenesisResizeHandle from '@genesis-labs/web-core/core/components/ui/actions/GenesisResizeHandle.vue';
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
-import { useGeneratorStore } from '../../manifest'; // ✅ AJOUTÉ pour accéder aux nouvelles actions
+import { useGeneratorStore } from '../../manifest';
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
 // ============================================================================
 const configManager = useConfigurationManager([], { singleConfiguration: true });
-const localPersistedConfigs = ref<GenesisConfig[]>([]);
-const store = useGeneratorStore(); // ✅ AJOUTÉ
+const store = useGeneratorStore();
 
 const { tables, views, fetchTablesMetadata } = useGenerator();
 
@@ -196,7 +195,7 @@ const {
 } = useConfig();
 
 // ============================================================================
-// 2. CONSTANTES (CARROUSEL)
+// 2. CONSTANTES
 // ============================================================================
 const panelSlides: CarouselSlide[] = [
   { color: '#3B82F6', label: 'Étape 1 : Sélection des tables' },
@@ -213,10 +212,8 @@ const filterOptions = [
 const activeFilter = ref<'all' | 'table' | 'view'>('all');
 
 // ============================================================================
-// 3. COMPUTEDS (Données dérivées)
+// 3. COMPUTEDS
 // ============================================================================
-
-// ✅ MODIFIÉ : Utilise le tableau temporaire du store au lieu de l'ancien tableSelection
 const selectedItemsInListRef = computed(() => store.selectedItemsInList);
 
 const activeConfig = computed(() => 
@@ -230,21 +227,18 @@ const combinedItems = computed<(TableMetadataDto & { type: 'table' | 'view' })[]
 
 const filteredCombinedItems = computed(() => {
   let items = combinedItems.value;
-  if (activeFilter.value === 'table') {
-    items = items.filter(item => !item.isView);
-  } else if (activeFilter.value === 'view') {
-    items = items.filter(item => item.isView);
-  }
+  if (activeFilter.value === 'table') items = items.filter(item => !item.isView);
+  else if (activeFilter.value === 'view') items = items.filter(item => item.isView);
+  
   if (tableSearchQuery.value.trim()) {
     const query = tableSearchQuery.value.toLowerCase();
     items = items.filter(item => item.tableName.toLowerCase().includes(query));
-  }
+    }
   return items;
 });
 
 const areAllVisibleSelected = computed(() => {
   if (filteredCombinedItems.value.length === 0) return false;
-  // ✅ MODIFIÉ : Vérifie contre le tableau temporaire du store
   return filteredCombinedItems.value.every(item => store.selectedItemsInList.includes(item.tableName));
 });
 
@@ -252,33 +246,27 @@ const areAllVisibleSelected = computed(() => {
 // 4. ACTIONS
 // ============================================================================
 
+// ✅ SIMPLIFIÉ : Plus besoin de localPersistedConfigs, on utilise configManager comme source de vérité
 async function persistConfig(id: string | number) {
-  try {
-    const uiConfig = configManager.configurations.value.find(c => c.id === id);
-    const persistedConfig = localPersistedConfigs.value.find(c => String(c.id) === String(id));
+  const uiConfig = configManager.configurations.value.find(c => c.id === id);
+  if (!uiConfig) return;
 
-    if (uiConfig && persistedConfig) {
-      const updatedConfig: GenesisConfig<GeneratorGenerationOptionsPayload> = {
-        ...persistedConfig,
-        name: uiConfig.name,
-        payload: {
-          components: [...uiConfig.components]
-        }
-      };
-      await saveConfiguration(updatedConfig);
-      
-      const index = localPersistedConfigs.value.findIndex(c => String(c.id) === String(id));
-      if (index !== -1) {
-        localPersistedConfigs.value[index] = updatedConfig;
-      }
+  const updatedConfig: GenesisConfig<GeneratorGenerationOptionsPayload> = {
+    id: String(uiConfig.id),
+    name: uiConfig.name,
+    configType: 'generator_generation-options',
+    schemaVersion: '1.0.0',
+    createdAt: new Date().toISOString(),
+    payload: {
+      components: [...uiConfig.components] // ✅ Typé correctement grâce au Type Guard ci-dessous
     }
-  } catch (error) {
-    console.error(`[persistConfig] Erreur critique lors de la sauvegarde de la configuration ${id}:`, error);
-  }
+  };
+  
+  await saveConfiguration(updatedConfig);
 }
 
 async function handleAddConfig() {
-  const defaultComponents = ['model', 'dao', 'service', 'controller'];
+  const defaultComponents: ComponentType[] = ['model', 'dao', 'service', 'controller'];
   const newUiConfig = configManager.addConfiguration(defaultComponents);
   
   const newGenesisConfig: GenesisConfig<GeneratorGenerationOptionsPayload> = {
@@ -287,9 +275,7 @@ async function handleAddConfig() {
     configType: 'generator_generation-options',
     schemaVersion: '1.0.0',
     createdAt: new Date().toISOString(),
-    payload: {
-      components: [...defaultComponents]
-    }
+    payload: { components: [...defaultComponents] }
   };
   
   await saveConfiguration(newGenesisConfig);
@@ -300,24 +286,19 @@ function handleRename(id: string | number, newName: string) {
   persistConfig(id);
 }
 
-// ✅ MODIFIÉ : Utilise les nouvelles actions du store pour lier les entités au profil
 function handleAssign(configId: string | number, items: string[]) {
   items.forEach(tableName => {
     const item = combinedItems.value.find(i => i.tableName === tableName);
-    if (item) {
-      store.assignTableToConfig(configId, tableName, item.isView);
-    }
+    if (item) store.assignTableToConfig(configId, tableName, item.isView);
   });
-  store.clearSelectedItemsInList(); // Nettoie la sélection après assignation
+  store.clearSelectedItemsInList();
   persistConfig(configId);
 }
 
 function handleRemove(configId: string | number, items: string[]) {
   items.forEach(tableName => {
     const item = combinedItems.value.find(i => i.tableName === tableName);
-    if (item) {
-      store.removeTableFromConfig(configId, tableName, item.isView);
-    }
+    if (item) store.removeTableFromConfig(configId, tableName, item.isView);
   });
   store.clearSelectedItemsInList();
   persistConfig(configId);
@@ -334,35 +315,27 @@ function handleComponentToggle(comp: ComponentType, isChecked: boolean) {
   const currentComponents = [...activeConfig.value.components];
   const idx = currentComponents.indexOf(comp);
   
-  if (isChecked && idx === -1) {
-    currentComponents.push(comp);
-  } else if (!isChecked && idx !== -1) {
-    currentComponents.splice(idx, 1);
-  } else {
-    return;
-  }
+  if (isChecked && idx === -1) currentComponents.push(comp);
+  else if (!isChecked && idx !== -1) currentComponents.splice(idx, 1);
+  else return;
   
   configManager.editConfiguration(activeConfig.value.id, currentComponents);
   persistConfig(activeConfig.value.id);
 }
 
-// ✅ MODIFIÉ : Vérifie la présence dans le tableau temporaire du store
 const isItemSelected = (item: TableMetadataDto): boolean => {
   return store.selectedItemsInList.includes(item.tableName);
 };
 
-// ✅ MODIFIÉ : Utilise l'action du store pour gérer la sélection visuelle
 const toggleItem = (item: TableMetadataDto): void => {
   store.toggleItemInList(item.tableName);
 };
 
-// ✅ MODIFIÉ : Utilise les actions du store pour la sélection de masse
 const toggleAllVisibleItems = (): void => {
   const allSelected = areAllVisibleSelected.value;
-  
   filteredCombinedItems.value.forEach(item => {
     if (allSelected) {
-      store.toggleItemInList(item.tableName); // Retire si déjà sélectionné
+      store.toggleItemInList(item.tableName);
     } else {
       if (!store.selectedItemsInList.includes(item.tableName)) {
         store.selectedItemsInList.push(item.tableName);
@@ -371,7 +344,6 @@ const toggleAllVisibleItems = (): void => {
   });
 };
 
-// ✅ MODIFIÉ : Interroge generationAssociations du store au lieu de config.components
 function getAssignedConfig(item: TableMetadataDto): string {
   const assoc = store.generationAssociations.find((a: GenerationAssociatedToConfig) => 
     item.isView ? a.associatedViews.includes(item.tableName) : a.associatedTables.includes(item.tableName)
@@ -385,22 +357,20 @@ function getAssignedConfig(item: TableMetadataDto): string {
 }
 
 // ============================================================================
-// 5. LIFECYCLE
+// 5. LIFECYCLE & SYNCHRONISATION
 // ============================================================================
-
-const validComponentValues = AVAILABLE_COMPONENTS.map(c => c.value);
 
 async function syncGenerationConfigs() {
   const data = await loadGenerationOptionsConfigurations();
-  localPersistedConfigs.value = data;
+  
+  // ✅ TYPE GUARD : Filtre et garantit que ce ne sont QUE des ComponentType valides.
+  // Cela nettoie les anciennes données corrompues et rassure TypeScript sans "as" aveugle.
+  const validComponentValues = AVAILABLE_COMPONENTS.map(c => c.value);
   
   configManager.configurations.value = data.map(c => {
     const p = c.payload as unknown as GeneratorGenerationOptionsPayload;
     
-    // CORRECTION CRUCIALE : On filtre pour ne garder QUE les ComponentType valides.
-    // Cela nettoie les anciennes données corrompues où les noms de tables étaient 
-    // accidentellement sauvegardés dans le tableau 'components'.
-    const cleanComponents = (p.components || []).filter((comp: string) => 
+    const cleanComponents = (p.components || []).filter((comp): comp is ComponentType => 
       validComponentValues.includes(comp as ComponentType)
     );
 
@@ -408,11 +378,13 @@ async function syncGenerationConfigs() {
       id: c.id,
       name: c.name,
       isHidden: false,
-      components: cleanComponents // Maintenant garanti d'être uniquement ['model', 'dao', 'service', 'controller']
+      components: cleanComponents
     };
   });
   
-  configManager.selectConfiguration(configManager.configurations.value.length > 0 ? configManager.configurations.value[0].id : null);
+  if (configManager.configurations.value.length > 0) {
+    configManager.selectConfiguration(configManager.configurations.value[0].id);
+  }
 }
 
 onMounted(async () => {
@@ -420,7 +392,7 @@ onMounted(async () => {
   try {
     await Promise.all([
       fetchTablesMetadata(),
-      syncGenerationConfigs()
+      syncGenerationConfigs() // Met à jour configManager, ce qui déclenchera le watch ci-dessous
     ]);
   } catch (error) {
     console.error('[GenerationConfigurationAlt] Erreur lors de l\'initialisation:', error);
@@ -429,6 +401,9 @@ onMounted(async () => {
   }
 });
 
+// ✅ WATCH SANS immediate: true
+// Il se déclenchera proprement UNE SEULE FOIS après que syncGenerationConfigs ait fini 
+// de peupler configManager.configurations.value, évitant la double exécution.
 watch(
   () => configManager.configurations.value,
   (newConfigs) => {
@@ -436,14 +411,14 @@ watch(
       newConfigs.map(c => ({
         id: c.id,
         name: c.name,
-        components: c.components as ComponentType[] // Contient déjà les ComponentType valides grâce à handleComponentToggle
+        components: c.components as ComponentType[] // Plus besoin de "as ComponentType[]", c'est déjà typé !
       }))
     );
   },
-  { deep: true, immediate: true } // immediate: true assure la synchro au chargement initial
+  { deep: true }
 );
-
 </script>
+
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }

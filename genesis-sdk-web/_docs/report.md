@@ -89,7 +89,7 @@ cascade Generation Option :
         - la génération n'est pas obligatoire(remplir le par dessus)
 
 
-    RAjouter un boolean pour activer automatiquement les dépendances de couches
+    RAjouter un boolean pour activer automatiquement les dépendances de couches(si activer, active les dépendances sinon laisse libre court)
 
 
 
