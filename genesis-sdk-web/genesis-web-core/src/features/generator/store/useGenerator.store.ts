@@ -166,28 +166,59 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setTablesChilds(data: TableMetadataDto[]) { tablesChilds.value = data; }
 
 
-    function assignTableToConfig(configId: string | number, tableName: string, isView: boolean) {
-    let assoc = generationAssociations.value.find(a => a.configId === configId);
-    if (!assoc) {
-      assoc = { configId, associatedTables: [], associatedViews: [] };
-      generationAssociations.value.push(assoc);
+  function assignTableToConfig(configId: string | number, tableName: string, isView: boolean) {
+    // 1. RETIRER la table/vue de TOUTES les configurations existantes (garantit l'unicité)
+    generationAssociations.value.forEach(assoc => {
+      if (isView) {
+        const viewIndex = assoc.associatedViews.indexOf(tableName);
+        if (viewIndex !== -1) {
+          assoc.associatedViews.splice(viewIndex, 1);
+        }
+      } else {
+        const tableIndex = assoc.associatedTables.indexOf(tableName);
+        if (tableIndex !== -1) {
+          assoc.associatedTables.splice(tableIndex, 1);
+        }
+      }
+    });
+
+    // (Optionnel mais recommandé) Nettoyer les objets de configuration devenus vides
+    generationAssociations.value = generationAssociations.value.filter(
+      assoc => assoc.associatedTables.length > 0 || assoc.associatedViews.length > 0
+    );
+
+    // 2. AJOUTER la table/vue à la NOUVELLE configuration cible
+    let targetAssoc = generationAssociations.value.find(a => a.configId === configId);
+    if (!targetAssoc) {
+      targetAssoc = { configId, associatedTables: [], associatedViews: [] };
+      generationAssociations.value.push(targetAssoc);
     }
+
     if (isView) {
-      if (!assoc.associatedViews.includes(tableName)) assoc.associatedViews.push(tableName);
+      if (!targetAssoc.associatedViews.includes(tableName)) {
+        targetAssoc.associatedViews.push(tableName);
+      }
     } else {
-      if (!assoc.associatedTables.includes(tableName)) assoc.associatedTables.push(tableName);
+      if (!targetAssoc.associatedTables.includes(tableName)) {
+        targetAssoc.associatedTables.push(tableName);
+      }
     }
   }
 
-  function removeTableFromConfig(configId: string | number, tableName: string, isView: boolean) {
-    const assoc = generationAssociations.value.find(a => a.configId === configId);
-    if (assoc) {
+  function removeTableFromConfig(_configId: string | number, tableName: string, isView: boolean) {
+    // 1. Retirer la table/vue de TOUTES les associations existantes
+    generationAssociations.value.forEach(assoc => {
       if (isView) {
         assoc.associatedViews = assoc.associatedViews.filter(t => t !== tableName);
       } else {
         assoc.associatedTables = assoc.associatedTables.filter(t => t !== tableName);
       }
-    }
+    });
+
+    // 2. Nettoyer les objets de configuration devenus vides (bonne pratique pour garder un état propre)
+    generationAssociations.value = generationAssociations.value.filter(
+      assoc => assoc.associatedTables.length > 0 || assoc.associatedViews.length > 0
+    );
   }
 
   function isTableAssignedToConfig(configId: string | number, tableName: string, isView: boolean): boolean {
