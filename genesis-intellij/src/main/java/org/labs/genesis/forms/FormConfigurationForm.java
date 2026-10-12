@@ -131,11 +131,7 @@ public class FormConfigurationForm {
                 context.getEntityTables() == null
                         || context.getEntityTables().isEmpty();
 
-        boolean noViews =
-                context.getViewTables() == null
-                        || context.getViewTables().isEmpty();
-
-        if (!noEntities || !noViews) {
+        if (!noEntities) {
             return;
         }
 
@@ -153,24 +149,14 @@ public class FormConfigurationForm {
         }
 
         if (context.getEntityNames() == null
-                || context.getEntityNames().isEmpty()
-                || context.getViewNames() == null
-                || context.getViewNames().isEmpty()) {
+                || context.getEntityNames().isEmpty()) {
 
             context.setEntityNames(
                     database.getAllTableNames(connection)
             );
-
-            context.setViewNames(
-                    database.getAllViewNames(connection)
-            );
         }
 
         context.setEntityTables(connection);
-
-        context.setViewTables(
-                database.getConnection(context.getCredentials())
-        );
     }
 
     private void refreshData() {
@@ -195,7 +181,7 @@ public class FormConfigurationForm {
             viewNames.addAll(context.getViewNames());
         }
 
-        this.tables = context.getAllTables()
+        this.tables = context.getEntityTables()
                 .stream()
                 .filter(table -> table.getTableName() != null)
                 .filter(table ->

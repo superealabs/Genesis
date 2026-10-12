@@ -57,25 +57,6 @@
       }
     },
 
-    "percentage": {
-      "configuration": {
-        "fields": [
-          {
-            "name": "min",
-            "type": "number"
-          },
-          {
-            "name": "max",
-            "type": "number"
-          },
-          {
-            "name": "step",
-            "type": "number"
-          }
-        ]
-      }
-    },
-
     "range": {
       "configuration": {
         "fields": [
