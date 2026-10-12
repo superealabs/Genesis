@@ -1,20 +1,31 @@
 <div class="form-group" *ngIf="field && form">
   <label [for]="field.name">{{ field.label }}</label>
 
-  <!-- Input text / number / date -->
+  <!-- Native and configured inputs -->
   <input
-    *ngIf="['text','number','date','time','datetime-local'].includes(field.type)"
-    [type]="field.type"
+    *ngIf="['text','number','date','time','datetime-local','range','email','phone','password','quantity','currency'].includes(field.type)"
+    [type]="getNativeInputType()"
     class="form-control"
     [id]="field.name"
     [formControl]="getControl()"
     [attr.required]="field.constraints?.required ? true : null"
     [attr.minlength]="field.constraints?.minlength"
     [attr.maxlength]="field.constraints?.maxlength"
-    [attr.min]="field.constraints?.min"
-    [attr.max]="field.constraints?.max"
+    [attr.min]="field.min ?? field.constraints?.min"
+    [attr.max]="field.max ?? field.constraints?.max"
+    [attr.step]="field.step"
     [attr.pattern]="field.constraints?.pattern"
   />
+  <input
+    *ngIf="field.type === 'color'"
+    type="color"
+    class="color-control"
+    [id]="field.name"
+    [formControl]="getControl()"
+    [attr.required]="field.constraints?.required ? true : null"
+  />
+  <span *ngIf="field.type === 'currency' && field.currency" class="currency-code">{{ field.currency }}</span>
+  <output *ngIf="field.type === 'range'" class="range-value">{{ getControlValue() }}</output>
 
   <!-- Checkbox -->
   <div *ngIf="field.type === 'checkbox'" class="checkbox-container">
@@ -26,7 +37,7 @@
     />
   </div>
 
-  <!-- Textarea -->
+  <!-- Multiline text -->
   <textarea
     *ngIf="field.type === 'textarea'"
     class="form-control"
@@ -36,6 +47,29 @@
     [attr.minlength]="field.constraints?.minlength"
     [attr.maxlength]="field.constraints?.maxlength"
   ></textarea>
+
+  <!-- Rich text -->
+  <ckeditor
+    *ngIf="field.type === 'ckeditor'"
+    [editor]="editor"
+    [config]="editorConfig"
+    [formControl]="getControl()"
+  ></ckeditor>
+
+  <!-- JSON editor -->
+  <div *ngIf="field.type === 'json-editor'" class="json-editor">
+    <div class="json-editor-actions">
+      <button type="button" (click)="formatJson(true)">Format JSON</button>
+      <button type="button" (click)="formatJson(false)">Minify JSON</button>
+    </div>
+    <textarea
+      class="form-control json-editor-input"
+      [id]="field.name"
+      [formControl]="getControl()"
+      [attr.required]="field.constraints?.required ? true : null"
+      spellcheck="false"
+    ></textarea>
+  </div>
 
   <!-- Select -->
   <ng-container *ngIf="field.type === 'select'">
@@ -67,9 +101,12 @@
     type="file"
     class="form-control"
     [id]="field.name"
+    [attr.accept]="field.accept"
     [attr.required]="field.constraints?.required ? true : null"
     (change)="onFileChange($event)"
   />
+
+  <div *ngIf="field.type === 'map'" #mapElement class="map-field" role="application" [attr.aria-label]="'Choose location for ' + field.label"></div>
 
   <!-- Hidden input -->
   <input
@@ -93,6 +130,7 @@
     <div *ngIf="form.get(field.name)?.errors?.['future']">Date must be in the future</div>
     <div *ngIf="form.get(field.name)?.errors?.['futureOrPresent']">Date must be today or later</div>
     <div *ngIf="form.get(field.name)?.errors?.['fileRead']">The selected file could not be read</div>
+    <div *ngIf="form.get(field.name)?.errors?.['invalidJson']">Enter valid JSON</div>
   </div>
 
   <div class="error" *ngIf=" validationErrors && validationErrors[field.name]">

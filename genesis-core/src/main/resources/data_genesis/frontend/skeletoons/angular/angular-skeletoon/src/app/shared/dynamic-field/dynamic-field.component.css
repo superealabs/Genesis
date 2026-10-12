@@ -1,7 +1,14 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .form-group {
   margin-bottom: 15px;
   display: flex;
   flex-direction: column;
+  position: relative;
+  width: 100%;
 }
 
 label {
@@ -39,4 +46,77 @@ label {
 .form-control.ng-invalid.ng-dirty {
   border-color: #dc3545;
   box-shadow: 0 0 5px rgba(220,53,69,0.5);
+}
+
+.currency-code {
+  position: absolute;
+  right: 10px;
+  top: 36px;
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.range-value {
+  align-self: flex-end;
+  font-size: 0.875rem;
+}
+
+.color-control {
+  width: 3.5rem;
+  height: 2.5rem;
+  padding: 0.25rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.json-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.json-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.json-editor-actions button {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.json-editor-input {
+  min-height: 10rem;
+  font-family: monospace;
+  resize: vertical;
+}
+
+.map-field {
+  width: 100%;
+  min-height: 320px;
+  height: 320px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.map-field .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 6px;
+}
+
+:host ::ng-deep .ck-editor {
+  width: 100%;
+}
+
+:host ::ng-deep .ck-editor__editable_inline {
+  min-height: 180px;
+  max-height: 260px;
+  overflow: auto;
 }
