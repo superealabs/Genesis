@@ -14,8 +14,10 @@ import type {
   TableMetadataDto, 
   RelationParameter,  
   FrontendLayoutConfig, 
-  GitConfiguration, 
-  DatabaseEngineDto
+  GitConfiguration,
+  DatabaseEngineDto,
+  GenerationAssociatedToConfig,
+  GenerationParameter
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -52,6 +54,7 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   // Domaine : Étape 7 - Relations
   const relations = ref<RelationParameter[]>([]);
+  const generationAssociations = ref<GenerationAssociatedToConfig[]>([]);
 
 
   // ==========================================================================
@@ -95,6 +98,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     pendingFramework.value = null;
     pendingDatabaseEngine.value = null;
     pendingFrontendFramework.value = null;
+    generationAssociations.value = [];
   }
 
   // --- Étape 1 : Framework ---
@@ -159,24 +163,38 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setAvailableTables(data: TableMetadataDto[]) { availableTables.value = data; }
   function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
   function setTablesChilds(data: TableMetadataDto[]) { tablesChilds.value = data; }
-  
-  function toggleTable(tableName: string) {
-    const list = stepperData.value.tableSelection.selectedTables;
-    const idx = list.indexOf(tableName);
-    idx === -1 ? list.push(tableName) : list.splice(idx, 1);
+
+
+    function assignTableToConfig(configId: string | number, tableName: string, isView: boolean) {
+    let assoc = generationAssociations.value.find(a => a.configId === configId);
+    if (!assoc) {
+      assoc = { configId, associatedTables: [], associatedViews: [] };
+      generationAssociations.value.push(assoc);
+    }
+    if (isView) {
+      if (!assoc.associatedViews.includes(tableName)) assoc.associatedViews.push(tableName);
+    } else {
+      if (!assoc.associatedTables.includes(tableName)) assoc.associatedTables.push(tableName);
+    }
+  }
+
+  function removeTableFromConfig(configId: string | number, tableName: string, isView: boolean) {
+    const assoc = generationAssociations.value.find(a => a.configId === configId);
+    if (assoc) {
+      if (isView) {
+        assoc.associatedViews = assoc.associatedViews.filter(t => t !== tableName);
+      } else {
+        assoc.associatedTables = assoc.associatedTables.filter(t => t !== tableName);
+      }
+    }
+  }
+
+  function isTableAssignedToConfig(configId: string | number, tableName: string, isView: boolean): boolean {
+    const assoc = generationAssociations.value.find(a => a.configId === configId);
+    if (!assoc) return false;
+    return isView ? assoc.associatedViews.includes(tableName) : assoc.associatedTables.includes(tableName);
   }
   
-  function toggleView(viewName: string) {
-    const list = stepperData.value.tableSelection.selectedViews;
-    const idx = list.indexOf(viewName);
-    idx === -1 ? list.push(viewName) : list.splice(idx, 1);
-  }
-  
-  function toggleComponent(component: ComponentType) {
-    const list = stepperData.value.tableSelection.selectedComponents;
-    const idx = list.indexOf(component);
-    idx === -1 ? list.push(component) : list.splice(idx, 1);
-  }
 
   // --- Étape 7 : Relations ---
   function setRelations(data: RelationParameter[]) { relations.value = data; }
@@ -289,7 +307,9 @@ export const useGeneratorStore = defineStore('generator', () => {
     availableTables, tables, views, getAvailableTables, getAvailableViews,
     getTablesParents, getTablesChilds,
     setAvailableTables, setTablesParents, setTablesChilds,
-    toggleTable, toggleView, toggleComponent,
+    assignTableToConfig,
+    removeTableFromConfig,
+    isTableAssignedToConfig,
 
     // Étape 7 : Relations
     relations, getRelations, setRelations, addRelation, removeRelation,

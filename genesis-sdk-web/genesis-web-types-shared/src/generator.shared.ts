@@ -38,10 +38,20 @@ export interface TableMetadataDto {
 
 export type ComponentType = 'model' | 'dao' | 'service' | 'controller';
 
-export interface TableSelectionConfig {
-    selectedTables: string[];
-    selectedViews: string[];
-    selectedComponents: ComponentType[];
+
+// ✅ AJOUTÉ : Type 2 - Le lien temporaire UI entre une config et des entités
+export interface GenerationAssociatedToConfig {
+  configId: string | number;
+  associatedTables: string[];
+  associatedViews: string[];
+}
+
+// ✅ AJOUTÉ : Type 3 - Le payload final propre envoyé au backend
+export interface GenerationParameter {
+  profileName: string;
+  selectedTables: string[];
+  selectedViews: string[];
+  selectedComponents: ComponentType[];
 }
 
 export interface RelationParameter {
@@ -82,7 +92,7 @@ export interface GeneratorData {
 
 
     // Correction à apporter ici
-    tableSelection: TableSelectionConfig;
+    generationParameters: GenerationParameter[]; 
     frontend: FrontendFramework | null;
     frontendLayout: FrontendLayoutConfig;
     git: GitConfiguration;
