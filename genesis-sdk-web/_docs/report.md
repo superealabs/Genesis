@@ -67,3 +67,5 @@ LOgique à suivre :
         Quand l'utilisateur clique sur suivant sans rien configurer, useGit devient true, cela crée un fichier .git donc initialise le git
         et on récupère le reste des informations sur le formulaire
         si il clique sur skipper alors on passe à l'étape suivante
+
+
