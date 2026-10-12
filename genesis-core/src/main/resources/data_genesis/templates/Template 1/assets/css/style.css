@@ -2435,3 +2435,23 @@ th:hover .sort-icons {
         grid-column: span 12;
     }
 }
+
+.dashboard-map-container {
+    width: 100%;
+    height: 320px;
+    min-height: 320px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dashboard-map-container .leaflet-container {
+    width: 100%;
+    height: 100%;
+}
+
+.dashboard-chart-container,
+.dashboard-map-container {
+    position: relative;
+    width: 100%;
+    height: 320px;
+}

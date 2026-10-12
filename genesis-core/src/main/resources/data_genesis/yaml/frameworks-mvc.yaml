@@ -4974,6 +4974,10 @@
                 case "SCATTER":
                     renderScatter(widget, rows, fields, options);
                     break;
+        
+                case "MAP":
+                    renderMap(widget, rows, fields, options);
+                    break;
 
                 default:
                     console.warn(
@@ -5365,6 +5369,192 @@
             );
         }
         
+        function renderMap(widget, rows, fields, visualOptions) {
+          const latitudeField = findField(fields, "LATITUDE");
+          const longitudeField = findField(fields, "LONGITUDE");
+          const labelField = findField(fields, "COLUMN");
+          const valueField = findField(fields, "MEASURE");
+          
+          if (!latitudeField || !longitudeField) {
+            showDashboardEmpty(widget);
+            return;
+          }
+          
+          const container = widget.querySelector(".dashboard-map-container");
+      
+          if (!container) {
+            showDashboardEmpty(widget);
+            return;
+          }
+          
+          const points = rows.map(function (row) {
+            const latitude = Number(row[latitudeField.key]);
+            const longitude = Number(row[longitudeField.key]);
+            if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+              return null;
+            }
+          
+            if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+              return null;
+            }
+          
+            const label = labelField ? row[labelField.key] : null;
+            const value = valueField ? Number(row[valueField.key]) : null;
+            return {
+              latitude: latitude,
+              longitude: longitude,
+              label:
+                  label == null ? "" : String(label),
+              
+              value:
+                  Number.isFinite(value) ? value : null
+            };
+          }
+          )
+          .filter(
+              function (point) {
+              return point != null;
+            }
+          );
+          
+          if (points.length === 0) {
+            showDashboardEmpty(widget);
+            return;
+          }
+          
+          const map = L.map(container);
+          
+          L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+              maxZoom: 19,
+              attribution:
+                "&copy; OpenStreetMap contributors"
+            }
+          ).addTo(map);
+          
+          const bounds = [];
+          
+          points.forEach(
+              function (point) {
+                const latLng = [point.latitude, point.longitude];
+                bounds.push(latLng);
+                
+                let marker;
+                
+                if (visualOptions.markerType === "BUFFER") {
+                  marker = L.circleMarker(latLng, {
+                                                      radius:
+                                                        calculateMapRadius(
+                                                        point.value
+                                                        )
+                                                  }
+                            );
+                } else {
+                  marker = L.marker(latLng);
+                }
+                marker.addTo(map);
+                if (point.label) {
+                    marker.bindTooltip(
+                        escapeDashboardHtml(
+                            point.label
+                        ),
+                        {
+                          permanent: true,
+                          direction: "top",
+                          offset: [0, -8]
+                        }
+                    );
+                }
+                const popupContent = buildMapPopup(point, visualOptions);
+                
+                if (popupContent) {
+                  marker.bindPopup(popupContent);
+                }
+            }
+          );
+          
+          if (bounds.length === 1) {
+            map.setView(bounds[0], 13);
+          } else {
+            map.fitBounds(bounds, {
+                                    padding:
+                                      [20, 20]
+                                  }
+                          );
+            }
+          
+          setTimeout(
+            function () {
+              map.invalidateSize();
+            },
+            0
+          );
+        }
+        
+        function calculateMapRadius(value) {
+          if (!Number.isFinite(value) || value <= 0) {
+            return 8;
+          }
+        
+          const radius = Math.sqrt(value) / 20;
+          return Math.max(6, Math.min(radius, 30));
+        }
+        
+        function buildMapPopup(point, visualOptions) {
+          const parts = [];
+          
+          if (point.label) {
+          
+            parts.push(
+              "<strong>"
+              + escapeDashboardHtml(
+                point.label
+              )
+              + "</strong>"
+            );
+          }
+          
+          if (point.value != null) {
+          
+            parts.push(
+              escapeDashboardHtml(
+                formatChartNumber(
+                  point.value,
+                  visualOptions
+                )
+              )
+            );
+          }
+          
+          if (parts.length === 0) {
+            return null;
+          }
+          
+          return parts.join(
+            "<br>"
+          );
+        }
+        
+        function escapeDashboardHtml(
+          value
+        ) {
+          
+          if (value == null) {
+            return "";
+          }
+
+          const element =
+            document.createElement(
+              "div"
+            );
+          
+          element.textContent =
+            String(value);
+          
+          return element.innerHTML;
+        }
+        
         function formatScatterNumber(value, prefix, suffix, decimals) {
           const numericValue = Number(value);
           
@@ -5434,6 +5624,9 @@
             
             legendTitle:
               widget.dataset.legendTitle || "",
+        
+            markerType:
+                (widget.dataset.markerType || "PIN").toUpperCase(),
             
             valuePrefix:
               widget.dataset.valuePrefix || "",

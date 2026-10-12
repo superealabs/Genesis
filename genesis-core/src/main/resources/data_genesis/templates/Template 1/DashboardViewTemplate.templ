@@ -24,6 +24,7 @@ ${viewAnnotations}
             <article class="dashboard-widget"
                     data-dashboard-id="${this.id}"
                     data-dashboard-type="${this.typeLowerCase}"
+                    data-marker-type="${this.markerType}"
                      data-legend-x="${this.legendX}"
                      data-legend-y="${this.legendY}"
                      data-legend-title="${this.legendTitle}"
@@ -71,6 +72,12 @@ ${viewAnnotations}
                         </table>
                     </div>
 
+                    <!-- MAP -->
+                    {{elseIf this.type = MAP}}
+                    <div class="dashboard-map-container"
+                         data-dashboard-target>
+                    </div>
+
                     <!-- Tous les graphiques Chart.js -->
                     {{else}}
                     <div class="dashboard-chart-container">
@@ -100,6 +107,8 @@ ${viewAnnotations}
     {{/each}}
 
 </section>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script th:src="@{/js/dashboard.js}"></script>

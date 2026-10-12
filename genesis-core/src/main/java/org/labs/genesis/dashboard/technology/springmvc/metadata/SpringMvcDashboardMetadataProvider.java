@@ -114,6 +114,7 @@ public final class SpringMvcDashboardMetadataProvider {
             metadata.put("valuePrefixY", optionString(visualization, "valuePrefixY"));
             metadata.put("valueSuffixY", optionString(visualization, "valueSuffixY"));
             metadata.put("decimalsY", optionInteger(visualization, "decimalsY", 0));
+            metadata.put("markerType", optionString(visualization, "markerType").isBlank()? "PIN" :  optionString(visualization, "markerType").toUpperCase(Locale.ROOT));
         } else {
             metadata.put("options", new HashMap<>());
         }
