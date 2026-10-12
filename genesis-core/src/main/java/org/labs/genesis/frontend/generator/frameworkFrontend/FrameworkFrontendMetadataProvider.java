@@ -62,12 +62,20 @@ public class FrameworkFrontendMetadataProvider {
                 .anyMatch(field -> "phone".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
         boolean useQuantity = fields.stream()
                 .anyMatch(field -> "quantity".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean useTextarea = fields.stream()
+                .anyMatch(field -> {
+                    String uiType = String.valueOf(field.get("uiType"));
+                    return "textarea".equalsIgnoreCase(uiType)
+                            || "ckeditor".equalsIgnoreCase(uiType)
+                            || "json-editor".equalsIgnoreCase(uiType);
+                });
         metadata.put("fields", fields);
         metadata.put("containsFile", containsFile);
         metadata.put("useMap", useMap);
         metadata.put("useCurrency", useCurrency);
         metadata.put("usePhone", usePhone);
         metadata.put("useQuantity", useQuantity);
+        metadata.put("useTextarea", useTextarea);
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, formConfiguration));
         metadata.put("fieldsFK", fkList);
         metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata, formConfiguration));
@@ -245,6 +253,11 @@ public class FrameworkFrontendMetadataProvider {
             fieldMap.put("input-config", configuredField.getInputConfiguration());
             fieldMap.put("accepted-file", configuredField.getFileConfiguration());
             fieldMap.put("currency", configuredField.getCurrency());
+            fieldMap.put("minValue", getConfigurationValue(configuredField, "min"));
+            fieldMap.put("maxValue", getConfigurationValue(configuredField, "max"));
+            fieldMap.put("stepValue", getConfigurationValue(configuredField, "step"));
+            fieldMap.put("currencyCode", getConfigurationValue(configuredField, "currency"));
+            fieldMap.put("acceptedExtensions", getConfigurationValue(configuredField, "accept"));
             String latitude = configuredField.getLatitude();
             if(latitude != null) {
                 fieldMap.put("longitude", "${minStart(this.name)}");
@@ -304,6 +317,15 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
+    }
+
+    private static String getConfigurationValue(FieldConfiguration fieldConfiguration, String name) {
+        if (fieldConfiguration.getConfiguration() == null) {
+            return null;
+        }
+        FieldConfiguration.Configuration configuration =
+                fieldConfiguration.getConfiguration().get(name);
+        return configuration == null ? null : configuration.getValue();
     }
 
     public static  HashMap<String,Object> getServiceHashMap(ServiceComponent serviceComponent, FrontendLanguage frontendLanguage, TableMetadata tableMetadata)

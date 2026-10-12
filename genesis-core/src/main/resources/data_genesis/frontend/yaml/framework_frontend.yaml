@@ -1290,13 +1290,19 @@
               { type: 'select', name: '${this.name}', label: '${this.type}', options: [] },
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
-            {{#if this.isText}}{{removeLine}}
-              { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric or this.isInterval}}
-              { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
-              { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDateTime}}
-              { type: 'datetime-local', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isTime}}
-              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{else}}
-              { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
+              {
+                type: '${this.uiType}',
+                name: '${this.name}',
+                label: '${formatReadableLowerCase(this.name)}',
+                constraints: { required: ${this.isRequired}{{#if this.minValue}}, min: ${this.minValue}{{/if}}{{#if this.maxValue}}, max: ${this.maxValue}{{/if}} },
+                {{#if this.minValue}}min: ${this.minValue},{{else}}{{removeLine}}{{/if}}
+                {{#if this.maxValue}}max: ${this.maxValue},{{else}}{{removeLine}}{{/if}}
+                {{#if this.stepValue}}step: ${this.stepValue},{{else}}{{removeLine}}{{/if}}
+                {{#if this.currencyCode}}currency: '${this.currencyCode}',{{else}}{{removeLine}}{{/if}}
+                {{#if this.acceptedExtensions}}accept: '${this.acceptedExtensions}',{{else}}{{removeLine}}{{/if}}
+                {{#if !this.isGeographic and this.type=map}}latitude: '${this.latitude}',
+                longitude: '${this.longitude}',{{else}}{{removeLine}}{{/if}}
+              }{{#if !@last}},{{/if}}
               {{tab}}{{/each}}{{removeLine}}
           ];
 
@@ -1832,31 +1838,34 @@
       content: |
         import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
         import { CommonModule } from '@angular/common';
-        import { FormsModule } from '@angular/forms';
+        import { FormsModule, ReactiveFormsModule, FormGroup } from '@angular/forms';
         import { HttpClient } from '@angular/common/http';
+        import { Subscription } from 'rxjs';
+        import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
         import { environment } from '../../../../environments/environment';
 
-        export interface ${majStart(className)}TableFieldConfig {
-          type: string;
-          name: string;
-          label: string;
+        export interface ${majStart(className)}TableFieldConfig extends FieldConfig {
           isFk?: boolean;
-          options?: {value: any; label: string}[];
         }
 
         @Component({
           selector: 'app-${toKebabCase(className)}-table-form',
           standalone: true,
-          imports: [CommonModule, FormsModule],
+          imports: [CommonModule, FormsModule, ReactiveFormsModule, DynamicFieldComponent],
           templateUrl: './${toKebabCase(className)}-table-form.component.html'
         })
         export class ${majStart(className)}TableFormComponent implements OnInit {
           @Output() rowsChange = new EventEmitter<any[]>();
           rows: any[] = [];
+          rowForms: FormGroup[] = [];
+          private rowSubscriptions = new Map<FormGroup, Subscription>();
 
           @Input()
           set initialData(data: any[] | null | undefined) {
             this.rows = (data ?? []).map(d => ({ ...d }));
+            this.rowSubscriptions.forEach(subscription => subscription.unsubscribe());
+            this.rowSubscriptions.clear();
+            this.rowForms = this.rows.map(row => this.createRowForm(row));
           }
 
           fields: ${majStart(className)}TableFieldConfig[] = [
@@ -1867,7 +1876,20 @@
             {{tab}}{{tab}}{{/if}}
             {{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
-            { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}', isFk: false }{{#if !@last}},{{/if}}
+            {
+              type: '${this.uiType}',
+              name: '${this.name}',
+              label: '${formatReadableLowerCase(this.name)}',
+              isFk: false,
+              constraints: { required: ${this.isRequired}{{#if this.minValue}}, min: ${this.minValue}{{/if}}{{#if this.maxValue}}, max: ${this.maxValue}{{/if}} },
+              {{#if this.minValue}}min: ${this.minValue},{{/if}}
+              {{#if this.maxValue}}max: ${this.maxValue},{{/if}}
+              {{#if this.stepValue}}step: ${this.stepValue},{{/if}}
+              {{#if this.currencyCode}}currency: '${this.currencyCode}',{{/if}}
+              {{#if this.acceptedExtensions}}accept: '${this.acceptedExtensions}',{{/if}}
+              {{#if this.latitude}}latitude: '${this.latitude}',{{/if}}
+              {{#if this.longitude}}longitude: '${this.longitude}',{{/if}}
+            }{{#if !@last}},{{/if}}
             {{tab}}{{/each}}{{removeLine}}
           ];
 
@@ -1897,15 +1919,31 @@
             return index;
           }
 
+          private createRowForm(row: any): FormGroup {
+            const form = new FormGroup({});
+            this.rowSubscriptions.set(form, form.valueChanges.subscribe(value => {
+              const index = this.rowForms.indexOf(form);
+              if (index < 0) return;
+              this.rows[index] = { ...this.rows[index], ...value };
+              this.onFieldChange();
+            }));
+            return form;
+          }
+
           addRow(): void {
             const row: any = {};
             this.fields.forEach(f => row[f.name] = null);
             this.rows = [...this.rows, row];
+            this.rowForms = [...this.rowForms, this.createRowForm(row)];
             this.rowsChange.emit(this.rows);
           }
 
           removeRow(index: number): void {
+            const removedForm = this.rowForms[index];
+            this.rowSubscriptions.get(removedForm)?.unsubscribe();
+            this.rowSubscriptions.delete(removedForm);
             this.rows = this.rows.filter((_, i) => i !== index);
+            this.rowForms = this.rowForms.filter((_, i) => i !== index);
             this.rowsChange.emit(this.rows);
           }
 
@@ -1947,14 +1985,11 @@
                       </select>
                     </ng-container>
                     <ng-template #plainInput>
-                      <input
-                        [type]="f.type"
-                        [placeholder]="'Enter ' + f.label"
-                        [ngModel]="row[f.name]"
-                        (ngModelChange)="row[f.name] = $event; onFieldChange()"
-                        [ngModelOptions]="{standalone: true}"
-                        style="width:100%; border:1px solid #d1d5db; border-radius:4px; padding:0.35rem 0.5rem;"
-                      />
+                      <app-dynamic-field
+                        [field]="f"
+                        [form]="rowForms[i]"
+                        [initialData]="row"
+                      ></app-dynamic-field>
                     </ng-template>
                   </td>
                 </ng-container>
@@ -6667,6 +6702,7 @@
         {{#if useCurrency}}import GenesisCurrency from '@/components/form/GenesisCurrency.vue'{{/if}}
         {{#if usePhone}}import GenesisPhone from '@/components/form/GenesisPhone.vue'{{/if}}
         {{#if useQuantity}}import GenesisQuantity from '@/components/form/GenesisQuantity.vue'{{/if}}
+        {{#if useTextarea}}import GenesisTextarea from '@/components/form/GenesisTextarea.vue'{{/if}}
         {{#if useMap}}import GenesisMap from '@/components/form/GenesisMap.vue'
         import GenesisPopup from '@/components/popup/GenesisPopup.vue'{{/if}}
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
@@ -7629,6 +7665,7 @@
         {{#if useQuantity}}import GenesisQuantity from '@/components/form/GenesisQuantity.vue'{{/if}}
         {{#if useMap}}import GenesisMap from '@/components/form/GenesisMap.vue'
         import GenesisPopup from '@/components/popup/GenesisPopup.vue'{{/if}}
+        {{#if useTextarea}}import GenesisTextarea from '@/components/form/GenesisTextarea.vue'{{/if}}
         import { ref, onMounted{{#if useMap}}, type Ref, toRef{{/if}}} from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
