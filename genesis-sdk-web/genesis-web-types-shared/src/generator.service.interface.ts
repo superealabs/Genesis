@@ -4,7 +4,7 @@ import type {
     RelationParameter, 
     ProjectConfig, 
     ScriptConfig,
-    TableSelectionConfig,
+    GenerationParameter,
     LlmModelDto, 
     AiPromptPayload,
     AiResponseDto,
@@ -35,7 +35,8 @@ export interface IGeneratorService {
 
     // ═══ ÉTAPE 6 : SÉLECTION DES TABLES, VUES ET COMPOSANTS ═══
     fetchTablesMetadata(): Promise<TableMetadataDto[]>;
-    saveTableSelection(config: TableSelectionConfig): Promise<{ success: boolean; message: string }>;
+    saveGenerationParameters(params: GenerationParameter[]): Promise<{ success: boolean; message: string }>;
+
 
     // ═══ ÉTAPE 7 : RELATIONS ═══
     fetchTablesMetadataParents(): Promise<TableMetadataDto[]>;

@@ -4,7 +4,6 @@ export type {
     ScriptConfig,
     TableMetadataDto,
     ComponentType,
-    TableSelectionConfig,
     RelationParameter,
     FrontendLayoutConfig,
     GitConfiguration,

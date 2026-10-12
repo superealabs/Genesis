@@ -10,14 +10,12 @@ import type {
   ProjectConfig, 
   DatabaseConfig, 
   ScriptConfig, 
-  ComponentType, 
   TableMetadataDto, 
   RelationParameter,  
   FrontendLayoutConfig, 
   GitConfiguration,
   DatabaseEngineDto,
   GenerationAssociatedToConfig,
-  GenerationParameter
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -52,9 +50,12 @@ export const useGeneratorStore = defineStore('generator', () => {
   const tablesParents = ref<TableMetadataDto[]>([]);
   const tablesChilds = ref<TableMetadataDto[]>([]);
 
+  const generationAssociations = ref<GenerationAssociatedToConfig[]>([]);
+  const selectedItemsInList = ref<string[]>([]);
+
+
   // Domaine : Étape 7 - Relations
   const relations = ref<RelationParameter[]>([]);
-  const generationAssociations = ref<GenerationAssociatedToConfig[]>([]);
 
 
   // ==========================================================================
@@ -194,7 +195,16 @@ export const useGeneratorStore = defineStore('generator', () => {
     if (!assoc) return false;
     return isView ? assoc.associatedViews.includes(tableName) : assoc.associatedTables.includes(tableName);
   }
+
+  function toggleItemInList(tableName: string) {
+    const idx = selectedItemsInList.value.indexOf(tableName);
+    if (idx === -1) selectedItemsInList.value.push(tableName);
+    else selectedItemsInList.value.splice(idx, 1);
+  }
   
+  function clearSelectedItemsInList() {
+    selectedItemsInList.value = [];
+  }
 
   // --- Étape 7 : Relations ---
   function setRelations(data: RelationParameter[]) { relations.value = data; }
@@ -310,6 +320,10 @@ export const useGeneratorStore = defineStore('generator', () => {
     assignTableToConfig,
     removeTableFromConfig,
     isTableAssignedToConfig,
+    selectedItemsInList,
+    toggleItemInList,
+    clearSelectedItemsInList,
+    generationAssociations,
 
     // Étape 7 : Relations
     relations, getRelations, setRelations, addRelation, removeRelation,

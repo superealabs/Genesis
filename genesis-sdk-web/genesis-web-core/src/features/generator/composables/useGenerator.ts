@@ -260,9 +260,6 @@ export function useGenerator() {
     updateFrontendLayout: store.updateFrontendLayout,
     updateGitConfig: store.updateGitConfig,
     
-    toggleTable: store.toggleTable,
-    toggleView: store.toggleView,
-    toggleComponent: store.toggleComponent,
     toggleLanguage: store.toggleLanguage,
     
     addRelation: store.addRelation,

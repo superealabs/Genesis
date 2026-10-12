@@ -62,6 +62,7 @@
                   @click="toggleItem(item)"
                 >
                   <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <!-- ✅ MODIFIÉ : Utilise le nouveau computed du store -->
                     <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
                     <div class="flex flex-col min-w-0">
                       <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
@@ -103,7 +104,7 @@
               :search-query="configManager.searchQuery.value"
               :can-move-up="configManager.canMoveUp.value"
               :can-move-down="configManager.canMoveDown.value"
-              :selected-items="selectedItemsInList" 
+              :selected-items="selectedItemsInListRef" 
               @update:search-query="(val) => configManager.searchQuery.value = val"
               @add="handleAddConfig" 
               @delete="handleDeleteConfig" 
@@ -150,7 +151,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import type { ComponentType, TableMetadataDto, GenesisConfig, GeneratorGenerationOptionsPayload } from '@genesis-labs/shared-types';
+import type { ComponentType, TableMetadataDto, GenesisConfig, GeneratorGenerationOptionsPayload, GenerationAssociatedToConfig } from '@genesis-labs/shared-types';
 import { AVAILABLE_COMPONENTS } from '@genesis-labs/shared-types';
 
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
@@ -166,24 +167,26 @@ import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/u
 
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
 import GenesisResizeHandle from '@genesis-labs/web-core/core/components/ui/actions/GenesisResizeHandle.vue';
-
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
+import { useGeneratorStore } from '../../manifest'; // ✅ AJOUTÉ pour accéder aux nouvelles actions
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
 // ============================================================================
 const configManager = useConfigurationManager([], { singleConfiguration: true });
 const localPersistedConfigs = ref<GenesisConfig[]>([]);
+const store = useGeneratorStore(); // ✅ AJOUTÉ
 
-const { stepperData, toggleTable, toggleView, tables, views, fetchTablesMetadata } = useGenerator();
+// ❌ SUPPRIMÉ : toggleTable, toggleView ne sont plus utilisés ici
+const { tables, views, fetchTablesMetadata } = useGenerator();
 
 const isLoading = ref(false);
 const tableSearchQuery = ref('');
 
 const { resizeStyle, startResizeBottom } = useResizable({
-    minHeight: 300, // Hauteur minimale pour garder la liste lisible
-    maxHeight: () => window.innerHeight * 0.8, // Hauteur max : 80% de la hauteur de la fenêtre
-    resizableX: ref(false), // On ne redimensionne que verticalement
+    minHeight: 300,
+    maxHeight: () => window.innerHeight * 0.8,
+    resizableX: ref(false),
     resizableY: ref(true)
 });
 
@@ -206,23 +209,20 @@ const filterOptions = [
   { label: 'Tous', value: 'all' },
   { label: 'Tables', value: 'table' },
   { label: 'Vues', value: 'view' }
-]
+];
 
 const activeFilter = ref<'all' | 'table' | 'view'>('all');
 
 // ============================================================================
 // 3. COMPUTEDS (Données dérivées)
 // ============================================================================
-const tableSelection = computed(() => stepperData.value.tableSelection);
+
+// ✅ MODIFIÉ : Utilise le tableau temporaire du store au lieu de l'ancien tableSelection
+const selectedItemsInListRef = computed(() => store.selectedItemsInList);
 
 const activeConfig = computed(() => 
   configManager.configurations.value.find(c => c.id === configManager.selectedConfigId.value)
 );
-
-const selectedItemsInList = computed(() => [
-  ...tableSelection.value.selectedTables,
-  ...tableSelection.value.selectedViews
-]);
 
 const combinedItems = computed<(TableMetadataDto & { type: 'table' | 'view' })[]>(() => [
   ...tables.value.map(t => ({ ...t, type: 'table' as const })),
@@ -231,26 +231,22 @@ const combinedItems = computed<(TableMetadataDto & { type: 'table' | 'view' })[]
 
 const filteredCombinedItems = computed(() => {
   let items = combinedItems.value;
-
-  // A. Filtre par type (All / Table / Vue)
   if (activeFilter.value === 'table') {
     items = items.filter(item => !item.isView);
   } else if (activeFilter.value === 'view') {
     items = items.filter(item => item.isView);
   }
-
-  // B. Filtre par recherche textuelle
   if (tableSearchQuery.value.trim()) {
     const query = tableSearchQuery.value.toLowerCase();
     items = items.filter(item => item.tableName.toLowerCase().includes(query));
   }
-
   return items;
 });
 
 const areAllVisibleSelected = computed(() => {
   if (filteredCombinedItems.value.length === 0) return false;
-  return filteredCombinedItems.value.every(item => isItemSelected(item));
+  // ✅ MODIFIÉ : Vérifie contre le tableau temporaire du store
+  return filteredCombinedItems.value.every(item => store.selectedItemsInList.includes(item.tableName));
 });
 
 // ============================================================================
@@ -270,7 +266,6 @@ async function persistConfig(id: string | number) {
           components: [...uiConfig.components]
         }
       };
-    
       await saveConfiguration(updatedConfig);
       
       const index = localPersistedConfigs.value.findIndex(c => String(c.id) === String(id));
@@ -306,13 +301,26 @@ function handleRename(id: string | number, newName: string) {
   persistConfig(id);
 }
 
+// ✅ MODIFIÉ : Utilise les nouvelles actions du store pour lier les entités au profil
 function handleAssign(configId: string | number, items: string[]) {
-  configManager.assignToConfig(configId, items);
+  items.forEach(tableName => {
+    const item = combinedItems.value.find(i => i.tableName === tableName);
+    if (item) {
+      store.assignTableToConfig(configId, tableName, item.isView);
+    }
+  });
+  store.clearSelectedItemsInList(); // Nettoie la sélection après assignation
   persistConfig(configId);
 }
 
 function handleRemove(configId: string | number, items: string[]) {
-  configManager.removeFromConfig(configId, items);
+  items.forEach(tableName => {
+    const item = combinedItems.value.find(i => i.tableName === tableName);
+    if (item) {
+      store.removeTableFromConfig(configId, tableName, item.isView);
+    }
+  });
+  store.clearSelectedItemsInList();
   persistConfig(configId);
 }
 
@@ -339,52 +347,42 @@ function handleComponentToggle(comp: ComponentType, isChecked: boolean) {
   persistConfig(activeConfig.value.id);
 }
 
+// ✅ MODIFIÉ : Vérifie la présence dans le tableau temporaire du store
 const isItemSelected = (item: TableMetadataDto): boolean => {
-  return item.isView 
-    ? tableSelection.value.selectedViews.includes(item.tableName)
-    : tableSelection.value.selectedTables.includes(item.tableName);
+  return store.selectedItemsInList.includes(item.tableName);
 };
 
+// ✅ MODIFIÉ : Utilise l'action du store pour gérer la sélection visuelle
 const toggleItem = (item: TableMetadataDto): void => {
-  item.isView ? toggleView(item.tableName) : toggleTable(item.tableName);
+  store.toggleItemInList(item.tableName);
 };
 
+// ✅ MODIFIÉ : Utilise les actions du store pour la sélection de masse
 const toggleAllVisibleItems = (): void => {
   const allSelected = areAllVisibleSelected.value;
   
   filteredCombinedItems.value.forEach(item => {
-    const isSelected = isItemSelected(item);
-    
-    if (allSelected && isSelected) {
-      // Désélectionner l'élément
-      if (item.isView) {
-        const idx = tableSelection.value.selectedViews.indexOf(item.tableName);
-        if (idx !== -1) tableSelection.value.selectedViews.splice(idx, 1);
-      } else {
-        const idx = tableSelection.value.selectedTables.indexOf(item.tableName);
-        if (idx !== -1) tableSelection.value.selectedTables.splice(idx, 1);
-      }
-    } else if (!allSelected && !isSelected) {
-      // Sélectionner l'élément (sans créer de doublons)
-      if (item.isView) {
-        if (!tableSelection.value.selectedViews.includes(item.tableName)) {
-          tableSelection.value.selectedViews.push(item.tableName);
-        }
-      } else {
-        if (!tableSelection.value.selectedTables.includes(item.tableName)) {
-          tableSelection.value.selectedTables.push(item.tableName);
-        }
+    if (allSelected) {
+      store.toggleItemInList(item.tableName); // Retire si déjà sélectionné
+    } else {
+      if (!store.selectedItemsInList.includes(item.tableName)) {
+        store.selectedItemsInList.push(item.tableName);
       }
     }
   });
 };
 
-
+// ✅ MODIFIÉ : Interroge generationAssociations du store au lieu de config.components
 function getAssignedConfig(item: TableMetadataDto): string {
-  const assignedConfigs = configManager.configurations.value
-    .filter(c => c.components.includes(item.tableName))
-    .map(c => c.name);
-  return assignedConfigs.length > 0 ? assignedConfigs[0] : 'Non assigné';
+  const assoc = store.generationAssociations.find((a: GenerationAssociatedToConfig) => 
+    item.isView ? a.associatedViews.includes(item.tableName) : a.associatedTables.includes(item.tableName)
+  );
+  
+  if (assoc) {
+    const config = configManager.configurations.value.find(c => c.id === assoc.configId);
+    return config ? config.name : 'Non assigné';
+  }
+  return 'Non assigné';
 }
 
 // ============================================================================
@@ -393,7 +391,6 @@ function getAssignedConfig(item: TableMetadataDto): string {
 
 async function syncGenerationConfigs() {
   const data = await loadGenerationOptionsConfigurations();
-  
   localPersistedConfigs.value = data;
   
   configManager.configurations.value = data.map(c => {
