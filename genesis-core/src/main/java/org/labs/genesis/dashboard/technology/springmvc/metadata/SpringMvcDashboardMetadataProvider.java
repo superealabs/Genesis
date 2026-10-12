@@ -102,11 +102,54 @@ public final class SpringMvcDashboardMetadataProvider {
         metadata.put("hasFields", !fields.isEmpty());
         if (visualization.getOptions() != null) {
             metadata.put("options", visualization.getOptions());
+            metadata.put("legendX", optionString(visualization, "legendX"));
+            metadata.put("legendY", optionString(visualization, "legendY"));
+            metadata.put("legendTitle", optionString(visualization, "legendTitle"));
+            metadata.put("valuePrefix", optionString(visualization, "valuePrefix"));
+            metadata.put("valueSuffix", optionString(visualization, "valueSuffix"));
+            metadata.put("decimals", optionInteger(visualization, "decimals", 0));
+            metadata.put("valuePrefixX", optionString(visualization, "valuePrefixX"));
+            metadata.put("valueSuffixX", optionString(visualization, "valueSuffixX"));
+            metadata.put("decimalsX", optionInteger(visualization, "decimalsX", 0));
+            metadata.put("valuePrefixY", optionString(visualization, "valuePrefixY"));
+            metadata.put("valueSuffixY", optionString(visualization, "valueSuffixY"));
+            metadata.put("decimalsY", optionInteger(visualization, "decimalsY", 0));
         } else {
             metadata.put("options", new HashMap<>());
         }
 
         return metadata;
+    }
+
+    private static String optionString(DashboardVisualizationGenerationModel visualization, String key) {
+        if (visualization.getOptions() == null) {
+            return "";
+        }
+
+        Object value = visualization.getOptions().get(key);
+        return value == null ? "" : value.toString();
+    }
+
+    private static int optionInteger(DashboardVisualizationGenerationModel visualization, String key, int defaultValue) {
+        if (visualization.getOptions() == null) {
+            return defaultValue;
+        }
+
+        Object value = visualization.getOptions().get(key);
+
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+
+        if (value == null) {
+            return defaultValue;
+        }
+
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     private static Map<String, Object> buildQueryMetadata(DashboardPageGenerationModel page, DashboardVisualizationGenerationModel visualization) {

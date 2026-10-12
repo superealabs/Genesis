@@ -23,7 +23,19 @@ ${viewAnnotations}
             {{#each this.visualizations}}
             <article class="dashboard-widget"
                     data-dashboard-id="${this.id}"
-                    data-dashboard-type="${this.typeLowerCase}">
+                    data-dashboard-type="${this.typeLowerCase}"
+                     data-legend-x="${this.legendX}"
+                     data-legend-y="${this.legendY}"
+                     data-legend-title="${this.legendTitle}"
+                     data-value-prefix="${this.valuePrefix}"
+                     data-value-suffix="${this.valueSuffix}"
+                     data-decimals="${this.decimals}"
+                     data-value-prefix-x="${this.valuePrefixX}"
+                     data-value-suffix-x="${this.valueSuffixX}"
+                     data-decimals-x="${this.decimalsX}"
+                     data-value-prefix-y="${this.valuePrefixY}"
+                     data-value-suffix-y="${this.valueSuffixY}"
+                     data-decimals-y="${this.decimalsY}">
 
                 <div class="dashboard-widget-header">
                     <h3>${this.title}</h3>

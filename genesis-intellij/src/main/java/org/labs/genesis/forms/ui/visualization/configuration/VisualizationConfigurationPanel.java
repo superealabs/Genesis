@@ -434,12 +434,17 @@ public class VisualizationConfigurationPanel extends JPanel {
     }
 
     private JComponent createNumberEditor(String key) {
+
         if ("limit".equals(key)) {
             return new OptionalNumberEditor();
         }
 
-        JSpinner spinner = new JSpinner(new SpinnerNumberModel(10, 0, Integer.MAX_VALUE, 1));
+        int defaultValue = "decimals".equals(key) ? 0 : 10;
+
+        JSpinner spinner = new JSpinner(new SpinnerNumberModel(defaultValue, 0, Integer.MAX_VALUE, 1));
+
         setFixedHeight(spinner, EDITOR_HEIGHT);
+
         return spinner;
     }
 

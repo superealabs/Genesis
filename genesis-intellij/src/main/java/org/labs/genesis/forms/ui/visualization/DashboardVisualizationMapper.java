@@ -5,9 +5,11 @@ import org.labs.genesis.dashboard.model.*;
 import org.labs.genesis.dashboard.model.DashboardEnums.*;
 import org.labs.genesis.forms.ui.visualization.model.*;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import java.util.Locale;
+import java.util.Map;
 
 /** Maps the dashboard editor's visualization state to its serializable model. */
 public final class DashboardVisualizationMapper {
@@ -22,6 +24,7 @@ public final class DashboardVisualizationMapper {
         DashboardSourceType sourceType = resolveSourceType(source, context);
         result.setDataSource(new DashboardDataSource(source, sourceType));
         mapFields(result, component.getConfig(), component.getVisualizationItem());
+        mapVisualOptions(result, component.getConfig(), component.getVisualizationItem());
         if (result.getType() == DashboardVisualizationType.MAP) {
             addOptionalMapColumn(result, component.getConfig(), "labelColumn");
         }
@@ -29,12 +32,34 @@ public final class DashboardVisualizationMapper {
         return result;
     }
 
+    private static final Map<String, DashboardVisualizationType> KEYWORDS = new LinkedHashMap<>();
+    static {
+        KEYWORDS.put("DONUT", DashboardVisualizationType.DONUT);
+        KEYWORDS.put("PIE", DashboardVisualizationType.PIE);
+        KEYWORDS.put("LINE", DashboardVisualizationType.LINE);
+        KEYWORDS.put("SCATTER", DashboardVisualizationType.SCATTER);
+        KEYWORDS.put("KPI", DashboardVisualizationType.KPI);
+        KEYWORDS.put("GAUGE", DashboardVisualizationType.GAUGE);
+        KEYWORDS.put("MAP", DashboardVisualizationType.MAP);
+    }
+
     private static DashboardVisualizationType typeFor(String name) {
-        String normalized = name.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
-        for (DashboardVisualizationType type : DashboardVisualizationType.values())
-            if (normalized.contains(type.name())) return type;
-        if (normalized.contains("BAR")) return DashboardVisualizationType.BAR_VERTICAL;
-        return DashboardVisualizationType.TABLE;
+        if (name == null || name.isBlank()) {
+            return DashboardVisualizationType.TABLE;
+        }
+
+        String s = name.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+
+        if (s.contains("BAR")) {
+            if (s.contains("HORIZONTAL")) return DashboardVisualizationType.BAR_HORIZONTAL;
+            if (s.contains("VERTICAL")) return DashboardVisualizationType.BAR_VERTICAL;
+        }
+
+        return KEYWORDS.entrySet().stream()
+                .filter(e -> s.contains(e.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(DashboardVisualizationType.TABLE);
     }
 
     private static DashboardSourceType resolveSourceType(String source, ProjectGenerationContext context) {
@@ -134,6 +159,7 @@ public final class DashboardVisualizationMapper {
         result.setType(typeFor(item.name));
         result.setDataSource(new DashboardDataSource(source, DashboardSourceType.TABLE));
         mapFields(result, config, item);
+        mapVisualOptions(result, config, item);
         if (result.getType() == DashboardVisualizationType.MAP) {
             addOptionalMapColumn(result, config, "labelColumn");
         }
@@ -286,6 +312,38 @@ public final class DashboardVisualizationMapper {
         }
 
         return result;
+    }
+
+    private static void mapVisualOptions(DashboardVisualization result, VisualizationConfig config, VisualizationItem item) {
+        if (result == null || config == null || item == null) {
+            return;
+        }
+
+        for (VisualizationParameter parameter : item.parameters) {
+            // Les paramètres qui participent à la requête
+            // ne sont pas des options visuelles.
+            if (parameter.getRole() != null) {
+                continue;
+            }
+
+            String key = parameter.getKey();
+
+            if ("title".equals(key)) {
+                continue;
+            }
+
+            Object value = config.getValue(key);
+
+            if (value == null) {
+                continue;
+            }
+
+            if (value instanceof String text && text.isBlank()) {
+                continue;
+            }
+
+            result.getOptions().put(key, value);
+        }
     }
 
 }

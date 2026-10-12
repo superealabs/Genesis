@@ -4941,9 +4941,10 @@
             }
 
             const fields = readDashboardFields(widget);
+            const options = readDashboardOptions(widget);
             switch (visualizationType) {
                 case "KPI":
-                    renderKpi(widget, rows, fields);
+                    renderKpi(widget, rows, fields, options);
                     break;
 
                 case "TABLE":
@@ -4951,27 +4952,27 @@
                     break;
 
                 case "BAR_VERTICAL":
-                    renderCategoryChart(widget, rows, fields, "bar", false);
+                    renderCategoryChart(widget, rows, fields, "bar", false, options);
                     break;
 
                 case "BAR_HORIZONTAL":
-                    renderCategoryChart(widget, rows, fields, "bar",true);
+                    renderCategoryChart(widget, rows, fields, "bar", true, options);
                     break;
 
                 case "LINE":
-                    renderCategoryChart(widget, rows, fields, "line", false);
+                    renderCategoryChart(widget, rows, fields, "line", false, options);
                     break;
 
                 case "PIE":
-                    renderCategoryChart(widget, rows, fields, "pie", false);
+                    renderCategoryChart(widget, rows, fields, "pie", false, options);
                     break;
 
                 case "DONUT":
-                    renderCategoryChart(widget, rows, fields, "doughnut", false);
+                    renderCategoryChart(widget, rows, fields, "doughnut", false, options);
                     break;
 
                 case "SCATTER":
-                    renderScatter(widget, rows, fields);
+                    renderScatter(widget, rows, fields, options);
                     break;
 
                 default:
@@ -5009,7 +5010,7 @@
             return matchingFields[index || 0];
         }
 
-        function renderKpi(widget, rows, fields) {
+        function renderKpi(widget, rows, fields, options) {
             const measure = findField(fields, "MEASURE");
 
             if (!measure) {
@@ -5020,7 +5021,7 @@
             const value = rows[0][measure.key];
             const target = widget.querySelector("[data-dashboard-target]");
 
-            target.textContent = formatDashboardValue(value);
+            target.textContent = formatDashboardValue(value, options);
         }
 
         function renderTable(widget, rows, fields) {
@@ -5063,7 +5064,7 @@
             });
         }
 
-        function renderCategoryChart(widget, rows, fields, chartType, horizontal) {
+        function renderCategoryChart(widget, rows, fields, chartType, horizontal,  visualOptions) {
             const dimension = findField(fields, "DIMENSION");
             const measure = findField(fields, "MEASURE");
 
@@ -5096,7 +5097,8 @@
                             datasets: [
                                 {
                                     label:
-                                            measure.column
+                                            visualOptions.legendY
+                                            || measure.column
                                             || measure.key,
 
                                     data: values
@@ -5110,19 +5112,130 @@
                                     horizontal
                                             ? "y"
                                             : "x",
+                            scales:
+                                    chartType === "pie"
+                                    || chartType === "doughnut"
+                                            ? {}
+                                            : horizontal
+                                                    ? {
+                                                        x: {
+                                                            title: {
+                                                                display:
+                                                                        Boolean(visualOptions.legendY),
+                            
+                                                                text:
+                                                                        visualOptions.legendY
+                                                            },
+                            
+                                                            ticks: {
+                                                                callback:
+                                                                        function (value) {
+                                                                            return formatChartNumber(value, visualOptions);
+                                                                        }
+                                                            }
+                                                        },
+                            
+                                                        y: {
+                                                            title: {
+                                                                display:
+                                                                        Boolean(visualOptions.legendX),
+                            
+                                                                text:
+                                                                        visualOptions.legendX
+                                                            }
+                                                        }
+                                                    }
+                                                    : {
+                                                        x: {
+                                                            title: {
+                                                                display:
+                                                                        Boolean(visualOptions.legendX),
+                            
+                                                                text:
+                                                                        visualOptions.legendX
+                                                            }
+                                                        },
+                            
+                                                        y: {
+                                                            title: {
+                                                                display:
+                                                                        Boolean(visualOptions.legendY),
+                            
+                                                                text:
+                                                                        visualOptions.legendY
+                                                            },
+                            
+                                                            ticks: {
+                                                                callback:
+                                                                        function (value) {
+                                                                            return formatChartNumber(value, visualOptions);
+                                                                        }
+                                                            }
+                                                        }
+                                                    },
                             plugins: {
-                                legend: {
-                                    display:
-                                            chartType === "pie"
-                                            || chartType === "doughnut"
+
+                              legend: {
+                                
+                                display:
+                                    chartType === "pie"
+                                      || chartType === "doughnut",
+                                      
+                                      title: {
+                                        
+                                        display:
+                                          Boolean(visualOptions.legendTitle),
+                                        
+                                        text:
+                                          visualOptions.legendTitle
+                                      }
+                              },
+                          
+                              tooltip: {
+                                
+                                callbacks: {
+                                  
+                                  label:
+                                      function (context) {
+                                                           
+                                           let value;
+                                           
+                                           if (chartType === "pie" || chartType === "doughnut") {
+                                           
+                                              value = context.parsed;
+                                           
+                                           } else {
+                                           
+                                              value = horizontal
+                                                ? context.parsed.x
+                                                : context.parsed.y;
+                                           }
+                                           
+                                           return formatChartNumber(value, visualOptions);
+                                      }
                                 }
+                              }
                             }
                         }
                     }
             );
         }
+        
+        function formatChartNumber(value,options) {
+            const numericValue =Number(value);
+            
+            if (!Number.isFinite(numericValue)) {
+                return value == null? "-" : String(value);
+            }
+            
+            const decimals = Number.isFinite(options?.decimals) ? options.decimals : 0;
+            const formatted = new Intl.NumberFormat(undefined,{minimumFractionDigits:decimals,maximumFractionDigits:decimals}).format(numericValue);
+            return (options?.valuePrefix || "")
+                + formatted
+                + (options?.valueSuffix || "");
+        }
 
-        function renderScatter(widget, rows, fields) {
+        function renderScatter(widget, rows, fields, visualOptions) {
             const xField = findField(fields, "VALUE", 0);
             const yField = findField(fields, "VALUE", 1);
 
@@ -5156,7 +5269,8 @@
                             datasets: [
                                 {
                                     label:
-                                            yField.column
+                                            visualOptions.legendY
+                                            || yField.column
                                             || yField.key,
                                     data: values
                                 }
@@ -5164,10 +5278,103 @@
                         },
                         options: {
                             responsive: true,
-                            maintainAspectRatio: false
+                            maintainAspectRatio: false,
+        
+                            scales: {
+                              x: {
+                                  title: {
+                                      display:
+                                              Boolean(visualOptions.legendX),
+      
+                                      text:
+                                              visualOptions.legendX
+                                  },
+      
+                                  ticks: {
+                                      callback:
+                                              function (value) {
+                                                  return formatScatterNumber(
+                                                          value,
+                                                          visualOptions.valuePrefixX,
+                                                          visualOptions.valueSuffixX,
+                                                          visualOptions.decimalsX
+                                                  );
+                                              }
+                                  }
+                              },
+      
+                              y: {
+                                  title: {
+                                      display:
+                                              Boolean(visualOptions.legendY),
+      
+                                      text:
+                                              visualOptions.legendY
+                                  },
+      
+                                  ticks: {
+                                      callback:
+                                              function (value) {
+      
+                                                  return formatScatterNumber(
+                                                          value,
+                                                          visualOptions.valuePrefixY,
+                                                          visualOptions.valueSuffixY,
+                                                          visualOptions.decimalsY
+                                                  );
+                                              }
+                                  }
+                              }
+                            },
+      
+                            plugins: {
+        
+                                tooltip: {
+        
+                                    callbacks: {
+        
+                                        label:
+                                                function (context) {
+        
+                                                    const x =
+                                                            formatScatterNumber(
+                                                                    context.parsed.x,
+                                                                    visualOptions.valuePrefixX,
+                                                                    visualOptions.valueSuffixX,
+                                                                    visualOptions.decimalsX
+                                                            );
+        
+                                                    const y =
+                                                            formatScatterNumber(
+                                                                    context.parsed.y,
+                                                                    visualOptions.valuePrefixY,
+                                                                    visualOptions.valueSuffixY,
+                                                                    visualOptions.decimalsY
+                                                            );
+        
+                                                    return "X: "
+                                                            + x
+                                                            + " | Y: "
+                                                            + y;
+                                                }
+                                    }
+                                }
+                            }
                         }
                     }
             );
+        }
+        
+        function formatScatterNumber(value, prefix, suffix, decimals) {
+          const numericValue = Number(value);
+          
+          if (!Number.isFinite(numericValue)) {
+            return "-";
+          }
+          
+          const precision = Number.isFinite(decimals) ? decimals : 0;
+          
+          return (prefix || "") + new Intl.NumberFormat(undefined,{minimumFractionDigits:precision,maximumFractionDigits:precision}).format(numericValue)+ (suffix || "");
         }
 
         function showDashboardEmpty(widget) {
@@ -5196,15 +5403,65 @@
             return Number.isFinite(number) ? number : 0;
         }
 
-        function formatDashboardValue(value) {
+        function formatDashboardValue(value, options) {
             if (value == null) {
                 return "-";
             }
+            const prefix = options?.valuePrefix || "";
+            const suffix = options?.valueSuffix || "";
             if (typeof value === "number") {
-                return new Intl.NumberFormat().format(value);
+                const decimals =Number.isFinite(options?.decimals)
+                        ? options.decimals
+                        : 0;
+                const formatted = new Intl.NumberFormat(undefined,{minimumFractionDigits:decimals, maximumFractionDigits:decimals}).format(value);
+                return prefix + formatted + suffix;
             }
 
-            return String(value);
+            return prefix + String(value) + suffix;
+        }
+        
+        function readDashboardOptions(widget) {
+          const decimals = Number.parseInt(widget.dataset.decimals, 10);
+          const decimalsX = Number.parseInt(widget.dataset.decimalsX, 10);
+          const decimalsY = Number.parseInt(widget.dataset.decimalsY, 10);
+  
+          return {
+            legendX:
+              widget.dataset.legendX || "",
+            
+            legendY:
+              widget.dataset.legendY || "",
+            
+            legendTitle:
+              widget.dataset.legendTitle || "",
+            
+            valuePrefix:
+              widget.dataset.valuePrefix || "",
+            
+            valueSuffix:
+              widget.dataset.valueSuffix || "",
+            
+            decimals:
+                Number.isFinite(decimals) ? decimals : 0,
+            
+            valuePrefixX:
+              widget.dataset.valuePrefixX || "",
+            
+            valueSuffixX:
+              widget.dataset.valueSuffixX || "",
+            
+            decimalsX:
+                Number.isFinite(decimalsX) ? decimalsX : 0,
+            
+            valuePrefixY:
+              widget.dataset.valuePrefixY || "",
+            
+            valueSuffixY:
+              widget.dataset.valueSuffixY || "",
+            
+            decimalsY:
+                Number.isFinite(decimalsY) ? decimalsY : 0
+          };
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/js"
 
