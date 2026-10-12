@@ -236,6 +236,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         const tables = await svc.fetchTablesMetadata();
         store.setAvailableTables(tables);
         console.log(`[Wizard: tables] ${tables.length} tables/vues chargées`);
+
       } catch (error) {
         console.error("[Wizard: tables] Échec du chargement des tables:", error);
       }
@@ -243,6 +244,23 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     
     beforeNext: async (store) => {
       try {
+
+        // ajouter profileName à TableSelectionConfig
+
+        // récupérer toutes les tables et vues assignés
+          // les tables et vues non assignés à une configuration ne sont pas considéré
+        // récupérer toutes les configurations actives
+        /*
+          Pour chaque Configuration
+            récupérer les vues correspondantes à cette configuration
+            récupérerles tables correspondante à cette configuration
+
+            créer l'objet TableSection avec pour paramètre : la liste des tables et vue associés à la configuration + les components associé à la configuration
+
+        */
+        
+
+
         console.log("[Wizard: tables] Sélection des tables validée");
         return true;
       } catch (error) {

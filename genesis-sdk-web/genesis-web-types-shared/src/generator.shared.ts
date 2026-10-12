@@ -79,6 +79,9 @@ export interface GeneratorData {
     config: ProjectConfig;
     database: DatabaseConfig; // Utilise le type importé en interne
     script: ScriptConfig;
+
+
+    // Correction à apporter ici
     tableSelection: TableSelectionConfig;
     frontend: FrontendFramework | null;
     frontendLayout: FrontendLayoutConfig;

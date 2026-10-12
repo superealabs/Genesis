@@ -54,18 +54,52 @@ UR
 
 
 
-BUG LOGIC : 
-    La configuration de langue a un problème.
-        Elle ne charge pas / ne se sauvegarde pas 
 
 BUG INTERFACE :
     LLM_ASSISTANT Panel need an optimization
 
 
-LOgique à suivre :
-    - useGit est par defaut en false.
-        Quand l'utilisateur clique sur suivant sans rien configurer, useGit devient true, cela crée un fichier .git donc initialise le git
-        et on récupère le reste des informations sur le formulaire
-        si il clique sur skipper alors on passe à l'étape suivante
+
+- revérification des informations inséré avec GEneratorDATA
 
 
+Créer ceci : TableSelectionConfig
+à partir de ceci :
+    - GeneratorGenerationOptionsPayload
+    - TableMetadataDto
+
+créer ceci :
+    - TableSelectionConfig
+
+
+
+
+Une GenerationOption:
+    - Correction de type(plusieurs configurations en une génération)
+
+
+
+
+cascade Generation Option :
+    Si on séléctionne Controller, Normalement dans la logique Service doit être séléctionné
+
+    Si controller séléctionné, obligatoirement service séléctionné ?
+
+    Cas pris en compte :
+        - la génération n'est pas obligatoire(remplir le par dessus)
+
+
+    RAjouter un boolean pour activer automatiquement les dépendances de couches
+
+
+
+
+
+Dépendance avec avertissement
+    mvc -> rest + frontend et inversement
+
+dépendance base : ignoré les données supplémentaires
+
+setFramework
+
+générationParameters
