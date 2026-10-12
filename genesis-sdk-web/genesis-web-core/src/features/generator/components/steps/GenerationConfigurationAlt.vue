@@ -62,7 +62,6 @@
                   @click="toggleItem(item)"
                 >
                   <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <!-- ✅ MODIFIÉ : Utilise le nouveau computed du store -->
                     <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
                     <div class="flex flex-col min-w-0">
                       <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
@@ -78,7 +77,6 @@
                   </div>
                 </div>
 
-                <!-- État vide ou aucun résultat -->
                 <div v-if="filteredCombinedItems.length === 0" class="p-6 text-center text-text-muted text-sm flex-shrink-0">
                   {{ combinedItems.length === 0 ? 'Aucune table ou vue trouvée.' : 'Aucun résultat pour cette recherche.' }}
                 </div>
@@ -126,12 +124,24 @@
               </h4>
             </div>
             
+            <!-- ✅ AJOUT : Switch pour activer/désactiver les dépendances hiérarchiques -->
+            <div class="flex items-center justify-between py-2 border-b border-secondary/50 mb-2">
+              <span class="text-xs font-medium text-text-muted">
+                Appliquer les dépendances hiérarchiques
+              </span>
+              <GenesisSwitch
+                v-model="enforceDependencies"
+                size="sm"
+              />
+            </div>
+
             <div class="flex flex-col gap-2">
               <GenesisCheckboxSimple
                 v-for="comp in AVAILABLE_COMPONENTS"
                 :key="comp.value"
                 :model-value="activeConfig.components.includes(comp.value)"
                 :label="comp.label"
+                :disabled="isComponentDisabled(comp.value)"
                 size="md"
                 @update:model-value="(isChecked) => handleComponentToggle(comp.value, isChecked)"
               />
@@ -160,6 +170,7 @@ import { useConfig } from '@genesis-labs/web-core/core/features/config/composabl
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisCheckboxSimple from '@genesis-labs/web-core/core/components/ui/inputs/GenesisCheckboxSimple.vue';
+import GenesisSwitch from '@genesis-labs/web-core/core/components/ui/inputs/GenesisSwitch.vue'; // ✅ AJOUTÉ
 import GenesisConfigurationSelector from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationSelector.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
@@ -181,6 +192,9 @@ const { tables, views, fetchTablesMetadata } = useGenerator();
 const isLoading = ref(false);
 const tableSearchQuery = ref('');
 
+// ✅ AJOUT : État pour le mode de dépendance hiérarchique
+const enforceDependencies = ref(false);
+
 const { resizeStyle, startResizeBottom } = useResizable({
     minHeight: 300,
     maxHeight: () => window.innerHeight * 0.8,
@@ -195,7 +209,7 @@ const {
 } = useConfig();
 
 // ============================================================================
-// 2. CONSTANTES
+// 2. CONSTANTES & HIÉRARCHIE
 // ============================================================================
 const panelSlides: CarouselSlide[] = [
   { color: '#3B82F6', label: 'Étape 1 : Sélection des tables' },
@@ -210,6 +224,19 @@ const filterOptions = [
 ];
 
 const activeFilter = ref<'all' | 'table' | 'view'>('all');
+
+// ✅ AJOUT : Définition stricte de l'ordre hiérarchique
+const COMPONENT_HIERARCHY: ComponentType[] = ['model', 'dao', 'service', 'controller'];
+
+const getPrerequisites = (comp: ComponentType): ComponentType[] => {
+  const index = COMPONENT_HIERARCHY.indexOf(comp);
+  return COMPONENT_HIERARCHY.slice(0, index);
+};
+
+const getDependents = (comp: ComponentType): ComponentType[] => {
+  const index = COMPONENT_HIERARCHY.indexOf(comp);
+  return COMPONENT_HIERARCHY.slice(index + 1);
+};
 
 // ============================================================================
 // 3. COMPUTEDS
@@ -233,7 +260,7 @@ const filteredCombinedItems = computed(() => {
   if (tableSearchQuery.value.trim()) {
     const query = tableSearchQuery.value.toLowerCase();
     items = items.filter(item => item.tableName.toLowerCase().includes(query));
-    }
+  }
   return items;
 });
 
@@ -246,7 +273,6 @@ const areAllVisibleSelected = computed(() => {
 // 4. ACTIONS
 // ============================================================================
 
-// ✅ SIMPLIFIÉ : Plus besoin de localPersistedConfigs, on utilise configManager comme source de vérité
 async function persistConfig(id: string | number) {
   const uiConfig = configManager.configurations.value.find(c => c.id === id);
   if (!uiConfig) return;
@@ -258,7 +284,7 @@ async function persistConfig(id: string | number) {
     schemaVersion: '1.0.0',
     createdAt: new Date().toISOString(),
     payload: {
-      components: [...uiConfig.components] // ✅ Typé correctement grâce au Type Guard ci-dessous
+      components: [...uiConfig.components]
     }
   };
   
@@ -309,18 +335,62 @@ async function handleDeleteConfig(id: string | number) {
   await deleteConfiguration(String(id));
 }
 
+// ✅ MODIFIÉ : Gère la logique de cascade si enforceDependencies est actif
 function handleComponentToggle(comp: ComponentType, isChecked: boolean) {
   if (!activeConfig.value) return;
   
-  const currentComponents = [...activeConfig.value.components];
-  const idx = currentComponents.indexOf(comp);
+  let newComponents = [...activeConfig.value.components];
+
+  if (enforceDependencies.value) {
+    if (isChecked) {
+      // Mode strict : On coche le composant ET tous ses prérequis
+      const prereqs = getPrerequisites(comp);
+      [...prereqs, comp].forEach(c => {
+        if (!newComponents.includes(c)) {
+          newComponents.push(c);
+        }
+      });
+    } else {
+      // Mode strict : On décoche le composant ET tous ses dépendants
+      const dependents = getDependents(comp);
+      newComponents = newComponents.filter(c => c !== comp && !dependents.includes(c as ComponentType));
+    }
+  } else {
+    // Mode libre : Comportement standard
+    const idx = newComponents.indexOf(comp);
+    if (isChecked && idx === -1) {
+      newComponents.push(comp);
+    } else if (!isChecked && idx !== -1) {
+      newComponents.splice(idx, 1);
+    } else {
+      return; // Aucun changement
+    }
+  }
   
-  if (isChecked && idx === -1) currentComponents.push(comp);
-  else if (!isChecked && idx !== -1) currentComponents.splice(idx, 1);
-  else return;
-  
-  configManager.editConfiguration(activeConfig.value.id, currentComponents);
+  configManager.editConfiguration(activeConfig.value.id, newComponents);
   persistConfig(activeConfig.value.id);
+}
+
+//  AJOUT : Détermine si une checkbox doit être verrouillée (disabled)
+function isComponentDisabled(comp: ComponentType): boolean {
+  if (!enforceDependencies.value || !activeConfig.value) return false;
+
+  const currentIndex = COMPONENT_HIERARCHY.indexOf(comp);
+  const isChecked = activeConfig.value.components.includes(comp);
+
+  if (isChecked) {
+    // Si ce composant est coché, on vérifie si un composant de niveau supérieur l'est aussi.
+    // Si oui, on ne peut pas le décocher sans casser la hiérarchie.
+    const higherComponents = COMPONENT_HIERARCHY.slice(currentIndex + 1);
+    const hasHigherChecked = higherComponents.some(higherComp => 
+      activeConfig.value!.components.includes(higherComp)
+    );
+    return hasHigherChecked;
+  }
+
+  // S'il n'est pas coché, l'utilisateur peut toujours cliquer pour le cocher 
+  // (ce qui déclenchera l'ajout des prérequis).
+  return false;
 }
 
 const isItemSelected = (item: TableMetadataDto): boolean => {
@@ -363,8 +433,6 @@ function getAssignedConfig(item: TableMetadataDto): string {
 async function syncGenerationConfigs() {
   const data = await loadGenerationOptionsConfigurations();
   
-  // ✅ TYPE GUARD : Filtre et garantit que ce ne sont QUE des ComponentType valides.
-  // Cela nettoie les anciennes données corrompues et rassure TypeScript sans "as" aveugle.
   const validComponentValues = AVAILABLE_COMPONENTS.map(c => c.value);
   
   configManager.configurations.value = data.map(c => {
@@ -392,7 +460,7 @@ onMounted(async () => {
   try {
     await Promise.all([
       fetchTablesMetadata(),
-      syncGenerationConfigs() // Met à jour configManager, ce qui déclenchera le watch ci-dessous
+      syncGenerationConfigs()
     ]);
   } catch (error) {
     console.error('[GenerationConfigurationAlt] Erreur lors de l\'initialisation:', error);
@@ -401,9 +469,6 @@ onMounted(async () => {
   }
 });
 
-// ✅ WATCH SANS immediate: true
-// Il se déclenchera proprement UNE SEULE FOIS après que syncGenerationConfigs ait fini 
-// de peupler configManager.configurations.value, évitant la double exécution.
 watch(
   () => configManager.configurations.value,
   (newConfigs) => {
@@ -411,14 +476,13 @@ watch(
       newConfigs.map(c => ({
         id: c.id,
         name: c.name,
-        components: c.components as ComponentType[] // Plus besoin de "as ComponentType[]", c'est déjà typé !
+        components: c.components as ComponentType[]
       }))
     );
   },
   { deep: true }
 );
 </script>
-
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }

@@ -81,17 +81,7 @@ Une GenerationOption:
 
 
 cascade Generation Option :
-    Si on séléctionne Controller, Normalement dans la logique Service doit être séléctionné
-
-    Si controller séléctionné, obligatoirement service séléctionné ?
-
-    Cas pris en compte :
-        - la génération n'est pas obligatoire(remplir le par dessus)
-
-
-    RAjouter un boolean pour activer automatiquement les dépendances de couches(si activer, active les dépendances sinon laisse libre court)
-
-
+    bug, si une configuration a auparavant un Controller et qu'on active le cascade, les dépendances n'apparaissent pas
 
 
 
@@ -103,3 +93,4 @@ dépendance base : ignoré les données supplémentaires
 setFramework
 
 générationParameters
+
