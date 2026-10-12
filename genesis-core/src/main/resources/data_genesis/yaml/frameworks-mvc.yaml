@@ -4908,6 +4908,10 @@
       fileName: "dashboard"
       extension: "js"
       content: |
+        if (window.Chart && window.ChartDataLabels) {
+            Chart.register(ChartDataLabels);
+        }
+        
         document.addEventListener("DOMContentLoaded", function () {       
             initializeDashboardPagination();       
         });
@@ -5301,19 +5305,22 @@
                             plugins: {
 
                               legend: {
-                                
-                                display:
-                                    chartType === "pie"
-                                      || chartType === "doughnut",
-                                      
-                                      title: {
-                                        
-                                        display:
-                                          Boolean(visualOptions.legendTitle),
-                                        
-                                        text:
-                                          visualOptions.legendTitle
-                                      }
+                                display: true,
+                                position:
+                                  chartType === "pie"
+                                  || chartType === "doughnut"
+                                    ? "bottom"
+                                    : "top",
+
+                                title: {
+                                  display:
+                                    Boolean(
+                                      visualOptions.legendTitle
+                                    ),
+
+                                  text:
+                                    visualOptions.legendTitle
+                                }
                               },
                           
                               tooltip: {
@@ -5339,7 +5346,43 @@
                                            return formatChartNumber(value, visualOptions);
                                       }
                                 }
-                              }
+                              },
+                              datalabels:
+                                chartType === "pie"
+                                || chartType === "doughnut"
+                                  ? {
+                                      color: "#ffffff",
+                                      font: {
+                                        weight: "bold"
+                                      },
+                                      formatter:
+                                        function (value, context) {
+
+                                          const data =
+                                            context.chart.data.datasets[0].data
+                                            || [];
+
+                                          const total =
+                                            data.reduce(
+                                              function (sum, current) {
+                                                return sum + Number(current || 0);
+                                              },
+                                              0
+                                            );
+
+                                          if (!total) {
+                                            return "";
+                                          }
+
+                                          const percentage =
+                                            (Number(value || 0) / total) * 100;
+
+                                          return Math.round(percentage) + "%";
+                                        }
+                                    }
+                                  : {
+                                      display: false
+                                    },
                             }
                         }
                     }

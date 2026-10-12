@@ -2486,3 +2486,9 @@ th:hover .sort-icons {
     opacity: 0.45;
     cursor: not-allowed;
 }
+
+.dashboard-chart-container {
+    position: relative;
+    width: 100%;
+    height: 380px;
+}
