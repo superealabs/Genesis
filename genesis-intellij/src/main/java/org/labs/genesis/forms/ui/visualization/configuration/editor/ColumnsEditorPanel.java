@@ -266,7 +266,6 @@
         }
 
         public void setHeaders(Map<String, String> headers) {
-            System.out.println("restore: " + headers);
             if (headers == null) {
                 return;
             }
@@ -279,14 +278,12 @@
                 JTextField headerField = headerFields.get(i);
 
                 String columnKey = row.getStorageValue();
-                System.out.println(columnKey);
                 if (columnKey == null) {
                     headerField.setText("");
                     continue;
                 }
 
                 String header = headers.get(columnKey);
-                System.out.println(header);
                 headerField.setText(
                         header != null ? header : ""
                 );

@@ -55,8 +55,6 @@ public class DataProvider {
                         commonPlan
                 );
 
-        System.out.println("[DataProvider] Map SQL: " + query);
-
         Result<?> result = query.fetch();
 
         return convertMapResult(
@@ -654,10 +652,6 @@ public class DataProvider {
                         commonPlan
                 );
 
-        System.out.println(
-                "[DataProvider] Chart SQL: " + query
-        );
-
         Result<?> result =
                 query.fetch();
 
@@ -692,10 +686,6 @@ public class DataProvider {
                 ).render(
                         commonPlan
                 );
-
-        System.out.println(
-                "[DataProvider] Table SQL: " + query
-        );
 
         Result<?> result =
                 query.fetch();
