@@ -12,6 +12,7 @@ export interface WizardConfig {
   onBeforeNext?: (currentStep: number, context: { skippedSteps: Set<number> }) => boolean | Promise<boolean>;
   onBeforePrevious?: (currentStep: number) => boolean | Promise<boolean>;
   onStepEnter?: (step: number) => void | Promise<void>;
+  onSkip?: (step: number) => void | Promise<void>;
 }
 
 // ============================================================================
@@ -135,6 +136,11 @@ export function useGenesisWizard(config: WizardConfig) {
   }
 
   function skipCurrentStep() {
+
+    if (config.onSkip) {
+      config.onSkip(currentStep.value);
+    }
+
     const stepsToSkip = resolveDependencies(currentStep.value);
     stepsToSkip.forEach(step => skippedSteps.value.add(step));
     goToNextStep(true); 

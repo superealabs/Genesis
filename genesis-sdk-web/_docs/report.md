@@ -53,20 +53,19 @@ UR
 
 
 
-Corriger la gestion des étapes
-    : un composant est associé à un Nom
-    : un traitement est associé à un nom
-    : un numéro est associé à un nom
+
+BUG LOGIC : 
+    La configuration de langue a un problème.
+        Elle ne charge pas / ne se sauvegarde pas 
+
+BUG INTERFACE :
+    LLM_ASSISTANT Panel need an optimization
 
 
+LOgique à suivre :
+    - useGit est par defaut en false.
+        Quand l'utilisateur clique sur suivant sans rien configurer, useGit devient true, cela crée un fichier .git donc initialise le git
+        et on récupère le reste des informations sur le formulaire
+        si il clique sur skipper alors on passe à l'étape suivante
 
-Correction à apporter :
-wizard-step-config.ts (La nouvelle source de vérité)
-Chemin : genesis-sdk-web/genesis-web-core/src/features/generator/composables/wizard-step-config.ts
-Action : Réécriture complète pour introduire les StepId, l'ordre WIZARD_STEP_ORDER, la configuration par nom, et les fonctions utilitaires d'adaptation (Nom ↔ Numéro).
-useGenerator.ts (L'orchestrateur)
-Chemin : genesis-sdk-web/genesis-web-core/src/features/generator/composables/useGenerator.ts
-Action : Remplacer les constantes en dur (totalSteps: 10, SKIPPABLE_CONFIG) par les appels aux nouvelles fonctions utilitaires. Mettre à jour les hooks onStepEnter et onBeforeNext pour qu'ils traduisent le numéro d'étape en StepId avant d'exécuter la logique.
-GeneratorStepper.vue (La vue)
-Chemin : genesis-sdk-web/genesis-web-core/src/features/generator/components/GeneratorStepper.vue
-Action : Supprimer la longue chaîne de v-else-if. Ajouter le dictionnaire STEP_COMPONENTS et utiliser un <component :is="..."> dynamique pour afficher la bonne vue en fonction de l'ID de l'étape courante.
+
