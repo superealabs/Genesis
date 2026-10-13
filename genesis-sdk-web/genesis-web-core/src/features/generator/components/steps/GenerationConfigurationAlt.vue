@@ -487,7 +487,7 @@ watch(enforceDependencies, (isEnforced) => {
   if (isEnforced && activeConfig.value) {
     let newComponents = [...activeConfig.value.components];
     let hasChanged = false;
-
+    // tada
     // Pour chaque composant actuellement coché, on s'assure que ses prérequis le sont aussi
     newComponents.forEach((comp) => {
       const prereqs = getPrerequisites(comp as ComponentType);
