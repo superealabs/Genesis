@@ -482,6 +482,30 @@ watch(
   },
   { deep: true }
 );
+
+watch(enforceDependencies, (isEnforced) => {
+  if (isEnforced && activeConfig.value) {
+    let newComponents = [...activeConfig.value.components];
+    let hasChanged = false;
+
+    // Pour chaque composant actuellement coché, on s'assure que ses prérequis le sont aussi
+    newComponents.forEach((comp) => {
+      const prereqs = getPrerequisites(comp as ComponentType);
+      prereqs.forEach((prereq) => {
+        if (!newComponents.includes(prereq)) {
+          newComponents.push(prereq);
+          hasChanged = true;
+        }
+      });
+    });
+
+    // Si des prérequis manquants ont été ajoutés, on sauvegarde la mise à jour
+    if (hasChanged) {
+      configManager.editConfiguration(activeConfig.value.id, newComponents);
+      persistConfig(activeConfig.value.id);
+    }
+  }
+});
 </script>
 
 <style scoped>
