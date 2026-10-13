@@ -6,7 +6,7 @@
             <span
                 v-if="i > 0"
                 class="w-0.5 h-4 transition-colors duration-300"
-                :class="i <= current ? 'bg-primary/50' : 'bg-neutral-genesis'"
+                :class="i <= current ? 'bg-primary/50' : 'bg-bg-neutral-genesis'"
             />
 
             <button
@@ -37,6 +37,6 @@ const emit = defineEmits<{ select: [index: number] }>();
 const stateClass = (i: number) => {
     if (i === props.current) return 'bg-primary text-bg';
     if (i < props.current) return 'bg-primary/50 text-bg';
-    return 'bg-neutral-genesis text-text-muted';
+    return 'bg-bg-neutral-genesis text-text-muted';
 };
 </script>

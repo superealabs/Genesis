@@ -42,49 +42,43 @@
             <GenesisSegmentedControl v-model="activeFilter" :options="filterOptions" size="md" />
           </div>
 
-          <div class="rounded-md overflow-hidden min-h-[300px] h-[400px] flex flex-col border border-bg-neutral-genesis relative" :style="resizeStyle">
-            <!-- État de chargement -->
-            <div v-if="isLoading" class="p-6 text-center text-text-muted text-sm flex items-center justify-center gap-2">
-              <svg class="animate-spin h-4 w-4 text-text-muted" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>Chargement des métadonnées...</span>
-            </div>
-
-            <!-- Liste des éléments -->
-            <template v-else>
-              <div class="flex-1 overflow-y-auto custom-scrollbar">
-                <div 
-                  v-for="item in filteredCombinedItems" 
-                  :key="item.tableName"
-                  class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
-                  @click="toggleItem(item)"
-                >
-                  <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
-                    <div class="flex flex-col min-w-0">
-                      <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
-                      <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    class="flex-shrink-0 text-xs text-text-muted ml-4 text-right min-w-[120px] truncate" 
-                    :title="getAssignedConfig(item)"
-                  >
-                    {{ getAssignedConfig(item) }}
-                  </div>
-                </div>
-
-                <div v-if="filteredCombinedItems.length === 0" class="p-6 text-center text-text-muted text-sm flex-shrink-0">
-                  {{ combinedItems.length === 0 ? 'Aucune table ou vue trouvée.' : 'Aucun résultat pour cette recherche.' }}
+          <!-- APRÈS (Propre et Réutilisable) -->
+          <GenesisContainer
+            :is-loading="isLoading"
+            loading-text="Chargement des métadonnées..."
+            :is-empty="filteredCombinedItems.length === 0"
+            empty-text="Aucune table ou vue trouvée."
+            :min-height="200"
+            :max-height="500"
+            :height="400" 
+          >
+            <!-- Le contenu de ta boucle v-for va directement ici -->
+            <div 
+              v-for="item in filteredCombinedItems" 
+              :key="item.tableName"
+              class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
+              @click="toggleItem(item)"
+            >
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
+                <div class="flex flex-col min-w-0">
+                  <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
+                  <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
                 </div>
               </div>
-            </template>
+              
+              <div class="flex-shrink-0 text-xs text-text-muted ml-4 text-right min-w-[120px] truncate" :title="getAssignedConfig(item)">
+                {{ getAssignedConfig(item) }}
+              </div>
+            </div>
 
-            <GenesisResizeHandle @resize-start="startResizeBottom"/>
-          </div>
+            <!-- Optionnel : Tu peux aussi utiliser le slot nommé 'empty' pour un contenu personnalisé -->
+            <!-- <template #empty>
+              <div class="p-6 text-center text-text-muted text-sm flex-shrink-0">
+                Message personnalisé si vide
+              </div>
+            </template> -->
+          </GenesisContainer>
         </div>
 
         <!-- 2. PANNEAU DROIT : GESTION DES CONFIGURATIONS -->
@@ -176,10 +170,9 @@ import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSear
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 
-import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
-import GenesisResizeHandle from '@genesis-labs/web-core/core/components/ui/actions/GenesisResizeHandle.vue';
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 import { useGeneratorStore } from '../../manifest';
+import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
@@ -192,15 +185,8 @@ const { tables, views, fetchTablesMetadata } = useGenerator();
 const isLoading = ref(false);
 const tableSearchQuery = ref('');
 
-// ✅ AJOUT : État pour le mode de dépendance hiérarchique
 const enforceDependencies = ref(false);
 
-const { resizeStyle, startResizeBottom } = useResizable({
-    minHeight: 300,
-    maxHeight: () => window.innerHeight * 0.8,
-    resizableX: ref(false),
-    resizableY: ref(true)
-});
 
 const { 
   loadGenerationOptionsConfigurations, 

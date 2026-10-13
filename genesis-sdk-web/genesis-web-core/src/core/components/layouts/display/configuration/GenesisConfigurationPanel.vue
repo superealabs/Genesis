@@ -1,6 +1,6 @@
 <!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue -->
 <template>
-    <div class="flex flex-col w-full min-w-[300px] max-w-[400px] gap-4 relative" :style="resizeStyle">
+    <div class="flex flex-col w-full min-w-[300px] max-w-[400px] gap-4 relative">
         <div class="relative">
             <GenesisInput
                 :modelValue="searchQuery"
@@ -17,8 +17,15 @@
         </div>
 
         <div class="flex flex-1 min-h-0 gap-4 overflow-hidden">
-            <div class="flex-1 flex flex-col min-h-0 overflow-hidden border border-bg-neutral-genesis rounded-lg relative">
-                <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+            <!-- MODIFIÉ : minHeight et height liés à la variable réactive rightColumnHeight -->
+            <GenesisContainer
+                :min-height="rightColumnHeight"
+                :height="rightColumnHeight"
+                :max-height="maxSize()"
+                :is-empty="filteredConfigs.length === 0"
+            >
+                <!-- 1. CONTENU PRINCIPAL -->
+                <div class="p-3 space-y-2">
                     <GenesisItemConfig
                         v-for="config in filteredConfigs"
                         :key="config.id"
@@ -32,17 +39,23 @@
                         @edit="$emit('edit', config.id)"
                         @toggleVisibility="handleToggleVisibility(config.id)"
                     />
+                </div>
 
-                    <div v-if="filteredConfigs.length === 0" class="flex flex-col items-center justify-center h-32 text-text-muted text-sm">
+                <!-- 2. ÉTAT VIDE PERSONNALISÉ -->
+                <template #empty>
+                    <div class="flex flex-col items-center justify-center h-32 text-text-muted text-sm">
                         <IconSearch :size="24" class="mb-2 opacity-50" />
                         <span>Aucune configuration trouvée.</span>
                     </div>
-                </div>
-                <GenesisResizeHandle @resize-start="startResizeBottom" />
-            </div>
+                </template>
+            </GenesisContainer>
 
-            <!-- ✅ Masqué en mode readonly -->
-            <div v-if="!readonly" class="flex flex-col gap-2 flex-shrink-0 justify-between pt-1">
+            <!-- ✅ AJOUTÉ : ref="rightColumnRef" pour pouvoir mesurer sa hauteur -->
+            <div 
+                v-if="!readonly" 
+                ref="rightColumnRef" 
+                class="flex flex-col gap-2 flex-shrink-0 justify-between pt-1"
+            >
                 <div class="flex flex-col gap-2">
                     <GenesisButtonIcon size="lg" title="Ajouter une configuration" variant="secondary" @click="handleAdd">
                         <IconPlus />
@@ -65,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted, nextTick } from 'vue'; // ✅ AJOUTÉ : ref, onMounted, nextTick
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
@@ -74,8 +87,7 @@ import IconTrashAlt from '@genesis-labs/web-core/core/components/ui/icons/IconTr
 import IconChevronUp from '@genesis-labs/web-core/core/components/ui/icons/IconChevronUp.vue';
 import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
 import GenesisItemConfig from './GenesisItemConfig.vue';
-import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
-import GenesisResizeHandle from '../../../ui/actions/GenesisResizeHandle.vue';
+import GenesisContainer from '../../GenesisContainer.vue';
 
 const props = defineProps<{
     configurations: { id: string | number; name: string; isHidden?: boolean }[];
@@ -84,7 +96,7 @@ const props = defineProps<{
     searchQuery: string;
     canMoveUp: boolean;
     canMoveDown: boolean;
-    readonly?: boolean; // ✅ AJOUTÉ
+    readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -107,12 +119,24 @@ function handleMoveUp() { if (props.selectedConfigId !== null) emit('moveUp', pr
 function handleMoveDown() { if (props.selectedConfigId !== null) emit('moveDown', props.selectedConfigId); }
 function handleSearchUpdate(value: string | number | boolean) { emit('update:searchQuery', String(value)); }
 
-const { resizeStyle, startResizeBottom } = useResizable({
-    minHeight: 250,
-    maxHeight: () => window.innerHeight * 0.85,
-    resizableX: ref(false),
-    resizableY: ref(true)
+// AJOUTÉ : Références pour le calcul dynamique de la hauteur
+const rightColumnRef = ref<HTMLElement | null>(null);
+const rightColumnHeight = ref(150); // Valeur de repli par défaut
+
+const updateRightColumnHeight = () => {
+    if (rightColumnRef.value) {
+        // offsetHeight inclut le contenu, le padding et les bordures, ce qui correspond parfaitement à l'empreinte visuelle
+        rightColumnHeight.value = rightColumnRef.value.offsetHeight;
+    }
+};
+
+// On calcule la hauteur une fois que le DOM est entièrement rendu
+onMounted(async () => {
+    await nextTick();
+    updateRightColumnHeight();
 });
+
+const maxSize = () => window.innerHeight * 0.85; 
 </script>
 
 <style scoped>

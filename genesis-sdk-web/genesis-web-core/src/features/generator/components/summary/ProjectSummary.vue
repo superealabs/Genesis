@@ -1,163 +1,139 @@
 <template>
-  <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-    <h3 class="text-lg font-semibold text-text mb-4">Résumé de la configuration</h3>
+  <!-- Image toujours à droite : rangée non repliable, colonne droite à largeur fixe (shrink-0) -->
+  <main class="flex flex-row gap-12 h-full w-full p-8">
 
-    <!-- Section Framework -->
-    <section class="space-y-4">
-      <h4 class="text-base font-semibold text-text flex items-center gap-2">
-        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
-        </svg>
-        Framework
-      </h4>
-      
-      <div v-if="framework" class="bg-bg-secondary/30 rounded-lg p-4 border border-neutral-light">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="space-y-1">
-            <span class="text-xs text-muted">Nom</span>
-            <p class="text-sm font-medium text-text">{{ framework.name }}</p>
-          </div>
-          
-          <div class="space-y-1">
-            <span class="text-xs text-muted">Langage</span>
-            <!-- ✅ MODIFIÉ : Affiche le nom résolu au lieu de l'ID -->
-            <p class="text-sm font-medium text-text capitalize">{{ languageName }}</p>
-          </div>
-          
-          <div class="space-y-1">
-            <span class="text-xs text-muted">Version</span>
-            <p class="text-sm font-medium text-text">{{ config.frameworkVersion || 'Non spécifiée' }}</p>
-          </div>
-          
-          <div class="space-y-1">
-            <span class="text-xs text-muted">Version du langage</span>
-            <p class="text-sm font-medium text-text">{{ config.languageVersion || 'Non spécifiée' }}</p>
-          </div>
-        </div>
+    <!-- ═══ GAUCHE : informations, de la plus importante à la moins importante ═══ -->
+    <div class="flex-1 min-w-0 min-h-0 overflow-y-auto custom-scrollbar flex flex-col">
+      <div class="my-auto flex flex-col gap-10 py-4">
+
+        <!-- 1. Nom du projet -->
+        <header class="flex flex-col gap-2">
+          <span class="text-xs font-semibold uppercase tracking-widest text-muted">Projet</span>
+          <h1 class="text-5xl font-bold leading-tight text-text break-words">
+            {{ config.projectName || 'Sans nom' }}
+          </h1>
+          <span class="text-xs text-muted break-all">{{ config.projectLocation || 'Localisation non définie' }}</span>
+        </header>
+
+        <!-- 2. Fonctionnalités : trois niveaux de taille (stack → build → avancé) -->
+        <section class="flex flex-col gap-8">
+          <dl
+            v-for="group in featureGroups"
+            :key="group.id"
+            class="grid gap-x-10 gap-y-5"
+            :class="group.gridClass"
+          >
+            <div v-for="field in group.fields" :key="field.label" class="flex flex-col gap-1 min-w-0">
+              <dt class="text-xs font-semibold uppercase tracking-wider text-muted">{{ field.label }}</dt>
+              <dd class="text-text break-words" :class="group.valueClass">{{ field.value }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <!-- 3. Description : en dernier, rétractable (fermée par défaut) -->
+        <details class="group">
+          <summary
+            class="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden text-xs font-semibold uppercase tracking-wider text-muted hover:text-text transition-colors"
+          >
+            Description
+            <svg
+              class="w-3 h-3 transition-transform duration-200 group-open:rotate-180"
+              fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <p class="mt-3 w-full pr-4 text-sm leading-relaxed text-text whitespace-pre-line">
+            {{ config.projectDescription || 'Aucune description' }}
+          </p>
+        </details>
+
       </div>
-      
-      <div v-else class="bg-bg-secondary/30 rounded-lg p-4 border border-neutral-light">
-        <p class="text-sm text-muted italic">Aucun framework sélectionné</p>
-      </div>
-    </section>
+    </div>
 
-    <!-- Section Configuration du Projet -->
-    <section class="space-y-4">
-      <h4 class="text-base font-semibold text-text flex items-center gap-2">
-        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        Configuration du Projet
-      </h4>
-      
-      <div class="bg-bg-secondary/30 rounded-lg p-4 border border-neutral-light space-y-4">
-        <!-- Informations de base -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="space-y-1">
-            <span class="text-xs text-muted">Nom du projet</span>
-            <p class="text-sm font-medium text-text">{{ config.projectName || 'Non défini' }}</p>
-          </div>
-          
-          <div class="space-y-1">
-            <span class="text-xs text-muted">Port</span>
-            <p class="text-sm font-medium text-text">{{ config.projectPort || 'Non défini' }}</p>
-          </div>
-          
-          <div class="space-y-1 md:col-span-2">
-            <span class="text-xs text-muted">Localisation</span>
-            <p class="text-sm font-medium text-text break-all">{{ config.projectLocation || 'Non définie' }}</p>
-          </div>
-          
-          <div class="space-y-1 md:col-span-2">
-            <span class="text-xs text-muted">Description</span>
-            <p class="text-sm text-text">{{ config.projectDescription || 'Aucune description' }}</p>
-          </div>
-        </div>
+    <!-- ═══ DROITE : visuel (statique, ne rétrécit jamais sous sa largeur) ═══ -->
+    <div class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center gap-2 text-muted border border-secondary border-dashed bg-secondary/10 rounded-lg">
+      <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      <span class="text-sm font-medium">Aperçu du projet</span>
+    </div>
 
-        <!-- Séparateur -->
-        <div class="border-t border-neutral-light"></div>
-
-        <!-- Configuration technique -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="space-y-1">
-            <span class="text-xs text-muted">Build Tool</span>
-            <p class="text-sm font-medium text-text capitalize">{{ config.buildTool || 'Non défini' }}</p>
-          </div>
-          
-          <div class="space-y-1">
-            <span class="text-xs text-muted">Group ID</span>
-            <p class="text-sm font-medium text-text">{{ config.groupId || 'Non défini' }}</p>
-          </div>
-        </div>
-
-        <!-- Séparateur -->
-        <div class="border-t border-neutral-light"></div>
-
-        <!-- Configuration avancée -->
-        <div class="space-y-3">
-          <h5 class="text-sm font-semibold text-text">Configuration Avancée</h5>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="space-y-1">
-              <span class="text-xs text-muted">Niveau de Logging</span>
-              <p class="text-sm font-medium text-text">{{ config.loggingLevel || 'Non défini' }}</p>
-            </div>
-            
-            <div class="space-y-1">
-              <span class="text-xs text-muted">Type de Sécurité</span>
-              <p class="text-sm font-medium text-text">{{ config.securityType || 'Non défini' }}</p>
-            </div>
-            
-            <div class="space-y-1">
-              <span class="text-xs text-muted">Fournisseur de Cache</span>
-              <p class="text-sm font-medium text-text">{{ config.cacheProvider || 'Non défini' }}</p>
-            </div>
-            
-            <div v-if="config.hibernateDdlAuto" class="space-y-1">
-              <span class="text-xs text-muted">Hibernate DDL Auto</span>
-              <p class="text-sm font-medium text-text">{{ config.hibernateDdlAuto }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
-import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store'; // ✅ AJOUTÉ
+import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
 
 const { stepperData } = useGenerator();
-const frameworkStore = useFrameworkStore(); // ✅ AJOUTÉ
+const frameworkStore = useFrameworkStore();
 
 const framework = computed(() => stepperData.value.framework);
 const config = computed(() => stepperData.value.config);
 
-// ✅ AJOUTÉ : Résolution du nom du langage à partir de l'ID stocké dans le framework
 const languageName = computed(() => {
   if (!framework.value?.languageId) return 'Non spécifié';
-  
   const lang = frameworkStore.languages.find(l => l.id === framework.value!.languageId);
   return lang ? lang.name : 'Inconnu';
 });
+
+const or = (value: string | undefined | null, fallback = 'Non défini') => value || fallback;
+
+interface FeatureField { label: string; value: string }
+interface FeatureGroup { id: string; gridClass: string; valueClass: string; fields: FeatureField[] }
+
+// Une seule source de données : le template ne fait que boucler.
+// La hiérarchie vient de `valueClass` (taille de police) et de `gridClass` (colonnes).
+const featureGroups = computed<FeatureGroup[]>(() => [
+  {
+    id: 'stack',
+    gridClass: 'grid-cols-2',
+    valueClass: 'text-2xl font-semibold',
+    fields: [
+      { label: 'Framework', value: `${framework.value?.name ?? 'Aucun'} ${config.value.frameworkVersion ?? ''}`.trim() },
+      { label: 'Langage',   value: `${languageName.value} ${config.value.languageVersion ?? ''}`.trim() },
+    ],
+  },
+  {
+    id: 'build',
+    gridClass: 'grid-cols-3',
+    valueClass: 'text-base font-medium',
+    fields: [
+      { label: 'Build tool', value: or(config.value.buildTool) },
+      { label: 'Group ID',   value: or(config.value.groupId) },
+      { label: 'Port',       value: or(config.value.projectPort) },
+    ],
+  },
+  {
+    id: 'advanced',
+    gridClass: 'grid-cols-2 lg:grid-cols-4',
+    valueClass: 'text-sm',
+    fields: [
+      { label: 'Logging',  value: or(config.value.loggingLevel) },
+      { label: 'Sécurité', value: or(config.value.securityType) },
+      { label: 'Cache',    value: or(config.value.cacheProvider) },
+      // Champ optionnel : n'apparaît que s'il existe
+      ...(config.value.hibernateDdlAuto
+        ? [{ label: 'Hibernate DDL', value: config.value.hibernateDdlAuto }]
+        : []),
+    ],
+  },
+]);
 </script>
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: var(--color-neutral-light);
   border-radius: 4px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--color-neutral);
 }
