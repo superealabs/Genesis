@@ -65,21 +65,39 @@
 
       <!-- 3. BASE DE DONNÉES ET SCHÉMA -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <GenesisInput
-          v-model="database.databaseName"
-          label="Database Name"
-          size="lg"
-          placeholder="my_database"
-          is-mandatory
-          fill-width
-        />
-        <GenesisInput
-          v-model="database.schema"
-          label="Schema"
-          size="lg"
-          placeholder="public"
-          fill-width
-        />
+        
+        <!-- MODIFIÉ : Prend 2 colonnes sur écran moyen+ si le moteur n'est ni Postgres ni SQL Server -->
+        <div :class="database.engine == 'mysql' ? 'md:col-span-2' : 'md:col-span-1'">
+          <GenesisInput
+            v-model="database.databaseName"
+            label="Database Name"
+            size="lg"
+            placeholder="my_database"
+            is-mandatory
+            fill-width
+          />
+        </div>
+
+        <div v-if="database.engine === 'oracle'" class="md:col-span-1">
+          <GenesisInput
+            v-model="database.sid"
+            label="SID (Oracle)"
+            placeholder="ORCL"
+            size="lg"
+            fill-width
+          />
+        </div>
+        <!-- MODIFIÉ : Visible uniquement pour PostgreSQL et SQL Server (occupe 1 colonne) -->
+        <div v-if="database.engine === 'postgre' || database.engine === 'sqlserver'" class="md:col-span-1">
+          <GenesisInput
+            v-model="database.schema"
+            label="Schema"
+            size="lg"
+            :placeholder="database.engine === 'postgre' ? 'public' : 'dbo'"
+            fill-width
+          />
+        </div>
+        
       </div>
 
       <!-- 4. IDENTIFIANTS -->
@@ -126,13 +144,15 @@
         </GenesisButton>
       </div>
 
-      <!-- 6. CONFIGURATIONS AVANCÉES -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- 6. CONFIGURATIONS AVANCÉES (Drivers & Spécifique Oracle) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- ✅ MODIFIÉ : Désactivé car géré automatiquement par le store lors de la sélection du SGBD -->
         <GenesisInput
           v-model="database.driverType"
           label="Driver Type"
           size="lg"
           placeholder="org.postgresql.Driver"
+          disabled
           fill-width
         />
         <GenesisInput
@@ -140,30 +160,27 @@
           label="Driver Name"
           placeholder="PostgreSQL JDBC Driver"
           size="lg"
+          disabled
           fill-width
         />
-        <GenesisInput
-          v-model="database.sid"
-          label="SID (Oracle)"
-          placeholder="ORCL"
-          size="lg"
-          :disabled="database.engine !== 'oracle'"
-          fill-width
-        />
+      
       </div>
 
-      <!-- 7. OPTIONS BOOLÉENNES -->
+      <!-- 7. OPTIONS BOOLÉENNES SPÉCIFIQUES -->
       <div class="flex flex-col gap-2 mt-2">
+        <!-- ✅ MODIFIÉ : Visible uniquement pour MySQL -->
         <GenesisInput
-          v-model="database.trustCertificate"
-          label="Trust certificate"
+          v-if="database.engine === 'mysql'"
+          v-model="database.allowPublicKeyRetrieval"
+          label="Allow public key retrieval"
           type="boolean"
           size="lg"
           one-line
         />
+        
         <GenesisInput
-          v-model="database.allowPublicKeyRetrieval"
-          label="Allow public key retrieval"
+          v-model="database.trustCertificate"
+          label="Trust certificate"
           type="boolean"
           size="lg"
           one-line
@@ -182,7 +199,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
-import { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store'; // ✅ NOUVEAU IMPORT
+import { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store';
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
@@ -202,14 +219,11 @@ const emit = defineEmits<{
 const { stepperData, testDatabaseConnection, setDatabaseEngine } = useGenerator();
 const databaseStore = useDatabaseStore();
 
-// Référence réactive vers la configuration de la base de données dans le store
 const database = computed(() => stepperData.value.database);
-
-// État local pour gérer le chargement du bouton de test
 const isTesting = ref(false);
 
 // ============================================================================
-// 3. GESTION DE L'ÉDITION DU SGBD (Pattern identique au Framework)
+// 3. GESTION DE L'ÉDITION DU SGBD
 // ============================================================================
 const databaseSelectorRef = ref<HTMLElement | null>(null);
 const isEditingDatabase = ref(false);
@@ -230,10 +244,7 @@ function cancelEditingDatabase() {
 }
 
 function handleDatabaseSelect(value: any) {
-  // Si l'utilisateur tape du texte sans sélectionner d'option, on ignore
   if (typeof value === 'string') return;
-  
-  // Si une option valide (objet DatabaseEngine) est sélectionnée
   if (value && value.name) {
     setDatabaseEngine(value);
     isEditingDatabase.value = false;
@@ -264,12 +275,8 @@ const panelSlides: CarouselSlide[] = [
 ];
 
 // ============================================================================
-// 5. COMPUTEDS (LOGIQUE D'AFFICHAGE)
+// 5. COMPUTEDS
 // ============================================================================
-
-/**
- * Construit dynamiquement l'URL de connexion JDBC en fonction du moteur sélectionné.
- */
 const computedUrl = computed(() => {
   const { engine, host, port, databaseName, sid } = database.value;
   const hostStr = host || 'localhost';
@@ -290,19 +297,21 @@ const computedUrl = computed(() => {
   }
 });
 
+watch(
+  () => [database.value.host, database.value.port, database.value.databaseName, database.value.sid],
+  () => {
+    // Le computed se mettra à jour automatiquement grâce à la réactivité de Vue
+  },
+  { deep: true }
+);
+
 // ============================================================================
 // 6. ACTIONS
 // ============================================================================
-
-/**
- * Déclenche le test de connexion via le service et gère le retour.
- */
 async function handleTestConnection() {
   isTesting.value = true;
-  
   try {
     const result = await testDatabaseConnection();
-    
     if (!result.success) {
       emit('test-connection-error', result.message);
     }
