@@ -195,7 +195,7 @@ public class VisualizationConfigurationPanel extends JPanel {
         if (editor instanceof ColumnDropField columnDropField) {
             String existingColumn = targetComponent.getConfigValue(key);
             if (existingColumn != null && !existingColumn.isEmpty()) {
-                columnDropField.setColumn(existingColumn);
+                columnDropField.restoreValue(existingColumn);
             }
             columnDropField.setColumnChangeListener(value -> targetComponent.updateConfig(key, value));
             return;
@@ -219,7 +219,23 @@ public class VisualizationConfigurationPanel extends JPanel {
             }
             comboBox.addActionListener(e -> targetComponent.updateConfig(key, comboBox.getSelectedItem()));
         } else if (editor instanceof JSpinner spinner) {
-            spinner.addChangeListener(e -> targetComponent.updateConfig(key, spinner.getValue()));
+            Object existingValue = targetComponent.getConfigObject(key);
+            if (existingValue instanceof Number number) {
+                spinner.setValue(number.intValue());
+            } else if (existingValue != null) {
+                try {
+                    spinner.setValue(Integer.parseInt(existingValue.toString()));
+                } catch (NumberFormatException ignored) {
+                    // Conserver la valeur par défaut du spinner.
+                }
+            }
+
+            spinner.addChangeListener(
+                    e -> targetComponent.updateConfig(
+                            key,
+                            spinner.getValue()
+                    )
+            );
         }
     }
 
@@ -393,11 +409,13 @@ public class VisualizationConfigurationPanel extends JPanel {
         }
 
         globalOptionsPanel.setChangeListener(() -> {
-            targetComponent.updateConfig("limit", globalOptionsPanel.getLimitValue());
-            targetComponent.updateConfig("aggregation", globalOptionsPanel.getAggregation());
-            targetComponent.updateConfig("sortColumn", globalOptionsPanel.getSortColumn());
-            targetComponent.updateConfig("sortDirection", globalOptionsPanel.getSortDirection());
-            targetComponent.updateConfig("filters", globalOptionsPanel.getFilters());
+            targetComponent.updateGlobalConfig(
+                    globalOptionsPanel.getLimitValue(),
+                    globalOptionsPanel.getAggregation(),
+                    globalOptionsPanel.getSortColumn(),
+                    globalOptionsPanel.getSortDirection(),
+                    globalOptionsPanel.getFilters()
+            );
         });
     }
 
@@ -439,7 +457,7 @@ public class VisualizationConfigurationPanel extends JPanel {
             return new OptionalNumberEditor();
         }
 
-        int defaultValue = "decimals".equals(key) ? 0 : 10;
+        int defaultValue = key != null && key.startsWith("decimals") ? 0 : 10;
 
         JSpinner spinner = new JSpinner(new SpinnerNumberModel(defaultValue, 0, Integer.MAX_VALUE, 1));
 

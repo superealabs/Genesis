@@ -170,7 +170,7 @@ public class LineChartRenderer extends AbstractChartRenderer {
     private int computeYAxisWidth(FontMetrics metrics, double upperBound, double tickUnit) {
         int maxWidth = 0;
         for (double v = 0; v <= upperBound + 0.001; v += tickUnit) {
-            String text = formatValue(v);
+            String text = formatConfiguredValue(v);
             maxWidth = Math.max(maxWidth, metrics.stringWidth(text));
         }
         return maxWidth + 10;
@@ -211,7 +211,7 @@ public class LineChartRenderer extends AbstractChartRenderer {
             g.setColor(DashboardTheme.BORDER);
             g.drawLine(plotX - 4, y, plotX, y);
 
-            String text = formatValue(v);
+            String text = formatConfiguredValue(v);
             int textX = plotX - 7 - fm.stringWidth(text);
             int textY = y - fm.getHeight() / 2 + fm.getAscent();
             g.setColor(DashboardTheme.TEXT_MUTED);
@@ -461,23 +461,6 @@ public class LineChartRenderer extends AbstractChartRenderer {
         }
 
         return niceStep * magnitude;
-    }
-
-    /**
-     * Formate une valeur pour l'affichage.
-     * Gère les grands nombres avec des séparateurs.
-     */
-    private String formatValue(double value) {
-        if (Math.floor(value) == value) {
-            long longValue = Math.round(value);
-            if (longValue >= 1_000_000) {
-                return String.format("%.1fM", longValue / 1_000_000.0);
-            } else if (longValue >= 1_000) {
-                return String.format("%.1fK", longValue / 1_000.0);
-            }
-            return String.valueOf(longValue);
-        }
-        return String.format("%.1f", value);
     }
 
     // =========================== INNER CLASSES ===========================

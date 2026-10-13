@@ -13,7 +13,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class GlobalVisualizationOptionsPanel extends JPanel {
 
@@ -126,11 +125,7 @@ public class GlobalVisualizationOptionsPanel extends JPanel {
     }
 
     public void setSortColumn(String value) {
-        if (value == null || value.isBlank()) {
-            sortColumnField.clearColumn();
-        } else {
-            sortColumnField.setColumn(value);
-        }
+        sortColumnField.restoreValue(value);
     }
 
     public void setAggregation(String aggregation) {
@@ -176,31 +171,6 @@ public class GlobalVisualizationOptionsPanel extends JPanel {
 
     public void setChangeListener(Runnable listener) {
         this.changeListener = listener;
-    }
-
-    public void restoreFromConfig(Object configValue) {
-        if (configValue instanceof List<?> list) {
-            List<VisualizationFilterCondition> conditions = new ArrayList<>();
-            for (Object item : list) {
-                if (item instanceof VisualizationFilterCondition condition) {
-                    conditions.add(condition);
-                } else if (item instanceof Map<?, ?> map) {
-                    VisualizationFilterCondition condition = new VisualizationFilterCondition();
-                    Object column = map.get("column");
-                    Object operator = map.get("operator");
-                    Object value = map.get("value");
-                    Object relation = map.get("relationToPrevious");
-                    if (column != null) condition.setColumn(column.toString());
-                    if (operator != null) condition.setOperator(operator.toString());
-                    if (value != null) condition.setValue(value.toString());
-                    condition.setRelationToPrevious(FilterLogicalOperator.fromValue(relation));
-                    conditions.add(condition);
-                }
-            }
-            setFilters(conditions);
-        } else {
-            setFilters(new ArrayList<>());
-        }
     }
 
     // ---------------------------------------------------------------

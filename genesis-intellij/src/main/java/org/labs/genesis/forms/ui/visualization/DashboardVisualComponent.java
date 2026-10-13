@@ -1298,4 +1298,18 @@ public class DashboardVisualComponent extends JPanel {
         SOUTH_WEST,
         SOUTH_EAST
     }
+
+    public void updateGlobalConfig(Object limit, String aggregation, String sortColumn, String sortDirection, Object filters) {
+        config.setValue("limit", limit);
+        config.setValue("aggregation", aggregation);
+        config.setValue("sortColumn", sortColumn);
+        config.setValue("sortDirection", sortDirection);
+        config.setValue("filters", filters);
+
+        renderer.updateConfig(config);
+
+        refreshDataIfNeeded();
+
+        updateDisplayState();
+    }
 }

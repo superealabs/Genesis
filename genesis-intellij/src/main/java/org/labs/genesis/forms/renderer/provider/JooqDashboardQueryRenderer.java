@@ -11,10 +11,12 @@ import java.sql.Connection;
 import java.util.List;
 
 public final class JooqDashboardQueryRenderer implements DashboardQueryRenderer<Select<?>> {
+    private final Connection connection;
     private final DSLContext dsl;
     private final FilterConditionBuilder filterBuilder;
 
     public JooqDashboardQueryRenderer(Connection connection, DSLContext dsl) {
+        this.connection = connection;
         this.dsl = dsl;
         this.filterBuilder = new FilterConditionBuilder(connection);
     }
@@ -124,6 +126,10 @@ public final class JooqDashboardQueryRenderer implements DashboardQueryRenderer<
 
     private void addLimit(SelectQuery<Record> query, DashboardQueryPlan plan) {
         if (plan.getOptions() == null || plan.getOptions().getLimit() == null || plan.getOptions().getLimit() <= 0) {
+            return;
+        }
+        DatabaseType databaseType = databaseType();
+        if (databaseType == DatabaseType.SQL_SERVER || databaseType == DatabaseType.ORACLE) {
             return;
         }
         query.addLimit(plan.getOptions().getLimit());
@@ -428,5 +434,50 @@ public final class JooqDashboardQueryRenderer implements DashboardQueryRenderer<
             case FULL ->
                     JoinType.FULL_OUTER_JOIN;
         };
+    }
+
+    private enum DatabaseType {
+        MYSQL,
+        POSTGRESQL,
+        MARIADB,
+        SQLITE,
+        SQL_SERVER,
+        ORACLE,
+        UNKNOWN
+    }
+
+    private DatabaseType databaseType() {
+        try {
+            String product = connection.getMetaData().getDatabaseProductName().toLowerCase();
+
+            if (product.contains("mysql")) {
+                return DatabaseType.MYSQL;
+            }
+
+            if (product.contains("mariadb")) {
+                return DatabaseType.MARIADB;
+            }
+
+            if (product.contains("postgres")) {
+                return DatabaseType.POSTGRESQL;
+            }
+
+            if (product.contains("sqlite")) {
+                return DatabaseType.SQLITE;
+            }
+
+            if (product.contains("sql server") || product.contains("microsoft")) {
+                return DatabaseType.SQL_SERVER;
+            }
+
+            if (product.contains("oracle")) {
+                return DatabaseType.ORACLE;
+            }
+
+            return DatabaseType.UNKNOWN;
+
+        } catch (Exception e) {
+            return DatabaseType.UNKNOWN;
+        }
     }
 }

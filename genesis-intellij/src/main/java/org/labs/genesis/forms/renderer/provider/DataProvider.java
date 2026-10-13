@@ -54,7 +54,7 @@ public class DataProvider {
                         commonPlan
                 );
 
-        Result<?> result = query.fetch();
+        Result<?> result = executeDashboardQuery(connection, dsl, query, commonPlan, item.name);
 
         return convertMapResult(
                 result,
@@ -651,8 +651,7 @@ public class DataProvider {
                         commonPlan
                 );
 
-        Result<?> result =
-                query.fetch();
+        Result<?> result = executeDashboardQuery(connection, dsl, query, commonPlan, item.name);
 
         return convertChartResult(
                 result,
@@ -686,8 +685,7 @@ public class DataProvider {
                         commonPlan
                 );
 
-        Result<?> result =
-                query.fetch();
+        Result<?> result = executeDashboardQuery(connection, dsl, query, commonPlan, item.name);
 
         return convertTableResult(
                 result,
@@ -1179,5 +1177,111 @@ public class DataProvider {
                 )
                 .findFirst()
                 .orElse(null);
+    }
+
+    private String applyVendorLimit(Connection connection, String sql, DashboardQueryPlan plan) {
+
+        if (plan == null
+                || plan.getOptions() == null
+                || plan.getOptions().getLimit() == null
+                || plan.getOptions().getLimit() <= 0) {
+            return sql;
+        }
+
+        int limit = plan.getOptions().getLimit();
+        try {
+            String product = connection
+                            .getMetaData()
+                            .getDatabaseProductName()
+                            .toLowerCase();
+
+            if (product.contains("sql server") || product.contains("microsoft")) {
+                return sql.replaceFirst(
+                        "(?i)^\\s*select\\s+",
+                        "select top "
+                                + limit
+                                + " "
+                );
+            }
+            if (product.contains("oracle")) {
+                return sql
+                        + " fetch first "
+                        + limit
+                        + " rows only";
+            }
+
+        } catch (Exception e) {
+
+            throw new IllegalStateException(
+                    "Unable to apply dashboard limit",
+                    e
+            );
+        }
+
+        return sql;
+    }
+
+    private Result<?> executeDashboardQuery(Connection connection, DSLContext dsl, Select<?> query, DashboardQueryPlan plan, String visualizationName) {
+        String sql = renderDashboardSql(dsl, query);
+        sql = applyVendorLimit(connection, sql, plan);
+        logDashboardQuery(visualizationName, sql);
+        if (requiresVendorLimit(connection, plan)) {
+            return dsl.fetch(sql);
+        }
+        return query.fetch();
+    }
+
+    private String renderDashboardSql(DSLContext dsl, Select<?> query) {
+        DSLContext formattedDsl =
+                DSL.using(
+                        dsl.configuration()
+                                .derive(new org.jooq.conf.Settings().withRenderFormatted(true))
+                );
+        return formattedDsl.renderInlined(query);
+    }
+
+    private boolean requiresVendorLimit(Connection connection, DashboardQueryPlan plan) {
+
+        if (plan == null
+                || plan.getOptions() == null
+                || plan.getOptions().getLimit() == null
+                || plan.getOptions().getLimit() <= 0) {
+            return false;
+        }
+        try {
+            String product = connection
+                            .getMetaData()
+                            .getDatabaseProductName()
+                            .toLowerCase();
+
+            return product.contains("sql server")
+                    || product.contains("microsoft")
+                    || product.contains("oracle");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void logDashboardQuery(String visualizationName, String sql) {
+        System.out.println();
+        System.out.println(
+                "============================================================"
+        );
+        System.out.println(
+                "[Dashboard] "
+                        + visualizationName
+        );
+
+        System.out.println(
+                "------------------------------------------------------------"
+        );
+
+        System.out.println(sql);
+
+        System.out.println(
+                "============================================================"
+        );
+
+        System.out.println();
     }
 }

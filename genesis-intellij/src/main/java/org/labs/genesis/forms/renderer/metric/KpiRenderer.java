@@ -7,6 +7,7 @@ import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.NumberFormat;
 
 public class KpiRenderer implements VisualizationRenderer {
 
@@ -89,24 +90,38 @@ public class KpiRenderer implements VisualizationRenderer {
 
         double value = values[0];
 
-        valueLabel.setText(
-                formatValue(value)
-        );
+        String prefix = config.getString("valuePrefix", "");
+        String suffix = config.getString("valueSuffix", "");
+        int decimals = getDecimals(config);
+
+        valueLabel.setText(formatValue(value, prefix, suffix, decimals));
     }
 
-    private String formatValue(double value) {
+    private String formatValue(double value, String prefix, String suffix, int decimals) {
+        NumberFormat formatter = NumberFormat.getNumberInstance();
+        formatter.setMinimumFractionDigits(decimals);
+        formatter.setMaximumFractionDigits(decimals);
+        String formatted = formatter.format(value);
+        return prefix + formatted + suffix;
+    }
 
-        if (value == Math.rint(value)) {
-            return String.format(
-                    "%,.0f",
-                    value
-            );
+    private int getDecimals(VisualizationConfig config) {
+
+        Object value = config.getValue("decimals");
+
+        if (value instanceof Number number) {
+            return Math.max(0, number.intValue());
         }
 
-        return String.format(
-                "%,.2f",
-                value
-        );
+        if (value != null) {
+            try {
+                return Math.max(0, Integer.parseInt(value.toString()));
+            } catch (NumberFormatException ignored) {
+                // valeur par défaut
+            }
+        }
+
+        return 0;
     }
 
     @Override

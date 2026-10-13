@@ -83,18 +83,6 @@ public final class DashboardVisualizationMapper {
         return source.equals(table) || source.endsWith("." + table);
     }
 
-    private static void mapSort(DashboardVisualComponent component, DashboardVisualization result) {
-        Object columnValue = component.getConfig().getValue("sortColumn");
-        if (columnValue == null || columnValue.toString().isBlank()) {
-            return;
-        }
-        String directionValue = component.getConfig().getString("sortDirection", "ASC");
-        DashboardSortDirection direction = "DESC".equalsIgnoreCase(directionValue) ? DashboardSortDirection.DESC : DashboardSortDirection.ASC;
-        result.getQueryOptions()
-                .getSorts()
-                .add(new DashboardSort(columnValue.toString(), direction));
-    }
-
     private static DashboardFilter mapCondition(VisualizationFilterCondition condition) {
         if (condition == null || condition.getColumn() == null || condition.getColumn().isBlank()) {
             return null;

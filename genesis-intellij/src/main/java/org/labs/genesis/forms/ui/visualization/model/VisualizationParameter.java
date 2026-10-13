@@ -163,14 +163,6 @@ public class VisualizationParameter {
         );
     }
 
-    public static VisualizationParameter sort(
-            String key,
-            String label,
-            boolean required
-    ) {
-        return ordering(key, label, required);
-    }
-
     public static VisualizationParameter columns(
             String key,
             String label,
@@ -188,14 +180,6 @@ public class VisualizationParameter {
 
     public boolean isColumns() {
         return role == QueryRole.COLUMNS;
-    }
-
-    public static VisualizationParameter condition(
-            String key,
-            String label,
-            boolean required
-    ) {
-        return filter(key, label, required);
     }
 
     // -------------------------------------------------------------------------
@@ -344,69 +328,6 @@ public class VisualizationParameter {
         );
     }
 
-    /**
-     * Paramètre utilisé comme limite.
-     *
-     * Exemple :
-     *
-     *     LIMIT 10
-     */
-    public static VisualizationParameter limit(
-            String key,
-            String label,
-            boolean required
-    ) {
-        return new VisualizationParameter(
-                key,
-                label,
-                VisualizationParameterType.NUMBER,
-                required,
-                QueryRole.LIMIT
-        );
-    }
-
-    /**
-     * Paramètre utilisé pour le tri.
-     *
-     * Le sens du tri est déterminé par le mode :
-     *
-     *     ASCENDING
-     *     DESCENDING
-     */
-    public static VisualizationParameter ordering(
-            String key,
-            String label,
-            boolean required
-    ) {
-        return new VisualizationParameter(
-                key,
-                label,
-                VisualizationParameterType.SORT,
-                required,
-                QueryRole.SORT
-        );
-    }
-
-    /**
-     * Paramètre utilisé comme filtre.
-     *
-     * Exemple :
-     *
-     *     status = 'ACTIVE'
-     */
-    public static VisualizationParameter filter(
-            String key,
-            String label,
-            boolean required
-    ) {
-        return new VisualizationParameter(
-                key,
-                label,
-                VisualizationParameterType.CONDITION,
-                required,
-                QueryRole.FILTER
-        );
-    }
 
     /**
      * Paramètre latitude.
@@ -492,26 +413,6 @@ public class VisualizationParameter {
         return role == QueryRole.VALUE;
     }
 
-    public boolean isLimit() {
-        return role == QueryRole.LIMIT;
-    }
-
-    public boolean isSort() {
-        return role == QueryRole.SORT;
-    }
-
-    public boolean isFilter() {
-        return role == QueryRole.FILTER;
-    }
-
-    public boolean isLatitude() {
-        return role == QueryRole.LATITUDE;
-    }
-
-    public boolean isLongitude() {
-        return role == QueryRole.LONGITUDE;
-    }
-
     // -------------------------------------------------------------------------
     // Value / mode
     // -------------------------------------------------------------------------
@@ -542,28 +443,5 @@ public class VisualizationParameter {
     public boolean isFormulaMode() {
         return "FORMULA".equals(mode);
     }
-
-    public boolean isAscendingMode() {
-        return "ASCENDING".equals(mode);
-    }
-
-    public boolean isDescendingMode() {
-        return "DESCENDING".equals(mode);
-    }
-
-    public void setColumnMode() {
-        setMode("COLUMN", true);
-    }
-
-    public void setFormulaMode() {
-        setMode("FORMULA", true);
-    }
-
-    public void setAscendingMode() {
-        setMode("ASCENDING", true);
-    }
-
-    public void setDescendingMode() {
-        setMode("DESCENDING", true);
-    }
+    
 }

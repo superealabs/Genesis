@@ -14,9 +14,7 @@ import org.labs.genesis.dashboard.query.DashboardQueryPlan;
 import org.labs.genesis.dashboard.query.DashboardQuerySelection;
 import org.labs.genesis.dashboard.query.DashboardStatisticExpression;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public final class SpringMvcDashboardQueryRenderer {
 
@@ -240,9 +238,136 @@ public final class SpringMvcDashboardQueryRenderer {
         }
     }
 
-    private static FilterSql renderFilters(DashboardQueryPlan plan, String defaultTable, List<Object> parameters) {
+    private static final Map<String, String> COMPARATORS = Map.ofEntries(
+            Map.entry(">", ">"), Map.entry("greater than", ">"), Map.entry("gt", ">"), Map.entry("after", ">"),
+            Map.entry(">=", ">="), Map.entry("greater than or equal", ">="), Map.entry("gte", ">="), Map.entry("at least", ">="),
+            Map.entry("<", "<"), Map.entry("less than", "<"), Map.entry("lt", "<"), Map.entry("before", "<"),
+            Map.entry("<=", "<="), Map.entry("less than or equal", "<="), Map.entry("lte", "<="), Map.entry("at most", "<="));
+
+    private static FilterSql renderFilters(DashboardQueryPlan plan, String table, List<Object> params) {
+        var options = plan.getOptions();
+        if (options == null || options.getFilters() == null || options.getFilters().isEmpty()) return FilterSql.empty();
+        return renderNodes(options.getFilters(), null, plan, table, params);
+    }
+
+    /** forced == null : on utilise relationToPrevious de chaque noeud (niveau racine) ; sinon l'operateur du groupe. */
+    private static FilterSql renderNodes(List<DashboardFilterNode> nodes, DashboardLogicalOperator forced, DashboardQueryPlan plan, String table, List<Object> params) {
+        String where = "", having = "";
+        for (DashboardFilterNode node : nodes) {
+            FilterSql r = renderNode(node, plan, table, params);
+            boolean w = !r.where().isBlank(), h = !r.having().isBlank();
+            DashboardLogicalOperator op = forced != null ? forced : relationToPrevious(node);
+
+            if (op == DashboardLogicalOperator.OR && ((w && !having.isBlank()) || (h && !where.isBlank()) || (w && h && forced != null))) {
+                throw new IllegalArgumentException("OR groups cannot mix aggregated and non-aggregated filters");
+            }
+            where = combine(where, r.where(), op);
+            having = combine(having, r.having(), op);
+        }
+        return new FilterSql(where, having);
+    }
+
+    private static FilterSql renderNode(DashboardFilterNode node, DashboardQueryPlan plan, String table, List<Object> params) {
+        if (node instanceof DashboardFilter f) return renderFilter(f, plan, table, params);
+        if (node instanceof DashboardFilterGroup g && g.getChildren() != null && !g.getChildren().isEmpty()) {
+            var op = g.getOperator() == DashboardLogicalOperator.OR ? DashboardLogicalOperator.OR : DashboardLogicalOperator.AND;
+            FilterSql r = renderNodes(g.getChildren(), op, plan, table, params);
+            return new FilterSql(parenthesize(r.where()), parenthesize(r.having()));
+        }
         return FilterSql.empty();
     }
+
+    private static FilterSql renderFilter(DashboardFilter f, DashboardQueryPlan plan, String table, List<Object> params) {
+        if (f.getColumnName() == null || f.getColumnName().isBlank()) return FilterSql.empty();
+
+        DashboardQuerySelection sel = findSelection(plan, f.getColumnName());
+        String field = sel != null && sel.getStatisticExpression() != null
+                ? renderStatistic(sel.getStatisticExpression(), table)
+                : qualify(sel != null ? sel.getColumnName() : f.getColumnName(), table);
+
+        String condition = renderCondition(field, f.getOperator(), f.getValue(), params);
+        if (condition == null || condition.isBlank()) return FilterSql.empty();
+
+        return sel != null && sel.isAggregated() ? new FilterSql("", condition) : new FilterSql(condition, "");
+    }
+
+    private static DashboardQuerySelection findSelection(DashboardQueryPlan plan, String target) {
+        return plan.getSelections().stream()
+                .filter(s -> s != null && (target.equalsIgnoreCase(s.getAlias()) || target.equalsIgnoreCase(s.getColumnName())))
+                .findFirst().orElse(null);
+    }
+
+    private static String renderCondition(String field, String operatorRaw, Object value, List<Object> params) {
+        String op = operatorRaw == null ? "is" : operatorRaw.trim().toLowerCase(Locale.ROOT).replace('_', ' ').replaceAll("\\s+", " ");
+        String v = value == null ? null : value.toString();
+
+        String comparator = COMPARATORS.get(op);
+        if (comparator != null) return renderComparison(field, comparator, v, params);
+
+        return switch (op) {
+            case "is not", "!=", "<>", "not equals", "ne" -> renderEquals(field, v, true, params);
+            case "contains", "like" -> renderLike(field, v, "%", "%", false, params);
+            case "doesn't contain", "does not contain", "not contains", "not like" -> renderLike(field, v, "%", "%", true, params);
+            case "starts with", "startswith" -> renderLike(field, v, "", "%", false, params);
+            case "ends with", "endswith" -> renderLike(field, v, "%", "", false, params);
+            case "is empty" -> "(" + field + " IS NULL OR " + field + " = '')";
+            case "is not empty" -> "(" + field + " IS NOT NULL AND " + field + " <> '')";
+            case "between" -> renderBetween(field, v, params);
+            case "in", "is one of", "one of" -> renderIn(field, v, false, params);
+            case "not in", "is not one of" -> renderIn(field, v, true, params);
+            default -> renderEquals(field, v, false, params); // "is", "=", "equals", "eq" et inconnus
+        };
+    }
+
+    private static String addParameter(Object value, List<Object> params) {
+        params.add(value);
+        return "?" + params.size();
+    }
+
+    private static String renderEquals(String field, String value, boolean negate, List<Object> params) {
+        if (value == null || value.isBlank()) return field + (negate ? " IS NOT NULL" : " IS NULL");
+        return field + (negate ? " <> " : " = ") + addParameter(value, params);
+    }
+
+    private static String renderLike(String field, String value, String prefix, String suffix, boolean negate, List<Object> params) {
+        return value == null ? null : field + (negate ? " NOT LIKE " : " LIKE ") + addParameter(prefix + value + suffix, params);
+    }
+
+    private static String renderComparison(String field, String operator, String value, List<Object> params) {
+        return value == null || value.isBlank() ? null : field + " " + operator + " " + addParameter(value, params);
+    }
+
+    private static String renderBetween(String field, String value, List<Object> params) {
+        if (value == null || value.isBlank()) return null;
+        String[] p = value.contains("..") ? value.split("\\.\\.", 2) : value.split(",", 2);
+        if (p.length != 2) return null;
+        return field + " BETWEEN " + addParameter(p[0].trim(), params) + " AND " + addParameter(p[1].trim(), params);
+    }
+
+    private static String renderIn(String field, String value, boolean negate, List<Object> params) {
+        if (value == null || value.isBlank()) return null;
+        List<String> placeholders = Arrays.stream(value.split(","))
+                .map(String::trim).filter(s -> !s.isEmpty())
+                .map(s -> addParameter(s, params)).toList();
+        return placeholders.isEmpty() ? null : field + (negate ? " NOT IN (" : " IN (") + String.join(", ", placeholders) + ")";
+    }
+
+    private static String combine(String current, String next, DashboardLogicalOperator op) {
+        if (next == null || next.isBlank()) return current;
+        if (current == null || current.isBlank()) return next;
+        return "(" + current + ") " + (op == DashboardLogicalOperator.OR ? "OR" : "AND") + " " + next;
+    }
+
+    private static String parenthesize(String sql) {
+        return sql == null || sql.isBlank() ? "" : "(" + sql + ")";
+    }
+
+    private static DashboardLogicalOperator relationToPrevious(DashboardFilterNode node) {
+        DashboardLogicalOperator op = node instanceof DashboardFilter f ? f.getRelationToPrevious()
+                : node instanceof DashboardFilterGroup g ? g.getRelationToPrevious() : null;
+        return op == null ? DashboardLogicalOperator.AND : op;
+    }
+
 
     private static String qualify(String column, String defaultTable) {
         if (column == null || column.isBlank()) {

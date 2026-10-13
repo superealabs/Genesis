@@ -247,7 +247,7 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
         for (double v = 0; v <= upperBound + 0.001; v += tickUnit) {
             double ratio = v / upperBound;
             int y = chartY + chartHeight - (int) Math.round(ratio * chartHeight);
-            String label = formatNumber(v);
+            String label = formatConfiguredValue(v);
             int tx = chartX - fm.stringWidth(label) - 7;
             int baseline = y + (fm.getAscent() - fm.getDescent()) / 2;
             g.setColor(MUTED_COLOR);
@@ -300,7 +300,7 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
 
         int maxWidth = 0;
         for (double v = 0; v <= upperBound + 0.001; v += tickUnit) {
-            String text = formatNumber(v);
+            String text = formatConfiguredValue(v);
             maxWidth = Math.max(maxWidth, fm.stringWidth(text));
         }
         return maxWidth + 12;
@@ -371,21 +371,6 @@ public class VerticalBarChartRenderer extends AbstractChartRenderer {
         else niceStep = 10.0;
 
         return niceStep * magnitude;
-    }
-
-    private String formatNumber(double value) {
-        if (value == (long) value) {
-            long longValue = (long) value;
-            if (longValue >= 1_000_000_000) {
-                return String.format("%.1fB", longValue / 1_000_000_000.0);
-            } else if (longValue >= 1_000_000) {
-                return String.format("%.1fM", longValue / 1_000_000.0);
-            } else if (longValue >= 1_000) {
-                return String.format("%.1fK", longValue / 1_000.0);
-            }
-            return Long.toString(longValue);
-        }
-        return String.format(java.util.Locale.US, "%.1f", value);
     }
 
     // =========================== INNER CLASSES ===========================
