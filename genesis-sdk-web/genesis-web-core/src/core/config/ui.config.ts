@@ -106,7 +106,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     icon: '[&_svg]:!w-5 [&_svg]:!h-5',
     rightIcon: '[&_.right-part_svg]:!w-4 [&_.right-part_svg]:!h-4',
     px: 'px-4',
-    pxWithRight: 'px-3',
+    pxWithRight: 'px-2',
     pl: 'pl-4',
     pr: 'pr-4',
     slotPx: 'px-2.5',
@@ -122,7 +122,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pxWithRight: 'px-4',
     pl: 'pl-5',
     pr: 'pr-5',
-    slotPx: 'px-3',
+    slotPx: 'px-2',
     gap: 'gap-2.5',
   },
   xl: {
@@ -135,7 +135,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pxWithRight: 'px-5',
     pl: 'pl-6',
     pr: 'pr-6',
-    slotPx: 'px-3.5',
+    slotPx: 'px-3',
     gap: 'gap-3',
   },
   '2xl': {
@@ -148,7 +148,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pxWithRight: 'px-6',
     pl: 'pl-7',
     pr: 'pr-7',
-    slotPx: 'px-4',
+    slotPx: 'px-3',
     gap: 'gap-3',
   },
 };
