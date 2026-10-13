@@ -7,7 +7,7 @@ import type {
     ProjectConfig,
     DatabaseConfig,
     ScriptConfig,
-    TableSelectionConfig,
+    GenerationParameter,
     LlmModelDto,
     AiPromptPayload,
     AiResponseDto,
@@ -198,13 +198,13 @@ export class VsCodeGeneratorService implements IGeneratorService {
         }
     }
 
-    async saveTableSelection(config: TableSelectionConfig): Promise<{ success: boolean; message: string }> {
+    async saveGenerationParameters(params: GenerationParameter[]): Promise<{ success: boolean; message: string }> {
         try {
-            logger.log(LOG_CHANNEL, `💾 Sauvegarde de la sélection des tables/vues`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/table-selection', config);
+            logger.log(LOG_CHANNEL, `💾 Sauvegarde des paramètres de génération (${params.length} profils)`);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/generation-parameters', params);
             return data;
         } catch (error) {
-            logger.log(LOG_CHANNEL, `❌ saveTableSelection API échouée: ${(error as Error).message}`);
+            logger.log(LOG_CHANNEL, `❌ saveGenerationParameters API échouée: ${(error as Error).message}`);
             throw error;
         }
     }

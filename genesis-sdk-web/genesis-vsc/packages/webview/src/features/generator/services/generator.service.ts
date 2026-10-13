@@ -6,7 +6,7 @@ import type {
     ProjectConfig,
     DatabaseConfig,
     ScriptConfig,
-    TableSelectionConfig,
+    GenerationParameter,
     LlmModelDto,
     AiPromptPayload,
     AiResponseDto,
@@ -148,16 +148,16 @@ export class GeneratorServiceVsc implements IGeneratorService {
         });
     }
 
-    saveTableSelection(config: TableSelectionConfig): Promise<{ success: boolean; message: string }> {
+    saveGenerationParameters(params: GenerationParameter[]): Promise<{ success: boolean; message: string }> {
         return new Promise((resolve, reject) => {
-            this.vscode.sendMessage('SAVE_TABLE_SELECTION', { config });
+            this.vscode.sendMessage('SAVE_GENERATION_PARAMETERS', { params });
             
-            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>('TABLE_SELECTION_SAVED', (data) => {
+            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>('GENERATION_PARAMETERS_SAVED', (data) => {
                 cleanup(); resolve(data);
             });
 
             const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
-                if (data.command === 'SAVE_TABLE_SELECTION') {
+                if (data.command === 'SAVE_GENERATION_PARAMETERS') {
                     cleanup(); errorCleanup();
                     reject(new Error(data.message));
                 }

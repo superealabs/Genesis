@@ -10,12 +10,13 @@ import type {
   ProjectConfig, 
   DatabaseConfig, 
   ScriptConfig, 
-  ComponentType, 
   TableMetadataDto, 
   RelationParameter,  
   FrontendLayoutConfig, 
-  GitConfiguration, 
-  DatabaseEngineDto
+  GitConfiguration,
+  DatabaseEngineDto,
+  GenerationAssociatedToConfig,
+  ComponentType
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -49,6 +50,12 @@ export const useGeneratorStore = defineStore('generator', () => {
   const availableTables = ref<TableMetadataDto[]>([]);
   const tablesParents = ref<TableMetadataDto[]>([]);
   const tablesChilds = ref<TableMetadataDto[]>([]);
+
+  const generationAssociations = ref<GenerationAssociatedToConfig[]>([]);
+  const selectedItemsInList = ref<string[]>([]);
+  const generationProfiles = ref<{ id: string | number; name: string; components: ComponentType[] }[]>([]);
+
+
 
   // Domaine : Étape 7 - Relations
   const relations = ref<RelationParameter[]>([]);
@@ -95,6 +102,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     pendingFramework.value = null;
     pendingDatabaseEngine.value = null;
     pendingFrontendFramework.value = null;
+    generationAssociations.value = [];
   }
 
   // --- Étape 1 : Framework ---
@@ -159,23 +167,80 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setAvailableTables(data: TableMetadataDto[]) { availableTables.value = data; }
   function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
   function setTablesChilds(data: TableMetadataDto[]) { tablesChilds.value = data; }
-  
-  function toggleTable(tableName: string) {
-    const list = stepperData.value.tableSelection.selectedTables;
-    const idx = list.indexOf(tableName);
-    idx === -1 ? list.push(tableName) : list.splice(idx, 1);
+  function setGenerationProfiles(profiles: { id: string | number; name: string; components: ComponentType[] }[]) {
+    generationProfiles.value = profiles;
+  }
+
+
+  function assignTableToConfig(configId: string | number, tableName: string, isView: boolean) {
+    // 1. RETIRER la table/vue de TOUTES les configurations existantes (garantit l'unicité)
+    generationAssociations.value.forEach(assoc => {
+      if (isView) {
+        const viewIndex = assoc.associatedViews.indexOf(tableName);
+        if (viewIndex !== -1) {
+          assoc.associatedViews.splice(viewIndex, 1);
+        }
+      } else {
+        const tableIndex = assoc.associatedTables.indexOf(tableName);
+        if (tableIndex !== -1) {
+          assoc.associatedTables.splice(tableIndex, 1);
+        }
+      }
+    });
+
+    // (Optionnel mais recommandé) Nettoyer les objets de configuration devenus vides
+    generationAssociations.value = generationAssociations.value.filter(
+      assoc => assoc.associatedTables.length > 0 || assoc.associatedViews.length > 0
+    );
+
+    // 2. AJOUTER la table/vue à la NOUVELLE configuration cible
+    let targetAssoc = generationAssociations.value.find(a => a.configId === configId);
+    if (!targetAssoc) {
+      targetAssoc = { configId, associatedTables: [], associatedViews: [] };
+      generationAssociations.value.push(targetAssoc);
+    }
+
+    if (isView) {
+      if (!targetAssoc.associatedViews.includes(tableName)) {
+        targetAssoc.associatedViews.push(tableName);
+      }
+    } else {
+      if (!targetAssoc.associatedTables.includes(tableName)) {
+        targetAssoc.associatedTables.push(tableName);
+      }
+    }
+  }
+
+  function removeTableFromConfig(_configId: string | number, tableName: string, isView: boolean) {
+    // 1. Retirer la table/vue de TOUTES les associations existantes
+    generationAssociations.value.forEach(assoc => {
+      if (isView) {
+        assoc.associatedViews = assoc.associatedViews.filter(t => t !== tableName);
+      } else {
+        assoc.associatedTables = assoc.associatedTables.filter(t => t !== tableName);
+      }
+    });
+
+    // 2. Nettoyer les objets de configuration devenus vides (bonne pratique pour garder un état propre)
+    generationAssociations.value = generationAssociations.value.filter(
+      assoc => assoc.associatedTables.length > 0 || assoc.associatedViews.length > 0
+    );
+  }
+
+  function isTableAssignedToConfig(configId: string | number, tableName: string, isView: boolean): boolean {
+    const assoc = generationAssociations.value.find(a => a.configId === configId);
+    if (!assoc) return false;
+    return isView ? assoc.associatedViews.includes(tableName) : assoc.associatedTables.includes(tableName);
+  }
+
+  function toggleItemInList(tableName: string) {
+    const idx = selectedItemsInList.value.indexOf(tableName);
+    if (idx === -1) selectedItemsInList.value.push(tableName);
+    else selectedItemsInList.value.splice(idx, 1);
   }
   
-  function toggleView(viewName: string) {
-    const list = stepperData.value.tableSelection.selectedViews;
-    const idx = list.indexOf(viewName);
-    idx === -1 ? list.push(viewName) : list.splice(idx, 1);
-  }
-  
-  function toggleComponent(component: ComponentType) {
-    const list = stepperData.value.tableSelection.selectedComponents;
-    const idx = list.indexOf(component);
-    idx === -1 ? list.push(component) : list.splice(idx, 1);
+  function clearSelectedItemsInList() {
+    selectedItemsInList.value = [];
   }
 
   // --- Étape 7 : Relations ---
@@ -286,10 +351,18 @@ export const useGeneratorStore = defineStore('generator', () => {
     updateScript,
 
     // Étape 6 : Tables, Vues & Composants
+    generationProfiles,
+    setGenerationProfiles,
     availableTables, tables, views, getAvailableTables, getAvailableViews,
     getTablesParents, getTablesChilds,
     setAvailableTables, setTablesParents, setTablesChilds,
-    toggleTable, toggleView, toggleComponent,
+    assignTableToConfig,
+    removeTableFromConfig,
+    isTableAssignedToConfig,
+    selectedItemsInList,
+    toggleItemInList,
+    clearSelectedItemsInList,
+    generationAssociations,
 
     // Étape 7 : Relations
     relations, getRelations, setRelations, addRelation, removeRelation,

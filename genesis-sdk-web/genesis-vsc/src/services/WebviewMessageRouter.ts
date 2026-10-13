@@ -111,8 +111,8 @@ export class WebviewMessageRouter {
                 case 'GET_RELATION_PARAMETERS':
                     await this.generatorHandler.handleGetRelations(message.payload, this.panel);
                     break;
-                case 'SAVE_TABLE_SELECTION':
-                    await this.generatorHandler.handleSaveTableSelection(message.payload, this.panel);
+                case 'SAVE_GENERATION_PARAMETERS':
+                    await this.generatorHandler.handleSaveGenerationParameters(message.payload, this.panel);
                     break;
                 case 'SAVE_RELATION_PARAMETERS':
                     await this.generatorHandler.handleSaveRelationParameters(message.payload, this.panel);

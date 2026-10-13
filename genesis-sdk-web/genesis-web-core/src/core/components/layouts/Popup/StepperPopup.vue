@@ -35,7 +35,7 @@
                         :class="{
                             'w-6 bg-primary': step === currentStep,
                             'w-2 bg-primary/40': step < currentStep,
-                            'w-2 bg-neutral-light-genesis': step > currentStep
+                            'w-2 bg-bg-neutral-genesis': step > currentStep
                         }"
                     />
                 </div>

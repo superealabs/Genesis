@@ -5,7 +5,7 @@ import type {
     ProjectConfig,
     DatabaseConfig,
     ScriptConfig,
-    TableSelectionConfig,
+    GenerationParameter,
     AiPromptPayload,
     FrontendLayoutConfig,
     GitConfiguration,
@@ -132,12 +132,12 @@ export class GeneratorHandler {
         }
     }
 
-    async handleSaveTableSelection(payload: { config: TableSelectionConfig }, panel: vscode.WebviewPanel): Promise<void> {
+    async handleSaveGenerationParameters(payload: { params: GenerationParameter[] }, panel: vscode.WebviewPanel): Promise<void> {
         try {
-            const result = await this.service.saveTableSelection(payload.config);
-            panel.webview.postMessage({ type: 'TABLE_SELECTION_SAVED', payload: result });
+            const result = await this.service.saveGenerationParameters(payload.params);
+            panel.webview.postMessage({ type: 'GENERATION_PARAMETERS_SAVED', payload: result });
         } catch (error) {
-            this.sendApiError(panel, 'SAVE_TABLE_SELECTION', error);
+            this.sendApiError(panel, 'SAVE_GENERATION_PARAMETERS', error);
         }
     }
 
