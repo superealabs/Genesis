@@ -74,23 +74,4 @@ créer ceci :
 
 
 
-Une GenerationOption:
-    - Correction de type(plusieurs configurations en une génération)
-
-
-
-
-cascade Generation Option :
-    bug, si une configuration a auparavant un Controller et qu'on active le cascade, les dépendances n'apparaissent pas
-
-
-
-Dépendance avec avertissement
-    mvc -> rest + frontend et inversement
-
-dépendance base : ignoré les données supplémentaires
-
-setFramework
-
-générationParameters
-
+Gestion de la logique de base de donnée.
