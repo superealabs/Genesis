@@ -75,3 +75,7 @@ créer ceci :
 
 
 Gestion de la logique de base de donnée.
+
+Créer la vue pour le résumer
+    - rajouter un écran de résumé pour chaque étape
+        les écrans de séléction ne compte pas pour un résume
