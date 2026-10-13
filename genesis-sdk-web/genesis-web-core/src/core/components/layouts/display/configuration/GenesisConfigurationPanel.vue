@@ -1,8 +1,6 @@
+<!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue -->
 <template>
     <div class="flex flex-col w-full min-w-[300px] max-w-[400px] gap-4 relative" :style="resizeStyle">
-
-        
-        <!-- ═══ EN-TÊTE : Barre de recherche ═══ -->
         <div class="relative">
             <GenesisInput
                 :modelValue="searchQuery"
@@ -18,13 +16,9 @@
             </GenesisInput>
         </div>
 
-        <!-- ═══ CONTENU : Deux colonnes ═══ -->
         <div class="flex flex-1 min-h-0 gap-4 overflow-hidden">
-            
             <div class="flex-1 flex flex-col min-h-0 overflow-hidden border border-bg-neutral-genesis rounded-lg relative">
                 <div class="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
-                    
-                    <!-- Dans le template, mettre à jour l'écouteur @rename -->
                     <GenesisItemConfig
                         v-for="config in filteredConfigs"
                         :key="config.id"
@@ -32,6 +26,7 @@
                         :is-hidden="config.isHidden"
                         :is-selected="selectedConfigId === config.id"
                         :show-delete="false" 
+                        :readonly="readonly"
                         @select="handleSelect(config.id)"
                         @rename="(newName) => $emit('rename', config.id, newName)" 
                         @edit="$emit('edit', config.id)"
@@ -43,58 +38,24 @@
                         <span>Aucune configuration trouvée.</span>
                     </div>
                 </div>
-
-                <!-- Handle déplacé ICI, à l'intérieur de la colonne gauche -->
                 <GenesisResizeHandle @resize-start="startResizeBottom" />
             </div>
 
-            <!-- COLONNE DROITE : Boutons de configuration (Exclusivement GenesisButtonIcon) -->
-            <div class="flex flex-col gap-2 flex-shrink-0 justify-between pt-1">
-                
-                <!-- Groupe 1 : Gestion (Ajout / Suppression) -->
+            <!-- ✅ Masqué en mode readonly -->
+            <div v-if="!readonly" class="flex flex-col gap-2 flex-shrink-0 justify-between pt-1">
                 <div class="flex flex-col gap-2">
-                    <GenesisButtonIcon 
-                        size="lg" 
-                        title="Ajouter une configuration"
-                        variant="secondary"
-                        @click="handleAdd"
-                    >
+                    <GenesisButtonIcon size="lg" title="Ajouter une configuration" variant="secondary" @click="handleAdd">
                         <IconPlus />
                     </GenesisButtonIcon>
-
-                    <GenesisButtonIcon 
-                        size="lg" 
-                        title="Supprimer la configuration sélectionnée"
-                        :disabled="!selectedConfigId"
-                        class="disabled:opacity-50 disabled:cursor-not-allowed"
-                        @click="handleDelete"
-                    >
+                    <GenesisButtonIcon size="lg" title="Supprimer la configuration sélectionnée" :disabled="!selectedConfigId" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleDelete">
                         <IconTrashAlt />
                     </GenesisButtonIcon>
                 </div>
-
-                <!-- Séparateur -->
-
-
                 <div class="flex flex-col gap-2">
-                    <!-- Groupe 2 : Navigation (Réordonnancement) -->
-                    <GenesisButtonIcon 
-                        size="lg" 
-                        title="Monter la configuration"
-                        :disabled="!canMoveUp"
-                        class="disabled:opacity-50 disabled:cursor-not-allowed"
-                        @click="handleMoveUp"
-                    >
+                    <GenesisButtonIcon size="lg" title="Monter la configuration" :disabled="!canMoveUp" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleMoveUp">
                         <IconChevronUp />
                     </GenesisButtonIcon>
-
-                    <GenesisButtonIcon 
-                        size="lg" 
-                        title="Descendre la configuration"
-                        :disabled="!canMoveDown"
-                        class="disabled:opacity-50 disabled:cursor-not-allowed"
-                        @click="handleMoveDown"
-                    >
+                    <GenesisButtonIcon size="lg" title="Descendre la configuration" :disabled="!canMoveDown" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleMoveDown">
                         <IconChevronDown />
                     </GenesisButtonIcon>
                 </div>
@@ -113,21 +74,19 @@ import IconTrashAlt from '@genesis-labs/web-core/core/components/ui/icons/IconTr
 import IconChevronUp from '@genesis-labs/web-core/core/components/ui/icons/IconChevronUp.vue';
 import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
 import GenesisItemConfig from './GenesisItemConfig.vue';
-import type { ConfigurationItem } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
-
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
 import GenesisResizeHandle from '../../../ui/actions/GenesisResizeHandle.vue';
 
 const props = defineProps<{
-    configurations: ConfigurationItem[];
+    configurations: { id: string | number; name: string; isHidden?: boolean }[];
     selectedConfigId: string | number | null;
-    filteredConfigs: ConfigurationItem[];
+    filteredConfigs: { id: string | number; name: string; isHidden?: boolean }[];
     searchQuery: string;
     canMoveUp: boolean;
     canMoveDown: boolean;
+    readonly?: boolean; // ✅ AJOUTÉ
 }>();
 
-// Dans le script setup, mettre à jour defineEmits
 const emit = defineEmits<{
     'update:searchQuery': [value: string];
     add: [];
@@ -140,60 +99,24 @@ const emit = defineEmits<{
     selectConfiguration: [id: string | number];
 }>();
 
-// ═══ HANDLERS POUR RELIER LE TEMPLATE AUX EMITS ═══
-
-function handleSelect(id: string | number) {
-    emit('selectConfiguration', id);
-}
-
-function handleToggleVisibility(id: string | number) {
-    emit('toggleVisibility', id);
-}
-
-function handleAdd() {
-    emit('add');
-}
-
-function handleDelete() {
-    if (props.selectedConfigId !== null) {
-        emit('delete', props.selectedConfigId);
-    }
-}
-
-function handleMoveUp() {
-    if (props.selectedConfigId !== null) {
-        emit('moveUp', props.selectedConfigId);
-    }
-}
-
-function handleMoveDown() {
-    if (props.selectedConfigId !== null) {
-        emit('moveDown', props.selectedConfigId);
-    }
-}
-
-function handleSearchUpdate(value: string | number | boolean) {
-    emit('update:searchQuery', String(value));
-}
+function handleSelect(id: string | number) { emit('selectConfiguration', id); }
+function handleToggleVisibility(id: string | number) { emit('toggleVisibility', id); }
+function handleAdd() { emit('add'); }
+function handleDelete() { if (props.selectedConfigId !== null) emit('delete', props.selectedConfigId); }
+function handleMoveUp() { if (props.selectedConfigId !== null) emit('moveUp', props.selectedConfigId); }
+function handleMoveDown() { if (props.selectedConfigId !== null) emit('moveDown', props.selectedConfigId); }
+function handleSearchUpdate(value: string | number | boolean) { emit('update:searchQuery', String(value)); }
 
 const { resizeStyle, startResizeBottom } = useResizable({
-    minHeight: 250, // Hauteur minimale pour garder le panneau utilisable
-    maxHeight: () => window.innerHeight * 0.85, // Hauteur max : 85% de la fenêtre
-    resizableX: ref(false), // Désactive le redimensionnement horizontal
-    resizableY: ref(true)   // Active le redimensionnement vertical
+    minHeight: 250,
+    maxHeight: () => window.innerHeight * 0.85,
+    resizableX: ref(false),
+    resizableY: ref(true)
 });
-
 </script>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: var(--color-secondary, #cbd5e1);
-    border-radius: 3px;
-}
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: var(--color-secondary, #cbd5e1); border-radius: 3px; }
 </style>

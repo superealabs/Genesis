@@ -45,7 +45,8 @@ export type StepId =
   | 'relations'
   | 'frontend_select'
   | 'frontend_layout'
-  | 'git_config';
+  | 'git_config'
+  | 'summary';
 
 // ============================================================================
 // SOURCE DE VÉRITÉ : ORDRE DES ÉTAPES
@@ -65,7 +66,8 @@ export const WIZARD_STEP_ORDER: StepId[] = [
   'relations',
   'frontend_select',
   'frontend_layout',
-  'git_config'
+  'git_config',
+  'summary'
 ];
 
 // ============================================================================
@@ -392,6 +394,27 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       return true;
     },
     skipCascade: []
+  },
+
+  summary: {
+    onEnter: (/** store */) => {
+      console.log("[Wizard: summary] Affichage du résumé final de la configuration.");
+      // Aucune action de chargement requise ici, toutes les données sont déjà dans le store.
+      // Le composant SummaryView se chargera de les afficher via les composantes enfants.
+    },
+    
+    beforeNext: async (store) => {
+      try {
+        console.log("[Wizard: summary] Résumé validé. Prêt pour la génération finale.");
+        
+        // C'est ici que tu pourrais déclencher la génération si le wizard le gère via beforeNext,
+        // ou simplement retourner true pour permettre au composant parent de gérer le clic sur "Générer".
+        return true;
+      } catch (error) {
+        store.setWizardError(error instanceof Error ? error.message : "Échec de la validation du résumé.");
+        return false;
+      }
+    }
   }
 };
 

@@ -94,6 +94,8 @@
     <!-- ÉTAPE : CONFIGURATION GIT -->
     <GitConfigView v-else-if="currentStepId === 'git_config'" />
 
+    <SummaryView v-else-if="currentStepId === 'summary'" />
+
   </StepperPopup>
 
   <!-- POPUP D'ERREUR GLOBALE -->
@@ -120,6 +122,7 @@ import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/Err
 import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-core/features/frameworks/components/FrameworkLayout.vue';
 import DatabaseLayout, { type DatabaseLayoutProps } from '@genesis-labs/web-core/features/database/components/DatabaseLayout.vue';
 import FrontendLayout, { type FrontendLayoutProps } from '@genesis-labs/web-core/features/frontend/components/FrontendLayout.vue';
+import SummaryView from './steps/SummaryView.vue';
 
 import { 
   ProjectConfigView, DatabaseConfigView, ScriptConfigView, GenerationConfigurationAlt,
