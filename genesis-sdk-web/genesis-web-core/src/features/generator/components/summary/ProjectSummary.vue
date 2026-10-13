@@ -20,7 +20,8 @@
           
           <div class="space-y-1">
             <span class="text-xs text-muted">Langage</span>
-            <p class="text-sm font-medium text-text">{{ framework.languageId }}</p>
+            <!-- ✅ MODIFIÉ : Affiche le nom résolu au lieu de l'ID -->
+            <p class="text-sm font-medium text-text capitalize">{{ languageName }}</p>
           </div>
           
           <div class="space-y-1">
@@ -126,11 +127,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store'; // ✅ AJOUTÉ
 
 const { stepperData } = useGenerator();
+const frameworkStore = useFrameworkStore(); // ✅ AJOUTÉ
 
 const framework = computed(() => stepperData.value.framework);
 const config = computed(() => stepperData.value.config);
+
+// ✅ AJOUTÉ : Résolution du nom du langage à partir de l'ID stocké dans le framework
+const languageName = computed(() => {
+  if (!framework.value?.languageId) return 'Non spécifié';
+  
+  const lang = frameworkStore.languages.find(l => l.id === framework.value!.languageId);
+  return lang ? lang.name : 'Inconnu';
+});
 </script>
 
 <style scoped>
