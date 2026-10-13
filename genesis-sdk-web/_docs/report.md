@@ -60,22 +60,45 @@ BUG INTERFACE :
 
 
 
-- revérification des informations inséré avec GEneratorDATA
 
+Summary
+        Pour toute :             
+            - rajouter une partie image à droite
+            - modifier le curseur en pointer une fois sur une étape
+            - il faut corriger le component resizable
+            - rajouter un bouton edit qui permet de rediriger vers l'étape correspondante
 
-Créer ceci : TableSelectionConfig
-à partir de ceci :
-    - GeneratorGenerationOptionsPayload
-    - TableMetadataDto
+            - si une étape est skippé, elle ne fait pas partie du résumer
+        Conteneur
+            UI
+                - corriger la couleur des bg des step indicator non actif
+        ProjectSummary
+            UI
+                - retirez les bg, les borders, les icônes et les rounded
+                - jouer sur la hierarchie des titres des labels
 
-créer ceci :
-    - TableSelectionConfig
+        DatabaseSummary
+            - UI
+                - retirez les bg, les borders, les icônes et les rounded
 
+        GenerationSummary
+            - UI
+                - créer un component GenesisContainer, peux être resizable mais uniquement en y
+                - créer un component List qui utilise GenesisContainer pour genesis et l'utiliser sur GenerationCOnfigView et GenerationSummary
+                - afficher le profil de génération
+            - UX
+                - correction de GenesisItemConfig et de GenesisConfigurationPanel, Normalement on peut séléction même en readonly
+                - on affiche la liste des profils dans GeneratorData
 
-
-
-Gestion de la logique de base de donnée.
-
-Créer la vue pour le résumer
-    - rajouter un écran de résumé pour chaque étape
-        les écrans de séléction ne compte pas pour un résume
+                - séléction
+                    - séléctionner un profil affiche uniquement les tables et vues assignées avec
+                    - si aucune séléction, alors on affiche tout
+        RelationSummary
+            - UI
+                - retirer les borders, bg
+                - remplacer les oui non par des icônes true et false
+                - le tableau doit être resizable
+        FrontendSummary
+            - UI
+                - retirer les les borders et le bg
+                - corriger la couleur d'arrière plan
