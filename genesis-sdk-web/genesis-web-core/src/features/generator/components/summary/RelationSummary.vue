@@ -18,9 +18,8 @@
             </p>
           </div>
 
-          <!-- Barre de filtres combinés -->
+          <!-- Barre de recherche (les filtres booléens sont maintenant dans les headers) -->
           <div class="flex flex-wrap gap-3 items-end">
-            <!-- Recherche ciblée ou globale -->
             <div class="flex-1 min-w-[250px]">
               <GenesisInput
                 v-model="searchQuery"
@@ -33,24 +32,6 @@
                   <IconSearch :size="16" class="text-text-muted" />
                 </template>
               </GenesisInput>
-            </div>
-
-            <!-- Filtre Formulaire -->
-            <div class="w-48">
-              <GenesisSegmentedControl 
-                v-model="filterForm" 
-                :options="booleanOptions" 
-                size="md" 
-              />
-            </div>
-
-            <!-- Filtre Obligatoire -->
-            <div class="w-48">
-              <GenesisSegmentedControl 
-                v-model="filterMandatory" 
-                :options="booleanOptions" 
-                size="md" 
-              />
             </div>
           </div>
         </header>
@@ -66,7 +47,7 @@
             <table class="w-full text-left text-sm">
               <thead class="sticky top-0 z-10 bg-bg-secondary/20">
                 <tr>
-                  <!-- ✅ Header Parent cliquable -->
+                  <!-- Header Parent cliquable -->
                   <th 
                     class="p-4 text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group"
                     :class="searchTarget === 'parent' ? 'bg-bg-secondary text-secondary' : 'text-muted hover:text-text hover:bg-bg-secondary/50'"
@@ -76,7 +57,7 @@
                     <IconSearch v-if="searchTarget === 'parent'" class="absolute top-3 right-3 w-3.5 h-3.5" />
                   </th>
 
-                  <!-- ✅ Header Child cliquable -->
+                  <!-- Header Child cliquable -->
                   <th 
                     class="p-4 text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group"
                     :class="searchTarget === 'child' ? 'bg-bg-secondary text-secondary' : 'text-muted hover:text-text hover:bg-bg-secondary/50'"
@@ -86,8 +67,35 @@
                     <IconSearch v-if="searchTarget === 'child'" class="absolute top-3 right-3 w-3.5 h-3.5" />
                   </th>
 
-                  <th class="p-4 text-center text-xs font-semibold uppercase tracking-wider text-muted">Formulaire</th>
-                  <th class="p-4 text-center text-xs font-semibold uppercase tracking-wider text-muted">Obligatoire</th>
+                  <!-- ✅ Header Formulaire cliquable (3 états) -->
+                  <th 
+                    class="p-4 text-center text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group hover:bg-bg-secondary/50"
+                    :class="{
+                      'text-muted': filterForm === 'all',
+                      'bg-bg-secondary text-secondary': filterForm === 'yes',
+                      'bg-red-500/10 text-red-500': filterForm === 'no'
+                    }"
+                    @click="toggleFilterForm"
+                  >
+                    Formulaire
+                    <IconCheck :size="iconSize" v-if="filterForm === 'yes'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <IconX :size="iconSize" v-if="filterForm === 'no'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                  </th>
+
+                  <!-- ✅ Header Obligatoire cliquable (3 états) -->
+                  <th 
+                    class="p-4 text-center text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group hover:bg-bg-secondary/50"
+                    :class="{
+                      'text-muted': filterMandatory === 'all',
+                      'bg-bg-secondary text-secondary': filterMandatory === 'yes',
+                      'bg-red-500/10 text-red-500': filterMandatory === 'no'
+                    }"
+                    @click="toggleFilterMandatory"
+                  >
+                    Obligatoire
+                    <IconCheck :size="iconSize" v-if="filterMandatory === 'yes'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <IconX :size="iconSize" v-if="filterMandatory === 'no'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                  </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-bg-neutral-genesis">
@@ -144,7 +152,6 @@ import { useGenerator } from '@genesis-labs/web-core/features/generator/composab
 // UI Components
 import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
-import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
 import IconX from '@genesis-labs/web-core/core/components/ui/icons/IconX.vue';
 import IconCheck from '@genesis-labs/web-core/core/components/ui/icons/IconCheck.vue';
@@ -161,27 +168,34 @@ const searchQuery = ref('');
 const filterForm = ref<'all' | 'yes' | 'no'>('all');
 const filterMandatory = ref<'all' | 'yes' | 'no'>('all');
 
-// ✅ NOUVEAU : Cible de la recherche ('all', 'parent', ou 'child')
+const iconSize = 32;
+
 type SearchTarget = 'all' | 'parent' | 'child';
 const searchTarget = ref<SearchTarget>('all');
 
-const booleanOptions = [
-  { label: 'Tous', value: 'all' },
-  { label: 'Oui', value: 'yes' },
-  { label: 'Non', value: 'no' }
-];
-
-// ✅ NOUVEAU : Placeholder dynamique pour guider l'utilisateur
+// ✅ NOUVEAU : Placeholder dynamique
 const searchPlaceholder = computed(() => {
   if (searchTarget.value === 'parent') return 'Rechercher dans les tables parentes...';
   if (searchTarget.value === 'child') return 'Rechercher dans les tables filles...';
   return 'Rechercher une table (Parent ou Child)...';
 });
 
-// ✅ NOUVEAU : Fonction pour basculer la cible de recherche (ou la désactiver)
+// ✅ NOUVEAU : Fonctions de cycle pour les filtres booléens (all -> yes -> no -> all)
+const toggleFilterForm = () => {
+  if (filterForm.value === 'all') filterForm.value = 'yes';
+  else if (filterForm.value === 'yes') filterForm.value = 'no';
+  else filterForm.value = 'all';
+};
+
+const toggleFilterMandatory = () => {
+  if (filterMandatory.value === 'all') filterMandatory.value = 'yes';
+  else if (filterMandatory.value === 'yes') filterMandatory.value = 'no';
+  else filterMandatory.value = 'all';
+};
+
 const toggleSearchTarget = (target: SearchTarget) => {
   if (searchTarget.value === target) {
-    searchTarget.value = 'all'; // Désactive le filtre si on reclique sur le même header
+    searchTarget.value = 'all';
   } else {
     searchTarget.value = target;
   }
@@ -202,7 +216,6 @@ const filteredRelations = computed(() => {
       } else if (searchTarget.value === 'child') {
         matchesSearch = rel.childTable.toLowerCase().includes(query);
       } else {
-        // Comportement par défaut : cherche dans les deux
         matchesSearch = rel.parentTable.toLowerCase().includes(query) || 
                         rel.childTable.toLowerCase().includes(query);
       }
