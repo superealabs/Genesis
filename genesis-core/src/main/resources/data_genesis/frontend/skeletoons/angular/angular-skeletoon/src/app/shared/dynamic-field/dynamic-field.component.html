@@ -3,7 +3,7 @@
 
   <!-- Native and configured inputs -->
   <input
-    *ngIf="['text','number','date','time','datetime-local','range','email','phone','password','quantity','currency'].includes(field.type)"
+    *ngIf="['text','number','date','time','datetime-local','range','email','password'].includes(field.type)"
     [type]="getNativeInputType()"
     class="form-control"
     [id]="field.name"
@@ -16,6 +16,64 @@
     [attr.step]="field.step"
     [attr.pattern]="field.constraints?.pattern"
   />
+  <div *ngIf="field.type === 'phone'" class="phone-control">
+    <select
+      class="form-control phone-country"
+      [id]="field.name + '-country'"
+      [value]="phoneCountryCode"
+      [attr.aria-label]="field.label + ' country code'"
+      (change)="onPhoneCountryChange($any($event.target).value)"
+    >
+      <option *ngFor="let country of phoneCountries" [value]="country.code">
+        {{ country.name }} ({{ country.code }})
+      </option>
+    </select>
+    <input
+      type="tel"
+      class="form-control phone-number"
+      [id]="field.name"
+      [value]="phoneNumber"
+      [attr.required]="field.constraints?.required ? true : null"
+      [attr.minlength]="field.constraints?.minlength"
+      [attr.maxlength]="field.constraints?.maxlength"
+      [attr.pattern]="field.constraints?.pattern"
+      [attr.placeholder]="field.label"
+      [attr.aria-label]="field.label"
+      (input)="onPhoneNumberInput($any($event.target).value)"
+    />
+  </div>
+  <div *ngIf="field.type === 'quantity'" class="quantity-control">
+    <button type="button" class="quantity-button" [attr.aria-label]="'Decrease ' + field.label" (click)="adjustQuantity(-1)">−</button>
+    <input
+      type="number"
+      class="form-control quantity-input"
+      [id]="field.name"
+      [formControl]="getControl()"
+      [attr.required]="field.constraints?.required ? true : null"
+      [attr.min]="field.min ?? field.constraints?.min"
+      [attr.max]="field.max ?? field.constraints?.max"
+      [attr.step]="field.step ?? 1"
+    />
+    <button type="button" class="quantity-button" [attr.aria-label]="'Increase ' + field.label" (click)="adjustQuantity(1)">+</button>
+  </div>
+  <div *ngIf="field.type === 'currency'" class="currency-control">
+    <input
+      #currencyInput
+      type="text"
+      inputmode="decimal"
+      class="form-control currency-input"
+      [id]="field.name"
+      [value]="currencyDisplayValue"
+      [attr.required]="field.constraints?.required ? true : null"
+      [attr.min]="field.min ?? field.constraints?.min"
+      [attr.max]="field.max ?? field.constraints?.max"
+      [attr.placeholder]="field.label"
+      (input)="onCurrencyInput($any($event.target).value)"
+      (focus)="onCurrencyFocus(currencyInput)"
+      (blur)="onCurrencyBlur()"
+    />
+    <span *ngIf="field.currency" class="currency-code">{{ field.currency }}</span>
+  </div>
   <input
     *ngIf="field.type === 'color'"
     type="color"
@@ -24,7 +82,6 @@
     [formControl]="getControl()"
     [attr.required]="field.constraints?.required ? true : null"
   />
-  <span *ngIf="field.type === 'currency' && field.currency" class="currency-code">{{ field.currency }}</span>
   <output *ngIf="field.type === 'range'" class="range-value">{{ getControlValue() }}</output>
 
   <!-- Checkbox -->

@@ -43,6 +43,39 @@ export interface FieldConfig {
   };
 }
 
+const PHONE_COUNTRIES = [
+  { name: 'Madagascar', code: '+261' },
+  { name: 'France', code: '+33' },
+  { name: 'Reunion', code: '+262' },
+  { name: 'United States', code: '+1' },
+  { name: 'Canada', code: '+1' },
+  { name: 'United Kingdom', code: '+44' },
+  { name: 'Germany', code: '+49' },
+  { name: 'Italy', code: '+39' },
+  { name: 'Spain', code: '+34' },
+  { name: 'Belgium', code: '+32' },
+  { name: 'Switzerland', code: '+41' },
+  { name: 'India', code: '+91' },
+  { name: 'China', code: '+86' },
+  { name: 'Japan', code: '+81' },
+  { name: 'Australia', code: '+61' },
+  { name: 'South Africa', code: '+27' },
+  { name: 'Mauritius', code: '+230' },
+  { name: 'Comoros', code: '+269' },
+  { name: 'Seychelles', code: '+248' },
+  { name: 'Kenya', code: '+254' },
+  { name: 'Tanzania', code: '+255' },
+  { name: 'Uganda', code: '+256' },
+  { name: 'Rwanda', code: '+250' },
+  { name: 'Senegal', code: '+221' },
+  { name: 'Ivory Coast', code: '+225' },
+  { name: 'Cameroon', code: '+237' },
+  { name: 'Nigeria', code: '+234' },
+  { name: 'Brazil', code: '+55' },
+  { name: 'Mexico', code: '+52' },
+  { name: 'United Arab Emirates', code: '+971' }
+];
+
 @Component({
   selector: 'app-dynamic-field',
   standalone: true,
@@ -63,6 +96,11 @@ export class DynamicFieldComponent implements OnInit, OnChanges, AfterViewInit, 
   private registeredForm?: FormGroup;
   private destroyed = false;
   private registeredFieldName?: string;
+
+  readonly phoneCountries = PHONE_COUNTRIES;
+  phoneCountryCode = '+261';
+  phoneNumber = '';
+  currencyDisplayValue = '';
 
   readonly editor = ClassicEditor;
   readonly editorConfig = {
@@ -111,7 +149,7 @@ export class DynamicFieldComponent implements OnInit, OnChanges, AfterViewInit, 
     if (c.futureOrPresent) validators.push(this.futureOrPresentValidator);
     if (this.field.type === 'json-editor') validators.push(this.jsonValidator);
 
-    let value = this.initialData?.[this.field.name];
+    const value = this.initialData?.[this.field.name];
     let defaultValue: any = this.field.type === 'color' ? '#000000' : '';
 
     if (value !== undefined) {
@@ -128,6 +166,13 @@ export class DynamicFieldComponent implements OnInit, OnChanges, AfterViewInit, 
     this.form.addControl(this.field.name, new FormControl(defaultValue, validators));
     this.registeredForm = this.form;
     this.registeredFieldName = this.field.name;
+    console.log(`Registered control for field '${this.field.name}' with default value:`, defaultValue , this.field.type);
+    if (this.field.type === 'phone') {
+      this.setPhoneFromValue(defaultValue);
+    }
+    if (this.field.type === 'currency') {
+      this.currencyDisplayValue = this.formatCurrency(defaultValue);
+    }
   }
 
   ngAfterViewInit(): void {
@@ -168,9 +213,92 @@ export class DynamicFieldComponent implements OnInit, OnChanges, AfterViewInit, 
   }
 
   getNativeInputType(): string {
-    if (this.field.type === 'phone') return 'tel';
-    if (this.field.type === 'quantity' || this.field.type === 'currency') return 'number';
+    if (this.field.type === 'quantity') return 'number';
     return this.field.type;
+  }
+
+  onPhoneNumberInput(value: string): void {
+    this.phoneNumber = value.replace(/\D/g, '');
+    this.getControl().setValue(this.phoneNumber ? `${this.phoneCountryCode}${this.phoneNumber}` : '');
+  }
+
+  onPhoneCountryChange(code: string): void {
+    this.phoneCountryCode = code;
+    this.updatePhoneControl();
+  }
+
+  adjustQuantity(direction: number): void {
+    const control = this.getControl();
+    const current = Number(control.value) || 0;
+    const step = Number(this.field.step) || 1;
+    const min = this.field.min ?? this.field.constraints?.min;
+    const max = this.field.max ?? this.field.constraints?.max;
+    const next = Number((current + direction * step).toFixed(10));
+    if ((min === undefined || next >= min) && (max === undefined || next <= max)) {
+      control.setValue(next);
+      control.markAsDirty();
+      control.markAsTouched();
+    }
+  }
+
+  onCurrencyInput(value: string): void {
+    this.currencyDisplayValue = value;
+    const normalized = this.normalizeCurrency(value);
+    if (normalized === '') {
+      this.getControl().setValue('');
+      return;
+    }
+    const amount = Number(normalized);
+    this.getControl().setValue(Number.isFinite(amount) ? amount : null);
+  }
+
+  onCurrencyFocus(input: HTMLInputElement): void {
+    const value = this.getControl().value;
+    this.currencyDisplayValue = value === '' || value === null ? '' : String(value);
+    input.value = this.currencyDisplayValue;
+  }
+
+  onCurrencyBlur(): void {
+    this.currencyDisplayValue = this.formatCurrency(this.getControl().value);
+  }
+
+  private setPhoneFromValue(value: unknown): void {
+    const phone = String(value ?? '').trim();
+    const matchingCountry = this.phoneCountries
+      .filter(country => phone.startsWith(country.code))
+      .sort((first, second) => second.code.length - first.code.length)[0];
+    this.phoneCountryCode = matchingCountry?.code ?? '+261';
+    this.phoneNumber = phone.replace(/\D/g, '');
+    if (matchingCountry) {
+      this.phoneNumber = this.phoneNumber.slice(matchingCountry.code.length - 1);
+    } else if (phone.startsWith('+')) {
+      this.phoneNumber = this.phoneNumber.replace(/^\d{1,3}/, '');
+    }
+    this.updatePhoneControl();
+  }
+
+  private updatePhoneControl(): void {
+    this.getControl().setValue(this.phoneNumber ? `${this.phoneCountryCode}${this.phoneNumber}` : '');
+  }
+
+  private normalizeCurrency(value: string): string {
+    let normalized = value.replace(/[\s\u00a0\u202f]/g, '').replace(/[^\d,.-]/g, '');
+    const commaIndex = normalized.lastIndexOf(',');
+    const dotIndex = normalized.lastIndexOf('.');
+    if (commaIndex > dotIndex) {
+      normalized = normalized.replace(/\./g, '').replace(',', '.');
+    } else if (dotIndex >= 0) {
+      normalized = normalized.replace(/,/g, '');
+    }
+    return normalized;
+  }
+
+  private formatCurrency(value: unknown): string {
+    const number = Number(value);
+    if (value === '' || value === null || value === undefined || !Number.isFinite(number)) {
+      return '';
+    }
+    return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(number);
   }
 
   formatJson(pretty: boolean): void {

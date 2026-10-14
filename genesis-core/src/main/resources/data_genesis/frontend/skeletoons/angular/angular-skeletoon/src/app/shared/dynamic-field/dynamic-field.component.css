@@ -48,10 +48,58 @@ label {
   box-shadow: 0 0 5px rgba(220,53,69,0.5);
 }
 
+.phone-control,
+.quantity-control,
+.currency-control {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.phone-control,
+.quantity-control {
+  gap: 0.5rem;
+}
+
+.phone-country {
+  flex: 0 0 auto;
+  width: min(48%, 13rem);
+}
+
+.phone-number,
+.quantity-input,
+.currency-input {
+  min-width: 0;
+  flex: 1;
+}
+
+.quantity-button {
+  width: 2.75rem;
+  flex: 0 0 2.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.quantity-button:hover {
+  background: #f3f4f6;
+}
+
+.currency-control {
+  position: relative;
+}
+
+.currency-input {
+  padding-right: 4.5rem;
+}
+
 .currency-code {
   position: absolute;
-  right: 10px;
-  top: 36px;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
   color: #6b7280;
   pointer-events: none;
 }
