@@ -83,9 +83,11 @@ Summary
 
         GenerationSummary
             - UI
-                - créer un component GenesisContainer, peux être resizable mais uniquement en y
-                - créer un component List qui utilise GenesisContainer pour genesis et l'utiliser sur GenerationCOnfigView et GenerationSummary
-                - afficher le profil de génération
+                - créer un component GenesisContainerList qui utilise GenesisContainer pour lister le contenu du tableau.
+                    un item dans GenesisContainerList à la partie gauche et la partie droite(les deux sont en slots)
+                
+                - utiliser le component GenesisContainer, peux être resizable
+                - afficher le profil de génération en bas de GenesisConfigurationPanel
             - UX
                 - correction de GenesisItemConfig et de GenesisConfigurationPanel, Normalement on peut séléction même en readonly
                 - on affiche la liste des profils dans GeneratorData

@@ -256,11 +256,22 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
           // Trouver l'association correspondante
           const assoc = associations.find(a => a.configId === profile.id);
           
-          // Construire le GenerationParameter
+          const assignedTables = assoc?.associatedTables || [];
+          const assignedViews = assoc?.associatedViews || [];
+          
+          // On ignore totalement les profils qui n'ont 
+          // aucune table ou vue assignée. Cela garantit que seules les entités 
+          // explicitement liées à une configuration sont envoyées au backend.
+          if (assignedTables.length === 0 && assignedViews.length === 0) {
+            console.log(`[Wizard: tables] Profil "${profile.name}" ignoré : aucune entité assignée.`);
+            continue; // On passe au profil suivant sans l'ajouter au tableau
+          }
+          
+          // Construire le GenerationParameter uniquement avec les données assignées
           const param: GenerationParameter = {
             profileName: profile.name,
-            selectedTables: assoc?.associatedTables || [],
-            selectedViews: assoc?.associatedViews || [],
+            selectedTables: assignedTables,
+            selectedViews: assignedViews,
             selectedComponents: profile.components as ComponentType[]
           };
           
@@ -270,7 +281,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         // 3. Stocker dans stepperData pour l'envoi au backend
         store.stepperData.generationParameters = generationParameters;
         
-        console.log("[Wizard: tables] Sélection des tables validée. Profils générés :", generationParameters);
+        console.log("[Wizard: tables] Sélection validée. Seules les entités assignées sont incluses :", generationParameters);
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des tables.");

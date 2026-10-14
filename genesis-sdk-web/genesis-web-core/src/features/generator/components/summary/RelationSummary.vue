@@ -1,109 +1,230 @@
-<!-- genesis-sdk-web/genesis-web-core/src/features/generator/components/summary/RelationSummary.vue -->
 <template>
-  <main class="flex gap-4 h-full overflow-hidden">
-    
-    <!-- PARTIE GAUCHE : CONTENU PRINCIPAL (Scrollable) -->
-    <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-      
-      <div class="space-y-2">
-        <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-          <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-          </svg>
-          Résumé des Relations
-        </h3>
-        <p class="text-sm text-text-muted">
-          Aperçu des liaisons configurées entre les entités de votre base de données.
-        </p>
-      </div>
+  <!-- Image toujours à droite : rangée non repliable, colonne droite à largeur fixe (shrink-0) -->
+  <main class="flex flex-row gap-12 h-full w-full p-8">
 
-      <!-- Tableau de résumé des relations -->
-      <div class="bg-bg-secondary/30 rounded-lg border border-neutral-light overflow-hidden">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-bg-light text-text-muted uppercase text-xs font-semibold tracking-wider">
-            <tr>
-              <th class="p-4">Table Parent (Mère)</th>
-              <th class="p-4">Table Child (Fille)</th>
-              <th class="p-4 text-center">Formulaire (Form)</th>
-              <th class="p-4 text-center">Obligatoire (Mandatory)</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-neutral-light">
-            <tr 
-              v-for="(rel, index) in relations" 
-              :key="`${rel.parentTable}-${rel.childTable}-${index}`" 
-              class="hover:bg-bg-light/50 transition-colors"
-            >
-              <td class="p-4 font-medium text-text">
-                {{ rel.parentTable }}
-              </td>
-              <td class="p-4 font-medium text-text">
-                {{ rel.childTable }}
-              </td>
-              <td class="p-4 text-center">
-                <span 
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="rel.hasForm ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-500'"
+    <!-- ═══ GAUCHE : informations et listes (Scrollable indépendamment) ═══ -->
+    <div class="flex-1 min-w-0 min-h-0 overflow-y-auto custom-scrollbar flex flex-col">
+      <div class="my-auto flex flex-col gap-8 py-4">
+
+        <!-- 1. En-tête et Filtres -->
+        <header class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <span class="text-xs font-semibold uppercase tracking-widest text-muted">Relations</span>
+            <h1 class="text-4xl font-bold leading-tight text-text break-words">
+              Liaisons configurées
+            </h1>
+            <p class="text-sm text-text-muted">
+              Aperçu des liaisons parent-enfant configurées entre les entités de votre base de données.
+            </p>
+          </div>
+
+          <!-- Barre de filtres combinés -->
+          <div class="flex flex-wrap gap-3 items-end">
+            <!-- Recherche ciblée ou globale -->
+            <div class="flex-1 min-w-[250px]">
+              <GenesisInput
+                v-model="searchQuery"
+                type="text"
+                :placeholder="searchPlaceholder"
+                size="md"
+                fill-width
+              >
+                <template #left>
+                  <IconSearch :size="16" class="text-text-muted" />
+                </template>
+              </GenesisInput>
+            </div>
+
+            <!-- Filtre Formulaire -->
+            <div class="w-48">
+              <GenesisSegmentedControl 
+                v-model="filterForm" 
+                :options="booleanOptions" 
+                size="md" 
+              />
+            </div>
+
+            <!-- Filtre Obligatoire -->
+            <div class="w-48">
+              <GenesisSegmentedControl 
+                v-model="filterMandatory" 
+                :options="booleanOptions" 
+                size="md" 
+              />
+            </div>
+          </div>
+        </header>
+
+        <!-- 2. Tableau des Relations (via GenesisContainer) -->
+        <section>
+          <GenesisContainer
+            :min-height="300"
+            :max-height="maxHeight()"
+            :is-empty="filteredRelations.length === 0"
+            empty-text="Aucune relation ne correspond à ces critères."
+          >
+            <table class="w-full text-left text-sm">
+              <thead class="sticky top-0 z-10 bg-bg-secondary/20">
+                <tr>
+                  <!-- ✅ Header Parent cliquable -->
+                  <th 
+                    class="p-4 text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group"
+                    :class="searchTarget === 'parent' ? 'bg-bg-secondary text-secondary' : 'text-muted hover:text-text hover:bg-bg-secondary/50'"
+                    @click="toggleSearchTarget('parent')"
+                  >
+                    Table Parent (Mère)
+                    <IconSearch v-if="searchTarget === 'parent'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                  </th>
+
+                  <!-- ✅ Header Child cliquable -->
+                  <th 
+                    class="p-4 text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group"
+                    :class="searchTarget === 'child' ? 'bg-bg-secondary text-secondary' : 'text-muted hover:text-text hover:bg-bg-secondary/50'"
+                    @click="toggleSearchTarget('child')"
+                  >
+                    Table Child (Fille)
+                    <IconSearch v-if="searchTarget === 'child'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                  </th>
+
+                  <th class="p-4 text-center text-xs font-semibold uppercase tracking-wider text-muted">Formulaire</th>
+                  <th class="p-4 text-center text-xs font-semibold uppercase tracking-wider text-muted">Obligatoire</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-bg-neutral-genesis">
+                <tr 
+                  v-for="(rel, index) in filteredRelations" 
+                  :key="`${rel.parentTable}-${rel.childTable}-${index}`" 
+                  class="hover:bg-bg-secondary/50 transition-colors"
                 >
-                  {{ rel.hasForm ? 'Oui' : 'Non' }}
-                </span>
-              </td>
-              <td class="p-4 text-center">
-                <span 
-                  class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  :class="rel.mandatory ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-500'"
-                >
-                  {{ rel.mandatory ? 'Oui' : 'Non' }}
-                </span>
-              </td>
-            </tr>
-            
-            <!-- État vide -->
-            <tr v-if="relations.length === 0">
-              <td colspan="4" class="p-8 text-center text-text-muted">
-                <div class="flex flex-col items-center gap-2">
-                  <svg class="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                  </svg>
-                  <span>Aucune relation configurée pour ce projet.</span>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <td class="p-4 font-medium text-text">
+                    {{ rel.parentTable }}
+                  </td>
+                  <td class="p-4 font-medium text-text">
+                    {{ rel.childTable }}
+                  </td>
+                  
+                  <td class="p-4 text-center">
+                    <div class="flex justify-center items-center">
+                      <IconCheck v-if="rel.hasForm" class="w-5 h-5 text-primary" />
+                      <IconX v-else class="w-5 h-5 text-red-500" />
+                    </div>
+                  </td>
+                  
+                  <td class="p-4 text-center">
+                    <div class="flex justify-center items-center">
+                      <IconCheck v-if="rel.mandatory" class="w-5 h-5 text-primary" />
+                      <IconX v-else class="w-5 h-5 text-red-500" />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </GenesisContainer>
+        </section>
+
       </div>
     </div>
 
-    <!-- PARTIE DROITE : CARROUSEL TUTORIEL (Fixe) -->
-    <div class="w-2/5 min-w-[300px] h-full shrink-0">
-      <CarrouselPanel :slides="panelSlides" />
+    <!-- ═══ DROITE : visuel (statique, ne rétrécit jamais sous sa largeur) ═══ -->
+    <div class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center gap-2 text-muted border border-secondary border-dashed bg-secondary/10 rounded-lg">
+      <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+      <span class="text-sm font-medium">Aperçu des relations</span>
+      <span class="text-xs text-muted text-center px-4">La représentation visuelle du diagramme de relations sera intégrée ici.</span>
     </div>
 
   </main>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
-import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
-import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 
-// ============================================================================
-// 1. COMPOSABLES
-// ============================================================================
+// UI Components
+import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
+import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
+import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
+import IconX from '@genesis-labs/web-core/core/components/ui/icons/IconX.vue';
+import IconCheck from '@genesis-labs/web-core/core/components/ui/icons/IconCheck.vue';
+
 const { getRelations } = useGenerator();
 
-// On s'assure que c'est bien un tableau réactif
 const relations = computed(() => getRelations.value || []);
+const maxHeight = () => window.innerHeight * 0.5;
 
 // ============================================================================
-// 2. CONSTANTES (CARROUSEL)
+// ÉTATS DE FILTRAGE
 // ============================================================================
-const panelSlides: CarouselSlide[] = [
-  { color: '#3B82F6', label: 'Étape 1 : Vue d\'ensemble' },
-  { color: '#EF4444', label: 'Étape 2 : Relations Parent/Child' },
-  { color: '#10B981', label: 'Étape 3 : Options de génération' },
+const searchQuery = ref('');
+const filterForm = ref<'all' | 'yes' | 'no'>('all');
+const filterMandatory = ref<'all' | 'yes' | 'no'>('all');
+
+// ✅ NOUVEAU : Cible de la recherche ('all', 'parent', ou 'child')
+type SearchTarget = 'all' | 'parent' | 'child';
+const searchTarget = ref<SearchTarget>('all');
+
+const booleanOptions = [
+  { label: 'Tous', value: 'all' },
+  { label: 'Oui', value: 'yes' },
+  { label: 'Non', value: 'no' }
 ];
+
+// ✅ NOUVEAU : Placeholder dynamique pour guider l'utilisateur
+const searchPlaceholder = computed(() => {
+  if (searchTarget.value === 'parent') return 'Rechercher dans les tables parentes...';
+  if (searchTarget.value === 'child') return 'Rechercher dans les tables filles...';
+  return 'Rechercher une table (Parent ou Child)...';
+});
+
+// ✅ NOUVEAU : Fonction pour basculer la cible de recherche (ou la désactiver)
+const toggleSearchTarget = (target: SearchTarget) => {
+  if (searchTarget.value === target) {
+    searchTarget.value = 'all'; // Désactive le filtre si on reclique sur le même header
+  } else {
+    searchTarget.value = target;
+  }
+};
+
+// ============================================================================
+// LOGIQUE DE FILTRAGE COMBINÉE
+// ============================================================================
+const filteredRelations = computed(() => {
+  return relations.value.filter(rel => {
+    // 1. Filtre de recherche textuelle ciblée
+    const query = searchQuery.value.toLowerCase().trim();
+    let matchesSearch = true;
+
+    if (query) {
+      if (searchTarget.value === 'parent') {
+        matchesSearch = rel.parentTable.toLowerCase().includes(query);
+      } else if (searchTarget.value === 'child') {
+        matchesSearch = rel.childTable.toLowerCase().includes(query);
+      } else {
+        // Comportement par défaut : cherche dans les deux
+        matchesSearch = rel.parentTable.toLowerCase().includes(query) || 
+                        rel.childTable.toLowerCase().includes(query);
+      }
+    }
+
+    if (!matchesSearch) return false;
+
+    // 2. Filtre Formulaire
+    if (filterForm.value !== 'all') {
+      const isYes = filterForm.value === 'yes';
+      if (rel.hasForm !== isYes) return false;
+    }
+
+    // 3. Filtre Obligatoire
+    if (filterMandatory.value !== 'all') {
+      const isYes = filterMandatory.value === 'yes';
+      if (rel.mandatory !== isYes) return false;
+    }
+
+    return true;
+  });
+});
 </script>
 
 <style scoped>
@@ -114,7 +235,10 @@ const panelSlides: CarouselSlide[] = [
   background: transparent; 
 }
 .custom-scrollbar::-webkit-scrollbar-thumb { 
-  background-color: var(--color-secondary, #cbd5e1); 
-  border-radius: 3px; 
+  background: var(--color-neutral-light); 
+  border-radius: 4px; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { 
+  background: var(--color-neutral); 
 }
 </style>

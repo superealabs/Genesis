@@ -1,89 +1,145 @@
-<!-- genesis-sdk-web/genesis-web-core/src/features/generator/components/summary/TablesSummary.vue -->
 <template>
-  <main class="flex gap-4 h-full overflow-hidden">
-    
-    <!-- PARTIE GAUCHE : LISTE DES TABLES ET VUES -->
-    <div class="space-y-3 flex-1 min-h-0 flex flex-col">
-      <div class="flex items-center justify-between flex-shrink-0">
-        <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-          Tables et Vues configurées
-        </h3>
-      </div>
-      
-      <p class="text-sm text-text-muted flex-shrink-0">
-        Aperçu des entités de base de données et de leur profil d'assignation.
-      </p>
+  <!-- Image toujours à droite : rangée non repliable, colonne droite à largeur fixe (shrink-0) -->
+  <main class="flex flex-row gap-4 h-full w-full p-8">
 
-      <!-- Filtres -->
-      <div class="flex flex-row gap-2">
-        <GenesisInput
-          v-model="tableSearchQuery"
-          type="text"
-          placeholder="Rechercher une table ou une vue..."
-          size="md"
-          fill-width
-        >
-          <template #left>
-            <IconSearch :size="16" class="text-text-muted" />
-          </template>
-        </GenesisInput>
+    <!-- ═══ GAUCHE : informations et listes (Scrollable indépendamment) ═══ -->
+    <div class="flex-1 min-w-0 min-h-0 overflow-y-auto custom-scrollbar flex flex-col">
+      <div class="my-auto flex flex-col gap-8 py-4">
 
-        <GenesisSegmentedControl v-model="activeFilter" :options="filterOptions" size="md" />
-      </div>
+        <!-- 1. En-tête et Filtres -->
+        <header class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <span class="text-xs font-semibold uppercase tracking-widest text-muted">Tables et Vues</span>
+            <h1 class="text-4xl font-bold leading-tight text-text break-words">
+              Entités configurées
+            </h1>
+            <p class="text-sm text-text-muted">
+              Aperçu des entités de base de données et de leur profil d'assignation.
+            </p>
+          </div>
+        </header>
 
-      <!-- Liste Redimensionnable -->
-      <div class="rounded-md overflow-hidden min-h-[300px] h-[400px] flex flex-col border border-bg-neutral-genesis relative" :style="resizeStyle">
-        <div class="flex-1 overflow-y-auto custom-scrollbar">
-          <div 
-            v-for="item in filteredCombinedItems" 
-            :key="item.tableName"
-            class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary/50 transition-colors"
-          >
-            <div class="flex items-center gap-3 flex-1 min-w-0">
-              <div class="w-5 h-5 rounded flex items-center justify-center flex-shrink-0"
-                   :class="item.isView ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'">
-                <svg v-if="item.isView" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+        <!-- 2. Liste des Tables et Vues + Récapitulatif des Profils -->
+        <section class="flex gap-6 pr-2">
+          
+          <!-- Colonne gauche : Liste des entités -->
+          <div class="w-2/3 flex flex-col gap-2">
+            <div class="flex flex-row gap-3 max-w-2xl">
+              <GenesisInput
+                v-model="tableSearchQuery"
+                type="text"
+                placeholder="Rechercher une table ou une vue..."
+                size="md"
+                class="flex-1"
+                :fill-width="true"
+              >
+                <template #left>
+                  <IconSearch :size="16" class="text-text-muted" />
+                </template>
+              </GenesisInput>
+
+              <GenesisSegmentedControl v-model="activeFilter" :options="filterOptions" size="md" />
+            </div>
+            
+            <GenesisContainer
+              :min-height="300"
+              :max-height="maxHeight()"
+              :is-empty="filteredCombinedItems.length === 0"
+              empty-text="Aucune table ou vue ne correspond à cette recherche."
+            >
+              <div 
+                v-for="item in filteredCombinedItems" 
+                :key="item.tableName"
+                class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary/50 transition-colors cursor-default"
+              >
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                  <!-- Icône Table / Vue -->
+                  <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
+                      :class="item.isView ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'">
+                    <svg v-if="item.isView" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                    </svg>
+                  </div>
+                  <div class="flex flex-col min-w-0">
+                    <span class="text-sm font-medium text-text truncate">{{ item.tableName }}</span>
+                    <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
+                  </div>
+                </div>
+                
+                <!-- Badge du profil assigné -->
+                <div class="flex-shrink-0 ml-4 text-right min-w-[120px]">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                    {{ getAssignedProfile(item.tableName, item.isView) }}
+                  </span>
+                </div>
               </div>
-              <div class="flex flex-col min-w-0">
-                <span class="text-sm font-medium text-text truncate">{{ item.tableName }}</span>
-                <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
+            </GenesisContainer>
+          </div>
+
+          <!-- Colonne droite : Récapitulatif des Profils et leurs composants -->
+          <div class="w-1/3 flex flex-col gap-4">
+            <h3 class="text-base font-semibold text-text flex items-center gap-2">
+              Profils de Génération
+            </h3>
+            
+            <!-- ✅ MODIFIÉ : selected-config-id lié à l'état local, et écoute de l'événement select-configuration -->
+            <GenesisConfigurationPanel
+              :configurations="summaryConfigs"
+              :selected-config-id="selectedProfileId"
+              :filtered-configs="summaryConfigs"
+              :search-query="''"
+              :can-move-up="false"
+              :can-move-down="false"
+              :readonly="true"
+              width="w-full"
+              @select-configuration="handleProfileSelect"
+            />
+
+            <!-- ✅ NOUVEAU : Affichage des composants du profil sélectionné (Lecture seule) -->
+            <div v-if="selectedProfileId !== null" class="p-4 rounded-lg border border-bg-neutral-genesis flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <h4 class="text-sm font-semibold text-text">
+                  Composants pour : <span class="text-primary">{{ selectedProfileName }}</span>
+                </h4>
+              </div>
+              
+              <div class="flex flex-col flex-wrap gap-2">
+                <span 
+                  v-for="comp in selectedProfileComponents" 
+                  :key="comp"
+                  class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium"
+                >
+                  {{ getComponentLabel(comp) }}
+                </span>
+                <span v-if="selectedProfileComponents.length === 0" class="text-xs text-muted italic">
+                  Aucun composant sélectionné
+                </span>
               </div>
             </div>
             
-            <div class="flex-shrink-0 ml-4 text-right min-w-[120px]">
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                {{ getAssignedProfile(item.tableName, item.isView) }}
-              </span>
+            <!-- Message d'invitation si rien n'est sélectionné -->
+            <div v-else class="p-4 rounded-lg border border-dashed border-bg-neutral-genesis text-center">
+              <p class="text-xs text-muted">Sélectionnez un profil ci-dessus pour voir ses composants.</p>
             </div>
-          </div>
 
-          <div v-if="filteredCombinedItems.length === 0" class="p-6 text-center text-text-muted text-sm flex-shrink-0">
-            {{ combinedItems.length === 0 ? 'Aucune table ou vue trouvée.' : 'Aucun résultat pour cette recherche.' }}
           </div>
-        </div>
-        <GenesisResizeHandle @resize-start="startResizeBottom"/>
+        </section>
+
       </div>
     </div>
 
-    <!-- PARTIE DROITE : LISTE DES PROFILS (READONLY) -->
-    <section class="flex flex-col gap-4 w-80 flex-shrink-0">
-      <div>
-        <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
-          Profils de Génération
-        </h3>
-        
-        <GenesisConfigurationPanel
-          :configurations="summaryConfigs"
-          :selected-config-id="null"
-          :filtered-configs="summaryConfigs"
-          :search-query="''"
-          :can-move-up="false"
-          :can-move-down="false"
-          :readonly="true"
-        />
-      </div>
-    </section>
+    <!-- ═══ DROITE : visuel (statique, ne rétrécit jamais sous sa largeur) ═══ -->
+    <div class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center gap-2 text-muted border border-secondary border-dashed bg-secondary/10 rounded-lg">
+      <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+      </svg>
+      <span class="text-sm font-medium">Aperçu des entités</span>
+      <span class="text-xs text-muted text-center px-4">La représentation visuelle du schéma de base de données sera intégrée ici.</span>
+    </div>
 
   </main>
 </template>
@@ -93,17 +149,30 @@ import { computed, ref } from 'vue';
 import type { TableMetadataDto } from '@genesis-labs/shared-types';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 
+// UI Components
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
+import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
-import GenesisResizeHandle from '@genesis-labs/web-core/core/components/ui/actions/GenesisResizeHandle.vue';
-import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable';
 
 const { tables, views, stepperData } = useGenerator();
 
+const maxHeight = () => window.innerHeight * 0.5;
+
 const tableSearchQuery = ref('');
 const activeFilter = ref<'all' | 'table' | 'view'>('all');
+
+// ✅ État pour suivre le profil sélectionné dans le panneau de droite
+const selectedProfileId = ref<string | number | null>(null);
+
+const handleProfileSelect = (id: string | number) => {
+  if (selectedProfileId.value === id) {
+    selectedProfileId.value = null; // Désélectionne si on clique sur le profil déjà actif
+  } else {
+    selectedProfileId.value = id;   // Sélectionne le nouveau profil
+  }
+};
 
 const filterOptions = [
   { label: 'Tous', value: 'all' },
@@ -111,34 +180,78 @@ const filterOptions = [
   { label: 'Vues', value: 'view' }
 ];
 
-const { resizeStyle, startResizeBottom } = useResizable({
-    minHeight: 300,
-    maxHeight: () => window.innerHeight * 0.8,
-    resizableX: ref(false),
-    resizableY: ref(true)
-});
-
-// Type local pour éviter la dépendance à ConfigurationItem
+// Type local enrichi pour inclure les composants
 interface SummaryConfig {
   id: string | number;
   name: string;
+  components: string[];
   isHidden: boolean;
 }
 
-const combinedItems = computed<(TableMetadataDto & { type: 'table' | 'view' })[]>(() => [
-  ...tables.value.map(t => ({ ...t, type: 'table' as const })),
-  ...views.value.map(v => ({ ...v, type: 'view' as const }))
-]);
+// Construction de la liste uniquement à partir des entités assignées
+const assignedItems = computed<(TableMetadataDto & { type: 'table' | 'view' })[]>(() => {
+  const params = stepperData.value.generationParameters;
+  const result: (TableMetadataDto & { type: 'table' | 'view' })[] = [];
+  const seen = new Set<string>();
 
+  params.forEach(param => {
+    param.selectedTables.forEach(tableName => {
+      if (!seen.has(tableName)) {
+        const meta = tables.value.find(t => t.tableName === tableName);
+        if (meta) {
+          result.push({ ...meta, type: 'table' });
+          seen.add(tableName);
+        }
+      }
+    });
+    
+    param.selectedViews.forEach(viewName => {
+      if (!seen.has(viewName)) {
+        const meta = views.value.find(v => v.tableName === viewName);
+        if (meta) {
+          result.push({ ...meta, type: 'view' });
+          seen.add(viewName);
+        }
+      }
+    });
+  });
+
+  return result;
+});
+
+// ✅ MODIFIÉ : Ajout de la règle de filtrage par profil sélectionné
 const filteredCombinedItems = computed(() => {
-  let items = combinedItems.value;
-  if (activeFilter.value === 'table') items = items.filter(item => !item.isView);
-  else if (activeFilter.value === 'view') items = items.filter(item => item.isView);
+  let items = assignedItems.value;
+
+  // 🆕 RÈGLE : Si un profil est sélectionné, on ne garde que ses entités
+  if (selectedProfileId.value !== null) {
+    const profile = summaryConfigs.value.find(c => c.id === selectedProfileId.value);
+    if (profile) {
+      // On retrouve le paramètre de génération correspondant à ce profil
+      const param = stepperData.value.generationParameters.find(p => p.profileName === profile.name);
+      if (param) {
+        items = items.filter(item => {
+          return item.type === 'table' 
+            ? param.selectedTables.includes(item.tableName)
+            : param.selectedViews.includes(item.tableName);
+        });
+      }
+    }
+  }
+
+  // 🔄 RÈGLES EXISTANTES : Filtres de type (Table/Vue)
+  if (activeFilter.value === 'table') {
+    items = items.filter(item => item.type === 'table');
+  } else if (activeFilter.value === 'view') {
+    items = items.filter(item => item.type === 'view');
+  }
   
+  // 🔄 RÈGLES EXISTANTES : Filtre par recherche textuelle
   if (tableSearchQuery.value.trim()) {
     const query = tableSearchQuery.value.toLowerCase();
     items = items.filter(item => item.tableName.toLowerCase().includes(query));
   }
+  
   return items;
 });
 
@@ -149,18 +262,48 @@ const getAssignedProfile = (tableName: string, isView: boolean): string => {
   return param ? param.profileName : 'Non assigné';
 };
 
-// ✅ Utilisation du type local SummaryConfig
+// On inclut les composants dans l'objet de configuration
 const summaryConfigs = computed<SummaryConfig[]>(() => 
   stepperData.value.generationParameters.map((p, index) => ({
     id: index,
     name: p.profileName,
+    components: p.selectedComponents,
     isHidden: false
   }))
 );
+
+// Computed pour récupérer facilement les données du profil sélectionné
+const selectedProfile = computed(() => 
+  summaryConfigs.value.find(c => c.id === selectedProfileId.value)
+);
+
+const selectedProfileName = computed(() => selectedProfile.value?.name || '');
+const selectedProfileComponents = computed(() => selectedProfile.value?.components || []);
+
+// Utilitaire pour formater l'affichage des composants (ex: 'dao' -> 'DAO')
+const getComponentLabel = (comp: string): string => {
+  const labels: Record<string, string> = {
+    model: 'Model',
+    dao: 'DAO',
+    service: 'Service',
+    controller: 'Controller'
+  };
+  return labels[comp] || comp;
+};
 </script>
 
 <style scoped>
-.custom-scrollbar::-webkit-scrollbar { width: 6px; }
-.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background-color: var(--color-secondary, #cbd5e1); border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar { 
+  width: 6px; 
+}
+.custom-scrollbar::-webkit-scrollbar-track { 
+  background: transparent; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb { 
+  background: var(--color-neutral-light); 
+  border-radius: 4px; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { 
+  background: var(--color-neutral); 
+}
 </style>

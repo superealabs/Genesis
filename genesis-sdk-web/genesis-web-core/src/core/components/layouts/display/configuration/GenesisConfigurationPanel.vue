@@ -1,6 +1,6 @@
 <!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue -->
 <template>
-    <div class="flex flex-col w-full min-w-[300px] max-w-[400px] gap-4 relative">
+    <div class="flex flex-col w-full min-w-[200px] max-w-[400px] gap-4 relative">
         <div class="relative">
             <GenesisInput
                 :modelValue="searchQuery"
@@ -50,7 +50,6 @@
                 </template>
             </GenesisContainer>
 
-            <!-- ✅ AJOUTÉ : ref="rightColumnRef" pour pouvoir mesurer sa hauteur -->
             <div 
                 v-if="!readonly" 
                 ref="rightColumnRef" 
