@@ -9833,7 +9833,20 @@
             required: ${this.isRequired},
           },
           {{else}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: '${this.typeBase}' as const,
+            component: '${this.uiType}',
+            min: '${this.minValue}',
+            max: '${this.maxValue}',
+            step: '${this.stepValue}',
+            currency: '${this.currencyCode}',
+            accept: '${this.acceptedExtensions}',
+            geographic: ${this.isGeographic},
+            latitude: '${this.latitude}',
+            longitude: '${this.longitude}',
+            required: ${this.isRequired},
+          },
           {{/if}}{{/each}}{{removeLine}}
       } as const;
 
@@ -9857,16 +9870,17 @@
       extension: "tsx"
       content: |
         import { useState, useEffect } from 'react';
-        import { Table, TableHead, TableBody, TableRow, TableCell, TextField, Select, MenuItem, IconButton, Box, Button, Typography } from '@mui/material';
+        import { Table, TableHead, TableBody, TableRow, TableCell, Select, MenuItem, IconButton, Box, Button, Typography } from '@mui/material';
         import { Delete, Add } from '@mui/icons-material';
         import axios from 'axios';
+        import ConfiguredField, { ConfiguredFieldConfig } from '@/components/GenericForm/ConfiguredField';
+        import { fileToBase64 } from '@/utils/imageUtil';
 
         const API_BASE = import.meta.env.VITE_API_BASE as string;
 
-        export interface ${majStart(className)}TableFieldConfig {
+        export interface ${majStart(className)}TableFieldConfig extends ConfiguredFieldConfig {
           type: string;
           name: string;
-          label: string;
           isFk?: boolean;
           options?: { value: any; label: string }[];
         }
@@ -9886,7 +9900,14 @@
             {{tab}}{{tab}}{{/if}}
             {{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
-            { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}', isFk: false }{{#if !@last}},{{/if}}
+            {
+              type: '${this.typeBase}', component: '${this.uiType}', name: '${this.name}',
+              label: '${formatReadableLowerCase(this.name)}', required: ${this.isRequired}, isFk: false,
+              min: '${this.minValue}', max: '${this.maxValue}', step: '${this.stepValue}',
+              currency: '${this.currencyCode}', accept: '${this.acceptedExtensions}',
+              geographic: ${this.isGeographic},
+              latitude: '${this.latitude}', longitude: '${this.longitude}',
+            }{{#if !@last}},{{/if}}
             {{tab}}{{/each}}{{removeLine}}
           ]);
 
@@ -9930,8 +9951,14 @@
             emit(rows.filter((_, i) => i !== index));
           };
 
-          const updateCell = (index: number, name: string, value: any) => {
+          const updateCell = async (index: number, name: string, value: any) => {
+            if (value instanceof File) value = await fileToBase64(value);
             const next = rows.map((r, i) => (i === index ? { ...r, [name]: value } : r));
+            emit(next);
+          };
+
+          const updateCells = (index: number, values: Record<string, any>) => {
+            const next = rows.map((r, i) => (i === index ? { ...r, ...values } : r));
             emit(next);
           };
 
@@ -9965,13 +9992,13 @@
                               ))}
                             </Select>
                           ) : (
-                            <TextField
-                              size="small"
-                              type={f.type}
-                              fullWidth
-                              placeholder={`Enter ${f.label}`}
+                            <ConfiguredField
+                              name={f.name}
+                              config={f}
                               value={row[f.name] ?? ''}
-                              onChange={(e) => updateCell(i, f.name, e.target.value)}
+                              values={row}
+                              onChange={updateCell.bind(null, i)}
+                              onChangeMany={(values) => updateCells(i, values)}
                             />
                           )}
                         </TableCell>
