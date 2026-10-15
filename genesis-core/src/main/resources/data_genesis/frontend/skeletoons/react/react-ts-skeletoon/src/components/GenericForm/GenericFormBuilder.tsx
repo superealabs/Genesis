@@ -30,14 +30,12 @@ import { parseTimeString } from '@/utils/timeParser';
 import { formatTimeTz, parseTimeTz } from "@/utils/timeTzParser";
 import { fileToBase64, bytesToUrl } from "@/utils/imageUtil";
 import { DurationInput } from "@/components/Input/DurationInput";
+import ConfiguredField, { ConfiguredFieldConfig } from "@/components/GenericForm/ConfiguredField";
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
-interface FormFieldConfig {
-    label: string;
-    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select' | 'interval'  | 'Uint8Array';
-    required?: boolean;
-    readonly?: boolean;
+interface FormFieldConfig extends ConfiguredFieldConfig {
+    type: string;
     options?: readonly { readonly value: string | number; readonly label: string }[];
     foreignKey?: {
         endpoint: string;
@@ -76,7 +74,15 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                                           }: Props<T>) {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
-    const [formData, setFormData] = useState<Partial<T>>(initialData || {});
+    const [formData, setFormData] = useState<Partial<T>>(() => {
+        const defaults: Partial<T> = { ...(initialData || {}) };
+        Object.entries(fields).forEach(([key, config]) => {
+            if (defaults[key as keyof T] === undefined && config.component === 'color') {
+                defaults[key as keyof T] = '#000000' as T[keyof T];
+            }
+        });
+        return defaults;
+    });
     const [foreignOptions, setForeignOptions] = useState<
         Record<string, { value: string | number; label: string }[]>
     >({});
@@ -120,6 +126,10 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                 const value = initialData[key as keyof T];
                 if (config.foreignKey && value && typeof value === 'object') {
                     preloaded[key as keyof T] = (value as any)[config.foreignKey.valueKey];
+                } else if (config.component === 'json-editor' && value && typeof value === 'object') {
+                    preloaded[key as keyof T] = JSON.stringify(value, null, 2) as T[keyof T];
+                } else if (value === undefined && config.component === 'color') {
+                    preloaded[key as keyof T] = '#000000' as T[keyof T];
                 } else {
                     preloaded[key as keyof T] = value;
                 }
@@ -135,10 +145,31 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
+    const handleChangeMany = (values: Record<string, any>) => {
+        setFormData((prev) => ({ ...prev, ...values }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setFieldErrors({});
+
+        const jsonErrors: Record<string, string> = {};
+        Object.entries(fields).forEach(([key, config]) => {
+            const value = formData[key as keyof T];
+            if (config.component === 'json-editor' && value != null && value !== '') {
+                try {
+                    JSON.parse(String(value));
+                } catch {
+                    jsonErrors[key] = 'Enter valid JSON';
+                }
+            }
+        });
+        if (Object.keys(jsonErrors).length > 0) {
+            setFieldErrors(jsonErrors);
+            return;
+        }
+
+        setLoading(true);
 
         let payload: any = { ...formData };
         Object.entries(fields).forEach(([key, config]) => {
@@ -388,6 +419,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                             <>
                                                 <input
                                                     type="file"
+                                                    accept={config.accept}
                                                     onChange={(e) => handleChange(key, e.target.files?.[0] ?? null)}
                                                 />
                                                 <img
@@ -400,6 +432,16 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                     }}
                                                 />
                                             </>
+                                        ) : config.component ? (
+                                            <ConfiguredField
+                                                name={key}
+                                                config={config}
+                                                value={value}
+                                                values={formData}
+                                                onChange={handleChange}
+                                                onChangeMany={handleChangeMany}
+                                                error={fieldErrors[key]}
+                                            />
                                         )  : (
                                             <TextField
                                                 fullWidth
