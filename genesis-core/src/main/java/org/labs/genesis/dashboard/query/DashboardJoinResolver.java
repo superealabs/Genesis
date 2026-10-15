@@ -121,17 +121,61 @@ public final class DashboardJoinResolver {
 
                     continue;
                 }
+                TableMetadata referencedTable = findTableIgnoreCase(tables, column.getReferencedTable());
+                String rightTableName = referencedTable != null
+                                ? referencedTable.getTableName()
+                                : column.getReferencedTable();
+                String rightColumnName = referencedTable != null
+                                ? resolvePhysicalColumnName(referencedTable, column.getReferencedPrimaryKeyColumn())
+                                : column.getReferencedPrimaryKeyColumn();
+
                 edges.add(
                         new RelationEdge(
                                 table.getTableName(),
                                 column.getReferencedColumn(),
-                                column.getReferencedTable(),
-                                column.getReferencedPrimaryKeyColumn()
+                                rightTableName,
+                                rightColumnName
                         )
                 );
             }
         }
         return edges;
+    }
+
+    private static TableMetadata findTableIgnoreCase(List<TableMetadata> tables, String tableName) {
+        if (tables == null || tableName == null) {
+            return null;
+        }
+
+        for (TableMetadata table : tables) {
+            if (table == null || table.getTableName() == null) {
+                continue;
+            }
+
+            if (table.getTableName().equalsIgnoreCase(tableName)) {
+                return table;
+            }
+        }
+
+        return null;
+    }
+
+    private static String resolvePhysicalColumnName(TableMetadata table, String columnName) {
+        if (table == null || table.getColumns() == null || columnName == null) {
+            return columnName;
+        }
+
+        for (ColumnMetadata column : table.getColumns()) {
+            if (column == null) {
+                continue;
+            }
+            String physicalName = column.getReferencedColumn();
+            if (physicalName != null && physicalName.equalsIgnoreCase(columnName)) {
+                return physicalName;
+            }
+        }
+
+        return columnName;
     }
 
     private static List<RelationEdge> findPath(String source, String target, List<TableMetadata> tables) {
