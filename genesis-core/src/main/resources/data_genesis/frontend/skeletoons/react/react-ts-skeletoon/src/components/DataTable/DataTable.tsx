@@ -47,7 +47,7 @@ export default function DataTable<T extends Record<string, any>>({
                             />
                         ) : (
                             <TableCell
-                                    key={c.header}
+                                key={c.header}
                                 sx={{
                                     ...tableCellSx,
                                     color: (theme) => theme.palette.text.primary, // 👈 dynamique
@@ -120,7 +120,7 @@ export default function DataTable<T extends Record<string, any>>({
                                     formatNull(
                                         typeof col.accessor === 'function'
                                             ? col.accessor(row)
-                                            : row[col.accessor]
+                                            : String(row[col.accessor])
                                     )
                                 )}
                             </TableCell>

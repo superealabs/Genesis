@@ -33,6 +33,7 @@ import { DurationInput } from "@/components/Input/DurationInput";
 import ConfiguredField, { ConfiguredFieldConfig } from "@/components/GenericForm/ConfiguredField";
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { use } from 'i18next';
 
 interface FormFieldConfig extends ConfiguredFieldConfig {
     type: string;
@@ -123,6 +124,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         if (initialData) {
             const preloaded: Partial<T> = {};
             Object.entries(fields).forEach(([key, config]) => {
+
                 const value = initialData[key as keyof T];
                 if (config.foreignKey && value && typeof value === 'object') {
                     preloaded[key as keyof T] = (value as any)[config.foreignKey.valueKey];
@@ -155,6 +157,7 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
 
         const jsonErrors: Record<string, string> = {};
         Object.entries(fields).forEach(([key, config]) => {
+
             const value = formData[key as keyof T];
             if (config.component === 'json-editor' && value != null && value !== '') {
                 try {
@@ -179,8 +182,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         });
         Object.keys(payload).forEach(key => {
             if (payload[key] === ''
-                    || payload[key] === null
-                    || payload[key] === undefined) {
+                || payload[key] === null
+                || payload[key] === undefined) {
                 delete payload[key];
             }
         });
@@ -299,6 +302,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                             }}
                         >
                             {Object.entries(fields).map(([key, config]) => {
+                                if (config.component === 'none') return;
+
                                 const value = formData[key as keyof T] ?? '';
                                 const options = foreignOptions[key] || [...(config.options || [])];
 
