@@ -5,13 +5,13 @@
         <header class="flex items-center justify-between gap-2 h-8 shrink-0">
             <h1 class="text-sm font-semibold text-text truncate">{{ title }}</h1>
 
-            <GenesisButtonIcon variant="tertiary" size="sm" title="Fermer la comparaison" @click="$emit('close')">
+            <GenesisButtonIcon variant="tertiary" size="lg" title="Fermer la comparaison" @click="$emit('close')">
                 <IconX />
             </GenesisButtonIcon>
         </header>
 
         <div class="flex-1 min-h-0">
-            <GenesisPanelContainer :panel="panel" :editors="editors" />
+            <GenesisPanelContainer :panel="panel" :editors="editors" :gap="32" :dropdown-element-size="'lg'" />
         </div>
     </section>
 </template>

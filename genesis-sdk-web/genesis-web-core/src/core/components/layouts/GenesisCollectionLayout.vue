@@ -129,7 +129,7 @@
         <Teleport to="body">
             <div
                 v-if="comparing"
-                class="fixed inset-0 z-[100] bg-black/30 p-6"
+                class="fixed inset-0 z-[100] bg-black/80 p-2"
                 @click.self="$emit('close-compare')"
             >
                 <slot name="comparator" />

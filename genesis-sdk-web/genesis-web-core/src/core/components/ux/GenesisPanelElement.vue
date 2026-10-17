@@ -6,11 +6,12 @@
         :aria-label="current?.label"
     >
         <!-- ═══ En-tête : sélecteur d'éditeur, puis bouton de fermeture à sa droite ═══ -->
-        <header class="relative flex items-center justify-between gap-1 h-8 shrink-0">
+         <!-- désactivation intentionnel de la taille maximale, = h-8 -->
+        <header class="relative flex justify-between gap-1 shrink-0">
             <!-- GenesisInput select : passe tout seul en combobox (recherche) à partir de 7 options -->
             <GenesisInput
                 type="select"
-                size="sm"
+                :size="dropdownSize"
                 fill-width
                 class="flex-1 min-w-0"
                 :model-value="editorId"
@@ -52,8 +53,9 @@ import {
     type PanelView,
     type PanelViewPatch
 } from '@genesis-labs/web-core/core/composables/ux/UseGenesisPanel';
+import type { UI_Size_Unit } from '../../config/ui.config';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     /** Éditeurs proposés dans le menu */
     editors: PanelEditorDefinition[];
     /** Éditeur actuellement affiché */
@@ -61,7 +63,10 @@ const props = defineProps<{
     /** Point de vue de CE panneau (défilement, etc.) */
     view: PanelView;
     canClose: boolean;
-}>();
+    dropdownSize?: UI_Size_Unit;
+}>(), {
+    dropdownSize: 'sm'
+});
 
 const emit = defineEmits<{
     'update:editorId': [id: string];

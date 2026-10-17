@@ -6,7 +6,7 @@
             :menu-class="fieldMenuClasses"
             :trigger-size="size"
             :trigger-disabled="disabled"
-            match-trigger-width
+            :match-trigger-width="matchTriggerWidth"
             :align="'left'"
             :force-down="true"
         >
@@ -56,6 +56,7 @@ const props = withDefaults(defineProps<{
     options?: { label: string, value: any }[];
     multiChoice?: boolean;
     choices?: string[];
+    matchTriggerWidth?: boolean;
 }>(), {
     modelValue: undefined,
     placeholder: '',
@@ -66,6 +67,7 @@ const props = withDefaults(defineProps<{
     options: () => [],
     multiChoice: false,
     choices: () => [],
+    matchTriggerWidth: true
 });
 
 const emit = defineEmits<{

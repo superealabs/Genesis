@@ -3,6 +3,7 @@
     class="h-full w-full"
     :panel="panel"
     :editors="editors"
+    :class="'bg-bg-light p-2'"
   />
 </template>
 
