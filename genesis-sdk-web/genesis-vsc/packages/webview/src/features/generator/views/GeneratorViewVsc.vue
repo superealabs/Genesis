@@ -12,7 +12,6 @@ const {
     isCurrentStepSkippable,
     goToPreviousStep,
     goToNextStep,
-    setSelectedFrontendFramework,
     reset,
     handleSelectFolderPath,
     handleFileRequest,

@@ -52,11 +52,42 @@ DRY
 UR
 
 
+- Présentation
+    - Créer la page de chargement
+    - Créer la première page d'affichage
+    - popup de séléction des tâches à faire
+        - créer un nouveau projet
+        - add new Rules
+        - etc
+    - 
 
+- Steps
+    - GenesisInput
+        - amélioration du type color
+        - amélioration du type number
+    - GenesisCollection layout
+        UI :
+            - améliorer l'UI du tableau en se basant sur le 
+            - amélioration de l'interface de détails
+        UX :
+            - fonctionnalité de compare
+            - fonctionnalité de détail
+    - Project Config
+        UI :
+            - TextArea Input : le texte semble bizarre quand c'est super long
+            - disclosure backend advanced
+                - modification de la size des inputs en lg
+                - 
 
+        Content :
+            - Corriger les entêtes
+    - Script Config
+        UI : 
+            LLM_ASSISTANT Panel need an optimization
+    - Relation Parameter
+        - remplacer le layout switcher en tableau de configuration mais provenant du résumé
+        - comment rajouter un système de tri avec le peu d'élément d'interface ?
 
-BUG INTERFACE :
-    LLM_ASSISTANT Panel need an optimization
 
 
 
@@ -97,10 +128,8 @@ Summary
                     - si aucune séléction, alors on affiche tout
         RelationSummary
             - UI
-                - retirer les borders, bg
-                - remplacer les oui non par des icônes true et false
-                - le tableau doit être resizable
+
         FrontendSummary
             - UI
-                - retirer les les borders et le bg
-                - corriger la couleur d'arrière plan
+
+

@@ -275,7 +275,7 @@ function handleClose() {
   emit('close'); 
 }
 
-function handleRequestFolderPath() { 
+function handleRequestFolderPath() {
   emit('request-folder-path'); 
 }
 

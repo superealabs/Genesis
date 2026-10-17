@@ -53,8 +53,10 @@
                     :class="searchTarget === 'parent' ? 'bg-bg-secondary text-secondary' : 'text-muted hover:text-text hover:bg-bg-secondary/50'"
                     @click="toggleSearchTarget('parent')"
                   >
-                    Table Parent (Mère)
-                    <IconSearch v-if="searchTarget === 'parent'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <div class="flex items-center">
+                      <span>Table Parent (Mère)</span>
+                      <IconSearch v-if="searchTarget === 'parent'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    </div>
                   </th>
 
                   <!-- Header Child cliquable -->
@@ -63,8 +65,10 @@
                     :class="searchTarget === 'child' ? 'bg-bg-secondary text-secondary' : 'text-muted hover:text-text hover:bg-bg-secondary/50'"
                     @click="toggleSearchTarget('child')"
                   >
-                    Table Child (Fille)
-                    <IconSearch v-if="searchTarget === 'child'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <div class="flex items-center">
+                      <span>Table Child (Fille)</span>
+                      <IconSearch v-if="searchTarget === 'child'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    </div>
                   </th>
 
                   <!-- ✅ Header Formulaire cliquable (3 états) -->
@@ -77,9 +81,15 @@
                     }"
                     @click="toggleFilterForm"
                   >
-                    Formulaire
-                    <IconCheck :size="iconSize" v-if="filterForm === 'yes'" class="absolute top-3 right-3 w-3.5 h-3.5" />
-                    <IconX :size="iconSize" v-if="filterForm === 'no'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <div class="flex items-center">
+                      <div>
+                        Formulaire
+                      </div>
+                      <div>
+                        <IconCheck :size="iconSize" v-if="filterForm === 'yes'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                        <IconX :size="iconSize" v-if="filterForm === 'no'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                      </div>
+                    </div>
                   </th>
 
                   <!-- ✅ Header Obligatoire cliquable (3 états) -->
@@ -92,9 +102,11 @@
                     }"
                     @click="toggleFilterMandatory"
                   >
-                    Obligatoire
-                    <IconCheck :size="iconSize" v-if="filterMandatory === 'yes'" class="absolute top-3 right-3 w-3.5 h-3.5" />
-                    <IconX :size="iconSize" v-if="filterMandatory === 'no'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <div class="flex items-center">
+                      <span>Obligatoire</span>
+                      <IconCheck :size="iconSize" v-if="filterMandatory === 'yes'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                      <IconX :size="iconSize" v-if="filterMandatory === 'no'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    </div>
                   </th>
                 </tr>
               </thead>

@@ -5,4 +5,4 @@
 
 export { default as FrameworkList } from '@genesis-labs/web-core/features/frameworks/components/FrameworkList.vue';
 export { default as FrameworkFilter } from '@genesis-labs/web-core/features/frameworks/components/FrameworkFilter.vue';
-export { default as FrameworkDetail } from '@genesis-labs/web-core/features/frameworks/components/FrameworkDetail.vue';
+export { default as FrameworkDetail } from '@genesis-labs/web-core/features/frameworks/components/FrameworkDetails.vue';

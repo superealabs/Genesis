@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-4 w-full">
+    <div class="flex flex-col gap-3 w-full">
         
         <!-- ═══ PARTIE 1 : Le Panneau de Configuration (Générique) ═══ -->
         <GenesisConfigurationPanel
@@ -21,7 +21,7 @@
         />
 
         <!-- ═══ PARTIE 2 : Ligne d'actions Assign / Remove ═══ -->
-        <div class="flex items-center justify-start gap-3 pt-3 border-t border-secondary">
+        <div class="flex items-center justify-start gap-3">
             <GenesisButton
                 variant="secondary"
                 size="sm"
@@ -33,7 +33,6 @@
             </GenesisButton>
 
             <GenesisButton
-                variant="secondary"
                 size="sm"
                 :disabled="!selectedConfigId || selectedItems.length === 0"
                 @click="handleRemove"

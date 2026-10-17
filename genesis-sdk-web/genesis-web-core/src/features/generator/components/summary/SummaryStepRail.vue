@@ -6,7 +6,7 @@
             <span
                 v-if="i > 0"
                 class="w-0.5 h-4 transition-colors duration-300"
-                :class="i <= current ? 'bg-primary/50' : 'bg-bg-neutral-genesis'"
+                :class="i <= current ? 'bg-primary/50 text-primary-text' : 'bg-bg-neutral-genesis'"
             />
 
             <button

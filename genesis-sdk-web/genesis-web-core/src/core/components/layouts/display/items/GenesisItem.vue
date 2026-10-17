@@ -143,7 +143,7 @@ const initials = computed(() => {
 const containerClasses = computed(() => {
     if (props.selected) {
         // Exemple : fond accentué + bordure primaire + léger anneau de focus
-        return 'bg-bg-light border-b-4 border-primary';
+        return 'bg-bg-light border-b-4 border-bg';
     }
 
     // Mode Grid et List : état par défaut (non sélectionné)

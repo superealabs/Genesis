@@ -82,7 +82,7 @@
         </div>
 
         <!-- 2. PANNEAU DROIT : GESTION DES CONFIGURATIONS -->
-        <section class="flex flex-col gap-4 w-80 flex-shrink-0">
+        <section class="flex flex-col gap-8 w-80 flex-shrink-0">
           <div>
             <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
               Profils de Génération
@@ -111,7 +111,7 @@
           </div>
 
           <!-- 3. PANNEAU DROIT : COMPOSANTS DE LA CONFIGURATION ACTIVE -->
-          <div v-if="activeConfig" class="p-4 rounded-lg border border-neutral-light-genesis space-y-3">
+          <div v-if="activeConfig" class="p-4 rounded-lg border border-bg-neutral-genesis space-y-3">
             <div class="flex items-center justify-between">
               <h4 class="text-sm font-semibold text-text">
                 Composants pour : <span class="text-primary">{{ activeConfig.name }}</span>
