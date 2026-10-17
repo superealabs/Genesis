@@ -155,7 +155,7 @@ const containerClasses = computed(() => {
     return 'bg-bg-light hover:bg-bg-light/50';
 });
 
-const badgeClasses = 'w-5 h-5 rounded-full bg-primary text-bg text-xs text-text font-bold flex items-center justify-center shadow-sm';
+const badgeClasses = 'w-5 h-5 rounded-full bg-primary text-primary-text text-xs font-bold flex items-center justify-center';
 
 const layoutClasses = computed(() => {
     const hasComp = props.showComplementary && hasComplementary.value;

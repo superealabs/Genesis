@@ -3,7 +3,7 @@
         <!-- ═══ Barre du haut : titre à gauche, fermeture de TOUTE la comparaison à droite ═══
              Sur sa propre ligne : elle ne recouvre pas le bouton de fermeture du dernier panneau. -->
         <header class="flex items-center justify-between gap-2 h-8 shrink-0">
-            <h1 class="text-sm font-semibold text-text truncate">{{ title }}</h1>
+            <!-- <h1 class="text-sm font-semibold text-text truncate">{{ title }}</h1> -->
 
             <GenesisButtonIcon variant="tertiary" size="lg" title="Fermer la comparaison" @click="$emit('close')">
                 <IconX />

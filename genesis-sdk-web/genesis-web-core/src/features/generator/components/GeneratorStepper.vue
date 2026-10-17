@@ -31,6 +31,9 @@
       @update:mode="handleModeChange"
       @update:filters="setFilters"
       @select-framework="(fw: Framework) => emit('select-framework', fw)"
+
+      @compare="comparator.open"
+      @close-compare="comparator.close"
     />
 
     <!-- ÉTAPE : CONFIGURATION PROJET -->
@@ -182,7 +185,8 @@ const {
   replaceOptions, showReplacePopup, mouseX, mouseY, filters, detailFramework,
   isFilterOpen, pendingFramework, isLoading, setSearch, setFilters,
   setDisplayMode, handleModeChange, handleSelectWrapper, handleReplaceSelection,
-  cancelReplace, openFilter, closeFilter, closeDetail, handleInfo, languages
+  cancelReplace, openFilter, closeFilter, closeDetail, handleInfo, languages,
+  compare, comparator
 } = useWizardFramework((framework: Framework) => {
   emit('select-framework', framework);
 });
@@ -237,6 +241,12 @@ const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
   pendingFramework: pendingFramework.value,
   isLoading: isLoading.value,
   groupBy: frameworkGroupBy.value,
+
+  canCompare: comparator.canOpen.value,
+  compareCount: compare.compareCount.value,
+  comparing: comparator.isOpen.value,
+  comparatorEditors: comparator.editors.value,
+  comparatorEditorIds: comparator.initialEditorIds.value
 }));
 
 const databaseLayoutProps = computed<DatabaseLayoutProps>(() => ({

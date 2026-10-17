@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-12 w-full bg-bg-dark">
+    <div class="relative flex flex-col gap-12 w-full bg-bg-dark" :class="comparing ? 'h-full max-h-screen overflow-hidden' : ''">
             <Carrousel
                 v-if="showCarousel"
                 :slides="carouselSlides"
@@ -90,7 +90,7 @@
                                     :title="canCompare ? 'Comparer les éléments sélectionnés' : 'Sélectionnez au moins 2 éléments'"
                                     @click="$emit('compare')"
                                 >
-                                    Comparer<template v-if="compareCount"> ({{ compareCount }})</template>
+                                    Comparer<!-- <template v-if="compareCount"> ({{ compareCount }})</template> -->
                                 </GenesisButton>
 
                                 <!-- ═══ CONTRÔLES D'AFFICHAGE ═══ -->
@@ -126,15 +126,23 @@
         <!-- ═══ VUE DE COMPARAISON ═══
              Teleport vers <body> : un parent avec `transform` (ex. popup déplaçable) casserait `fixed`.
              Le contenu (GenesisItemComparator) est fourni par la feature via le slot. -->
-        <Teleport to="body">
-            <div
-                v-if="comparing"
-                class="fixed inset-0 z-[100] bg-black/80 p-2"
-                @click.self="$emit('close-compare')"
-            >
+        <!-- <Teleport to="body"> -->
+        <div
+            v-if="comparing"
+            class="absolute inset-0 z-[200] bg-black/80 flex flex-col p-2"
+            @click.self="$emit('close-compare')"
+        >
+            <!-- 
+              Ce conteneur interne est la clé :
+              1. flex-1 + h-full : il prend tout l'espace disponible dans l'overlay (moins le padding p-2)
+              2. min-h-0 + overflow-hidden : il EMPÊCHE strictement le contenu de dépasser et de pousser la hauteur du parent.
+              3. Le scroll sera géré en interne par GenesisItemComparator -> GenesisPanelContainer.
+            -->
+            <div class="flex-1 min-h-0 w-full h-full overflow-hidden rounded-lg">
                 <slot name="comparator" />
             </div>
-        </Teleport>
+        </div>
+        <!-- </Teleport> -->
     </div>
 </template>
 
