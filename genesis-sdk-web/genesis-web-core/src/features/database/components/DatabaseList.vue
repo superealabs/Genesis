@@ -6,8 +6,10 @@
       :label="engine.name"
       :logo-src="resolveDatabaseLogo(engine)"
       :selected="selectedId === engine.id"
+      :show-info-button="true"
       :badge="databaseSlots?.get(engine.id) ?? null"
       @click="$emit('select', engine, $event)"
+      @info="$emit('info', engine)"
     >
       <!-- 
         Préservation de la structure pour le mode 'table'.
@@ -60,5 +62,6 @@ defineProps<{
 defineEmits<{
   /** Émis lorsque l'utilisateur clique sur un moteur de base de données. */
   select: [engine: DatabaseEngineDto, event?: MouseEvent];
+  info: [engine: DatabaseEngineDto];
 }>();
 </script>

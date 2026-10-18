@@ -88,6 +88,10 @@ export function useWizardFrontend(onSelect: (framework: FrontendFramework, event
     isLoading: fe.isLoading,
     replaceOptions,
     
+    // ✅ Comparaison (Ajouté pour le Stepper)
+    compare: fe.compare,
+    comparator: fe.comparator,
+    
     // Actions
     handleSelectWrapper,
     handleReplaceSelection,

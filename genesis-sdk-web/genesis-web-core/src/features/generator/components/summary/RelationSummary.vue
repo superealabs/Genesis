@@ -47,31 +47,31 @@
             <table class="w-full text-left text-sm">
               <thead class="sticky top-0 z-10 bg-bg-secondary/20">
                 <tr>
-                  <!-- Header Parent cliquable -->
+                  <!-- ✅ Header Parent -->
                   <th 
                     class="p-4 text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group"
                     :class="searchTarget === 'parent' ? 'bg-bg-secondary text-secondary' : 'text-muted hover:text-text hover:bg-bg-secondary/50'"
                     @click="toggleSearchTarget('parent')"
                   >
-                    <div class="flex items-center">
-                      <span>Table Parent (Mère)</span>
-                      <IconSearch v-if="searchTarget === 'parent'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <span>Table Parent (Mère)</span>
+                    <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-4 h-4 flex items-center justify-center">
+                      <IconSearch v-if="searchTarget === 'parent'" :size="iconSize" class="w-4 h-4" />
                     </div>
                   </th>
 
-                  <!-- Header Child cliquable -->
+                  <!-- ✅ Header Child -->
                   <th 
                     class="p-4 text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group"
                     :class="searchTarget === 'child' ? 'bg-bg-secondary text-secondary' : 'text-muted hover:text-text hover:bg-bg-secondary/50'"
                     @click="toggleSearchTarget('child')"
                   >
-                    <div class="flex items-center">
-                      <span>Table Child (Fille)</span>
-                      <IconSearch v-if="searchTarget === 'child'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <span>Table Child (Fille)</span>
+                    <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-4 h-4 flex items-center justify-center">
+                      <IconSearch v-if="searchTarget === 'child'" :size="iconSize" class="w-4 h-4" />
                     </div>
                   </th>
 
-                  <!-- ✅ Header Formulaire cliquable (3 états) -->
+                  <!-- ✅ Header Formulaire -->
                   <th 
                     class="p-4 text-center text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group hover:bg-bg-secondary/50"
                     :class="{
@@ -81,18 +81,14 @@
                     }"
                     @click="toggleFilterForm"
                   >
-                    <div class="flex items-center">
-                      <div>
-                        Formulaire
-                      </div>
-                      <div>
-                        <IconCheck :size="iconSize" v-if="filterForm === 'yes'" class="absolute top-3 right-3 w-3.5 h-3.5" />
-                        <IconX :size="iconSize" v-if="filterForm === 'no'" class="absolute top-3 right-3 w-3.5 h-3.5" />
-                      </div>
+                    <span>Formulaire</span>
+                    <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-4 h-4 flex items-center justify-center">
+                      <IconCheck v-if="filterForm === 'yes'" :size="iconSize" class="w-4 h-4" />
+                      <IconX v-else-if="filterForm === 'no'" :size="iconSize" class="w-4 h-4" />
                     </div>
                   </th>
 
-                  <!-- ✅ Header Obligatoire cliquable (3 états) -->
+                  <!-- ✅ Header Obligatoire -->
                   <th 
                     class="p-4 text-center text-xs font-semibold uppercase tracking-wider cursor-pointer transition-colors relative group hover:bg-bg-secondary/50"
                     :class="{
@@ -102,10 +98,10 @@
                     }"
                     @click="toggleFilterMandatory"
                   >
-                    <div class="flex items-center">
-                      <span>Obligatoire</span>
-                      <IconCheck :size="iconSize" v-if="filterMandatory === 'yes'" class="absolute top-3 right-3 w-3.5 h-3.5" />
-                      <IconX :size="iconSize" v-if="filterMandatory === 'no'" class="absolute top-3 right-3 w-3.5 h-3.5" />
+                    <span>Obligatoire</span>
+                    <div class="absolute left-1/2 -translate-x-1/2 bottom-1 w-4 h-4 flex items-center justify-center">
+                      <IconCheck v-if="filterMandatory === 'yes'" :size="iconSize" class="w-4 h-4" />
+                      <IconX v-else-if="filterMandatory === 'no'" :size="iconSize" class="w-4 h-4" />
                     </div>
                   </th>
                 </tr>
@@ -180,7 +176,7 @@ const searchQuery = ref('');
 const filterForm = ref<'all' | 'yes' | 'no'>('all');
 const filterMandatory = ref<'all' | 'yes' | 'no'>('all');
 
-const iconSize = 32;
+const iconSize = 16;
 
 type SearchTarget = 'all' | 'parent' | 'child';
 const searchTarget = ref<SearchTarget>('all');

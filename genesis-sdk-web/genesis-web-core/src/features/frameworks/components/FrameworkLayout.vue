@@ -38,7 +38,7 @@
       @update:groupBy="$emit('update:groupBy', $event)"
     />
 
-    <!-- ✅ 2. Le slot DOIT être à l'intérieur de GenesisCollectionLayout -->
+    <!-- ✅ Slot pour la vue de comparaison -->
     <template #comparator>
       <GenesisItemComparator
         :editors="comparatorEditors"
@@ -48,6 +48,7 @@
     </template>
   </GenesisCollectionLayout>
 
+  <!-- ✅ Popup de Filtres -->
   <BaseFormPopup
     v-if="isFilterOpen"
     title="Filtres des Frameworks"
@@ -61,11 +62,17 @@
     />
   </BaseFormPopup>
 
-  <FrameworkDetail
+  <!-- ✅ CORRECTION : Popup d'affichage des détails du framework sélectionné -->
+  <BaseFormPopup
     v-if="detailFramework"
-    :framework="detailFramework"
+    title="Détails du framework"
+    size="lg"
     @close="$emit('closeDetail')"
-  />
+  >
+    <FrameworkDetails 
+      :framework="detailFramework" 
+    />
+  </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
@@ -73,14 +80,14 @@ import { computed } from 'vue';
 import type { Framework, Language } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types.ts';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { PanelEditorDefinition } from '@genesis-labs/web-core/core/composables/ux/UseGenesisPanel.ts';
 
 import FrameworkList from './FrameworkList.vue'; 
 import FrameworkFilter from './FrameworkFilter.vue'; 
-import FrameworkDetail from './FrameworkDetails.vue'; 
+import FrameworkDetails from './FrameworkDetails.vue'; // ✅ Import du composant de détails
 import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisItemComparator from '@genesis-labs/web-core/core/components/layouts/GenesisItemComparator.vue';
-import type { PanelEditorDefinition } from '@genesis-labs/web-core/core/composables/ux/UseGenesisPanel.ts';
 
 // ============================================================================
 // 1. INTERFACE DES PROPS
@@ -101,18 +108,18 @@ export interface FrameworkLayoutProps {
   mouseX: number | null;
   mouseY: number | null;
   filters?: any; 
-  detailFramework: Framework | null;
+  detailFramework: Framework | null; // ✅ Déjà présent
   isFilterOpen: boolean;
   pendingFramework: Framework | null;
   isLoading: boolean;
   groupBy?: keyof Framework | null; 
   groupLabels?: Record<string | number, string>;
   
-  // ✅ Props de comparaison avec le bon typage
+  // ✅ Props de comparaison
   canCompare?: boolean;
   compareCount?: number;
   comparing?: boolean;
-  comparatorEditors?: PanelEditorDefinition[]; // Remplace any[] par le vrai type
+  comparatorEditors?: PanelEditorDefinition[];
   comparatorEditorIds?: string[];
 }
 
@@ -123,13 +130,12 @@ const props = withDefaults(defineProps<FrameworkLayoutProps>(), {
   isLoading: false,
   groupBy: null,
   groupLabels: () => ({}),
-  
-  // ✅ AJOUT DES VALEURS PAR DÉFAUT POUR ÉVITER 'UNDEFINED'
+  detailFramework: null, // ✅ Valeur par défaut ajoutée pour la propreté
   canCompare: false,
   compareCount: 0,
   comparing: false,
-  comparatorEditors: () => [], // Retourne un tableau vide par défaut
-  comparatorEditorIds: () => []  // Retourne un tableau vide par défaut
+  comparatorEditors: () => [],
+  comparatorEditorIds: () => []
 });
 
 // ============================================================================
@@ -140,7 +146,7 @@ defineEmits<{
   'back': [];
   'openFilter': [];
   'closeFilter': [];
-  'closeDetail': [];
+  'closeDetail': []; // ✅ Déjà présent
   
   // Actions utilisateur
   'select-replace': [slotId: string | number];
@@ -148,7 +154,7 @@ defineEmits<{
   'select': [framework: Framework, event?: MouseEvent];
   'info': [framework: Framework];
   
-  // ✅ 4. Les emits de comparaison sont obligatoires pour remonter l'info
+  // Actions de comparaison
   'compare': [];
   'close-compare': [];
   

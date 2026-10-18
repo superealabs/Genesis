@@ -1,5 +1,5 @@
 // genesis-sdk-web/genesis-web-core/src/features/frameworks/composables/useFrameworks.ts
-import { inject, computed,watchEffect } from 'vue';
+import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
 
@@ -27,14 +27,14 @@ export function useFrameworks() {
     getId: (f) => f.id
   });
 
-  watchEffect(() => {
-    console.group('🔍 DEBUG COMPARAISON');
-    console.log('1. Mode actuel:', compare.mode.value);
-    console.log('2. Nombre d\'éléments sélectionnés (compareCount):', compare.compareCount.value);
-    console.log('3. Détail des slots:', compare.slots.value);
-    console.log('4. comparator.canOpen (La valeur finale):', comparator.canOpen.value);
-    console.groupEnd();
-  });
+  // watchEffect(() => {
+  //   console.group('🔍 DEBUG COMPARAISON');
+  //   console.log('1. Mode actuel:', compare.mode.value);
+  //   console.log('2. Nombre d\'éléments sélectionnés (compareCount):', compare.compareCount.value);
+  //   console.log('3. Détail des slots:', compare.slots.value);
+  //   console.log('4. comparator.canOpen (La valeur finale):', comparator.canOpen.value);
+  //   console.groupEnd();
+  // });
 
   const { mode: compareMode, slots: compareSlots, selectedItem } = compare;
 

@@ -54,8 +54,8 @@ export type PopupPadding = 'none' | 'sm' | 'md' | 'lg' | 'xl';
  */
 export const PADDING_CLASSES: Record<PopupPadding, { header: string; content: string }> = {
     'none': { header: 'px-0 py-2', content: 'p-0' },
-    'sm':   { header: 'px-3 py-2', content: 'p-3' },
-    'md':   { header: 'px-4 py-3', content: 'p-4' },   // Défaut actuel
+    'sm':   { header: 'px-3 py-3', content: 'p-3' },
+    'md':   { header: 'px-4 py-4', content: 'p-4' },   // Défaut actuel
     'lg':   { header: 'px-6 py-4', content: 'p-6' },
     'xl':   { header: 'px-8 py-6', content: 'p-8' }
 };

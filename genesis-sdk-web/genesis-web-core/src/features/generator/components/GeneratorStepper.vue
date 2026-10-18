@@ -31,7 +31,6 @@
       @update:mode="handleModeChange"
       @update:filters="setFilters"
       @select-framework="(fw: Framework) => emit('select-framework', fw)"
-
       @compare="comparator.open"
       @close-compare="comparator.close"
     />
@@ -53,6 +52,12 @@
       @close-replace="cancelReplaceDb"
       @select="handleSelectWrapperDb"
       @select-database="(db: DatabaseEngineDto) => emit('select-database', db)"
+
+      @info="(engine) => dbDetailEngine = engine"
+      @close-detail="dbDetailEngine = null"
+
+      @compare="dbComparator.open"
+      @close-compare="dbComparator.close"
     />
 
     <!-- ÉTAPE : CONFIGURATION BASE DE DONNÉES -->
@@ -74,6 +79,7 @@
     <RelationConfigView v-else-if="currentStepId === 'relations'" />
 
     <!-- ÉTAPE : SÉLECTION FRONTEND -->
+    <!-- ÉTAPE : SÉLECTION FRONTEND -->
     <FrontendLayout 
       v-else-if="currentStepId === 'frontend_select'"
       v-bind="frontendLayoutProps"
@@ -84,8 +90,13 @@
       @select-replace="handleReplaceSelectionFe"
       @close-replace="cancelReplaceFe"
       @select="handleSelectWrapperFe"
-      @info="handleInfoFe"
       @select-frontend="(fe: FrontendFramework) => emit('select-frontend', fe)"
+      
+      @info="(fw) => feDetailFramework = fw"
+      @close-detail="feDetailFramework = null"
+      
+      @compare="feComparator.open"
+      @close-compare="feComparator.close"
     />
     
     <!-- ÉTAPE : CONFIGURATION LAYOUT FRONTEND -->
@@ -170,7 +181,10 @@ const emit = defineEmits<{
 const store = useGeneratorStore();
 const stepContentClass = 'overflow-y-auto';
 
-const frameworkGroupBy = ref<keyof Framework | null>('coreFramework'); 
+const frameworkGroupBy = ref<keyof Framework | null>('coreFramework');
+
+const feDetailFramework = ref<FrontendFramework | null>(null);
+const dbDetailEngine = ref<DatabaseEngineDto | null>(null);
 
 const showError = ref(false);
 const errorMessage = ref('');
@@ -196,7 +210,9 @@ const {
   compareMode: dbCompareMode, showReplacePopup: dbShowReplacePopup, mouseX: dbMouseX,
   mouseY: dbMouseY, isLoading: dbIsLoading, replaceOptions: dbReplaceOptions,
   handleSelectWrapper: handleSelectWrapperDb, handleReplaceSelection: handleReplaceSelectionDb,
-  cancelReplace: cancelReplaceDb, handleModeChange: handleModeChangeDb, setDisplayMode: setDisplayModeDb
+  cancelReplace: cancelReplaceDb, handleModeChange: handleModeChangeDb, setDisplayMode: setDisplayModeDb,
+  compare: dbCompare,
+  comparator: dbComparator
 } = useWizardDatabase((engine: DatabaseEngineDto) => {
   emit('select-database', engine);
 });
@@ -207,7 +223,10 @@ const {
   mouseX: feMouseX, mouseY: feMouseY, isLoading: feIsLoading, replaceOptions: feReplaceOptions,
   handleSelectWrapper: handleSelectWrapperFe, handleReplaceSelection: handleReplaceSelectionFe,
   cancelReplace: cancelReplaceFe, handleModeChange: handleModeChangeFe, setSearch: setSearchFe,
-  setDisplayMode: setDisplayModeFe, handleInfo: handleInfoFe
+  setDisplayMode: setDisplayModeFe,
+  // ✅ AJOUT : Comparaison pour le frontend
+  compare: feCompare,
+  comparator: feComparator
 } = useWizardFrontend((framework: FrontendFramework) => {
   emit('select-frontend', framework);
 });
@@ -216,10 +235,6 @@ const {
 // 4. COMPUTEDS (IDENTIFIANT D'ÉTAPE & PROPS)
 // ============================================================================
 
-/**
- * Détermine l'ID sémantique de l'étape actuelle à partir du numéro.
- * C'est la seule source de vérité pour le rendu conditionnel du template.
- */
 const currentStepId = computed(() => getStepIdByNumber(props.currentStep));
 
 const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
@@ -260,7 +275,15 @@ const databaseLayoutProps = computed<DatabaseLayoutProps>(() => ({
   showReplacePopup: dbShowReplacePopup.value,
   mouseX: dbMouseX.value,
   mouseY: dbMouseY.value,
-  isLoading: dbIsLoading.value
+  isLoading: dbIsLoading.value,
+  
+  detailEngine: dbDetailEngine.value,
+
+  canCompare: dbComparator.canOpen.value,
+  compareCount: dbCompare.compareCount.value,
+  comparing: dbComparator.isOpen.value,
+  comparatorEditors: dbComparator.editors.value,
+  comparatorEditorIds: dbComparator.initialEditorIds.value
 }));
 
 const frontendLayoutProps = computed<FrontendLayoutProps>(() => ({
@@ -275,7 +298,16 @@ const frontendLayoutProps = computed<FrontendLayoutProps>(() => ({
   showReplacePopup: feShowReplacePopup.value,
   mouseX: feMouseX.value,
   mouseY: feMouseY.value,
-  isLoading: feIsLoading.value
+  isLoading: feIsLoading.value,
+  
+  detailFramework: feDetailFramework.value,
+
+  // ✅ AJOUT : Props de comparaison pour le frontend
+  canCompare: feComparator.canOpen.value,
+  compareCount: feCompare.compareCount.value,
+  comparing: feComparator.isOpen.value,
+  comparatorEditors: feComparator.editors.value,
+  comparatorEditorIds: feComparator.initialEditorIds.value
 }));
 
 // ============================================================================

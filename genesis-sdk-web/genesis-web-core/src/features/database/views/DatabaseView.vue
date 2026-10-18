@@ -7,11 +7,16 @@
     @select-replace="handleReplaceSelection"
     @close-replace="cancelReplace"
     @select="handleSelectWrapper"
+    @info="(engine :DatabaseEngineDto) => detailEngine = engine"
+    @close-detail="detailEngine = null"
+    @compare="comparator.open"
+    @close-compare="comparator.close"
+    
   />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 
 // Types
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
@@ -52,6 +57,7 @@ const {
   handleModeChange,
   handleReplace,
   compare,
+  comparator, // ✅ AJOUTÉ : Récupération du comparateur
   showReplacePopup,
   pendingEngine,
   mouseX,
@@ -61,7 +67,12 @@ const {
 } = useDatabase();
 
 // ============================================================================
-// 3. COMPUTEDS (Données dérivées pour l'UI)
+// 3. ÉTAT LOCAL
+// ============================================================================
+const detailEngine = ref<DatabaseEngineDto | null>(null); // ✅ AJOUTÉ : Pour le popup de détails
+
+// ============================================================================
+// 4. COMPUTEDS (Données dérivées pour l'UI)
 // ============================================================================
 
 /**
@@ -94,11 +105,21 @@ const layoutProps = computed<DatabaseLayoutProps>(() => ({
   showReplacePopup: showReplacePopup.value,
   mouseX: mouseX.value,
   mouseY: mouseY.value,
-  isLoading: false // Note : À connecter à un état isLoading si useDatabase l'expose à l'avenir
+  isLoading: false,
+  
+  // ✅ AJOUT : État des détails
+  detailEngine: detailEngine.value,
+
+  // ✅ AJOUT : Props de comparaison (trigger + vue)
+  canCompare: comparator.canOpen.value,
+  compareCount: compare.compareCount.value,
+  comparing: comparator.isOpen.value,
+  comparatorEditors: comparator.editors.value,
+  comparatorEditorIds: comparator.initialEditorIds.value
 }));
 
 // ============================================================================
-// 4. ACTIONS & HANDLERS
+// 5. ACTIONS & HANDLERS
 // ============================================================================
 
 /**
@@ -126,7 +147,7 @@ function handleReplaceSelection(slotId: string | number) {
 }
 
 // ============================================================================
-// 5. LIFECYCLE & EXPOSE
+// 6. LIFECYCLE & EXPOSE
 // ============================================================================
 
 // Permet aux composants parents de déclencher manuellement le chargement si nécessaire
