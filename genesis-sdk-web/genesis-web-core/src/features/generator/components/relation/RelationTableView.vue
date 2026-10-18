@@ -74,7 +74,7 @@
                 :class="{
                   'text-muted bg-bg-dark hover:bg-bg-secondary': filterForm === 'all',
                   'text-secondary bg-bg-secondary': filterForm === 'yes',
-                  'text-red-600 bg-red-200 hover:bg-red-300': filterForm === 'no'
+                  'text-red-600 bg-red-600/50 hover:bg-red-300': filterForm === 'no'
                 }"
                 @click="toggleFilterForm"
               >
@@ -91,7 +91,7 @@
                 :class="{
                   'text-muted bg-bg-dark hover:bg-bg-secondary': filterMandatory === 'all',
                   'text-secondary bg-bg-secondary': filterMandatory === 'yes',
-                  'text-red-600 bg-red-200 hover:bg-red-300': filterMandatory === 'no'
+                  'text-red-600 bg-red-600/50 hover:bg-red-300': filterMandatory === 'no'
                 }"
                 @click="toggleFilterMandatory"
               >

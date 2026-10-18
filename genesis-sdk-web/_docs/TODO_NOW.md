@@ -1,4 +1,3 @@
-- mettre en place le système de comparaison dans toutes les autres features
-- Modifier l'interface de relationView pour faire correspondre au résumer
+
 - le système de set des étapes(revenir à une étape précise du formulaire)
     - gestion des exceptions
