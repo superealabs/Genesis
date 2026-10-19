@@ -1,0 +1,1 @@
+- ne jamais mettre de valeur fixe dans generated-shared sinon le compilateur crashe

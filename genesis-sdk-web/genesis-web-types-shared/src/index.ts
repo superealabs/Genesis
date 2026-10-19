@@ -11,3 +11,6 @@ export * from './frontend.service.interface';
 
 export * from './configStorage/config.service.interface';
 export * from './configStorage/config.types'
+
+export * from './recent/recent.service.interface';
+export * from './recent/recent.types';

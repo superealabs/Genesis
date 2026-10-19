@@ -12,6 +12,11 @@ import { useFrameworkStore } from '../../frameworks/store/useFramework.store';
 import { useDatabaseStore } from '../../database/store/useDatabase.store';
 import { useFrontendStore } from '../../frontend/store/useFrontend.store';
 
+import { useRecency } from '@genesis-labs/web-core/core/features/recent/composables/useRecency';
+import { RecentItem } from '@genesis-labs/shared-types';
+import type { IRecentService } from '@genesis-labs/web-core/core/features/recent/types/recent.service.interface';
+
+
 // ============================================================================
 // INTERFACES & TYPES
 // ============================================================================
@@ -21,6 +26,7 @@ export interface WizardServices {
   fdsvc: IFrontendService;
   dbsvc: IDatabaseService;
   fsvc: IFrameworkService;
+  recentSvc: IRecentService;
 }
 
 export interface StepConfig {
@@ -77,7 +83,7 @@ export const WIZARD_STEP_ORDER: StepId[] = [
 export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   
   framework: {
-    onEnter: async (_store, { fsvc }) => {
+    onEnter: async (_store, { fsvc, recentSvc }) => {
       console.log("[Wizard: framework] Chargement des frameworks et langues...");
       const frameworkStore = useFrameworkStore();
       
@@ -95,6 +101,12 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         console.error("[Wizard: framework] Échec du chargement:", error);
         _store.setWizardError("Impossible de charger la liste des frameworks.");
       }
+
+      try {
+      } catch (error) {
+        
+      }
+
     },
     
     beforeNext: async (store) => {
@@ -414,12 +426,47 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       // Le composant SummaryView se chargera de les afficher via les composantes enfants.
     },
     
-    beforeNext: async (store) => {
+    beforeNext: async (store, { recentSvc }) => {
       try {
         console.log("[Wizard: summary] Résumé validé. Prêt pour la génération finale.");
         
-        // C'est ici que tu pourrais déclencher la génération si le wizard le gère via beforeNext,
-        // ou simplement retourner true pour permettre au composant parent de gérer le clic sur "Générer".
+        try {
+          const data = store.stepperData;
+
+          // 1. Sauvegarder le Framework Backend
+          if (data.framework) {
+            await recentSvc.addRecentItem('frameworks', {
+              id: data.framework.id,
+              name: data.framework.name,
+              lastUsed: Date.now()
+            } as RecentItem);
+            console.log(`[Recency] Framework ajouté aux récents: ${data.framework.name}`);
+          }
+
+          // 2. Sauvegarder le Moteur de Base de Données
+          if (data.database?.engine) {
+            await recentSvc.addRecentItem('databases', {
+              id: data.database.engine,
+              name: data.database.engine.toUpperCase(),
+              lastUsed: Date.now()
+            } as RecentItem);
+            console.log(`[Recency] Database ajouté aux récents: ${data.database.engine}`);
+          }
+
+          // 3. Sauvegarder le Framework Frontend (si sélectionné)
+          if (data.frontend) {
+            await recentSvc.addRecentItem('frontends', {
+              id: data.frontend.id,
+              name: data.frontend.name,
+              lastUsed: Date.now()
+            } as RecentItem);
+            console.log(`[Recency] Frontend ajouté aux récents: ${data.frontend.name}`);
+          }
+
+        } catch (error) {
+          console.error("[Wizard: summary] Échec de la mise à jour de la récence:", error);
+        }
+
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la validation du résumé.");
