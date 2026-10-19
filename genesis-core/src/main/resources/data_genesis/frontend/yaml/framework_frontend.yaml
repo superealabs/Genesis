@@ -1536,6 +1536,16 @@
               '${this.name}': '${this.typeBase}',
               {{/each}}
             };
+            fieldUiTypes: Record<string, string> = {
+              {{#each fieldsNotFK}}
+              '${this.name}': '${this.uiType}',
+              {{/each}}
+            };
+            fieldMapConfig: Record<string, { geographic: boolean; latitude?: string; longitude?: string }> = {
+              {{#each fieldsNotFK}}
+              '${this.name}': { geographic: ${this.isGeographic}, latitude: '${this.latitude}', longitude: '${this.longitude}' },
+              {{/each}}
+            };
             {{#if isParentTable=true and hasChildrenForm=true}}
             {{#each childrenWithForm}}
             ${minStart(this.className)}s: any[] = [];
@@ -1636,7 +1646,7 @@
             <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
 
             <div *ngIf="!isLoading && ${minStart(className)}">
-              <app-detail-view [object]="${minStart(className)}" [fieldTypes]="fieldTypes" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
+              <app-detail-view [object]="${minStart(className)}" [fieldTypes]="fieldTypes" [fieldUiTypes]="fieldUiTypes" [fieldMapConfig]="fieldMapConfig" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
 
               {{#if isParentTable=true and hasChildrenForm=true}}
               {{#each childrenWithForm}}
@@ -1836,7 +1846,7 @@
       fileName: "${toKebabCase(className)}-table-form.component"
       extension: "ts"
       content: |
-        import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+        import { Component, ElementRef, Input, Output, EventEmitter, OnInit, ViewChild } from '@angular/core';
         import { CommonModule } from '@angular/common';
         import { FormsModule, ReactiveFormsModule, FormGroup } from '@angular/forms';
         import { HttpClient } from '@angular/common/http';
@@ -1855,9 +1865,11 @@
           templateUrl: './${toKebabCase(className)}-table-form.component.html'
         })
         export class ${majStart(className)}TableFormComponent implements OnInit {
+          @ViewChild('mapDialog') mapDialog!: ElementRef<HTMLDialogElement>;
           @Output() rowsChange = new EventEmitter<any[]>();
           rows: any[] = [];
           rowForms: FormGroup[] = [];
+          activeMap: { rowIndex: number; field: FieldConfig } | null = null;
           private rowSubscriptions = new Map<FormGroup, Subscription>();
 
           @Input()
@@ -1917,6 +1929,40 @@
 
           trackByIndex(index: number): number {
             return index;
+          }
+
+          openMap(rowIndex: number, field: FieldConfig): void {
+            this.activeMap = { rowIndex, field };
+            this.mapDialog.nativeElement.showModal();
+          }
+
+          closeMap(): void {
+            this.mapDialog.nativeElement.close();
+            this.activeMap = null;
+          }
+
+          closeMapOnBackdrop(event: MouseEvent): void {
+            if (event.target === this.mapDialog.nativeElement) {
+              this.closeMap();
+            }
+          }
+
+          getMapButtonLabel(row: any, field: FieldConfig): string {
+            const latitude = field.latitude && field.longitude
+              ? row[field.latitude]
+              : row[field.name]?.latitude ?? row[field.name]?.lat;
+            const longitude = field.latitude && field.longitude
+              ? row[field.longitude]
+              : row[field.name]?.longitude ?? row[field.name]?.lng;
+            if (latitude === null || latitude === undefined || latitude === ''
+              || longitude === null || longitude === undefined || longitude === '') {
+              return 'Choose location';
+            }
+            const parsedLatitude = Number(latitude);
+            const parsedLongitude = Number(longitude);
+            return Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude)
+              ? `${parsedLatitude.toFixed(6)}, ${parsedLongitude.toFixed(6)}`
+              : 'Choose location';
           }
           
           get visibleFields(): UserStatTableFieldConfig[] {
@@ -1989,11 +2035,20 @@
                       </select>
                     </ng-container>
                     <ng-template #plainInput>
-                      <app-dynamic-field
-                        [field]="f"
-                        [form]="rowForms[i]"
-                        [initialData]="row"
-                      ></app-dynamic-field>
+                      <button
+                        *ngIf="f.type === 'map'; else regularInput"
+                        type="button"
+                        [attr.aria-label]="'Choose location for ' + f.label"
+                        (click)="openMap(i, f)"
+                        style="width:100%; border:1px solid #9ca3af; border-radius:4px; padding:0.4rem 0.5rem; background:#fff; cursor:pointer;"
+                      >{{ getMapButtonLabel(row, f) }}</button>
+                      <ng-template #regularInput>
+                        <app-dynamic-field
+                          [field]="f"
+                          [form]="rowForms[i]"
+                          [initialData]="row"
+                        ></app-dynamic-field>
+                      </ng-template>
                     </ng-template>
                   </td>
                 </ng-container>
@@ -2007,6 +2062,24 @@
             <span style="font-size:0.8rem; color:#6b7280;">{{ rows.length }} row(s)</span>
             <button type="button" (click)="addRow()" style="background:#000; color:#fff; border:none; border-radius:4px; padding:0.4rem 0.9rem; cursor:pointer; font-weight:600;">+</button>
           </div>
+          <dialog
+            #mapDialog
+            (close)="activeMap = null"
+            (click)="closeMapOnBackdrop($event)"
+            style="width:min(90vw, 800px); max-width:800px; max-height:90vh; padding:1rem; border:0; border-radius:8px; overflow:auto;"
+          >
+            <ng-container *ngIf="activeMap as map">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.75rem;">
+                <h2 style="margin:0; font-size:1.1rem;">{{ map.field.label }}</h2>
+                <button type="button" aria-label="Close map" (click)="closeMap()" style="border:0; background:transparent; font-size:1.25rem; cursor:pointer;">&times;</button>
+              </div>
+              <app-dynamic-field
+                [field]="map.field"
+                [form]="rowForms[map.rowIndex]"
+                [initialData]="rows[map.rowIndex]"
+              ></app-dynamic-field>
+            </ng-container>
+          </dialog>
         </div>
       destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-table-form"
 
@@ -6514,6 +6587,8 @@
                           :longitude="${minStart(className)}.${this.longitude}"
                           :clickable="false"
                           :draggable="false"/>
+                      {{elseIf this.uiType=ckeditor}}
+                      <div class="ckeditor-content" v-html="${minStart(className)}.${this.name} ?? ''"></div>
                       {{elseIf this.uiType=none}}
                       {{else}}
                       <span>{{ ${minStart(className)}.${this.name} ?? '' }}</span>
@@ -9717,7 +9792,7 @@
             type: '${this.uiType}'
           },
           {{else}}
-          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}', type: '${this.uiType}' },
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}', type: '${this.uiType}', geographic: ${this.isGeographic}, latitude: '${this.latitude}', longitude: '${this.longitude}' },
           {{/if}}{{/each}}{{removeLine}}
       ]
 
@@ -9874,7 +9949,7 @@
       extension: "tsx"
       content: |
         import { useState, useEffect } from 'react';
-        import { Table, TableHead, TableBody, TableRow, TableCell, Select, MenuItem, IconButton, Box, Button, Typography } from '@mui/material';
+        import { Table, TableHead, TableBody, TableRow, TableCell, Select, MenuItem, IconButton, Box, Button, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
         import { Delete, Add } from '@mui/icons-material';
         import axios from 'axios';
         import ConfiguredField, { ConfiguredFieldConfig } from '@/components/GenericForm/ConfiguredField';
@@ -9896,6 +9971,7 @@
 
         export default function ${majStart(className)}TableForm({ initialData, onRowsChange }: ${majStart(className)}TableFormProps) {
           const [rows, setRows] = useState<any[]>(() => (initialData ?? []).map((d) => ({ ...d })));
+          const [activeMap, setActiveMap] = useState<{ rowIndex: number; field: ${majStart(className)}TableFieldConfig } | null>(null);
           const [fields, setFields] = useState<${majStart(className)}TableFieldConfig[]>([
             {{tab}}{{tab}}{{#each fieldsFK}}
             {{tab}}{{tab}}{{#if this.isParentForeignKey}}{{removeLine}}
@@ -9966,6 +10042,21 @@
             emit(next);
           };
 
+          const getMapButtonLabel = (row: any, field: ${majStart(className)}TableFieldConfig): string => {
+            const usesCoordinateFields = !field.geographic && Boolean(field.latitude && field.longitude);
+            const latitude = usesCoordinateFields ? row[field.latitude!] : row[field.name]?.latitude ?? row[field.name]?.lat;
+            const longitude = usesCoordinateFields ? row[field.longitude!] : row[field.name]?.longitude ?? row[field.name]?.lng;
+            if (latitude === null || latitude === undefined || latitude === ''
+              || longitude === null || longitude === undefined || longitude === '') {
+              return 'Choose location';
+            }
+            const parsedLatitude = Number(latitude);
+            const parsedLongitude = Number(longitude);
+            return Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude)
+              ? `${parsedLatitude.toFixed(6)}, ${parsedLongitude.toFixed(6)}`
+              : 'Choose location';
+          };
+
           return (
             <Box sx={{ overflowX: 'auto', mt: 2 }}>
               <Table size="small">
@@ -9995,6 +10086,16 @@
                                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                               ))}
                             </Select>
+                          ) : f.component === 'map' ? (
+                            <Button
+                              size="small"
+                              fullWidth
+                              variant="outlined"
+                              aria-label={`Choose location for ${f.label}`}
+                              onClick={() => setActiveMap({ rowIndex: i, field: f })}
+                            >
+                              {getMapButtonLabel(row, f)}
+                            </Button>
                           ) : (
                             <ConfiguredField
                               name={f.name}
@@ -10020,6 +10121,30 @@
                 <Typography variant="caption" color="text.secondary">{rows.length} row(s)</Typography>
                 <Button size="small" variant="contained" startIcon={<Add />} onClick={addRow}>Add</Button>
               </Box>
+              <Dialog open={activeMap !== null} onClose={() => setActiveMap(null)} fullWidth maxWidth="md">
+                {activeMap && (
+                  <>
+                    <DialogTitle>{activeMap.field.label}</DialogTitle>
+                    <DialogContent dividers>
+                      <ConfiguredField
+                        name={activeMap.field.name}
+                        config={activeMap.field}
+                        value={rows[activeMap.rowIndex]?.[activeMap.field.name] ?? ''}
+                        values={rows[activeMap.rowIndex] ?? {}}
+                        onChange={(name, value) => {
+                          if (activeMap) void updateCell(activeMap.rowIndex, name, value);
+                        }}
+                        onChangeMany={(values) => {
+                          if (activeMap) updateCells(activeMap.rowIndex, values);
+                        }}
+                      />
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={() => setActiveMap(null)}>Close</Button>
+                    </DialogActions>
+                  </>
+                )}
+              </Dialog>
             </Box>
           );
         }

@@ -1,5 +1,5 @@
 import {useParams, useNavigate, useLocation} from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Paper, Typography, Button, Chip, Divider, Grid } from '@mui/material';
 import { pageContainerSx } from '@/styles/mui-patterns';
 import BackdropBlocker from '@/components/Backdrop/BackdropBlocker';
@@ -9,8 +9,37 @@ import { Tabs, Tab } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { base64ToUrl } from "@/utils/imageUtil";
+import * as L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 type AnyRecord = Record<string, any>;
+
+function DetailMap({ latitude, longitude }: { latitude: unknown; longitude: unknown }) {
+    const elementRef = useRef<HTMLDivElement>(null);
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+    const hasPosition = latitude !== null && latitude !== undefined && latitude !== ''
+        && longitude !== null && longitude !== undefined && longitude !== ''
+        && Number.isFinite(lat) && Number.isFinite(lng);
+
+    useEffect(() => {
+        if (!elementRef.current) return;
+        const center: L.LatLngExpression = hasPosition ? [lat, lng] : [0, 0];
+        const map = L.map(elementRef.current, { scrollWheelZoom: false }).setView(center, hasPosition ? 13 : 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+        }).addTo(map);
+        if (hasPosition) L.circleMarker(center, { radius: 7 }).addTo(map);
+        const resizeTimer = window.setTimeout(() => map.invalidateSize(), 0);
+        return () => {
+            window.clearTimeout(resizeTimer);
+            map.remove();
+        };
+    }, [lat, lng, hasPosition]);
+
+    return <Box sx={{ width: '100%', height: 280, border: '1px solid', borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }} ref={elementRef} role="img" aria-label="Location map" />;
+}
 
 export type DetailAction<T> = {
     label: string;
@@ -32,7 +61,7 @@ interface DetailConfig<T extends AnyRecord> {
         getById: (id: number) => Promise<T>;
         delete: (id: string | number) => Promise<ApiResponse<void>>;
     };
-    columns: { header: string; accessor: keyof T | ((row: T) => React.ReactNode), type?: string }[];
+    columns: { header: string; accessor: keyof T | ((row: T) => React.ReactNode), type?: string; geographic?: boolean; latitude?: string; longitude?: string }[];
     backRoute: string; // fallback si pas de state
     actions?: DetailAction<T>[];
     tabs?: DetailTab<T>[];           // <-- ajout
@@ -99,17 +128,27 @@ export default function GenericDetailPage<T extends AnyRecord>(config: DetailCon
 
                     {/* Grille 2 colonnes */}
                     <Grid container spacing={3}>
-                        {config.columns.map(({ header, accessor, type }) => {
+                        {config.columns.map(({ header, accessor, type, geographic, latitude, longitude }) => {
                             const value = resolveValue(accessor);
+                            const mapValue = value as any;
+                            const mapLatitude = geographic ? mapValue?.latitude ?? mapValue?.lat : latitude ? record[latitude] : mapValue?.latitude ?? mapValue?.lat;
+                            const mapLongitude = geographic ? mapValue?.longitude ?? mapValue?.lng : longitude ? record[longitude] : mapValue?.longitude ?? mapValue?.lng;
                             return (
                                 <Grid item xs={12} sm={6} key={String(header)}>
-                                    <Box display="flex" justifyContent="space-between" alignItems="center" px={1}>
+                                    <Box display="flex" flexDirection={type === 'map' ? 'column' : 'row'} justifyContent="space-between" alignItems={type === 'map' ? 'stretch' : 'center'} gap={type === 'map' ? 1 : 0} px={1}>
                                         <Typography variant="body2" color="text.secondary">
                                             {header}
                                         </Typography>
                                         <Box>
                                             {typeof value === 'boolean' ? (
                                                 <Chip label={value ? 'Yes' : 'No'} color={value ? 'success' : 'default'} size="small" />
+                                            ) : type === 'ckeditor' ? (
+                                                <Box
+                                                    sx={{ fontWeight: 500, overflowWrap: 'anywhere', '& h1': { fontSize: '1.5rem', fontWeight: 700 }, '& h2': { fontSize: '1.25rem', fontWeight: 700 }, '& ul': { listStyle: 'disc', pl: 3 }, '& ol': { listStyle: 'decimal', pl: 3 }, '& a': { color: 'primary.main', textDecoration: 'underline' } }}
+                                                    dangerouslySetInnerHTML={{ __html: value == null ? '' : String(value) }}
+                                                />
+                                            ) : type === 'map' ? (
+                                                <DetailMap latitude={mapLatitude} longitude={mapLongitude} />
                                             ) : (
                                                 <Typography fontWeight={500}>
                                                     { type == 'file' ? (
