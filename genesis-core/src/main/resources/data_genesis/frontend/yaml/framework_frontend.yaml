@@ -1918,6 +1918,10 @@
           trackByIndex(index: number): number {
             return index;
           }
+          
+          get visibleFields(): UserStatTableFieldConfig[] {
+              return this.fields.filter(f => f.type !== 'none');
+          }
 
           private createRowForm(row: any): FormGroup {
             const form = new FormGroup({});
@@ -1962,7 +1966,7 @@
             <thead>
               <tr style="background:#000;">
                 <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#fff;">#</th>
-                <ng-container *ngFor="let f of fields">
+                <ng-container *ngFor="let f of visibleFields">
                   <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#fff;">{{ f.label }}</th>
                 </ng-container>
                 <th style="padding:0.5rem 0.75rem;"></th>
@@ -1971,7 +1975,7 @@
             <tbody>
               <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex" style="border-bottom:1px solid #e5e7eb;">
                 <td style="padding:0.4rem 0.75rem; color:#6b7280;">{{ i + 1 }}</td>
-                <ng-container *ngFor="let f of fields">
+                <ng-container *ngFor="let f of visibleFields">
                   <td style="padding:0.25rem 0.5rem;">
                     <ng-container *ngIf="f.isFk; else plainInput">
                       <select
@@ -9968,9 +9972,9 @@
                 <TableHead>
                   <TableRow>
                     <TableCell>#</TableCell>
-                    {fields.map((f) => (
+                    {fields.map((f) => f.component !== 'none' ? (
                       <TableCell key={f.name}>{f.label}</TableCell>
-                    ))}
+                    ) : null)}
                     <TableCell />
                   </TableRow>
                 </TableHead>
@@ -9978,7 +9982,7 @@
                   {rows.map((row, i) => (
                     <TableRow key={i}>
                       <TableCell>{i + 1}</TableCell>
-                      {fields.map((f) => (
+                      {fields.map((f) => f.component !== 'none' ? (
                         <TableCell key={f.name}>
                           {f.isFk ? (
                             <Select
@@ -10002,7 +10006,7 @@
                             />
                           )}
                         </TableCell>
-                      ))}
+                      ) : null)}
                       <TableCell>
                         <IconButton size="small" color="error" onClick={() => removeRow(i)}>
                           <Delete fontSize="small" />
