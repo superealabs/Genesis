@@ -11,27 +11,39 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 
+// 1. Dictionnaire des tailles prédéfinies (Surface en px² et côté max)
+// md (48x48 = 2304), sm (~32x32 = 1024), lg (~64x64 = 4096)
+const SIZE_PRESETS = {
+  sm: { area: 1024, maxSide: 64 },
+  md: { area: 2304, maxSide: 96 },
+  lg: { area: 4096, maxSide: 128 },
+} as const;
+
+type LogoSize = keyof typeof SIZE_PRESETS;
+
 const props = withDefaults(defineProps<{
     src: string;
     alt?: string;
-    /** Surface cible en px² (48 x 48 = 2304) */
-    area?: number;
-    /** Plafond par côté, pour éviter qu'un logo très allongé déborde */
-    maxSide?: number;
+    size?: LogoSize;  
+    area?: number;            
+    maxSide?: number;       
 }>(), {
     alt: '',
-    area: 2304,
-    maxSide: 96,
+    size: 'md',               // ✅ Valeur par défaut
 });
 
 const ratio = ref(1);
 const ready = ref(false);
 
+// 2. Calcul des valeurs effectives (la prop explicite gagne sur le preset)
+const effectiveArea = computed(() => props.area ?? SIZE_PRESETS[props.size].area);
+const effectiveMaxSide = computed(() => props.maxSide ?? SIZE_PRESETS[props.size].maxSide);
+
 watch(() => props.src, (src) => {
     ready.value = false;
     const img = new Image();
     img.onload = () => {
-        if (src !== props.src) return; // réponse périmée
+        if (src !== props.src) return; // réponse périmé
         ratio.value = img.naturalWidth && img.naturalHeight
             ? img.naturalWidth / img.naturalHeight
             : 1;
@@ -45,10 +57,11 @@ watch(() => props.src, (src) => {
     img.src = src;
 }, { immediate: true });
 
+// 3. Utilisation des valeurs effectives pour le calcul
 const size = computed(() => {
-    const w = Math.sqrt(props.area * ratio.value);
+    const w = Math.sqrt(effectiveArea.value * ratio.value);
     const h = w / ratio.value;
-    const k = Math.min(1, props.maxSide / w, props.maxSide / h);
+    const k = Math.min(1, effectiveMaxSide.value / w, effectiveMaxSide.value / h);
     return { w: Math.round(w * k), h: Math.round(h * k) };
 });
 

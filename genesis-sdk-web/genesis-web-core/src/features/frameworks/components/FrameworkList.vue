@@ -5,46 +5,40 @@
   </div>
 
   <!-- ═══ SECTION DÉDIÉE : FRAMEWORKS RÉCENTS ═══ -->
-<GenesisDisclosure
-  v-if="recentFrameworks.length > 0"
-  title="Récents"
-  :default-open="true"
-  variant="secondary"
-  content-class="!pt-6"
-  class="mb-6"
->
-  <template #title>
-    <span class="text-xl font-semibold">Récemment</span>
-    <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border border-secondary">
-      {{ recentFrameworks.length }}
-    </span>
-  </template>
+  <GenesisDisclosure
+    v-if="recentFrameworks.length > 0"
+    title="Récents"
+    :default-open="true"
+    variant="secondary"
+    content-class="!pt-10"
+    class="mb-6"
+  >
+    <template #title>
+      <span class="text-2xl font-semibold">Récemment</span>
+      <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border border-secondary">
+        {{ recentFrameworks.length }}
+      </span>
+    </template>
 
-  <div class="section-body">
-    <!-- ✅ Grille native avec ratio 1:1 forcé -->
-    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
-      <div 
-        v-for="framework in recentFrameworks" 
-        :key="`recent-${framework.id}`" 
-        class="aspect-square"
-      >
+    <div class="section-body">
+      <GenesisList :display="display" minColWidth="100px">
         <GenesisItem
-          :label="framework.name"
-          :logo-src="resolveFrameworkLogo(framework) ?? undefined"
+          v-for="framework in recentFrameworks"
+          :key="`recent-${framework.id}`"
+          :logo-src="resolveFrameworkLogo(framework)"
           :selected="selectedId === framework.id"
-          :show-info-button="false"
-          class="h-full"
+          :badge="frameworkSlots?.get(framework.id) ?? null"
           @click="$emit('select', framework, $event)"
+          @info="$emit('info', framework)"
+          :size="'sm'"
         >
-          <!-- Slot vide : on masque le contenu textuel pour ne garder que le logo -->
           <template #default>
-            <div></div>
+            <td class="p-3 text-center">{{ framework.name }}</td>
           </template>
         </GenesisItem>
-      </div>
+      </GenesisList>
     </div>
-  </div>
-</GenesisDisclosure>
+  </GenesisDisclosure>
 
   <!-- ═══ LISTE GROUPÉE GÉNÉRIQUE (TOUS LES FRAMEWORKS) ═══ -->
   <!-- ✅ CORRECTION : Retrait du v-else. On veut toujours afficher la liste complète en dessous des récents -->
