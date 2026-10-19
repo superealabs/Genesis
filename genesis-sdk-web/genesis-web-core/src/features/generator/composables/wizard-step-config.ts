@@ -12,7 +12,7 @@ import { useFrameworkStore } from '../../frameworks/store/useFramework.store';
 import { useDatabaseStore } from '../../database/store/useDatabase.store';
 import { useFrontendStore } from '../../frontend/store/useFrontend.store';
 
-import { useRecency } from '@genesis-labs/web-core/core/features/recent/composables/useRecency';
+import { useRecentStore } from '@genesis-labs/web-core/core/features/recent/store/useRecent.store';
 import { RecentItem } from '@genesis-labs/shared-types';
 import type { IRecentService } from '@genesis-labs/web-core/core/features/recent/types/recent.service.interface';
 
@@ -84,29 +84,27 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   
   framework: {
     onEnter: async (_store, { fsvc, recentSvc }) => {
-      console.log("[Wizard: framework] Chargement des frameworks et langues...");
+      console.log("[Wizard: framework] Chargement des frameworks, langues et données récentes...");
+      
       const frameworkStore = useFrameworkStore();
+      const recentStore = useRecentStore();
       
       try { 
-        const [frameworksData, languagesData] = await Promise.all([
+        const [frameworksData, languagesData, recencyData] = await Promise.all([
           fsvc.fetchFrameworks(),
-          fsvc.fetchLanguages()
+          fsvc.fetchLanguages(),
+          recentSvc.getRecencyData() 
         ]);
         
         frameworkStore.setFrameworks(frameworksData);
         frameworkStore.setLanguages(languagesData);
+        recentStore.setRecencyData(recencyData); // Les données sont maintenant réactives pour l'UI !
         
-        console.log(`[Wizard: framework] Chargement réussi : ${frameworksData.length} frameworks, ${languagesData.length} langues`);
+        console.log(`[Wizard: framework] Chargement réussi : ${frameworksData.length} frameworks, ${languagesData.length} langues, ${recencyData.frameworks.length} récents.`);
       } catch (error) {
         console.error("[Wizard: framework] Échec du chargement:", error);
         _store.setWizardError("Impossible de charger la liste des frameworks.");
       }
-
-      try {
-      } catch (error) {
-        
-      }
-
     },
     
     beforeNext: async (store) => {
