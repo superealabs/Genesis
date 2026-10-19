@@ -33,11 +33,27 @@
     </div>
 
     <!-- ═══ DROITE : visuel (statique, ne rétrécit jamais sous sa largeur) ═══ -->
-    <div class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center gap-2 text-muted border border-secondary border-dashed bg-secondary/10 rounded-lg">
-      <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
-      </svg>
-      <span class="text-sm font-medium">Aperçu de la connexion</span>
+    <div 
+      class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center rounded-lg overflow-hidden relative min-h-[300px]" 
+      :class="databaseIllustration ? '' : 'border border-secondary border-dashed bg-secondary/10'"
+    >
+      
+      <!-- ✅ 1. Si l'image est présente : elle couvre tout l'espace disponible -->
+      <img 
+        v-if="databaseIllustration"
+        :src="databaseIllustration" 
+        alt="Illustration Base de données" 
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+
+      <!-- ✅ 2. Sinon (v-else), on affiche le placeholder générique (centré par le flex du parent) -->
+      <template v-else>
+        <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+        </svg>
+        <span class="text-sm font-medium mt-2">Aperçu de la connexion</span>
+      </template>
+
     </div>
 
   </main>
@@ -47,6 +63,9 @@
 import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store';
+
+// ✅ IMPORT DE L'ILLUSTRATION BASE DE DONNÉES
+import databaseIllustration from '../../assets/database.png';
 
 const { stepperData } = useGenerator();
 const databaseStore = useDatabaseStore();

@@ -35,9 +35,8 @@ export interface GeneratorGenerationOptionsPayload {
   [key: string]: unknown;
 }
 
+// genesis-sdk-web/genesis-web-types-shared/src/configStorage/config.types.ts
 export interface FrontendLanguagesConfigurationPayload {
-  frontendFrameworkId: number;
-  frontendFrameworkName: string;
   languages: string[]; // Tableau des codes de langue (ex: ['fr', 'en'])
   [key: string]: unknown;
 }
