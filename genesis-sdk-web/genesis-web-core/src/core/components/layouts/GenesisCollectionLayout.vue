@@ -102,6 +102,9 @@
                                     ]"
                                     size="lg" 
                                 />
+
+                                <slot name="custom-menu"></slot>
+
                                 <LayoutSwitcherAlt v-model="internalDisplayMode" />
                             </div>
                         </div>

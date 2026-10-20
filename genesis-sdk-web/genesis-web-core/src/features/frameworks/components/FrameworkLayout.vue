@@ -25,6 +25,34 @@
     @compare="$emit('compare')"
     @close-compare="$emit('close-compare')"
   >
+
+    <template #custom-menu>
+      <GenesisDropdown
+        v-if="frameworkGroupOptions && frameworkGroupOptions.length > 0"
+        triggerVariant="secondary"
+        trigger-size="lg"
+      >
+        <template #triggerIcon>
+          <IconCategory />
+        </template>
+        
+        <template #default="{ close }">
+          <div class="flex flex-col gap-1 p-1 min-w-[180px]">
+            <button
+              v-for="opt in frameworkGroupOptions"
+              :key="String(opt.value ?? 'null')"
+              class="w-full text-left px-3 py-2 text-sm rounded hover:bg-bg-secondary transition-colors flex items-center justify-between"
+              :class="groupBy === opt.value ? 'bg-bg-secondary font-medium text-text' : 'text-muted'"
+              @click="handleUpdateGroupBy(opt.value); close()"
+            >
+              {{ opt.label }}
+              <IconCheck v-if="groupBy === opt.value" class="w-4 h-4 text-primary shrink-0" />
+            </button>
+          </div>
+        </template>
+      </GenesisDropdown>
+    </template>
+
     <FrameworkList
       :frameworks="frameworks"
       :selectedId="selectedId"
@@ -88,6 +116,8 @@ import FrameworkDetails from './FrameworkDetails.vue'; // ✅ Import du composan
 import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisItemComparator from '@genesis-labs/web-core/core/components/layouts/GenesisItemComparator.vue';
+import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
+import IconCategory from '@genesis-labs/web-core/core/components/ui/icons/IconCategory.vue';
 
 // ============================================================================
 // 1. INTERFACE DES PROPS
@@ -130,7 +160,7 @@ const props = withDefaults(defineProps<FrameworkLayoutProps>(), {
   isLoading: false,
   groupBy: null,
   groupLabels: () => ({}),
-  detailFramework: null, // ✅ Valeur par défaut ajoutée pour la propreté
+  detailFramework: null,
   canCompare: false,
   compareCount: 0,
   comparing: false,
@@ -141,7 +171,7 @@ const props = withDefaults(defineProps<FrameworkLayoutProps>(), {
 // ============================================================================
 // 2. EMITS
 // ============================================================================
-defineEmits<{
+const emit = defineEmits<{
   // Navigation
   'back': [];
   'openFilter': [];
@@ -163,7 +193,7 @@ defineEmits<{
   'update:displayMode': [mode: DisplayMode];
   'update:mode': [mode: 'selection' | 'compare'];
   'update:filters': [filters: any];
-  'update:groupBy': [value: keyof Framework | null];
+  'update:groupBy': [value: string | null]; 
 }>();
 
 // ============================================================================
@@ -195,4 +225,8 @@ const dynamicGroupLabels = computed<Record<string | number, string>>(() => {
   
   return labels;
 });
+
+function handleUpdateGroupBy(value: keyof Framework | null) {
+  emit('update:groupBy', value as string | null);
+}
 </script>

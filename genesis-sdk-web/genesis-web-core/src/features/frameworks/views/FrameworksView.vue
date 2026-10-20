@@ -3,7 +3,7 @@
     v-bind="layoutProps"
     :group-by="groupBy"
     :languages="languages"
-    @update:group-by="groupBy = $event"
+
     @back="$emit('back')"
     @update:mode="handleModeChange"
     @update:searchValue="setSearch"
@@ -18,6 +18,9 @@
     @info="handleInfo"
     @compare="comparator.open"
     @close-compare="comparator.close"
+
+    @update:group-by="handleUpdateGroupBy"
+
   />
 </template>
 
@@ -79,7 +82,7 @@ const detailFramework = ref<Framework | null>(null);
 const isFilterOpen = ref(false);
 
 //  ÉTAT DE REGROUPEMENT LOCAL (Rend le composant autonome)
-const groupBy = ref<keyof Framework | null>('coreFramework');
+const groupBy = ref<keyof Framework | null>(null);
 
 // ============================================================================
 // 4. COMPUTEDS (Données dérivées)
@@ -143,6 +146,10 @@ const layoutProps = computed<FrameworkLayoutProps>(() => {
 // ============================================================================
 // 5. ACTIONS & HANDLERS
 // ============================================================================
+
+function handleUpdateGroupBy(value: string | null) {
+  groupBy.value = value as keyof Framework | null;
+}
 
 function handleInfo(framework: Framework) { 
   detailFramework.value = framework; 

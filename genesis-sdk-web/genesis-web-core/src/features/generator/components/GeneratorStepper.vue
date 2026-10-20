@@ -17,7 +17,6 @@
       v-bind="frameworkLayoutProps"
       :group-by="frameworkGroupBy"
       :languages="languages"
-      @update:group-by="frameworkGroupBy = $event"
       @back="emit('close')"
       @open-filter="openFilter"
       @close-filter="closeFilter"
@@ -33,6 +32,7 @@
       @select-framework="(fw: Framework) => emit('select-framework', fw)"
       @compare="comparator.open"
       @close-compare="comparator.close"
+      @update:group-by="handleUpdateFrameworkGroupBy"
     />
 
     <!-- ÉTAPE : CONFIGURATION PROJET -->
@@ -181,7 +181,7 @@ const emit = defineEmits<{
 const store = useGeneratorStore();
 const stepContentClass = 'overflow-y-auto';
 
-const frameworkGroupBy = ref<keyof Framework | null>('coreFramework');
+const frameworkGroupBy = ref<keyof Framework | null>(null);
 
 const feDetailFramework = ref<FrontendFramework | null>(null);
 const dbDetailEngine = ref<DatabaseEngineDto | null>(null);
@@ -313,6 +313,10 @@ const frontendLayoutProps = computed<FrontendLayoutProps>(() => ({
 // ============================================================================
 // 5. ACTIONS & HANDLERS
 // ============================================================================
+function handleUpdateFrameworkGroupBy(value: string | null) {
+  frameworkGroupBy.value = value as keyof Framework | null;
+}
+
 function handleClose() { 
   emit('close'); 
 }

@@ -147,7 +147,7 @@ const containerClasses = computed(() => {
         return 'bg-bg-light border-b-4 border-bg';
     }
     if (display.value === 'grid' || display.value === 'list') {
-        return 'bg-bg-light border-b-4 border-bg hover:border-primary/50 active:border active:border-transparent';
+        return 'bg-bg-light border-b-4 border-bg active:border active:border-transparent';
     }
     return 'bg-bg-light hover:bg-bg-light/50';
 });

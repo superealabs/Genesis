@@ -10,7 +10,6 @@
     title="Récents"
     :default-open="true"
     variant="secondary"
-    content-class="!pt-10"
     class="mb-6"
   >
     <template #title>
