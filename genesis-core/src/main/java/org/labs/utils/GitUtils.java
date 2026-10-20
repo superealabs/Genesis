@@ -1,9 +1,13 @@
 package org.labs.utils;
 
-import org.labs.genesis.config.Constantes;
+import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.FilesEdit;
+import org.labs.genesis.config.langage.Framework;
+import org.labs.genesis.frontend.generator.FrontendFramework;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -11,8 +15,9 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 
 public class GitUtils {
 
@@ -25,7 +30,7 @@ public class GitUtils {
             String token,
             String repoName,
             boolean isPrivate
-    ) throws IOException, InterruptedException {
+    ) throws Exception {
 
         try (HttpClient client = HttpClient.newHttpClient()) {
 
@@ -69,17 +74,19 @@ public class GitUtils {
      * Initialise un repository Git local.
      */
     public static void gitInit(String projectPath)
-            throws IOException, InterruptedException {
+            throws Exception {
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "init"
         );
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "branch",
                 "-M",
                 "main"
@@ -90,11 +97,12 @@ public class GitUtils {
      * Force la branche principale à être "main".
      */
     public static void gitSetMainBranch(String projectPath)
-            throws IOException, InterruptedException {
+            throws Exception {
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "branch",
                 "-M",
                 "main"
@@ -105,11 +113,12 @@ public class GitUtils {
      * Ajoute tous les fichiers du projet.
      */
     public static void gitAdd(String projectPath)
-            throws IOException, InterruptedException {
+            throws Exception {
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "add",
                 "."
         );
@@ -121,11 +130,12 @@ public class GitUtils {
     public static void gitCommit(
             String projectPath,
             String message
-    ) throws IOException, InterruptedException {
+    ) throws Exception {
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "commit",
                 "-m",
                 message
@@ -139,7 +149,7 @@ public class GitUtils {
             String projectPath,
             String username,
             String repoName
-    ) throws IOException, InterruptedException {
+    ) throws Exception {
 
         String remoteUrl =
                 "https://github.com/" +
@@ -148,9 +158,10 @@ public class GitUtils {
                         repoName +
                         ".git";
 
-        executeGitCommand(
+        EnvironmentUtils.run(
                 projectPath,
-                "git",
+                null,
+                EnvironmentUtils.getCommand("git"),
                 "remote",
                 "add",
                 "origin",
@@ -168,24 +179,16 @@ public class GitUtils {
     ) throws IOException {
         if (gitIgnoreFile != null) {
             String content = gitIgnoreFile.getContent() == null ? "" : gitIgnoreFile.getContent();
-            Path gitIgnoreTarget = Paths.get(destinationPath, ".gitignore");
-            FileUtils.createFileStructure(destinationPath);
+            Path gitIgnoreTarget = Paths.get(destinationPath, gitIgnoreFile.getFileName());
             Files.writeString(gitIgnoreTarget, content);
         }
     }
 
-    public static  FilesEdit getGitIgnore(List<FilesEdit> conditionalFiles) {
-        Optional<FilesEdit> gitIgnoreFile = conditionalFiles != null
-                ? conditionalFiles.stream()
+    public static  FilesEdit get(List<FilesEdit> conditionalFiles, String fileName) {
+        return conditionalFiles != null ? conditionalFiles.stream()
                 .filter(file -> file != null && file.getFileName() != null)
-                .filter(file -> file.getFileName().equalsIgnoreCase(".gitignore") || file.getFileName().equalsIgnoreCase("gitignore"))
-                .findFirst()
-                : null;
-
-        if(gitIgnoreFile != null && gitIgnoreFile.isPresent())
-            return  gitIgnoreFile.get();
-
-        return null;
+                .filter(file -> file.getFileName().equalsIgnoreCase(fileName))
+                .findFirst().orElse(null) : null;
     }
 
     /**
@@ -195,20 +198,7 @@ public class GitUtils {
             String projectPath,
             String username,
             String token
-    ) throws IOException, InterruptedException {
-
-        ProcessBuilder processBuilder = new ProcessBuilder(
-                "git",
-                "push",
-                "-u",
-                "origin",
-                "main"
-        );
-
-        processBuilder
-                .directory(Paths.get(projectPath).toFile())
-                .redirectErrorStream(true);
-
+    ) throws Exception {
         /*
          * Git utilise ce script pour récupérer
          * automatiquement le username et le token.
@@ -230,58 +220,30 @@ public class GitUtils {
         );
 
         askPassScript.toFile().setExecutable(true);
-
-        processBuilder.environment().put(
+        
+        Map<String, String> envs = new HashMap<>();
+        envs.put(
                 "GIT_ASKPASS",
                 askPassScript.toAbsolutePath().toString()
         );
 
-        processBuilder.environment().put(
+        envs.put(
                 "GIT_TERMINAL_PROMPT",
                 "0"
         );
 
         try {
 
-            Process process = processBuilder.start();
-
-            int exitCode = process.waitFor();
-
-            if (exitCode != 0) {
-                throw new RuntimeException(
-                        "Git push échoué (code " +
-                                exitCode +
-                                ")"
-                );
-            }
+            EnvironmentUtils.run(projectPath, envs,
+                    EnvironmentUtils.getCommand("git"),
+                    "push",
+                    "-u",
+                    "origin",
+                    "main");
 
         } finally {
 
             Files.deleteIfExists(askPassScript);
-        }
-    }
-
-    /**
-     * Exécute une commande Git.
-     */
-    private static void executeGitCommand(
-            String projectPath,
-            String... command
-    ) throws IOException, InterruptedException {
-
-        Process process = new ProcessBuilder(command)
-                .directory(Paths.get(projectPath).toFile())
-                .inheritIO()
-                .start();
-
-        int exitCode = process.waitFor();
-
-        if (exitCode != 0) {
-
-            throw new RuntimeException(
-                    "Commande Git échouée : " +
-                            String.join(" ", command)
-            );
         }
     }
 }

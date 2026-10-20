@@ -1,7 +1,6 @@
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, HostListener } from '@angular/core';
 import { FormGroup, FormControl, Validators, AbstractControl, ValidatorFn, ReactiveFormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common'; // pour *ngIf et *ngFor
-import { fileToBase64 } from '../file-utils';
+import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 import { Subscription } from 'rxjs';
 import { CKEditorModule } from '@ckeditor/ckeditor5-angular';
@@ -15,6 +14,7 @@ import {
   List,
   Paragraph
 } from 'ckeditor5';
+import { buildFileSource, downloadFile, fileToBase64, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from '../file-utils';
 
 export interface FieldConfig {
   type: string;
@@ -84,6 +84,15 @@ const PHONE_COUNTRIES = [
   styleUrls: ['./dynamic-field.component.css']
 })
 export class DynamicFieldComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
+  readonly buildFileSource = buildFileSource;
+  readonly getGeneratedFileName = getGeneratedFileName;
+  readonly isImageContent = isImageContent;
+  readonly getFileSize = getFileSize;
+  readonly getFileTypeLabel = getFileTypeLabel;
+  previewSource: string | null = null;
+  previewAlt = '';
+  downloadedFile: string | null = null;
+  private downloadFeedbackTimeout?: ReturnType<typeof setTimeout>;
   @Input() field!: FieldConfig;
   @Input() form!: FormGroup;
   @Input() initialData: any = {};
@@ -149,11 +158,12 @@ export class DynamicFieldComponent implements OnInit, OnChanges, AfterViewInit, 
     if (c.futureOrPresent) validators.push(this.futureOrPresentValidator);
     if (this.field.type === 'json-editor') validators.push(this.jsonValidator);
 
-    const value = this.initialData?.[this.field.name];
-    let defaultValue: any = this.field.type === 'color' ? '#000000' : '';
+    let value = this.initialData?.[this.field.name];
+
+    let defaultValue: any = this.field.type === 'color' ? '#000000' : this.field.type === 'file' ? null : '';
 
     if (value !== undefined) {
-      if (this.field.type === 'map') {
+      if (this.field.type === 'file' || this.field.type === 'map) {
         defaultValue = value;
       } else if (typeof value === 'object' && value !== null) {
         defaultValue = JSON.stringify(value);
@@ -320,6 +330,40 @@ export class DynamicFieldComponent implements OnInit, OnChanges, AfterViewInit, 
 
   getControlValue(): any {
     return this.getControl().value;
+  }
+
+  removeFile(): void {
+    const control = this.getControl();
+    control.setValue(null);
+    control.markAsDirty();
+    control.markAsTouched();
+    control.updateValueAndValidity();
+  }
+
+  get currentFile(): unknown {
+    return this.getControl()?.value;
+  }
+
+  openPreview(content: unknown): void {
+    this.previewSource = buildFileSource(content);
+    this.previewAlt = getGeneratedFileName(content);
+  }
+
+  closePreview(): void {
+    this.previewSource = null;
+  }
+
+  downloadAsset(content: unknown): void {
+    const fileName = getGeneratedFileName(content);
+    downloadFile(content, fileName);
+    this.downloadedFile = fileName;
+    if (this.downloadFeedbackTimeout) clearTimeout(this.downloadFeedbackTimeout);
+    this.downloadFeedbackTimeout = setTimeout(() => this.downloadedFile = null, 1600);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closePreview();
   }
 
   getControl(): FormControl {

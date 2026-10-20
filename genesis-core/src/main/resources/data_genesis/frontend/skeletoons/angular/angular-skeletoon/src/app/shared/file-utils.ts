@@ -35,6 +35,43 @@ function extractBase64(content: unknown): string {
   return btoa(binary);
 }
 
+const MIME_EXTENSIONS: Record<string, string> = {
+  'application/pdf': 'pdf', 'application/zip': 'zip',
+  'application/x-rar-compressed': 'rar', 'application/x-7z-compressed': '7z',
+  'application/gzip': 'gz', 'application/json': 'json', 'application/xml': 'xml',
+  'application/msword': 'doc', 'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.oasis.opendocument.text': 'odt', 'application/vnd.oasis.opendocument.spreadsheet': 'ods',
+  'application/x-tar': 'tar',
+  'text/plain': 'txt', 'text/csv': 'csv', 'image/png': 'png', 'image/jpeg': 'jpg',
+  'image/gif': 'gif', 'image/webp': 'webp', 'image/bmp': 'bmp', 'image/tiff': 'tiff',
+  'image/x-icon': 'ico', 'audio/mpeg': 'mp3', 'audio/ogg': 'ogg', 'audio/wav': 'wav',
+  'video/mp4': 'mp4', 'video/webm': 'webm', 'video/quicktime': 'mov'
+};
+
+const EXTENSION_MIME_TYPES = Object.fromEntries(
+  Object.entries(MIME_EXTENSIONS).map(([mime, extension]) => [extension, mime])
+);
+const FILE_MIME_TYPES = new Map<string, string>();
+
+function mimeCacheKey(content: string): string {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < content.length; index += 1) {
+    hash = Math.imul(hash ^ content.charCodeAt(index), 0x01000193);
+  }
+  return `${content.length}:${hash >>> 0}`;
+}
+
+function rememberFileMimeType(base64: string, file: File): void {
+  const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+  const mimeType = file.type || EXTENSION_MIME_TYPES[extension];
+  if (!mimeType) return;
+  const key = mimeCacheKey(base64);
+  if (FILE_MIME_TYPES.size >= 64) FILE_MIME_TYPES.delete(FILE_MIME_TYPES.keys().next().value!);
+  FILE_MIME_TYPES.set(key, mimeType);
+}
+
 function extractBytes(content: unknown): number[] {
   if (content instanceof Uint8Array) {
     return Array.from(content);
@@ -80,6 +117,10 @@ function extractMimeFromDataUrl(content: unknown): string | null {
 }
 
 export function detectMimeType(content: unknown): string {
+  if (typeof content === 'string') {
+    const rememberedMime = FILE_MIME_TYPES.get(mimeCacheKey(extractBase64(content)));
+    if (rememberedMime) return rememberedMime;
+  }
   const dataUrlMime = extractMimeFromDataUrl(content);
 
   if (dataUrlMime) {
@@ -148,6 +189,17 @@ export function detectMimeType(content: unknown): string {
     return 'image/webp';
   }
 
+  // TIFF, ICO, ZIP, RAR, 7z et gzip
+  if (bytes[0] === 0x49 && bytes[1] === 0x49 && bytes[2] === 0x2a && bytes[3] === 0x00) return 'image/tiff';
+  if (bytes[0] === 0x4d && bytes[1] === 0x4d && bytes[2] === 0x00 && bytes[3] === 0x2a) return 'image/tiff';
+  if (bytes[0] === 0x00 && bytes[1] === 0x00 && bytes[2] === 0x01 && bytes[3] === 0x00) return 'image/x-icon';
+  if (bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04) {
+    return 'application/zip';
+  }
+  if (bytes[0] === 0x52 && bytes[1] === 0x61 && bytes[2] === 0x72 && bytes[3] === 0x21) return 'application/x-rar-compressed';
+  if (bytes[0] === 0x37 && bytes[1] === 0x7a && bytes[2] === 0xbc && bytes[3] === 0xaf) return 'application/x-7z-compressed';
+  if (bytes[0] === 0x1f && bytes[1] === 0x8b) return 'application/gzip';
+
   return 'application/octet-stream';
 }
 
@@ -172,7 +224,10 @@ export function buildFileSource(content: unknown): string {
   return `data:${detectMimeType(content)};base64,${base64}`;
 }
 
-export function getGeneratedFileName(content: unknown): string {
+export function getGeneratedFileName(content: unknown, prefix = 'fichier'): string {
+  if (content && typeof content === 'object' && 'name' in content && typeof content.name === 'string') {
+    return content.name;
+  }
   const extensions: Record<string, string> = {
     'image/png': 'png',
     'image/jpeg': 'jpg',
@@ -182,10 +237,43 @@ export function getGeneratedFileName(content: unknown): string {
     'application/pdf': 'pdf'
   };
 
-  const extension =
-    extensions[detectMimeType(content)] ?? 'bin';
+  const extension = extensions[detectMimeType(content)] ?? MIME_EXTENSIONS[detectMimeType(content)] ?? 'bin';
 
-  return `fichier.${extension}`;
+  return `${prefix.replace(/\.[^.]+$/, '')}.${extension}`;
+}
+
+export function getFileTypeLabel(content: unknown, fileName = getGeneratedFileName(content)): string {
+  const extension = fileName.split('.').pop()?.toLowerCase() ?? '';
+  if (!extension || extension === 'bin') return 'FILE';
+  return extension.slice(0, 4).toUpperCase();
+}
+
+export function getFileSize(content: unknown): string {
+  let bytes = 0;
+  if (content instanceof Blob) bytes = content.size;
+  else if (content instanceof Uint8Array) bytes = content.byteLength;
+  else if (Array.isArray(content)) bytes = content.length;
+  else if (typeof content === 'string') {
+    try { bytes = atob(extractBase64(content)).length; } catch { return ''; }
+  }
+  if (bytes < 1024) return `${bytes} B`;
+  const size = bytes / 1024;
+  return `${size >= 1024 ? (size / 1024).toFixed(1) + ' MB' : size.toFixed(1) + ' KB'}`;
+}
+
+export function downloadFile(content: unknown, fileName?: string): void {
+  if (content == null || content === '') return;
+
+  const source = content instanceof Blob ? URL.createObjectURL(content) : buildFileSource(content);
+  if (!source) return;
+
+  const link = document.createElement('a');
+  link.href = source;
+  link.download = fileName ?? getGeneratedFileName(content);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  if (content instanceof Blob) window.setTimeout(() => URL.revokeObjectURL(source), 1000);
 }
 
 export function fileToBase64(file: File): Promise<string> {
@@ -199,12 +287,9 @@ export function fileToBase64(file: File): Promise<string> {
       }
 
       const separatorIndex = reader.result.indexOf(',');
-
-      resolve(
-        separatorIndex >= 0
-          ? reader.result.substring(separatorIndex + 1)
-          : reader.result
-      );
+      const base64 = separatorIndex >= 0 ? reader.result.substring(separatorIndex + 1) : reader.result;
+      rememberFileMimeType(base64, file);
+      resolve(base64);
     };
 
     reader.onerror = () => {

@@ -9,6 +9,35 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes: []
+    environments:
+      - name: "ASPNETCORE_URLS"
+        separator: "="
+        value: "http://+:${backendPort}"
+    commands:
+      - command: "dotnet run"
+        build:
+          - "dotnet restore"
+        needVolume: true
+      - command: "dotnet watch run"
+        build:
+          - "dotnet restore"
+        needVolume: true
+      - command: "dotnet ./bin/Release/net${versionLanguage}/${projectName}.dll"
+        build:
+          - "dotnet restore"
+          - "dotnet publish -c Release -o ./bin/Release/net${versionLanguage}"
+        needVolume: false
+    images:
+      - image: "mcr.microsoft.com/dotnet/sdk:${versionLanguage}"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y dotnet-sdk-${versionLanguage}"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y dotnet-sdk-${versionLanguage}"
   excludeProjectFilesEdits:
     - "SolutionFile"
     - "TestProjectFile"
@@ -41,7 +70,24 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${backendImage} 
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}}{{removeLine}}
+        WORKDIR /app
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        EXPOSE ${backendPort}
+
+        CMD [${command}]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "ProgramFile"
@@ -4930,6 +4976,31 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes: []
+    environments: []
+    commands:
+      - command: "python manage.py runserver 0.0.0.0:${backendPort}"
+        build:
+          - "pip install -r requirements.txt"
+        needVolume: true
+      - command: "gunicorn ${projectName}.wsgi:application --bind 0.0.0.0:${backendPort}"
+        build:
+          - "pip install -r requirements.txt"
+        needVolume: false
+    images:
+      - image: "python:${versionLanguage}"
+        build: []
+      - image: "python:${versionLanguage}-slim"
+        build: []
+      - image: "python:${versionLanguage}-alpine"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y python3 python3-pip"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y python3 python3-pip"
   excludeProjectFilesEdits: []
   frontendPaths:
     faviconPath: "${destinationFolder}/${majStart(projectName)}/wwwroot"
@@ -4981,8 +5052,27 @@
         # OS
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${backendImage} 
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}}{{removeLine}}
+        WORKDIR /app
+        
+        ENV PYTHONDONTWRITEBYTECODE=1
+        ENV PYTHONUNBUFFERED=1
 
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        EXPOSE ${backendPort}
+
+        CMD [${command}]
+      destinationPath: ""
   additionalFiles:
     - fileType: "settings"
       fileName: "settings"

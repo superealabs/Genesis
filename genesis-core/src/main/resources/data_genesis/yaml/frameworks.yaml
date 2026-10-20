@@ -9,6 +9,45 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes:
+      - name: "maven_cache"
+        dir: "/root/.m2"
+      - name: "spring_boot_gradle_cache"
+        dir: "/root/.gradle"
+    environments: []
+    commands:
+      - command: "./mvnw spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+          - "chmod +x mvnw"
+        needVolume: false
+      - command: "mvn spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+        needVolume: true
+      - command: "java -jar build/libs/app.jar"
+        build:
+          - "mvn dependency:go-offline"
+          - "mvn package -DskipTests"
+        needVolume: false
+    images:
+      - image: "maven:3.9-eclipse-temurin-${versionLanguage}"
+        build: []
+      - image: "maven:3.9-amazoncorretto-${versionLanguage}"
+        build: []
+      - image: "eclipse-temurin:${versionLanguage}"
+        build:
+          - "apt-get update && apt-get install -y maven"
+      - image: "amazoncorretto:${versionLanguage}"
+        build:
+          - "yum install -y maven"
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "PointSerializer"
@@ -133,8 +172,26 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
 
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${backendImage}
+
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        WORKDIR /app
+        
+        COPY . .
+        
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}        
+        EXPOSE ${backendPort}
+        
+        CMD [${command}]
+      destinationPath: ""
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -1239,7 +1296,7 @@
         spring.jpa.properties.hibernate.validator.apply_to_ddl=false
         spring.jpa.properties.hibernate.validator.autoregister_listeners=false
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/test/resources/"
-    
+
     - fileType: "ConfigFile"
       fileName: "column-visibility"
       extension: "json"
@@ -1365,7 +1422,7 @@
     #   artifactId: "flyway-database-postgresql"
     #   version: "10.19.0"
     #   scope: "{{removeLine}}"
-      
+
   model:
     toGenerate: true
     modelImports: |
@@ -1919,7 +1976,7 @@
 
     serviceSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
     servicePackage: "${groupLink}.${lowerCase(projectName)}.services;"
-    
+
     serviceAdditionalFiles:
       - fileType: "Interface service"
         fileName: "${majStart(className)}Service"
@@ -2860,6 +2917,37 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes:
+      - name: "dotnet_nuget"
+        dir: "/root/.nuget"
+    environments:
+      - name: "ASPNETCORE_URLS"
+        separator: "="
+        value: "http://+:${backendPort}"
+    commands:
+      - command: "dotnet run"
+        build:
+          - "dotnet restore"
+        needVolume: true
+      - command: "dotnet watch run"
+        build:
+          - "dotnet restore"
+        needVolume: true
+      - command: "dotnet MyApi.dll"
+        build:
+          - "dotnet restore"
+          - "dotnet publish -c Release -o /app/publish"
+        needVolume: false
+    images:
+      - image: "mcr.microsoft.com/dotnet/sdk:${versionLanguage}"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y dotnet-sdk-${versionLanguage}"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y dotnet-sdk-${versionLanguage}"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "PointSerializer"
@@ -2951,7 +3039,28 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${backendImage}
+
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        WORKDIR /app
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        EXPOSE ${backendPort}
+        
+        ENV ASPNETCORE_URLS=http://+:${backendPort}
+        
+        CMD [${command}]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "ProgramFile"
@@ -3178,7 +3287,7 @@
         
         app.Run();
         public partial class Program {}
-      
+
       destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/"
 
     - fileType: "DbContextFile"
@@ -6518,6 +6627,43 @@
   useCloud: true
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes:
+      - name: "maven_cache"
+        dir: "/root/.m2"
+    environments: []
+    commands:
+      - command: "./mvnw spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+          - "chmod +x mvnw"
+        needVolume: false
+      - command: "mvn spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+        needVolume: true
+      - command: "java -jar target/app.jar"
+        build:
+          - "mvn dependency:go-offline"
+          - "mvn package -DskipTests"
+        needVolume: false
+    images:
+      - image: "maven:3.9-eclipse-temurin-${versionLanguage}"
+        build: []
+      - image: "maven:3.9-amazoncorretto-${versionLanguage}"
+        build: []
+      - image: "eclipse-temurin:${versionLanguage}"
+        build:
+          - "apt-get update && apt-get install -y maven"
+      - image: "amazoncorretto:${versionLanguage}"
+        build:
+          - "yum install -y maven"
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
@@ -6553,8 +6699,25 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${backendImage}
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}} 
+        {{removeLine}}
+        WORKDIR /app
 
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        EXPOSE ${backendPort}
+
+        CMD [${command}]
+      destinationPath: ""
   additionalFiles:
     - fileType: "MainFile"
       fileName: "${majStart(projectName)}Application"
@@ -6700,6 +6863,43 @@
   useCloud: true
   useEurekaServer: false
   isGateway: true
+  docker:
+    volumes:
+      - name: "maven_cache"
+        dir: "/root/.m2"
+    environments: []
+    commands:
+      - command: "./mvnw spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+          - "chmod +x mvnw"
+        needVolume: false
+      - command: "mvn spring-boot:run"
+        build:
+          - "mvn dependency:go-offline"
+        needVolume: true
+      - command: "java -jar target/app.jar"
+        build:
+          - "mvn dependency:go-offline"
+          - "mvn package -DskipTests"
+        needVolume: false
+    images:
+      - image: "maven:3.9-eclipse-temurin-${versionLanguage}"
+        build: []
+      - image: "maven:3.9-amazoncorretto-${versionLanguage}"
+        build: []
+      - image: "eclipse-temurin:${versionLanguage}"
+        build:
+          - "apt-get update && apt-get install -y maven"
+      - image: "amazoncorretto:${versionLanguage}"
+        build:
+          - "yum install -y maven"
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
   useGatewaySecurity: false
   withGroupId: true
   useFrontendApp: false
@@ -6735,7 +6935,25 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${backendImage} 
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}} 
+        {{removeLine}}
+        WORKDIR /app
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        EXPOSE ${backendPort}
+
+        CMD [${command}]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "MainFile"
@@ -7015,6 +7233,38 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes:
+      - name: "nestjs_node_modules"
+        dir: "/app/node_modules"
+    environments: []
+    commands:
+      - command: "npm run start:dev"
+        build:
+          - "npm install"
+        needVolume: true
+      - command: "npm run start"
+        build:
+          - "npm install"
+        needVolume: true
+      - command: "node dist/main.js"
+        build:
+          - "npm install"
+          - "npm run build"
+        needVolume: false
+    images:
+      - image: "node:${versionLanguage}"
+        build: []
+      - image: "node:${versionLanguage}-alpine"
+        build: []
+      - image: "node:${versionLanguage}-bookworm"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y nodejs npm"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -7042,7 +7292,26 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/"
+      destinationPath: ""
+
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${backendImage} 
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}} 
+        {{removeLine}}
+        WORKDIR /app
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        EXPOSE ${backendPort}
+
+        CMD [${command}]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "Exception"
@@ -8767,6 +9036,31 @@
   useCloud: false
   useEurekaServer: false
   isGateway: false
+  docker:
+    volumes: []
+    environments: []
+    commands:
+      - command: "python manage.py runserver"
+        build:
+          - "pip install -r requirements.txt"
+        needVolume: true
+      - command: "gunicorn ${projectName}.wsgi:application"
+        build:
+          - "pip install -r requirements.txt"
+        needVolume: false
+    images:
+      - image: "python:${versionLanguage}"
+        build: []
+      - image: "python:${versionLanguage}-slim"
+        build: []
+      - image: "python:${versionLanguage}-alpine"
+        build: []
+      - image: "ubuntu:24.04"
+        build:
+          - "apt-get update && apt-get install -y python3 python3-pip"
+      - image: "debian:bookworm"
+        build:
+          - "apt-get update && apt-get install -y python3 python3-pip"
   useGatewaySecurity: false
   conditionalFiles:
     - fileType: "Git Ignore"
@@ -8826,7 +9120,29 @@
 
         .DS_Store
         Thumbs.db
-      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+      destinationPath: ""
+
+    - fileType: "Docker File"
+      fileName: "Dockerfile"
+      extension: ""
+      content: |
+        FROM ${backendImage} 
+        
+        {{#each backendSpecificBuild}}RUN ${this}{{newline}}{{/each}} 
+        {{removeLine}}
+        WORKDIR /app
+        
+        ENV PYTHONDONTWRITEBYTECODE=1
+        ENV PYTHONUNBUFFERED=1
+
+        COPY . .
+
+        {{#each build}}RUN ${this}{{newline}}{{/each}}
+        {{removeLine}}
+        EXPOSE ${backendPort}
+
+        CMD [${command}]
+      destinationPath: ""
 
   additionalFiles:
     - fileType: "settings"

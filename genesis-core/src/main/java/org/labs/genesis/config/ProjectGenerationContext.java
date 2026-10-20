@@ -5,7 +5,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.labs.genesis.config.form.FieldConfiguration;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.config.tools.DockerConfiguration;
+import org.labs.genesis.config.tools.GitConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.indicator.IntellijGenerationProcess;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
@@ -72,6 +73,7 @@ public class ProjectGenerationContext {
     private ViewsTemplate viewsTemplate;
     private GitConfiguration gitConfiguration;
     private Map<String, Map<String, FieldConfiguration>> formConfiguration;
+    private DockerConfiguration dockerConfiguration;
 
     public ProjectGenerationContext() {
         this.generationProcess = new IntellijGenerationProcess();

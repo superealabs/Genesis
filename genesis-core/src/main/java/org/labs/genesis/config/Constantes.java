@@ -6,6 +6,7 @@ public class Constantes {
     public static final String FORM_CONFIGURATION_JSON = "data_genesis/json/form-field-configuration.json";
     public static final String INPUT_TYPE_MAPPING_JSON = "data_genesis/json/input-type-mapping.json";
     public static final String LLM_API_CONFIG_JSON = "data_genesis/json/llm-api-config.json";
+    public static final String DOCKER_CONF_YAML = "data_genesis/yaml/docker-configuration.yaml";
     public static final String FRAMEWORK_YAML = "data_genesis/yaml/frameworks.yaml";
     public static final String FRAMEWORK_MVC_YAML = "data_genesis/yaml/frameworks-mvc.yaml";
     public static final String PROJECT_YAML = "data_genesis/yaml/projects.yaml";
