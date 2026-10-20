@@ -1,7 +1,6 @@
 package org.labs.genesis.api.controller;
 
-import org.labs.genesis.api.dto.FrameworkDtos.FrameworkResponse;
-import org.labs.genesis.api.dto.FrameworkDtos.FrameworkSelectionResponse;
+import org.labs.genesis.api.dto.FrameworkDtos.*;
 import org.labs.genesis.api.service.FrameworkService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +23,21 @@ public class FrameworkController {
     @GetMapping
     public List<FrameworkResponse> getAll() {
         return frameworkService.getAll();
+    }
+
+    @GetMapping("/languages")
+    public List<LanguageResponse> getLanguages() {
+        return frameworkService.getLanguages();
+    }
+
+    @GetMapping("/cores")
+    public List<CoreFrameworkResponse> getCoreFrameworks() {
+        return frameworkService.getCoreFrameworks();
+    }
+
+    @GetMapping("/templates")
+    public List<ViewTemplateResponse> getViewTemplates() {
+        return frameworkService.getViewTemplates();
     }
 
     @PostMapping("/{id}/select")

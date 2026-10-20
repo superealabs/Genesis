@@ -5,6 +5,8 @@ import org.labs.genesis.api.dto.MetadataDtos.TableMetadataResponse;
 import org.labs.genesis.api.dto.RelationDtos.RelationResponse;
 import org.labs.genesis.api.dto.RelationDtos.RelationUpdateRequest;
 import org.labs.genesis.api.dto.RelationDtos.RelationUpdateResponse;
+import org.labs.genesis.api.dto.RelationDtos.RelationParametersRequest;
+import org.labs.genesis.api.dto.RelationDtos.RelationParametersResponse;
 import org.labs.genesis.api.exception.RelationException;
 import org.labs.genesis.api.mapper.RelationMapper;
 import org.labs.genesis.api.mapper.TableMetadataMapper;
@@ -18,15 +20,17 @@ import java.util.stream.Collectors;
 
 @Service
 public class RelationService {
-
+    private final ForeignKeyRelationValidator foreignKeyValidator;
     private static final String PARENTS = "PARENTS";
     private static final String CHILDS = "CHILDS";
 
     private final GenerationContextStore generationContextStore;
 
-    public RelationService(GenerationContextStore generationContextStore) {
+    public RelationService(GenerationContextStore generationContextStore, ForeignKeyRelationValidator foreignKeyValidator) {
         this.generationContextStore = generationContextStore;
+        this.foreignKeyValidator = foreignKeyValidator;
     }
+
 
     private List<TableMetadataResponse> getTablesByRelationType(String relationType) {
         ProjectGenerationContext context = requireSelectedTables();
@@ -49,10 +53,19 @@ public class RelationService {
     }
 
     public List<RelationResponse> getRelations() {
-        ProjectGenerationContext context = requireSelectedTables();
-        if (context.getRelationParameters() == null) {
+        ProjectGenerationContext context = generationContextStore.getContext();
+        List<RelationParameter> relations = context.getRelationParameters();
+        if (relations == null || relations.isEmpty()) {
             return List.of();
         }
+
+        return relations.stream()
+                .map(RelationMapper::toResponse)
+                .toList();
+    }
+
+    public List<RelationResponse> detectRelations() {
+        ProjectGenerationContext context = requireSelectedTables();
         return context.autoDetectRelationParameters()
                 .stream()
                 .map(RelationMapper::toResponse)
@@ -66,6 +79,19 @@ public class RelationService {
         }
         return context;
     }
+
+
+    public RelationParametersResponse saveRelationParameters(RelationParametersRequest request) {
+        if (request == null || request.relations() == null) {
+            throw new RelationException("La liste des relations est obligatoire");
+        }
+        RelationUpdateResponse result = updateRelations(request.relations());
+        if (!result.success()) {
+            throw new RelationException("Impossible d'enregistrer les relations");
+        }
+        return new RelationParametersResponse(true, result.relations().size() + " relation(s) enregistrée(s) avec succès");
+    }
+
 
     public RelationUpdateResponse updateRelations(List<RelationUpdateRequest> requests) {
         ProjectGenerationContext context = requireSelectedTables();
@@ -85,11 +111,12 @@ public class RelationService {
 
         for (RelationUpdateRequest request : requests) {
             if (request == null) {
-                continue;
+                throw new RelationException("Une relation de la liste est null");
             }
             String parentTable = normalizeTableName(request.parentTable());
             String childTable = normalizeTableName(request.childTable());
             validateRelation(parentTable, childTable, selectedTables);
+            foreignKeyValidator.validate(context.getConnection(), parentTable, childTable);
             String relationKey = parentTable + "->" + childTable;
             if (!uniqueRelations.add(relationKey)) {
                 throw new RelationException("Relation dupliquée : " + parentTable + " -> " + childTable);

@@ -25,4 +25,23 @@ public final class FrameworkDtos {
             FrameworkResponse framework
     ) {
     }
+
+    public record LanguageResponse(
+            int id,
+            String name,
+            String extension
+    ) {
+    }
+
+    public record CoreFrameworkResponse(
+            int id,
+            String name
+    ) {
+    }
+
+    public record ViewTemplateResponse(
+            int id,
+            String name
+    ) {
+    }
 }

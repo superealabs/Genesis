@@ -33,4 +33,19 @@ public final class MetadataDtos {
             List<TableMetadataResponse> views
     ) {
     }
+
+    public record GenerationParameterRequest(
+            String profileName,
+            List<String> selectedTables,
+            List<String> selectedViews,
+            List<String> selectedComponents
+    ) {
+    }
+
+    public record GenerationParametersResponse(
+            boolean success,
+            String message
+    ) {
+    }
+
 }

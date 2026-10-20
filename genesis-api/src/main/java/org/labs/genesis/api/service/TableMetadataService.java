@@ -83,9 +83,10 @@ public class TableMetadataService {
             if (connection.isClosed()) {
                 throw new MetadataException("La connexion à la base de données est fermée");
             }
+        } catch (MetadataException exception) {
+            throw exception;
         } catch (Exception exception) {
-            throw new MetadataException("Impossible de vérifier la connexion : " + exception.getMessage()
-            );
+            throw new MetadataException("Impossible de vérifier l'état de la connexion JDBC");
         }
     }
 }

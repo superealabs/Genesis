@@ -3,24 +3,31 @@ package org.labs.genesis.api.service;
 import org.labs.genesis.api.context.GenerationContextStore;
 import org.labs.genesis.api.dto.MetadataDtos.TableSelectionRequest;
 import org.labs.genesis.api.dto.MetadataDtos.TableSelectionResponse;
+import org.labs.genesis.api.dto.MetadataDtos.TablesMetadataResponse;
 import org.labs.genesis.api.exception.TableSelectionException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.springframework.stereotype.Service;
+import org.labs.genesis.api.dto.MetadataDtos.GenerationParameterRequest;
+import org.labs.genesis.api.dto.MetadataDtos.GenerationParametersResponse;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 
 @Service
 public class TableSelectionService {
 
     private final GenerationContextStore generationContextStore;
+    private final TableMetadataService tableMetadataService;
+    private final GenerationProfilesStore generationProfilesStore;
+    private final ProfileRelationService profileRelationService;
 
-    public TableSelectionService(GenerationContextStore generationContextStore) {
+
+    public TableSelectionService(GenerationContextStore generationContextStore, TableMetadataService tableMetadataService, GenerationProfilesStore generationProfilesStore, ProfileRelationService profileRelationService) {
         this.generationContextStore = generationContextStore;
+        this.tableMetadataService = tableMetadataService;
+        this.generationProfilesStore = generationProfilesStore;
+        this.profileRelationService = profileRelationService;
     }
+
 
     public TableSelectionResponse select(TableSelectionRequest request) {
         validateRequest(request);
@@ -112,4 +119,99 @@ public class TableSelectionService {
         }
         return current.getMessage() == null ? current.getClass().getSimpleName() : current.getMessage();
     }
+
+
+
+    public synchronized GenerationParametersResponse saveGenerationParameters(List<GenerationParameterRequest> parameters) {
+        if (parameters == null || parameters.isEmpty()) {
+            throw new TableSelectionException("Au moins un profil de génération est obligatoire");
+        }
+
+        ProjectGenerationContext context = generationContextStore.getContext();
+
+        validateContext(context);
+
+        TablesMetadataResponse metadata = tableMetadataService.loadAll();
+
+        Set<String> availableTables = metadata.tables()
+                .stream()
+                .map(table -> table.tableName().toLowerCase(Locale.ROOT))
+                .collect(java.util.stream.Collectors.toSet());
+
+        Set<String> availableViews = metadata.views()
+                .stream()
+                .map(view -> view.tableName().toLowerCase(Locale.ROOT))
+                .collect(java.util.stream.Collectors.toSet());
+
+        Set<String> profileNames = new HashSet<>();
+        List<GenerationParameterRequest> validatedProfiles = new ArrayList<>();
+
+        for (GenerationParameterRequest profile : parameters) {
+            if (profile == null) {
+                throw new TableSelectionException("Un profil de génération est null");
+            }
+
+            String profileName = profile.profileName();
+
+            if (profileName == null || profileName.isBlank()) {
+                throw new TableSelectionException("Le nom du profil est obligatoire");
+            }
+
+            profileName = profileName.trim();
+
+            if (!profileNames.add(profileName.toLowerCase(Locale.ROOT))) {
+                throw new TableSelectionException("Nom de profil dupliqué : " + profileName);
+            }
+
+            List<String> tables = normalizeNames(profile.selectedTables());
+            List<String> views = normalizeNames(profile.selectedViews());
+
+            if (tables.isEmpty() && views.isEmpty()) {
+                throw new TableSelectionException("Le profil " + profileName + " ne contient aucune table ni vue");
+            }
+
+            validateSelectedNames(profileName, tables, availableTables, "table");
+            validateSelectedNames(profileName, views, availableViews, "vue");
+
+            if (profile.selectedComponents() == null) {
+                throw new TableSelectionException("Les composants sont obligatoires pour " + profileName);
+            }
+
+            List<String> mappedComponents = mapComponents(profile.selectedComponents());
+            List<String> normalizedComponents =
+                    mappedComponents.stream()
+                            .map(component -> component.toLowerCase(Locale.ROOT))
+                            .toList();
+
+            validatedProfiles.add(new GenerationParameterRequest(profileName, tables, views, normalizedComponents));
+        }
+
+        List<GenerationParameterRequest> previousProfiles = generationProfilesStore.getProfiles(context);
+
+        profileRelationService.reconcileProfiles(previousProfiles, validatedProfiles);
+
+
+        generationProfilesStore.save(context, validatedProfiles);
+
+        return new GenerationParametersResponse(true, validatedProfiles.size() + " profil(s) de génération enregistré(s)");
+    }
+
+    private void validateSelectedNames(String profileName, List<String> selectedNames, Set<String> availableNames, String type) {
+        for (String name : selectedNames) {
+            if (!availableNames.contains(name.toLowerCase(Locale.ROOT))) {
+                throw new TableSelectionException("Le profil " + profileName + " référence une " + type + " inconnue : " + name);
+            }
+        }
+    }
+
+
+    public List<GenerationParameterRequest> getGenerationParameters() {
+        return generationProfilesStore.getProfiles(generationContextStore.getContext());
+    }
+
+    public void clearGenerationParameters() {
+        generationProfilesStore.clear();
+        profileRelationService.clear();
+    }
+
 }

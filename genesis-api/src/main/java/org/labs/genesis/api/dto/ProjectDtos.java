@@ -20,18 +20,34 @@ public final class ProjectDtos {
             String languageVersion,
             String buildTool,
             String groupId,
-            String frameworkVersion
+            String frameworkVersion,
+
+            String projectDescription,
+            String projectPort,
+            String loggingLevel,
+            String securityType,
+            String cacheProvider,
+            String hibernateDdlAuto
     ) {
     }
 
     public record ProjectConfigResponse(
             boolean success,
+            String message,
+
             String projectName,
             String projectLocation,
             String languageVersion,
             String buildTool,
             String groupId,
-            String frameworkVersion
+            String frameworkVersion,
+
+            String projectDescription,
+            String projectPort,
+            String loggingLevel,
+            String securityType,
+            String cacheProvider,
+            String hibernateDdlAuto
     ) {
     }
 }

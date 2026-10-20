@@ -62,29 +62,112 @@ public class ProjectConfigService {
         languageConfiguration.put("languageVersion", request.languageVersion());
         frameworkConfiguration.put("frameworkVersion", request.frameworkVersion());
 
+        applyFrameworkOption(framework, frameworkConfiguration, "loggingLevel", request.loggingLevel());
+        applyFrameworkOption(framework, frameworkConfiguration, "securityType", request.securityType());
+        applyFrameworkOption(framework, frameworkConfiguration, "cacheProvider", request.cacheProvider());
+        applyFrameworkOption(framework, frameworkConfiguration, "hibernateDdlAuto", request.hibernateDdlAuto());
+
         String groupId = Boolean.TRUE.equals(framework.getWithGroupId()) ? request.groupId() : "";
 
         if (Boolean.TRUE.equals(framework.getWithGroupId()) && (groupId == null || groupId.isBlank())) {
             throw new ProjectConfigException("Le Group ID est obligatoire pour ce framework");
         }
 
+        String projectPort = normalizeOptional(request.projectPort());
+        validateProjectPort(projectPort);
+
         context.setProjectName(request.projectName().trim());
         context.setDestinationFolder(request.projectLocation().trim());
         context.setGroupLink(groupId == null ? "" : groupId.trim());
         context.setProject(project);
+        context.setProjectDescription(normalizeOptional(request.projectDescription()));
+        context.setProjectPort(projectPort);
         context.setLanguageConfiguration(languageConfiguration);
         context.setFrameworkConfiguration(frameworkConfiguration);
 
         return new ProjectConfigResponse(
                 true,
+                "Configuration du projet enregistrée avec succès",
                 context.getProjectName(),
                 context.getDestinationFolder(),
                 request.languageVersion(),
                 project.getName().trim().toLowerCase(Locale.ROOT),
                 context.getGroupLink(),
-                request.frameworkVersion()
+                request.frameworkVersion(),
+                context.getProjectDescription(),
+                context.getProjectPort(),
+                getStringOption(frameworkConfiguration, "loggingLevel"),
+                getStringOption(frameworkConfiguration, "securityType"),
+                getStringOption(frameworkConfiguration, "cacheProvider"),
+                getStringOption(frameworkConfiguration, "hibernateDdlAuto")
         );
     }
+
+
+    private void applyFrameworkOption(Framework framework, Map<String, Object> configuration, String variableName, String requestedValue) {
+        if (requestedValue == null || requestedValue.isBlank()) {
+            return;
+        }
+        List<ConfigurationMetadata> metadata = framework.getConfigurations();
+        ConfigurationMetadata option = metadata == null
+                ? null
+                : metadata.stream()
+                .filter(item -> variableName.equals(item.getVariableName()))
+                .findFirst()
+                .orElse(null);
+        if (option == null) {
+            throw new ProjectConfigException(
+                    "L'option " + variableName
+                            + " n'est pas supportée par ce framework"
+            );
+        }
+        final String trimmed = requestedValue.trim();
+        String value = trimmed;
+        List<String> allowedValues = option.getOptions();
+        if (allowedValues != null && !allowedValues.isEmpty()) {
+            value = allowedValues.stream()
+                    .filter(allowed -> allowed.equalsIgnoreCase(trimmed))
+                    .findFirst()
+                    .orElseThrow(() -> new ProjectConfigException(
+                            "Valeur non supportée pour " + variableName + " : " + trimmed
+                    ));
+        }
+        configuration.put(variableName, value);
+    }
+
+
+    private String normalizeOptional(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private String getStringOption(Map<String, Object> configuration, String key) {
+        Object value = configuration.get(key);
+        return value == null ? "" : String.valueOf(value);
+    }
+
+    private void validateProjectPort(String port) {
+        if (port.isEmpty()) {
+            return;
+        }
+
+        final int numericPort;
+
+        try {
+            numericPort = Integer.parseInt(port);
+        } catch (NumberFormatException exception) {
+            throw new ProjectConfigException(
+                    "Le port du projet doit être un entier valide"
+            );
+        }
+
+        if (numericPort < 1 || numericPort > 65535) {
+            throw new ProjectConfigException(
+                    "Le port du projet doit être compris entre 1 et 65535"
+            );
+        }
+    }
+
+
 
     private Framework requireFramework(ProjectGenerationContext context) {
         if (context.getFramework() == null) {
