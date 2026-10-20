@@ -1339,13 +1339,19 @@
               { type: 'select', name: '${this.name}', label: '${this.type}', options: [] },
             {{tab}}{{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
-            {{#if this.isText}}{{removeLine}}
-              { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isNumeric or this.isInterval}}
-              { type: 'number', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDate }}
-              { type: 'date', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isDateTime}}
-              { type: 'datetime-local', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{elseIf this.isTime}}
-              { type: 'time', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{else}}
-              { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}' }{{/if}}{{#if !@last}},{{/if}}
+              {
+                type: '${this.uiType}',
+                name: '${this.name}',
+                label: '${formatReadableLowerCase(this.name)}',
+                constraints: { required: ${this.isRequired}{{#if this.minValue}}, min: ${this.minValue}{{/if}}{{#if this.maxValue}}, max: ${this.maxValue}{{/if}} },
+                {{#if this.minValue}}min: ${this.minValue},{{else}}{{removeLine}}{{/if}}
+                {{#if this.maxValue}}max: ${this.maxValue},{{else}}{{removeLine}}{{/if}}
+                {{#if this.stepValue}}step: ${this.stepValue},{{else}}{{removeLine}}{{/if}}
+                {{#if this.currencyCode}}currency: '${this.currencyCode}',{{else}}{{removeLine}}{{/if}}
+                {{#if this.acceptedExtensions}}accept: '${this.acceptedExtensions}',{{else}}{{removeLine}}{{/if}}
+                {{#if !this.isGeographic and this.type=map}}latitude: '${this.latitude}',
+                longitude: '${this.longitude}',{{else}}{{removeLine}}{{/if}}
+              }{{#if !@last}},{{/if}}
               {{tab}}{{/each}}{{removeLine}}
           ];
 
@@ -1553,6 +1559,16 @@
               '${this.name}': '${this.typeBase}',
               {{/each}}
             };
+            fieldUiTypes: Record<string, string> = {
+              {{#each fieldsNotFK}}
+              '${this.name}': '${this.uiType}',
+              {{/each}}
+            };
+            fieldMapConfig: Record<string, { geographic: boolean; latitude?: string; longitude?: string }> = {
+              {{#each fieldsNotFK}}
+              '${this.name}': { geographic: ${this.isGeographic}, latitude: '${this.latitude}', longitude: '${this.longitude}' },
+              {{/each}}
+            };
             {{#if isParentTable=true and hasChildrenForm=true}}
             {{#each childrenWithForm}}
             ${minStart(this.className)}s: any[] = [];
@@ -1653,7 +1669,7 @@
             <app-loading-icon [isLoading]="isLoading"></app-loading-icon>
 
             <div *ngIf="!isLoading && ${minStart(className)}">
-              <app-detail-view [object]="${minStart(className)}" [fieldTypes]="fieldTypes" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
+              <app-detail-view [object]="${minStart(className)}" [fieldTypes]="fieldTypes" [fieldUiTypes]="fieldUiTypes" [fieldMapConfig]="fieldMapConfig" [deletfn]="delete${majStart(className)}.bind(this)" [id]="this.id" LinkContext='${toKebabCase(className)}s'></app-detail-view>
 
               {{#if isParentTable=true and hasChildrenForm=true}}
               {{#each childrenWithForm}}
@@ -1853,33 +1869,38 @@
       fileName: "${toKebabCase(className)}-table-form.component"
       extension: "ts"
       content: |
-        import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+        import { Component, ElementRef, Input, Output, EventEmitter, OnInit, ViewChild } from '@angular/core';
         import { CommonModule } from '@angular/common';
-        import { FormsModule } from '@angular/forms';
+        import { FormsModule, ReactiveFormsModule, FormGroup } from '@angular/forms';
         import { HttpClient } from '@angular/common/http';
+        import { Subscription } from 'rxjs';
+        import { DynamicFieldComponent, FieldConfig } from '../../../shared/dynamic-field/dynamic-field.component';
         import { environment } from '../../../../environments/environment';
 
-        export interface ${majStart(className)}TableFieldConfig {
-          type: string;
-          name: string;
-          label: string;
+        export interface ${majStart(className)}TableFieldConfig extends FieldConfig {
           isFk?: boolean;
-          options?: {value: any; label: string}[];
         }
 
         @Component({
           selector: 'app-${toKebabCase(className)}-table-form',
           standalone: true,
-          imports: [CommonModule, FormsModule],
+          imports: [CommonModule, FormsModule, ReactiveFormsModule, DynamicFieldComponent],
           templateUrl: './${toKebabCase(className)}-table-form.component.html'
         })
         export class ${majStart(className)}TableFormComponent implements OnInit {
+          @ViewChild('mapDialog') mapDialog!: ElementRef<HTMLDialogElement>;
           @Output() rowsChange = new EventEmitter<any[]>();
           rows: any[] = [];
+          rowForms: FormGroup[] = [];
+          activeMap: { rowIndex: number; field: FieldConfig } | null = null;
+          private rowSubscriptions = new Map<FormGroup, Subscription>();
 
           @Input()
           set initialData(data: any[] | null | undefined) {
             this.rows = (data ?? []).map(d => ({ ...d }));
+            this.rowSubscriptions.forEach(subscription => subscription.unsubscribe());
+            this.rowSubscriptions.clear();
+            this.rowForms = this.rows.map(row => this.createRowForm(row));
           }
 
           fields: ${majStart(className)}TableFieldConfig[] = [
@@ -1890,7 +1911,20 @@
             {{tab}}{{tab}}{{/if}}
             {{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
-            { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}', isFk: false }{{#if !@last}},{{/if}}
+            {
+              type: '${this.uiType}',
+              name: '${this.name}',
+              label: '${formatReadableLowerCase(this.name)}',
+              isFk: false,
+              constraints: { required: ${this.isRequired}{{#if this.minValue}}, min: ${this.minValue}{{/if}}{{#if this.maxValue}}, max: ${this.maxValue}{{/if}} },
+              {{#if this.minValue}}min: ${this.minValue},{{/if}}
+              {{#if this.maxValue}}max: ${this.maxValue},{{/if}}
+              {{#if this.stepValue}}step: ${this.stepValue},{{/if}}
+              {{#if this.currencyCode}}currency: '${this.currencyCode}',{{/if}}
+              {{#if this.acceptedExtensions}}accept: '${this.acceptedExtensions}',{{/if}}
+              {{#if this.latitude}}latitude: '${this.latitude}',{{/if}}
+              {{#if this.longitude}}longitude: '${this.longitude}',{{/if}}
+            }{{#if !@last}},{{/if}}
             {{tab}}{{/each}}{{removeLine}}
           ];
 
@@ -1920,15 +1954,69 @@
             return index;
           }
 
+          openMap(rowIndex: number, field: FieldConfig): void {
+            this.activeMap = { rowIndex, field };
+            this.mapDialog.nativeElement.showModal();
+          }
+
+          closeMap(): void {
+            this.mapDialog.nativeElement.close();
+            this.activeMap = null;
+          }
+
+          closeMapOnBackdrop(event: MouseEvent): void {
+            if (event.target === this.mapDialog.nativeElement) {
+              this.closeMap();
+            }
+          }
+
+          getMapButtonLabel(row: any, field: FieldConfig): string {
+            const latitude = field.latitude && field.longitude
+              ? row[field.latitude]
+              : row[field.name]?.latitude ?? row[field.name]?.lat;
+            const longitude = field.latitude && field.longitude
+              ? row[field.longitude]
+              : row[field.name]?.longitude ?? row[field.name]?.lng;
+            if (latitude === null || latitude === undefined || latitude === ''
+              || longitude === null || longitude === undefined || longitude === '') {
+              return 'Choose location';
+            }
+            const parsedLatitude = Number(latitude);
+            const parsedLongitude = Number(longitude);
+            return Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude)
+              ? `${parsedLatitude.toFixed(6)}, ${parsedLongitude.toFixed(6)}`
+              : 'Choose location';
+          }
+          
+          get visibleFields(): UserStatTableFieldConfig[] {
+              return this.fields.filter(f => f.type !== 'none');
+          }
+
+          private createRowForm(row: any): FormGroup {
+            const form = new FormGroup({});
+            this.rowSubscriptions.set(form, form.valueChanges.subscribe(value => {
+              const index = this.rowForms.indexOf(form);
+              if (index < 0) return;
+              this.rows[index] = { ...this.rows[index], ...value };
+              this.onFieldChange();
+            }));
+            return form;
+          }
+
           addRow(): void {
             const row: any = {};
             this.fields.forEach(f => row[f.name] = null);
             this.rows = [...this.rows, row];
+            this.rowForms = [...this.rowForms, this.createRowForm(row)];
             this.rowsChange.emit(this.rows);
           }
 
           removeRow(index: number): void {
+            const removedForm = this.rowForms[index];
+            this.rowSubscriptions.get(removedForm)?.unsubscribe();
+            this.rowSubscriptions.delete(removedForm);
             this.rows = this.rows.filter((_, i) => i !== index);
+            this.rowForms = this.rowForms.filter((_, i) => i !== index);
             this.rowsChange.emit(this.rows);
           }
 
@@ -1947,7 +2035,7 @@
             <thead>
               <tr style="background:#000;">
                 <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#fff;">#</th>
-                <ng-container *ngFor="let f of fields">
+                <ng-container *ngFor="let f of visibleFields">
                   <th style="padding:0.5rem 0.75rem; text-align:left; font-weight:600; color:#fff;">{{ f.label }}</th>
                 </ng-container>
                 <th style="padding:0.5rem 0.75rem;"></th>
@@ -1956,7 +2044,7 @@
             <tbody>
               <tr *ngFor="let row of rows; let i = index; trackBy: trackByIndex" style="border-bottom:1px solid #e5e7eb;">
                 <td style="padding:0.4rem 0.75rem; color:#6b7280;">{{ i + 1 }}</td>
-                <ng-container *ngFor="let f of fields">
+                <ng-container *ngFor="let f of visibleFields">
                   <td style="padding:0.25rem 0.5rem;">
                     <ng-container *ngIf="f.isFk; else plainInput">
                       <select
@@ -1970,14 +2058,20 @@
                       </select>
                     </ng-container>
                     <ng-template #plainInput>
-                      <input
-                        [type]="f.type"
-                        [placeholder]="'Enter ' + f.label"
-                        [ngModel]="row[f.name]"
-                        (ngModelChange)="row[f.name] = $event; onFieldChange()"
-                        [ngModelOptions]="{standalone: true}"
-                        style="width:100%; border:1px solid #d1d5db; border-radius:4px; padding:0.35rem 0.5rem;"
-                      />
+                      <button
+                        *ngIf="f.type === 'map'; else regularInput"
+                        type="button"
+                        [attr.aria-label]="'Choose location for ' + f.label"
+                        (click)="openMap(i, f)"
+                        style="width:100%; border:1px solid #9ca3af; border-radius:4px; padding:0.4rem 0.5rem; background:#fff; cursor:pointer;"
+                      >{{ getMapButtonLabel(row, f) }}</button>
+                      <ng-template #regularInput>
+                        <app-dynamic-field
+                          [field]="f"
+                          [form]="rowForms[i]"
+                          [initialData]="row"
+                        ></app-dynamic-field>
+                      </ng-template>
                     </ng-template>
                   </td>
                 </ng-container>
@@ -1991,6 +2085,24 @@
             <span style="font-size:0.8rem; color:#6b7280;">{{ rows.length }} row(s)</span>
             <button type="button" (click)="addRow()" style="background:#000; color:#fff; border:none; border-radius:4px; padding:0.4rem 0.9rem; cursor:pointer; font-weight:600;">+</button>
           </div>
+          <dialog
+            #mapDialog
+            (close)="activeMap = null"
+            (click)="closeMapOnBackdrop($event)"
+            style="width:min(90vw, 800px); max-width:800px; max-height:90vh; padding:1rem; border:0; border-radius:8px; overflow:auto;"
+          >
+            <ng-container *ngIf="activeMap as map">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:0.75rem;">
+                <h2 style="margin:0; font-size:1.1rem;">{{ map.field.label }}</h2>
+                <button type="button" aria-label="Close map" (click)="closeMap()" style="border:0; background:transparent; font-size:1.25rem; cursor:pointer;">&times;</button>
+              </div>
+              <app-dynamic-field
+                [field]="map.field"
+                [form]="rowForms[map.rowIndex]"
+                [initialData]="rows[map.rowIndex]"
+              ></app-dynamic-field>
+            </ng-container>
+          </dialog>
         </div>
       destinationPath: "${destinationFolder}/src/app/features/${toKebabCase(className)}/${toKebabCase(className)}-table-form"
 
@@ -3809,6 +3921,7 @@
             "format": "prettier --write src/"
           },
           "dependencies": {
+            "@ckeditor/ckeditor5-vue": "^8.2.0",
             "@fortawesome/fontawesome-svg-core": "^7.0.0",
             "@fortawesome/free-brands-svg-icons": "^7.0.0",
             "@fortawesome/free-regular-svg-icons": "^7.0.0",
@@ -3818,8 +3931,10 @@
             "axios": "^1.11.0",
             "bootstrap": "^5.3.7",
             "bootstrap-icons": "^1.13.1",
+            "ckeditor5": "^48.5.2",
             "daisyui": "^5.0.50",
             "dayjs": "^1.11.21",
+            "leaflet": "^1.9.4",
             "patch-package": "^8.0.1",
             "pinia": "^3.0.3",
             "vee-validate": "^4.15.1",
@@ -3831,6 +3946,7 @@
           "devDependencies": {
             "@tsconfig/node22": "^22.0.2",
             "@types/jsdom": "^21.1.7",
+            "@types/leaflet": "^1.9.22",
             "@types/node": "^22.16.5",
             "@vitejs/plugin-vue": "^6.0.1",
             "@vitest/eslint-plugin": "^1.3.4",
@@ -6560,7 +6676,7 @@
                   {{#each fields}}
                   <div>
                     <label for="${minStart(className)}${majStart(this.name)}" class="block text-sm font-medium mb-1">{{#if this.isForeignKey}}${formatReadable(this.type)}{{else}}${formatReadable(this.name)}{{/if}}</label>
-                    <div id="${minStart(className)}${majStart(this.name)}" class="input min-h-16 w-full bg-base-100 cursor-default">
+                    <div id="${minStart(className)}${majStart(this.name)}" class="{{#if this.uiType=map}}w-full rounded-lg border border-base-300 overflow-hidden{{else}}input w-full bg-base-100 cursor-default{{/if}}">
                       {{#if this.uiType=file}}
                       <div v-if="${minStart(className)}.${this.name}" class="flex w-full min-w-0 items-center gap-3 py-2">
                         <button v-if="isImageContent(${minStart(className)}.${this.name})" type="button" class="shrink-0 overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(${minStart(className)}.${this.name}), '${formatReadable(this.name)}')"><img :src="buildFileSource(${minStart(className)}.${this.name})" alt="${formatReadable(this.name)}" class="h-12 w-16 object-cover" /></button>
@@ -6575,6 +6691,21 @@
                       <span>{{ ${minStart(className)}.${this.name} ? $d(${minStart(className)}.${this.name}, 'long') : '--/--/--' }}</span>
                       {{elseIf this.isNumeric}}
                       <span>{{ ${minStart(className)}.${this.name} ? $n(${minStart(className)}.${this.name}, 'decimal') : '--' }}</span>
+                      {{elseIf this.isGeographic and this.uiType=map}}
+                      <GenesisMap
+                          :latitude="${minStart(className)}.${this.name} ? ${minStart(className)}.${this.name}.latitude : null"
+                          :longitude="${minStart(className)}.${this.name} ? ${minStart(className)}.${this.name}.longitude : null"
+                          :clickable="false"
+                          :draggable="false"/>
+                      {{elseIf this.uiType=map}}
+                      <GenesisMap
+                          :latitude="${minStart(className)}.${this.latitude}"
+                          :longitude="${minStart(className)}.${this.longitude}"
+                          :clickable="false"
+                          :draggable="false"/>
+                      {{elseIf this.uiType=ckeditor}}
+                      <div class="ckeditor-content" v-html="${minStart(className)}.${this.name} ?? ''"></div>
+                      {{elseIf this.uiType=none}}
                       {{else}}
                       <span>{{ ${minStart(className)}.${this.name} ?? '' }}</span>
                       {{/if}}
@@ -6772,6 +6903,12 @@
         {{#if isParentTable=true and hasChildrenForm=true}} import { ref, computed, onMounted } from 'vue'{{else}}import { ref } from 'vue'{{/if}}
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model.ts'
         import GenesisButton from '@/components/button/GenesisButton.vue'
+        {{#if useCurrency}}import GenesisCurrency from '@/components/form/GenesisCurrency.vue'{{/if}}
+        {{#if usePhone}}import GenesisPhone from '@/components/form/GenesisPhone.vue'{{/if}}
+        {{#if useQuantity}}import GenesisQuantity from '@/components/form/GenesisQuantity.vue'{{/if}}
+        {{#if useTextarea}}import GenesisTextarea from '@/components/form/GenesisTextarea.vue'{{/if}}
+        {{#if useMap}}import GenesisMap from '@/components/form/GenesisMap.vue'
+        import GenesisPopup from '@/components/popup/GenesisPopup.vue'{{/if}}
         import GenesisInput from '@/components/form/GenesisInput.vue'{{#if containsForeignKey}}
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'{{/if}}{{#if isParentTable=true and hasChildrenForm=true}}
         {{#each childrenWithForm}}
@@ -6817,6 +6954,71 @@
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     @option-selected="(selectedValue) => (formModel.${minStart(this.name)} = String(selectedValue))"
                   />
+                  {{elseIf this.uiType=textarea}}
+                  <!-- ${formatReadable(this.name)} | Textarea -->
+                    <GenesisTextarea
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                  {{elseIf this.uiType=ckeditor}}
+                  <!-- ${formatReadable(this.name)} | Ckeditor -->
+                    <GenesisTextarea
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                    :is-ckeditor="true"
+                  />
+                  {{elseIf this.uiType=json-editor}}
+                  <!-- ${formatReadable(this.name)} | Json-editor -->
+                    <GenesisTextarea
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                    :is-json-editor="true"
+                  />
+                  {{elseIf this.uiType=phone}}
+                  <!-- ${formatReadable(this.name)} | Phone -->
+                    <GenesisPhone
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                  {{elseIf this.uiType=currency}}
+                  <!-- ${formatReadable(this.name)} | Currency -->
+                  <GenesisCurrency
+                    label="${formatReadable(this.name)}" ${this.input-config}
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}" ${this.currency}
+                  />
+                  {{elseIf this.uiType=quantity}}
+                  <!-- ${formatReadable(this.name)} | Quantity -->
+                  <GenesisQuantity
+                    label="${formatReadable(this.name)}" ${this.input-config}
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    placeholder="Enter ${formatReadable(this.name)}"
+                    v-model="formModel.${minStart(this.name)}"
+                  />
+                  {{elseIf this.uiType=none}}
+                  {{elseIf this.uiType=map and this.isGeographic}}
+                  <!-- ${formatReadable(this.name)} | Map -->
+                  <GenesisMap
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    v-model:latitude="formModel.${minStart(this.name)}!.latitude"
+                    v-model:longitude="formModel.${minStart(this.name)}!.longitude"/>
+                  {{elseIf this.uiType=map}}
+                  <!-- ${formatReadable(this.name)} | Map -->
+                  <GenesisMap
+                    label="${formatReadable(this.name)}"
+                    :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+                    v-model:latitude="formModel.${this.latitude}"
+                    v-model:longitude="formModel.${this.longitude}"/>
                   {{elseIf this.uiType = checkbox}}
                   <!-- ${formatReadable(this.name)} -->
                   <label class="flex items-center gap-2">
@@ -6833,7 +7035,8 @@
                     label="${formatReadable(this.name)}"
                     :violation="${minStart(className)}Violations ? ${minStart(className)}Violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
-                    type="${this.uiType}"
+                    type="${this.uiType}" ${this.accepted-file}
+                    v-model="formModel.${minStart(this.name)}"
                     @update:model-value="handle${majStart(this.name)}FileChange"
                   />
                   <div v-if="formModel.${minStart(this.name)}" class="flex min-w-0 items-center gap-3 rounded-md border border-base-300 bg-base-200/40 p-2">
@@ -6863,7 +7066,8 @@
                     label="${formatReadable(this.name)}"
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
-                    type="${this.uiType}"
+                    type="${this.uiType}" ${this.accepted-file}
+                    v-model="formModel.${minStart(this.name)}"
                     @update:model-value="handle${majStart(this.name)}FileChange"
                   />
                   <div v-if="formModel.${minStart(this.name)}" class="flex min-w-0 items-center gap-3 rounded-md border border-base-300 bg-base-200/40 p-2">
@@ -6904,7 +7108,7 @@
                     label="${formatReadable(this.name)}"
                     :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                     placeholder="Enter ${formatReadable(this.name)}"
-                    type="${this.uiType}"
+                    type="${this.uiType}" ${this.input-config} ${this.accepted-file}
                     v-model="formModel.${minStart(this.name)}"
                     :value="formModel.${minStart(this.name)}"
                   />
@@ -7004,7 +7208,12 @@
             data.${this.name} = await fileToBase64(data.${this.name})
           }{{/if}}
           {{/each}}
-          {{#if isParentTable=true and hasChildrenForm=true}}emit('submit', { ${minStart(className)}: data{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s.value{{/each}} })
+          {{#each childrenWithForm}}
+          const ${minStart(this.className)}sFiltrees = ${minStart(this.className)}s.value.filter(
+            (${minStart(this.className)}) => Object.keys(${minStart(this.className)}).length > 0,
+          )
+          {{/each}}
+          {{#if isParentTable=true and hasChildrenForm=true}}emit('submit', { ${minStart(className)}: data{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}sFiltrees{{/each}} })
           {{else}}emit('submit', data){{/if}}
         }
 
@@ -7484,13 +7693,13 @@
     exports: |
       export interface I${majStart(className)} {
         {{#each fields}}
-        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
       }
 
       export class ${majStart(className)} extends BaseModel implements I${majStart(className)} {
         {{#each fields}}
-        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
         constructor(data?: Partial<I${majStart(className)}>) {
@@ -7499,7 +7708,8 @@
           {{#if this.isForeignKey}}
           this.${minStart(this.name)} = data?.${minStart(this.name)}
             ? new ${majStart(this.type)}(data?.${minStart(this.name)})
-            : undefined{{else}}
+            : undefined{{elseIf this.isGeographic}}
+          this.${minStart(this.name)} = data?.${minStart(this.name)} ?? { latitude: null, longitude: null }{{else}}
           this.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
           {{/each}}{{removeLine}}
         }
@@ -7593,6 +7803,8 @@
         {{#each fields}}
         {{#if this.isForeignKey}}
         ${minStart(this.name)}?: string
+        {{elseIf this.isDate}}${minStart(this.name)}?: string
+        {{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}
         {{elseIf this.uiType=file}}${minStart(this.name)}?: string | Uint8Array | null{{elseIf this.isDate}}${minStart(this.name)}?: string{{else}}
         ${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
@@ -7601,6 +7813,7 @@
           {{#each fields}}
           {{#if this.isForeignKey}}this.${minStart(this.name)} = data?.${minStart(this.name)} ?? ""
           {{elseIf this.isDate}}this.${minStart(this.name)} = data?.${minStart(this.name)} ? data.${minStart(this.name)} : undefined
+          {{elseIf this.isGeographic}}this.${minStart(this.name)} = data?.${minStart(this.name)} ?? { latitude: null, longitude: null } 
           {{else}}this.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
           {{/each}}{{removeLine}}
         }
@@ -7609,6 +7822,7 @@
           const instance = new ${majStart(className)}FormDTO()
           {{#each fields}}
           {{#if this.isForeignKey}}instance.${minStart(this.name)} = data?.${minStart(this.name)}?.getKeyValue()?.toString()
+          {{elseIf this.isGeographic}}instance.${minStart(this.name)} = data?.${minStart(this.name)} ?? { latitude: null, longitude: null }
           {{else}}instance.${minStart(this.name)} = data?.${minStart(this.name)}{{/if}}
           {{/each}}{{removeLine}}
           return instance
@@ -7624,6 +7838,7 @@
             {{#each fieldsNotFK}}
             {{#if this.isDate}}
             ${minStart(this.name)}: this.${minStart(this.name)} ? this.${minStart(this.name)}.split('T')[0] : undefined,
+            {{elseIf this.isGeographic}}${minStart(this.name)}: this.${minStart(this.name)} ?? { latitude: null, longitude: null }
             {{else}}
             ${minStart(this.name)}: this.${minStart(this.name)},
             {{/if}}
@@ -7659,7 +7874,13 @@
         <script setup lang="ts">
         import GenesisSelectSearchCriteria from '@/components/form/GenesisSelectSearchCriteria.vue'
         import GenesisInput from '@/components/form/GenesisInput.vue'
-        import { ref, onMounted } from 'vue'
+        {{#if useCurrency}}import GenesisCurrency from '@/components/form/GenesisCurrency.vue'{{/if}}
+        {{#if usePhone}}import GenesisPhone from '@/components/form/GenesisPhone.vue'{{/if}}
+        {{#if useQuantity}}import GenesisQuantity from '@/components/form/GenesisQuantity.vue'{{/if}}
+        {{#if useMap}}import GenesisMap from '@/components/form/GenesisMap.vue'
+        import GenesisPopup from '@/components/popup/GenesisPopup.vue'{{/if}}
+        {{#if useTextarea}}import GenesisTextarea from '@/components/form/GenesisTextarea.vue'{{/if}}
+        import { ref, onMounted{{#if useMap}}, type Ref, toRef{{/if}}} from 'vue'
         import { ${majStart(className)}, ${majStart(className)}FormDTO } from '@/models/${majStart(className)}Model'
         import TrashIcon from '@/components/icons/TrashIcon.vue'
         {{#if containsFile=true}}import { buildFileSource, fileToBase64, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from '@/utils/file-utils'
@@ -7703,6 +7924,24 @@
         {{/if}}
         {{/each}}
         
+        {{#if useMap}}
+        const mapPopup = ref<{
+          visible: boolean
+          latitude: Ref<number | null | undefined>
+          longitude: Ref<number | null | undefined>
+        } | null>(null)
+          
+        function openMap(
+          latitude: Ref<number | null | undefined>,
+          longitude: Ref<number | null | undefined>
+        ) {
+          mapPopup.value = {
+            visible: true,
+              latitude,
+              longitude
+          }
+        }
+        {{/if}}
         onMounted(() => {
           updateModel()
         })
@@ -7732,8 +7971,88 @@
                     updateModel()
                   }
                 "
-              />
             </td>
+            {{elseIf this.uiType=textarea}}
+            <!-- ${formatReadable(this.name)} | Textarea -->
+            <GenesisTextarea
+              label="${formatReadable(this.name)}"
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=ckeditor}}
+            <!-- ${formatReadable(this.name)} | Ckeditor -->
+            <GenesisTextarea
+              label="${formatReadable(this.name)}"
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              :is-ckeditor="true"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=json-editor}}
+            <!-- ${formatReadable(this.name)} | Json-editor -->
+            <GenesisTextarea
+              label="${formatReadable(this.name)}"
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              :is-json-editor="true"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=phone}}
+            <!-- ${formatReadable(this.name)} | Phone -->
+            <GenesisPhone
+              label="${formatReadable(this.name)}"
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=currency}}
+            <!-- ${formatReadable(this.name)} | Currency -->
+            <GenesisCurrency
+              label="${formatReadable(this.name)}" ${this.input-config}
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}" 
+              v-model="formModel.${minStart(this.name)}" ${this.currency}
+              :value="formModel.${minStart(this.name)}"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=quantity}}
+            <!-- ${formatReadable(this.name)} | Quantity -->
+            <GenesisQuantity
+              label="${formatReadable(this.name)}"  ${this.input-config}
+              :violation="violations ? violations['${minStart(this.name)}'] : undefined"
+              placeholder="Enter ${formatReadable(this.name)}"
+              v-model="formModel.${minStart(this.name)}"
+              :value="formModel.${minStart(this.name)}"
+              @update:model-value="(newVal) => updateModel()"
+            />
+            {{elseIf this.uiType=map and this.isGeographic}}
+            <td class="text-center">
+              <button type="button" class="btn btn-outline btn-primary" 
+                @click="openMap(toRef(formModel.${minStart(this.name)}, 'latitude'), toRef(formModel.${minStart(this.name)}, 'longitude'))">
+              {{ formModel.${minStart(this.name)}.latitude != null && formModel.${minStart(this.name)}.longitude != null
+                ? formModel.${minStart(this.name)}.latitude.toFixed(6) + '\n' + formModel.${minStart(this.name)}.longitude.toFixed(6)
+                : 'Choose location' }}
+              </button>
+            </td>
+            {{elseIf this.uiType=map}}
+            <td class="text-center">
+              <button type="button" class="btn btn-outline btn-primary" 
+                @click="openMap(toRef(formModel, '${this.latitude}'), toRef(formModel, '${this.longitude}'))">
+              {{ formModel.${this.latitude} != null && formModel.${this.longitude} != null
+                ? formModel.${this.latitude}.toFixed(6) + '\n' + formModel.${this.longitude}.toFixed(6)
+                : 'Choose location' }}
+              </button>
+            </td>
+            {{elseIf this.uiType=none}}
             {{elseIf this.uiType=file}}
             <td>
               <GenesisInput
@@ -7759,7 +8078,7 @@
               <GenesisInput
                 :violation="violations ? violations['${minStart(this.name)}'] : undefined"
                 placeholder="Enter ${formatReadable(this.name)}"
-                type="${this.uiType}"
+                type="${this.uiType}" ${this.input-config} ${this.accepted-file}
                 v-model="formModel.${minStart(this.name)}"
                 :value="formModel.${minStart(this.name)}"
                 @update:model-value="(newVal) => updateModel()"
@@ -7773,6 +8092,21 @@
               </button>
             </td>
           </tr>
+          {{#if useMap}}
+          <Teleport to="body">
+            <GenesisPopup
+              v-if="mapPopup"
+              title="Choose location"
+              :visible="mapPopup.visible"
+              @close="mapPopup = null"
+              >
+              <GenesisMap
+                v-model:latitude="mapPopup.latitude"
+                v-model:longitude="mapPopup.longitude"
+                label="Location"
+                />
+            </GenesisPopup>
+          </Teleport>{{/if}}
           {{#if containsFile=true}}
           <Teleport to="body">
             <div v-if="previewSource" class="fixed inset-0 z-[100] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" :aria-label="previewAlt" @click.self="closeImagePreview">
@@ -7801,6 +8135,7 @@
                     <th class="">#</th>
                     {{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
                     {{elseIf this.isParentForeignKey}}{{removeLine}}
+                    {{elseIf this.type=none}}{{removeLine}}
                     {{else}}
                     <th class="">${formatReadable(this.name)}</th>
                     {{/if}}{{/each}}{{removeLine}}  
@@ -9694,7 +10029,7 @@
             type: '${this.uiType}'
           },
           {{else}}
-          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}', type: '${this.uiType}' },
+          { header: '${formatReadable(this.name)}', accessor: '${this.name}', sortKey: '${this.name}', type: '${this.uiType}', geographic: ${this.isGeographic}, latitude: '${this.latitude}', longitude: '${this.longitude}' },
           {{/if}}{{/each}}{{removeLine}}
       ]
 
@@ -9820,7 +10155,20 @@
             required: ${this.isRequired},
           },
           {{else}}
-          ${this.name}: { label: '${formatReadable(this.name)}', type: '${this.typeBase}' as const, required: ${this.isRequired} },
+          ${this.name}: {
+            label: '${formatReadable(this.name)}',
+            type: '${this.typeBase}' as const,
+            component: '${this.uiType}',
+            min: '${this.minValue}',
+            max: '${this.maxValue}',
+            step: '${this.stepValue}',
+            currency: '${this.currencyCode}',
+            accept: '${this.acceptedExtensions}',
+            geographic: ${this.isGeographic},
+            latitude: '${this.latitude}',
+            longitude: '${this.longitude}',
+            required: ${this.isRequired},
+          },
           {{/if}}{{/each}}{{removeLine}}
       } as const;
 
@@ -9844,16 +10192,17 @@
       extension: "tsx"
       content: |
         import { useState, useEffect } from 'react';
-        import { Table, TableHead, TableBody, TableRow, TableCell, TextField, Select, MenuItem, IconButton, Box, Button, Typography } from '@mui/material';
+        import { Table, TableHead, TableBody, TableRow, TableCell, Select, MenuItem, IconButton, Box, Button, Typography, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
         import { Delete, Add } from '@mui/icons-material';
         import axios from 'axios';
+        import ConfiguredField, { ConfiguredFieldConfig } from '@/components/GenericForm/ConfiguredField';
+        import { fileToBase64 } from '@/utils/imageUtil';
 
         const API_BASE = import.meta.env.VITE_API_BASE as string;
 
-        export interface ${majStart(className)}TableFieldConfig {
+        export interface ${majStart(className)}TableFieldConfig extends ConfiguredFieldConfig {
           type: string;
           name: string;
-          label: string;
           isFk?: boolean;
           options?: { value: any; label: string }[];
         }
@@ -9865,6 +10214,7 @@
 
         export default function ${majStart(className)}TableForm({ initialData, onRowsChange }: ${majStart(className)}TableFormProps) {
           const [rows, setRows] = useState<any[]>(() => (initialData ?? []).map((d) => ({ ...d })));
+          const [activeMap, setActiveMap] = useState<{ rowIndex: number; field: ${majStart(className)}TableFieldConfig } | null>(null);
           const [fields, setFields] = useState<${majStart(className)}TableFieldConfig[]>([
             {{tab}}{{tab}}{{#each fieldsFK}}
             {{tab}}{{tab}}{{#if this.isParentForeignKey}}{{removeLine}}
@@ -9873,7 +10223,14 @@
             {{tab}}{{tab}}{{/if}}
             {{tab}}{{/each}}{{removeLine}}
             {{tab}}{{tab}}{{#each simpleFields}}
-            { type: '${this.uiType}', name: '${this.name}', label: '${formatReadableLowerCase(this.name)}', isFk: false }{{#if !@last}},{{/if}}
+            {
+              type: '${this.typeBase}', component: '${this.uiType}', name: '${this.name}',
+              label: '${formatReadableLowerCase(this.name)}', required: ${this.isRequired}, isFk: false,
+              min: '${this.minValue}', max: '${this.maxValue}', step: '${this.stepValue}',
+              currency: '${this.currencyCode}', accept: '${this.acceptedExtensions}',
+              geographic: ${this.isGeographic},
+              latitude: '${this.latitude}', longitude: '${this.longitude}',
+            }{{#if !@last}},{{/if}}
             {{tab}}{{/each}}{{removeLine}}
           ]);
 
@@ -9917,9 +10274,30 @@
             emit(rows.filter((_, i) => i !== index));
           };
 
-          const updateCell = (index: number, name: string, value: any) => {
+          const updateCell = async (index: number, name: string, value: any) => {
+            if (value instanceof File) value = await fileToBase64(value);
             const next = rows.map((r, i) => (i === index ? { ...r, [name]: value } : r));
             emit(next);
+          };
+
+          const updateCells = (index: number, values: Record<string, any>) => {
+            const next = rows.map((r, i) => (i === index ? { ...r, ...values } : r));
+            emit(next);
+          };
+
+          const getMapButtonLabel = (row: any, field: ${majStart(className)}TableFieldConfig): string => {
+            const usesCoordinateFields = !field.geographic && Boolean(field.latitude && field.longitude);
+            const latitude = usesCoordinateFields ? row[field.latitude!] : row[field.name]?.latitude ?? row[field.name]?.lat;
+            const longitude = usesCoordinateFields ? row[field.longitude!] : row[field.name]?.longitude ?? row[field.name]?.lng;
+            if (latitude === null || latitude === undefined || latitude === ''
+              || longitude === null || longitude === undefined || longitude === '') {
+              return 'Choose location';
+            }
+            const parsedLatitude = Number(latitude);
+            const parsedLongitude = Number(longitude);
+            return Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude)
+              ? `${parsedLatitude.toFixed(6)}, ${parsedLongitude.toFixed(6)}`
+              : 'Choose location';
           };
 
           return (
@@ -9928,9 +10306,9 @@
                 <TableHead>
                   <TableRow>
                     <TableCell>#</TableCell>
-                    {fields.map((f) => (
+                    {fields.map((f) => f.component !== 'none' ? (
                       <TableCell key={f.name}>{f.label}</TableCell>
-                    ))}
+                    ) : null)}
                     <TableCell />
                   </TableRow>
                 </TableHead>
@@ -9938,7 +10316,7 @@
                   {rows.map((row, i) => (
                     <TableRow key={i}>
                       <TableCell>{i + 1}</TableCell>
-                      {fields.map((f) => (
+                      {fields.map((f) => f.component !== 'none' ? (
                         <TableCell key={f.name}>
                           {f.isFk ? (
                             <Select
@@ -9951,18 +10329,28 @@
                                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                               ))}
                             </Select>
-                          ) : (
-                            <TextField
+                          ) : f.component === 'map' ? (
+                            <Button
                               size="small"
-                              type={f.type}
                               fullWidth
-                              placeholder={`Enter ${f.label}`}
+                              variant="outlined"
+                              aria-label={`Choose location for ${f.label}`}
+                              onClick={() => setActiveMap({ rowIndex: i, field: f })}
+                            >
+                              {getMapButtonLabel(row, f)}
+                            </Button>
+                          ) : (
+                            <ConfiguredField
+                              name={f.name}
+                              config={f}
                               value={row[f.name] ?? ''}
-                              onChange={(e) => updateCell(i, f.name, e.target.value)}
+                              values={row}
+                              onChange={updateCell.bind(null, i)}
+                              onChangeMany={(values) => updateCells(i, values)}
                             />
                           )}
                         </TableCell>
-                      ))}
+                      ) : null)}
                       <TableCell>
                         <IconButton size="small" color="error" onClick={() => removeRow(i)}>
                           <Delete fontSize="small" />
@@ -9976,6 +10364,30 @@
                 <Typography variant="caption" color="text.secondary">{rows.length} row(s)</Typography>
                 <Button size="small" variant="contained" startIcon={<Add />} onClick={addRow}>Add</Button>
               </Box>
+              <Dialog open={activeMap !== null} onClose={() => setActiveMap(null)} fullWidth maxWidth="md">
+                {activeMap && (
+                  <>
+                    <DialogTitle>{activeMap.field.label}</DialogTitle>
+                    <DialogContent dividers>
+                      <ConfiguredField
+                        name={activeMap.field.name}
+                        config={activeMap.field}
+                        value={rows[activeMap.rowIndex]?.[activeMap.field.name] ?? ''}
+                        values={rows[activeMap.rowIndex] ?? {}}
+                        onChange={(name, value) => {
+                          if (activeMap) void updateCell(activeMap.rowIndex, name, value);
+                        }}
+                        onChangeMany={(values) => {
+                          if (activeMap) updateCells(activeMap.rowIndex, values);
+                        }}
+                      />
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={() => setActiveMap(null)}>Close</Button>
+                    </DialogActions>
+                  </>
+                )}
+              </Dialog>
             </Box>
           );
         }

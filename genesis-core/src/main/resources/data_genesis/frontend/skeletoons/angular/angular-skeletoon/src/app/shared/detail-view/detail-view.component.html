@@ -25,11 +25,19 @@
       </ng-template>
     </ng-container>
     <ng-template #normalValue>
+      <ng-container *ngIf="fieldUiTypes[item[0]] === 'map'; else nonMapValue">
+        <app-detail-map [latitude]="mapPosition(item[0]).latitude" [longitude]="mapPosition(item[0]).longitude"></app-detail-map>
+      </ng-container>
+      <ng-template #nonMapValue>
+      <div *ngIf="fieldUiTypes[item[0]] === 'ckeditor'; else plainValue" class="ckeditor-content" [innerHTML]="item[1] ?? ''"></div>
+      <ng-template #plainValue>
       <input
         type="text"
         [value]="langService.formatValue(item[1])"
         readonly
       />
+      </ng-template>
+      </ng-template>
     </ng-template>
   </div>
 

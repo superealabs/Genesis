@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.labs.genesis.config.form.FieldConfiguration;
 import org.labs.genesis.config.tools.DockerConfiguration;
 import org.labs.genesis.config.tools.GitConfiguration;
 import org.labs.genesis.config.langage.*;
@@ -71,6 +72,7 @@ public class ProjectGenerationContext {
     private  boolean generateViewsTemplates = true;
     private ViewsTemplate viewsTemplate;
     private GitConfiguration gitConfiguration;
+    private Map<String, Map<String, FieldConfiguration>> formConfiguration;
     private DockerConfiguration dockerConfiguration;
 
     public ProjectGenerationContext() {
@@ -105,6 +107,7 @@ public class ProjectGenerationContext {
         copy.setFrontendLanguage(this.frontendLanguage);
         copy.setConnection(this.connection);
         copy.setViewsTemplate(this.viewsTemplate);
+        copy.setFormConfiguration(this.formConfiguration);
         return copy;
     }
 

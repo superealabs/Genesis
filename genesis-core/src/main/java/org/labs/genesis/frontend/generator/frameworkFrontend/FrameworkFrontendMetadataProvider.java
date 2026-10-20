@@ -3,6 +3,7 @@ package org.labs.genesis.frontend.generator.frameworkFrontend;
 import org.jetbrains.annotations.NotNull;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.form.FieldConfiguration;
 import org.labs.genesis.config.langage.generator.framework.MereFilleMetadataProvider;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.TableMetadata;
@@ -39,23 +40,51 @@ public class FrameworkFrontendMetadataProvider {
     }
 
     public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, String destinationFolder, String projectName) {
+        return getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, null);
+    }
+
+    public static HashMap<String, Object> getHashMapIntermediaire(
+            TableMetadata tableMetadata,
+            String destinationFolder,
+            String projectName,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         HashMap<String, Object> metadata = new HashMap<>();
 
-        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
-        List<Map<String, Object>> fields = getFieldsList(tableMetadata);
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata, formConfiguration);
+        List<Map<String, Object>> fields = getFieldsList(tableMetadata, formConfiguration);
         List<String> fkTypes = fkList.stream()
                 .map(fk -> fk.get("type").toString())
                 .distinct()
                 .toList();
         boolean containsFile = fields.stream()
                 .anyMatch(field -> "file".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean useMap = fields.stream()
+            .anyMatch(field -> "map".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean useCurrency = fields.stream()
+                .anyMatch(field -> "currency".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean usePhone = fields.stream()
+                .anyMatch(field -> "phone".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean useQuantity = fields.stream()
+                .anyMatch(field -> "quantity".equalsIgnoreCase(String.valueOf(field.get("uiType"))));
+        boolean useTextarea = fields.stream()
+                .anyMatch(field -> {
+                    String uiType = String.valueOf(field.get("uiType"));
+                    return "textarea".equalsIgnoreCase(uiType)
+                            || "ckeditor".equalsIgnoreCase(uiType)
+                            || "json-editor".equalsIgnoreCase(uiType);
+                });
         metadata.put("fields", fields);
         metadata.put("containsFile", containsFile);
-        metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
+        metadata.put("useMap", useMap);
+        metadata.put("useCurrency", useCurrency);
+        metadata.put("usePhone", usePhone);
+        metadata.put("useQuantity", useQuantity);
+        metadata.put("useTextarea", useTextarea);
+        metadata.put("fieldsPK", getFieldsPKList(tableMetadata, formConfiguration));
         metadata.put("fieldsFK", fkList);
         metadata.put("fkTypes", fkTypes);
-        metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
-        metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
+        metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata, formConfiguration));
+        metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata, formConfiguration));
         metadata.put("containsForeignKey",!fkList.isEmpty());
         metadata.put("EntityName",tableMetadata.getTableName());
         metadata.put("isView",tableMetadata.getIsView());
@@ -153,33 +182,58 @@ public class FrameworkFrontendMetadataProvider {
     }
 
     private static List<Map<String, Object>> getFieldsList(TableMetadata tableMetadata) {
+        return getFieldsList(tableMetadata, null);
+    }
+
+    private static List<Map<String, Object>> getFieldsList(
+            TableMetadata tableMetadata,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
-            Map<String, Object> fieldMap = getFieldHashMap(field);
+            Map<String, Object> fieldMap = getFieldHashMap(field, tableMetadata.getTableName(), formConfiguration);
             fields.add(fieldMap);
         }
         return fields;
     }
     private static List<Map<String, Object>> getNotFkFieldsList(TableMetadata tableMetadata) {
+        return getNotFkFieldsList(tableMetadata, null);
+        }
+
+        private static List<Map<String, Object>> getNotFkFieldsList(
+            TableMetadata tableMetadata,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if(!field.isForeign()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field);
+                Map<String, Object> fieldMap = getFieldHashMap(field, tableMetadata.getTableName(), formConfiguration);
                 fields.add(fieldMap);
             }
         }
         return fields;
     }
     private static List<Map<String, Object>> getNotFkAndPKFieldsList(TableMetadata tableMetadata) {
+        return getNotFkAndPKFieldsList(tableMetadata, null);
+    }
+
+    private static List<Map<String, Object>> getNotFkAndPKFieldsList(
+        TableMetadata tableMetadata,
+        Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         List<Map<String, Object>> fields = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (!field.isForeign() && !(field.isPrimary() && field.isAutoGenerated())) {
-                fields.add(getFieldHashMap(field));
+                fields.add(getFieldHashMap(field, tableMetadata.getTableName(), formConfiguration));
             }
         }
         return fields;
     }
     public static @NotNull Map<String, Object> getFieldHashMap(ColumnMetadata field) {
+        return getFieldHashMap(field, null, null);
+        }
+
+        public static @NotNull Map<String, Object> getFieldHashMap(
+            ColumnMetadata field,
+            String tableName,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         Map<String, Object> fieldMap = new HashMap<>();
 
         fieldMap.put("typeBase", field.getFrontEndType());
@@ -193,6 +247,36 @@ public class FrameworkFrontendMetadataProvider {
             uiType = "date"; // date reste date
         } else if (field.isNumeric()) {
             uiType = "number"; // Au cas où
+        } else if (field.isGeographic()) {
+            uiType = "map";
+        }
+
+            FieldConfiguration configuredField = formConfiguration == null || tableName == null
+                ? null
+                : formConfiguration.getOrDefault(tableName, Map.of()).get(field.getReferencedColumn());
+        if (configuredField != null) {
+            fieldMap.put("input-config", configuredField.getInputConfiguration());
+            fieldMap.put("accepted-file", configuredField.getFileConfiguration());
+            fieldMap.put("currency", configuredField.getCurrency());
+            fieldMap.put("minValue", getConfigurationValue(configuredField, "min"));
+            fieldMap.put("maxValue", getConfigurationValue(configuredField, "max"));
+            fieldMap.put("stepValue", getConfigurationValue(configuredField, "step"));
+            fieldMap.put("currencyCode", getConfigurationValue(configuredField, "currency"));
+            fieldMap.put("acceptedExtensions", getConfigurationValue(configuredField, "accept"));
+            String latitude = configuredField.getLatitude();
+            if(latitude != null) {
+                fieldMap.put("longitude", "${minStart(this.name)}");
+                fieldMap.put("latitude", StringUtils.minStart(StringUtils.toCamelCase(latitude)));
+            } else {
+                String longitude = configuredField.getLongitude();
+                if(longitude != null) {
+                    fieldMap.put("longitude", StringUtils.minStart(StringUtils.toCamelCase(longitude)));
+                    fieldMap.put("latitude", "${minStart(this.name)}");
+                }
+            }
+            if (configuredField.getComponent() != null && !configuredField.getComponent().isBlank()) {
+                uiType = configuredField.getComponent();
+            }
         }
 
         if (uiType == null || uiType.isBlank()) {
@@ -202,6 +286,7 @@ public class FrameworkFrontendMetadataProvider {
                             + " (type SQL : " + field.getColumnType() + ")"
             );
         }
+
         fieldMap.put("uiType", uiType);
         fieldMap.put("type",field.getType());
         fieldMap.put("name", field.getName());
@@ -230,12 +315,22 @@ public class FrameworkFrontendMetadataProvider {
         fieldMap.put("isDateTimeTz",field.isDateTimeTz());
         fieldMap.put("useTimeZone",field.isUseTimeZone());
         fieldMap.put("isInterval",field.isInterval());
+        fieldMap.put("isGeographic",field.isGeographic());
         fieldMap.put("isText", field.isText() || "text".equalsIgnoreCase(uiType));
         fieldMap.put("isNotForeignKey",!field.isForeign());
         fieldMap.put("isIntAndPrimaryKey", field.isNumeric() && field.isPrimary() && field.isAutoGenerated());
         fieldMap.put("isParentForeignKey",field.getIsParentForeignKey());
 
         return fieldMap;
+    }
+
+    private static String getConfigurationValue(FieldConfiguration fieldConfiguration, String name) {
+        if (fieldConfiguration.getConfiguration() == null) {
+            return null;
+        }
+        FieldConfiguration.Configuration configuration =
+                fieldConfiguration.getConfiguration().get(name);
+        return configuration == null ? null : configuration.getValue();
     }
 
     public static  HashMap<String,Object> getServiceHashMap(ServiceComponent serviceComponent, FrontendLanguage frontendLanguage, TableMetadata tableMetadata)
@@ -351,10 +446,16 @@ public class FrameworkFrontendMetadataProvider {
     }
 
     private static List<Map<String, Object>> getFieldsPKList(TableMetadata tableMetadata) {
+        return getFieldsPKList(tableMetadata, null);
+    }
+
+    private static List<Map<String, Object>> getFieldsPKList(
+            TableMetadata tableMetadata,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         List<Map<String, Object>> fieldsPK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isPrimary()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field);
+                Map<String, Object> fieldMap = getFieldHashMap(field, tableMetadata.getTableName(), formConfiguration);
                 fieldsPK.add(fieldMap);
             }
         }
@@ -362,10 +463,16 @@ public class FrameworkFrontendMetadataProvider {
     }
 
     private static List<Map<String, Object>> getFieldsFKList(TableMetadata tableMetadata) {
+        return getFieldsFKList(tableMetadata, null);
+    }
+
+    private static List<Map<String, Object>> getFieldsFKList(
+            TableMetadata tableMetadata,
+            Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         List<Map<String, Object>> fieldsFK = new ArrayList<>();
         for (ColumnMetadata field : tableMetadata.getColumns()) {
             if (field.isForeign()) {
-                Map<String, Object> fieldMap = getFieldHashMap(field);
+                Map<String, Object> fieldMap = getFieldHashMap(field, tableMetadata.getTableName(), formConfiguration);
                 fieldsFK.add(fieldMap);
             }
         }

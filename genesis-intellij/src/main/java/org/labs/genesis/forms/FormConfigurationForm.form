@@ -1,0 +1,18 @@
+<form version="1" bind-to-class="org.labs.genesis.forms.FormConfigurationForm">
+<!--
+
+    Only the root panel is bound here. The header, splitter, table list and column
+    cards are built in FormConfigurationForm.setupUI(), because the GUI designer
+    can't express a JBSplitter, rounded cards, or a scroll area that tracks the
+    viewport width.
+
+-->
+<grid id="27dc6" binding="mainPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+<constraints>
+<xy x="0" y="0" width="900" height="650"/>
+</constraints>
+<properties/>
+<border type="none"/>
+<children/>
+</grid>
+</form>

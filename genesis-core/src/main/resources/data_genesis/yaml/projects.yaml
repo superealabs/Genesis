@@ -234,6 +234,8 @@
                 <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />
                 <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.18" />
                 {{/if}}
+                {{#if hasPoint}}<PackageReference Include="NetTopologySuite" Version="2.6.0" />
+                <PackageReference Include="${topologyProvider}.NetTopologySuite" Version="9.0.0" />{{/if}}
                 {{#if isMvcProject}}<Content Update="wwwroot\**" CopyToOutputDirectory="Always" />{{/if}}
             </ItemGroup>
         </Project>
