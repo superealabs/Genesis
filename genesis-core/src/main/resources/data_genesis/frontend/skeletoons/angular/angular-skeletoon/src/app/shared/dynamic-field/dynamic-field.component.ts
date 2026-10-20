@@ -163,7 +163,7 @@ export class DynamicFieldComponent implements OnInit, OnChanges, AfterViewInit, 
     let defaultValue: any = this.field.type === 'color' ? '#000000' : this.field.type === 'file' ? null : '';
 
     if (value !== undefined) {
-      if (this.field.type === 'file' || this.field.type === 'map) {
+      if (this.field.type === 'file' || this.field.type === 'map') {
         defaultValue = value;
       } else if (typeof value === 'object' && value !== null) {
         defaultValue = JSON.stringify(value);

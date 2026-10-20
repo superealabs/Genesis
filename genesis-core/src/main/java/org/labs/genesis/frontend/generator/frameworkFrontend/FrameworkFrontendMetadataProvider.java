@@ -50,8 +50,8 @@ public class FrameworkFrontendMetadataProvider {
             Map<String, Map<String, FieldConfiguration>> formConfiguration) {
         HashMap<String, Object> metadata = new HashMap<>();
 
-        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
-        List<Map<String, Object>> fields = getFieldsList(tableMetadata);
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata, formConfiguration);
+        List<Map<String, Object>> fields = getFieldsList(tableMetadata, formConfiguration);
         List<String> fkTypes = fkList.stream()
                 .map(fk -> fk.get("type").toString())
                 .distinct()
@@ -83,8 +83,8 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, formConfiguration));
         metadata.put("fieldsFK", fkList);
         metadata.put("fkTypes", fkTypes);
-        metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata));
-        metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata));
+        metadata.put("simpleFields",getNotFkAndPKFieldsList(tableMetadata, formConfiguration));
+        metadata.put("fieldsNotFK",getNotFkFieldsList(tableMetadata, formConfiguration));
         metadata.put("containsForeignKey",!fkList.isEmpty());
         metadata.put("EntityName",tableMetadata.getTableName());
         metadata.put("isView",tableMetadata.getIsView());
