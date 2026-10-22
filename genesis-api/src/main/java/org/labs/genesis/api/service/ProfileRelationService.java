@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.sql.Connection;
 
 @Service
 public class ProfileRelationService {
@@ -83,25 +84,65 @@ public class ProfileRelationService {
 
     public synchronized ProjectGenerationContext buildContext(String profileName) {
         ProjectGenerationContext source = contextStore.getContext();
+        return buildContext(profileName, source.getConnection());
+    }
+
+    public synchronized ProjectGenerationContext buildContext(String profileName, Connection connection) {
+        if (connection == null) {
+            throw new RelationException("Aucune connexion JDBC disponible pour le profil " + profileName);
+        }
+
+        ProjectGenerationContext source = contextStore.getContext();
         GenerationParameterRequest profile = findProfile(profileName, source);
+        // Copier les paramètres sans modifier le contexte global.
         ProjectGenerationContext copy = source.duplicateWithNoTables();
+        // La connexion doit être affectée avant setTables().
+        copy.setConnection(connection);
         copy.setEntityNames(new ArrayList<>(profile.selectedTables()));
         copy.setViewNames(new ArrayList<>(profile.selectedViews()));
         copy.setGenerationOptions(mapComponents(profile.selectedComponents()));
-
-        // Ne pas conserver les relations du contexte global.
+        // Ne pas importer les relations du contexte global.
         copy.setRelationParameters(new ArrayList<>());
-
         try {
             copy.setTables();
         } catch (RuntimeException exception) {
-            throw new RelationException("Impossible de charger les tables du profil : " + profileName);
+            throw new IllegalStateException("Impossible de charger les métadonnées " + "du profil : " + profileName, exception);
         }
 
+        // containsKey est volontaire :
+        // une liste vide représente une suppression explicite.
         if (manualRelations.containsKey(profileName)) {
             copy.setRelationParameters(new ArrayList<>(manualRelations.get(profileName)));
         } else {
-            // Défauts détectés uniquement dans le contexte dérivé.
+            copy.autoDetectRelationParameters();
+        }
+
+        return copy;
+    }
+
+    public ProjectGenerationContext buildContext(GenerationParameterRequest profile, GenerationConfigurationSnapshot.RelationSelection selection, Connection connection) {
+        Objects.requireNonNull(profile, "Profil obligatoire");
+        Objects.requireNonNull(selection, "Relations obligatoires");
+        Objects.requireNonNull(connection, "Connexion obligatoire");
+
+        ProjectGenerationContext source = contextStore.getContext();
+
+        ProjectGenerationContext copy = source.duplicateWithNoTables();
+
+        copy.setConnection(connection);
+        copy.setEntityNames(new ArrayList<>(profile.selectedTables()));
+        copy.setViewNames(new ArrayList<>(profile.selectedViews()));
+        copy.setGenerationOptions(mapComponents(profile.selectedComponents()));
+        copy.setRelationParameters(new ArrayList<>());
+        copy.setTables();
+
+        if (selection.manuallyConfigured()) {
+            List<RelationParameter> relations = new ArrayList<>();
+            for (var value : selection.relations()) {
+                relations.add(new RelationParameter(value.parentTable(), value.childTable(), value.mandatory(), value.hasForm()));
+            }
+            copy.setRelationParameters(relations);
+        } else {
             copy.autoDetectRelationParameters();
         }
         return copy;
@@ -156,4 +197,32 @@ public class ProfileRelationService {
         }
         manualRelations.keySet().retainAll(profilesToKeep);
     }
+
+    public synchronized Map<String, GenerationConfigurationSnapshot.RelationSelection> snapshotRelations(List<GenerationParameterRequest> profiles) {
+        Map<String, GenerationConfigurationSnapshot.RelationSelection> result = new LinkedHashMap<>();
+
+        for (GenerationParameterRequest profile : profiles) {
+            String name = profile.profileName();
+            // containsKey distingue une absence de configuration
+            // d'une configuration manuelle volontairement vide.
+            boolean manual = manualRelations.containsKey(name);
+            List<GenerationConfigurationSnapshot.RelationValue> values = new ArrayList<>();
+
+            if (manual) {
+                for (RelationParameter relation : manualRelations.get(name)) {
+                    values.add(new GenerationConfigurationSnapshot.RelationValue(
+                                    relation.getParentTable(),
+                                    relation.getChildTable(),
+                                    relation.getMandatory(),
+                                    relation.getHasForm()
+                            )
+                    );
+                }
+            }
+
+            result.put(name, new GenerationConfigurationSnapshot.RelationSelection(manual, values));
+        }
+        return Map.copyOf(result);
+    }
+
 }

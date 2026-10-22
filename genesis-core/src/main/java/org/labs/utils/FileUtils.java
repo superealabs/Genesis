@@ -20,10 +20,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.FileSystem;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class FileUtils {
@@ -77,19 +74,14 @@ public class FileUtils {
         return finalContent.replaceAll("\\s+", " ").replaceAll(";\\s*", ";");
     }
 
-
     public static void createFileStructure(String filePath) {
-        filePath = filePath.replace("\\", "/");
-        String[] folders = filePath.split("/");
-        StringBuilder currentPath = new StringBuilder();
+        try {
+            Path directory = GenerationWriteScope.check(Path.of(filePath));
 
-        for (String folder : folders) {
-            currentPath.append(folder).append("/");
-            File file = new File(currentPath.toString());
+            Files.createDirectories(directory);
 
-            if (!file.exists()) {
-                file.mkdir();
-            }
+        } catch (IOException exception) {
+            throw new UncheckedIOException("Impossible de créer le répertoire : " + filePath, exception);
         }
     }
 
@@ -102,16 +94,13 @@ public class FileUtils {
     }
 
     public static File createSimpleFile(String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
-        File file = new File(filePath + "/" + fileName + "." + fileExtension);
-        if (file.exists()) {
-            file.delete();
-        }
-        Files.write(file.toPath(), fileContent.getBytes());
-        return  file;
+        Path destination = GenerationWriteScope.check(Path.of(filePath, fileName + "." + fileExtension));
+        Files.writeString(destination, fileContent, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        return destination.toFile();
     }
 
     public static void copyFile(String sourceFilePath, String destinationFilePath, String fileName) throws IOException {
-        Path destinationPath = Paths.get(destinationFilePath, fileName);
+        Path destinationPath = GenerationWriteScope.check(Paths.get(destinationFilePath, fileName));
 
         try (InputStream inputStream = FileUtils.class.getClassLoader().getResourceAsStream(sourceFilePath)) {
             if (inputStream == null) {
@@ -121,7 +110,7 @@ public class FileUtils {
             Files.copy(inputStream, destinationPath, StandardCopyOption.REPLACE_EXISTING);
         } catch (NoSuchFileException e) {
             System.out.println("Warning : " + e.getMessage() + "\nGenerated the missing file ...\n");
-            createFileStructure(destinationPath.toString());
+            createFileStructure(destinationPath.getParent().toString());
 
             try (InputStream inputStream = FileUtils.class.getClassLoader().getResourceAsStream(sourceFilePath)) {
                 if (inputStream == null) {
@@ -140,7 +129,7 @@ public class FileUtils {
 
     public static void copyDirectory(String sourceDir, String destDir) throws IOException {
         URI resourceUri = getResourceUri(sourceDir);
-        Path destPath = Paths.get(destDir);
+        Path destPath = GenerationWriteScope.check(Paths.get(destDir));
 
         if (resourceUri.getScheme().equals("jar")) {
             // Gérer les fichiers dans un JAR
@@ -158,8 +147,8 @@ public class FileUtils {
     private static void copyDirectoryFromJar(Path sourceJarPath, Path destinationPath) throws IOException {
         try (Stream<Path> paths = Files.walk(sourceJarPath)) { // Utilisation du try-with-resources
             paths.forEach(path -> {
-                Path resolvedDestPath = destinationPath.resolve(sourceJarPath.relativize(path).toString());
                 try {
+                    Path resolvedDestPath = GenerationWriteScope.check(destinationPath.resolve(sourceJarPath.relativize(path).toString()));
                     if (Files.isDirectory(path)) {
                         Files.createDirectories(resolvedDestPath);
                     } else {
@@ -199,8 +188,8 @@ public class FileUtils {
 
         try (Stream<Path> paths = Files.walk(srcPath)) {
             paths.forEach(path -> {
-                Path destination = destPath.resolve(srcPath.relativize(path));
                 try {
+                    Path destination = GenerationWriteScope.check(destPath.resolve(srcPath.relativize(path)));
                     if (Files.isDirectory(path)) {
                         if (!Files.exists(destination)) {
                             Files.createDirectories(destination);
@@ -211,7 +200,7 @@ public class FileUtils {
                         }
                     }
                 } catch (IOException e) {
-                    System.err.println("Erreur lors de la copie du fichier : " + path + " -> " + e.getMessage());
+                    throw new UncheckedIOException("Erreur lors de la copie du fichier : " + path, e);
                 }
             });
         }
@@ -221,17 +210,17 @@ public class FileUtils {
         FileMergeInput mergeInput = mergeOutcome.input;
         if (mergeOutcome.hasConflict && mergeOutcome.mergedContent != null) {
             CONFLICT_FILES.add(mergeOutcome.conflictFile);
-            Files.write(mergeOutcome.conflictFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
+            Files.write(GenerationWriteScope.check(mergeOutcome.conflictFile.toPath()), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
         } else if (mergeOutcome.mergedContent != null) {
             // merge content into current file
-            Files.write(mergeInput.currentFile.toPath(), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
+            Files.write(GenerationWriteScope.check(mergeInput.currentFile.toPath()), mergeOutcome.mergedContent.getBytes(StandardCharsets.UTF_8));
         }
         // generated file into baseFile
-        Files.write(mergeInput.baseFile.toPath(), Files.readAllBytes(mergeInput.newFile.toPath()));
+        Files.write(GenerationWriteScope.check(mergeInput.baseFile.toPath()), Files.readAllBytes(mergeInput.newFile.toPath()));
         deleteFile(mergeInput.newFile.getPath());
     }
     public static void createOrMergeFile(String destinationFolder, String filePath, String fileName, String fileExtension, String fileContent) throws IOException {
-        if (mode.equals(FilesUtilsMode.MERGE)) {
+        if (getMode().equals(FilesUtilsMode.MERGE)) {
             File generatedFile = createGenerationTempFile(filePath, fileName, fileExtension, fileContent);
             File existingFile = new File(filePath + "/" + fileName + "." + fileExtension);
             File baseDirectory = generateBaseDirectoryIfAbsent(destinationFolder);
@@ -240,10 +229,27 @@ public class FileUtils {
             MergeOutcome mergeOutcome = MergeTool.merge(mergeInput,true);
             applyGeneratedMergeOutcome(mergeOutcome);
         }
-        else if (mode.equals(FilesUtilsMode.GENERATION)) {
+        else if (getMode().equals(FilesUtilsMode.GENERATION)) {
             createFile(filePath, fileName, fileExtension, fileContent);
         }
 
+    }
+
+    private static final ThreadLocal<FilesUtilsMode> EXECUTION_MODE = new ThreadLocal<>();
+
+    public static FilesUtilsMode getMode() {
+        FilesUtilsMode executionMode = EXECUTION_MODE.get();
+        return executionMode != null ? executionMode : mode;
+    }
+
+
+    public static AutoCloseable useExecutionMode(FilesUtilsMode requestedMode) {
+        Objects.requireNonNull(requestedMode, "Mode obligatoire");
+        if (EXECUTION_MODE.get() != null) {
+            throw new IllegalStateException("Un mode d'exécution est déjà actif");
+        }
+        EXECUTION_MODE.set(requestedMode);
+        return () -> EXECUTION_MODE.remove();
     }
 
 
@@ -264,22 +270,7 @@ public class FileUtils {
     }
 
     public static void createDirectory(String filePath) {
-        String filename = "";
-        String currentChar;
-
-        File file;
-        for (int i = 0; i < filePath.length(); ++i) {
-            currentChar = String.valueOf(filePath.charAt(i));
-            if (currentChar.equals("/")) {
-                file = new File(filename);
-                file.mkdir();
-            }
-
-            filename = filename + currentChar;
-        }
-
-        file = new File(filename);
-        file.mkdir();
+        createFileStructure(filePath);
     }
 
     public static <T> T fromJson(Class<T> clazz, String path) throws IOException {
@@ -329,18 +320,20 @@ public class FileUtils {
     public static <T> void toJson(T object, String filePath) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        File file = new File(filePath);
+        Path destination = GenerationWriteScope.check(Path.of(filePath));
+        File file = destination.toFile();
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
+            Files.createDirectories(destination.getParent());
         }
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, object);
     }
 
     public static <T> void toYaml(T object, String yamlFilePath) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        File file = new File(yamlFilePath);
+        Path destination = GenerationWriteScope.check(Path.of(yamlFilePath));
+        File file = destination.toFile();
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
-            file.getParentFile().mkdirs();
+            Files.createDirectories(destination.getParent());
         }
         objectMapper.writeValue(file, object);
     }
@@ -357,6 +350,11 @@ public class FileUtils {
     }
 
     public static void deleteDirectory(File directory) {
+        try {
+            GenerationWriteScope.check(directory.toPath());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         if (directory.exists()) {
             File[] files = directory.listFiles();
             if (files != null) {
@@ -373,7 +371,12 @@ public class FileUtils {
     }
 
     public static void deleteFile(String filePath) {
-        File file = new File(filePath);
+        File file;
+        try {
+            file = GenerationWriteScope.check(Path.of(filePath)).toFile();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
         if (file.exists() && file.isFile()) {
             file.delete();
         }
