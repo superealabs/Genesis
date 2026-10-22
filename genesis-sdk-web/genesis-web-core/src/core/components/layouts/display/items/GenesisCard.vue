@@ -26,7 +26,7 @@
         <!-- Identité : logo + texte (double couche pour l'effet de sélection) -->
         <GenesisSelectableIdentity
             class="w-full"
-            layer-class="flex flex-col items-center gap-4 w-full"
+            :layer-class="`flex flex-col items-center w-full ${hasText ? 'gap-4' : ''}`"
             :selected="selected"
         >
             <!-- Logo -->
@@ -34,8 +34,8 @@
                 <slot name="logo">{{ initials }}</slot>
             </div>
 
-            <!-- Zone texte : #header custom ou label/sublabel -->
-            <div :class="textClasses">
+            <!-- Zone texte : masquée si aucun label/sublabel/header n'est fourni -->
+             <div v-if="hasText" :class="textClasses">
                 <template v-if="hasHeaderSlot">
                     <slot name="header" />
                 </template>
@@ -66,14 +66,14 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'; // Ajout nécessaire pour le computed
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconHelpCircle from '@genesis-labs/web-core/core/components/ui/icons/IconHelpCircle.vue';
 import IconTrashAlt from '../../../ui/icons/IconTrashAlt.vue';
 import GenesisMascot from './GenesisMascot.vue';
 import GenesisSelectableIdentity from './GenesisSelectableIdentity.vue';
 
-// Toutes les classes, la mascotte et l'état de sélection viennent de GenesisItem (DRY)
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
     containerClasses: string;
     layoutClasses: string;
     badgeClasses: string;
@@ -85,7 +85,7 @@ withDefaults(defineProps<{
     infoButtonClasses: string;
     label?: string;
     sublabel?: string;
-    badge: string | null;
+    badge?: string | null;
     showInfoButton: boolean;
     showComplementary: boolean;
     showLogo: boolean;
@@ -106,4 +106,7 @@ defineEmits<{
     info: [];
     close: [];
 }>();
+
+// ✅ Vérification simple : y a-t-il du texte à afficher ?
+const hasText = computed(() => props.hasHeaderSlot || !!props.label || !!props.sublabel);
 </script>

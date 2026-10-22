@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full h-full bg-bg-light p-2 rounded-lg">
+    <div :class="['w-full h-full rounded-lg', props.containerClass]">
         <div
             ref="rootEl"
             class="relative w-full h-full"
@@ -20,6 +20,7 @@
                     :editor-id="leaf.node.editor"
                     :view="leaf.node.view"
                     :can-close="canClose"
+                    :dropdown-size="dropdownElementSize"
                     @update:editor-id="panel.setEditor(leaf.id, $event)"
                     @update:view="panel.setView(leaf.id, $event)"
                     @close="panel.closeLeaf(leaf.id)"
@@ -113,6 +114,8 @@ import {
     type SplitSnap
 } from '@genesis-labs/web-core/core/composables/ux/UseGenesisPanel';
 
+import type { UI_Size_Unit } from '../../config/ui.config.ts';
+
 // ============================================================================
 // 1. PROPS & CONSTANTES
 // ============================================================================
@@ -122,6 +125,8 @@ const props = withDefaults(defineProps<{
     /** Registre des éditeurs disponibles */
     editors: PanelEditorDefinition[];
     gap?: number;
+    containerClass?: string;
+    dropdownElementSize?: UI_Size_Unit;
 }>(), {
     gap:8
 });

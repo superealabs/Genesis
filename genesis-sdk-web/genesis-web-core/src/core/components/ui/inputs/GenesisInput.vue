@@ -73,12 +73,14 @@ interface Props {
     choices?: string[];
     accept?: string;
     options?: { label: string, value: any }[];
+    matchTriggerWidth?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     modelValue: '', placeholder: '', type: 'text', disabled: false, variant: 'neutral',
     shape: 'rectangle', size: 'md', fillWidth: false, label: '', isMandatory: false,
     oneLine: false, multiChoice: false, choices: () => [], accept: '*', options: () => [],
+    matchTriggerWidth: false
 });
 
 const emit = defineEmits<{
@@ -123,6 +125,7 @@ const sharedSelectProps = computed(() => ({
     options: props.options,
     multiChoice: props.multiChoice,
     choices: props.choices,
+    matchTriggerWidth: props.matchTriggerWidth,
 }));
 
 const sharedTextareaProps = computed(() => ({

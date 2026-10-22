@@ -36,7 +36,7 @@
             leave-to-class="transform scale-95 opacity-0"
         >
             <DisclosurePanel
-                class="px-4 pb-4 pt-2 border-t border-secondary/50"
+                class="px-4 pb-4 pt-2"
                 :class="contentClass"
             >
                 <slot />

@@ -11,6 +11,10 @@ import { useFrontendStore } from '../store/useFrontend.store';
 
 // Composables
 import { useCompareSlotsWithPopup } from '@genesis-labs/web-core/core/composables/ux/useCompareSlotsWithPopup';
+import { useComparator } from '@genesis-labs/web-core/core/composables/ux/useComparator';
+
+// Components
+import FrontendDetails from '../components/FrontendDetails.vue';
 
 /**
  * Composable métier pour la gestion des frameworks frontend.
@@ -49,6 +53,16 @@ export function useFrontend() {
   });
 
   const { mode: compareMode, slots: compareSlots, selectedItem } = compare;
+
+  // ✅ AJOUT : Initialisation du comparateur pour la vue de comparaison
+  const comparator = useComparator<FrontendFramework>({
+    compare,
+    items: availableFrontendFrameworks,
+    getId: (fw) => fw.id,
+    getLabel: (fw) => fw.name,
+    component: FrontendDetails,
+    propName: 'framework'
+  });
 
   // ==========================================================================
   // 4. COMPUTEDS (Données dérivées)
@@ -127,6 +141,7 @@ export function useFrontend() {
     
     // Comparaison & Popup
     compare,
+    comparator, // ✅ AJOUT : Exposition du comparateur
     showReplacePopup: compare.showReplacePopup,
     pendingFramework: compare.pendingItem,
     mouseX: compare.mouseX,

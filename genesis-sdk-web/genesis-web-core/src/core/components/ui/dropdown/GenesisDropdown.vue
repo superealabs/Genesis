@@ -183,7 +183,7 @@ const menuItemsVariantClasses = computed(() => {
     primary: 'bg-bg-dark text-text',
     secondary: 'bg-bg-dark text-text',
     tertiary: 'bg-bg-dark text-text',
-    neutral: 'bg-bg-dark text-text'
+    neutral: 'bg-bg-neutral-genesis text-text'
   };
   return variants[props.triggerVariant] || variants.neutral;
 });
@@ -222,6 +222,11 @@ const dropdownStyle = computed(() => {
   if (props.matchTriggerWidth && triggerWidth.value !== null) {
     style.width = `${triggerWidth.value}px`;
     style.minWidth = `${triggerWidth.value}px`;
+  }
+
+  // limite max au double du trigger
+  if (triggerWidth.value !== null) {
+    style.maxWidth = `${triggerWidth.value * 2}px`;
   }
 
   return style;

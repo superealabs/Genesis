@@ -26,7 +26,8 @@
         @close="$emit('close')"
     >
         <slot name="logo">
-            <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" />
+            <!-- ✅ PASSAGE DE LA PROP SIZE -->
+            <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" :size="size" />
         </slot>
         <template #header><slot name="header" /></template>
         <template #complementary><slot name="complementary" /></template>
@@ -78,7 +79,8 @@
     >
         <template #logo>
             <slot name="logo">
-                <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" />
+                <!-- ✅ PASSAGE DE LA PROP SIZE -->
+                <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" :size="size" />
             </slot>
         </template>
         <template #header><slot name="header" /></template>
@@ -106,6 +108,8 @@ const props = withDefaults(defineProps<{
     /** Hauteur de la mascotte en px (modes grid et list) */
     mascotSize?: number;
     logoSrc?: string | null;
+    /** ✅ NOUVEAU : Taille sémantique du composant (impacte le logo et les espacements) */
+    size?: 'sm' | 'md' | 'lg';
 }>(), {
     selected: false,
     badge: null,
@@ -114,6 +118,7 @@ const props = withDefaults(defineProps<{
     showLogo: true,
     mascotSize: 32,
     logoSrc: null,
+    size: 'md', // ✅ Valeur par défaut
 });
 
 defineEmits<{
@@ -130,7 +135,6 @@ const slots = useSlots();
 const hasComplementary = computed(() => !!slots.complementary);
 const hasHeaderSlot = computed(() => !!slots.header);
 
-// ═══ SOURCE UNIQUE DE LA MASCOTTE (DRY) ═══
 const mascotSrc = genieUrl;
 
 const initials = computed(() => {
@@ -138,38 +142,42 @@ const initials = computed(() => {
     return props.label.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 3);
 });
 
-// ═══ SOURCE DE VÉRITÉ UNIQUE POUR LE CSS (DRY) ═══
-
 const containerClasses = computed(() => {
     if (props.selected) {
-        // Exemple : fond accentué + bordure primaire + léger anneau de focus
-        return 'bg-bg-light border-b-4 border-primary';
-    }
+        return 'bg-bg-light/5 border border-primary';
+        // return 'bg-bg-light border-b-8 border-bg';
 
-    // Mode Grid et List : état par défaut (non sélectionné)
-    if (display.value === 'grid' || display.value === 'list') {
-        return 'bg-bg-light border-b-4 border-bg hover:border-primary/50 active:border active:border-transparent';
     }
-    
-    // Mode Table : état par défaut (non sélectionné)
+    if (display.value === 'grid' || display.value === 'list') {
+        return 'bg-bg-light border-b-8 border-bg active:border active:border-transparent';
+    }
     return 'bg-bg-light hover:bg-bg-light/50';
 });
 
-const badgeClasses = 'w-5 h-5 rounded-full bg-primary text-bg text-xs text-text font-bold flex items-center justify-center shadow-sm';
+const badgeClasses = 'w-5 h-5 rounded-full bg-primary text-primary-text text-xs font-bold flex items-center justify-center';
 
 const layoutClasses = computed(() => {
     const hasComp = props.showComplementary && hasComplementary.value;
+    // ✅ AJUSTEMENT : En mode 'sm', on réduit légèrement le padding global
+    const padding = props.size === 'sm' ? 'p-2' : 'p-4';
     return hasComp
-        ? 'flex flex-col items-center gap-4 p-4'
-        : 'aspect-square flex flex-col items-center justify-center gap-4 p-4';
+        ? `flex flex-col items-center gap-4 ${padding}`
+        : `aspect-square flex flex-col items-center justify-center gap-4 ${padding}`;
 });
 
 const logoClasses = computed(() => {
-    return 'flex items-center justify-center min-w-[48px] min-h-[48px] rounded text-text-muted text-xs font-mono flex-shrink-0';
+    // ✅ DYNAMISME : La taille minimale du conteneur du logo s'adapte à la prop 'size'
+    const sizeMap = {
+        sm: 'min-w-[32px] min-h-[32px]',
+        md: 'min-w-[48px] min-h-[48px]',
+        lg: 'min-w-[64px] min-h-[64px]'
+    };
+    const sizeClass = sizeMap[props.size] || sizeMap.md;
+    
+    return `flex items-center justify-center ${sizeClass} rounded text-text-muted text-xs font-mono flex-shrink-0`;
 });
 
 const textClasses = computed(() => {
-    // En mode 'list' (flex), le texte est aligné à gauche, pas centré
     if (display.value === 'list') {
         return 'flex flex-col gap-1 w-full';
     }
@@ -179,11 +187,16 @@ const textClasses = computed(() => {
     return 'flex flex-col gap-2 w-full';
 });
 
-const labelClasses = 'text-xs font-semibold text-text leading-tight';
+// ✅ AJUSTEMENT : En mode 'sm', on peut réduire légèrement la taille de la police du label
+const labelClasses = computed(() => {
+    return props.size === 'sm' 
+        ? 'text-[11px] font-semibold text-text leading-tight' 
+        : 'text-xs font-semibold text-text leading-tight';
+});
+
 const sublabelClasses = 'text-[10px] text-text-muted truncate';
 
 const complementaryClasses = computed(() => {
-    // En mode 'list' (flex), on retire la bordure du haut pour un rendu plus épuré à droite
     if (display.value === 'list') {
         return 'flex items-center gap-2';
     }
@@ -191,7 +204,6 @@ const complementaryClasses = computed(() => {
 });
 
 const infoButtonClasses = computed(() => {
-    // En mode 'list' (flex), le bouton n'a pas besoin d'être absolute
     if (display.value === 'list') {
         return 'opacity-60 hover:opacity-100';
     }

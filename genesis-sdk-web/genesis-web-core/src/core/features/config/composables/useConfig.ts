@@ -164,15 +164,13 @@ export function useConfig() {
         }
     }
 
-    async function loadFrontendLanguagesConfigurations(frontendFrameworkId: number, frontendFrameworkName: string) {
+    async function loadFrontendLanguagesConfigurations() {
         store.setLoading(true);
         store.clearError();
         try {
+            // On récupère TOUTES les configurations de ce type, sans filtre
             const data = await svc.getAll('frontend_languages-configuration');
-            return data.filter(c => {
-                const p = c.payload as any;
-                return p.frontendFrameworkId === frontendFrameworkId || p.frontendFrameworkName === frontendFrameworkName;
-            });
+            return data; 
         } catch (err) {
             store.setError((err as Error).message || 'Erreur lors du chargement des configurations de langues.');
             return [];

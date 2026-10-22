@@ -63,6 +63,8 @@ export function useWizardFramework(onSelect: (framework: Framework, event?: Mous
     pendingFramework: fw.pendingFramework,
     mouseX: fw.mouseX,
     mouseY: fw.mouseY,
+    compare: fw.compare,
+    comparator: fw.comparator,
 
     // État UI local & Computeds
     isFilterOpen,
@@ -84,6 +86,6 @@ export function useWizardFramework(onSelect: (framework: Framework, event?: Mous
     openFilter,
     closeFilter,
     closeDetail,
-    handleInfo
+    handleInfo,
   };
 }

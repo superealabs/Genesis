@@ -38,7 +38,7 @@
 
 
     <!-- ═══ MODE GRID ═══ -->
-    <div v-else class="grid gap-3" :style="gridStyle">
+    <div v-else class="grid gap-6" :style="gridStyle">
         <slot />
     </div>
 </template>

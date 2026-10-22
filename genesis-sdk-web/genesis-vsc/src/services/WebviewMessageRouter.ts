@@ -5,6 +5,7 @@ import { GeneratorHandler } from './Generator/GeneratorHandler';
 import { FrontendHandler } from './FrontEnd/FrontendFrameworkHandler';
 import { DatabaseHandler } from './database/DatabaseHandler';
 import { ConfigHandler } from './core/config/ConfigHandler';
+import { RecentHandler } from './core/recent/RecentHandler';
 
 export class WebviewMessageRouter {
     private frameworkHandler: FrameworkHandler;
@@ -12,6 +13,7 @@ export class WebviewMessageRouter {
     private frontendHandler: FrontendHandler;
     private databaseHandler: DatabaseHandler;
     private configHandler: ConfigHandler;
+    private recentHandler: RecentHandler;
 
 
     constructor(
@@ -25,6 +27,7 @@ export class WebviewMessageRouter {
         this.frontendHandler = new FrontendHandler(this.panel);
         this.databaseHandler = new DatabaseHandler(this.panel);
         this.configHandler = new ConfigHandler(this.panel, this.context);
+        this.recentHandler = new RecentHandler(this.panel, this.context);
     }
 
     /**
@@ -176,6 +179,20 @@ export class WebviewMessageRouter {
                     break;
                 case 'CONFIG_EXPORT_ALL':
                     await this.configHandler.handleExportAll(message.payload);
+                    break;
+
+
+                case 'RECENT_GET_ALL':
+                    await this.recentHandler.handleGetAll();
+                    break;
+                case 'RECENT_GET_ITEMS':
+                    await this.recentHandler.handleGetItems(message.payload);
+                    break;
+                case 'RECENT_ADD_ITEM':
+                    await this.recentHandler.handleAddItem(message.payload);
+                    break;
+                case 'RECENT_CLEAR_ITEMS':
+                    await this.recentHandler.handleClearItems(message.payload);
                     break;
 
                 default:

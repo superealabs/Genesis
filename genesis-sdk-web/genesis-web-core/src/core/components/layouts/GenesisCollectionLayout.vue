@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col gap-12 w-full bg-bg-dark">
+    <div class="relative flex flex-col gap-12 w-full bg-bg-dark" :class="comparing ? 'h-full max-h-screen overflow-hidden' : ''">
             <Carrousel
                 v-if="showCarousel"
                 :slides="carouselSlides"
@@ -11,7 +11,7 @@
                     <div 
                         class="flex gap-4 rounded-b-lg" 
                         id="background-header"
-                        :class="isStuck ? 'bg-bg-dark border-b-2 border-neutral-light-genesis shadow-sm shadow-hover-ghost/10' : 'bg-transparent'"
+                        :class="isStuck ? 'bg-bg-dark border-b-2 border-bg-neutral-genesis shadow-sm shadow-hover-ghost/10' : 'bg-transparent'"
                         >
                         <div class="flex items-center gap-4 px-8 pb-4 pt-2">
                             <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
@@ -80,6 +80,19 @@
                                     </template>
                                 </GenesisDropdown>
 
+                                <!-- ═══ TRIGGER DE COMPARAISON : seulement en mode Compare, actif dès 2 slots remplis ═══ -->
+                                <GenesisButton
+                                    v-if="mode === 'compare'"
+                                    variant="accent"
+                                    size="lg"
+                                    class="shrink-0"
+                                    :disabled="!canCompare"
+                                    :title="canCompare ? 'Comparer les éléments sélectionnés' : 'Sélectionnez au moins 2 éléments'"
+                                    @click="$emit('compare')"
+                                >
+                                    Comparer<!-- <template v-if="compareCount"> ({{ compareCount }})</template> -->
+                                </GenesisButton>
+
                                 <!-- ═══ CONTRÔLES D'AFFICHAGE ═══ -->
                                 <GenesisSegmentedControl
                                     v-model="internalMode"
@@ -89,6 +102,9 @@
                                     ]"
                                     size="lg" 
                                 />
+
+                                <slot name="custom-menu"></slot>
+
                                 <LayoutSwitcherAlt v-model="internalDisplayMode" />
                             </div>
                         </div>
@@ -109,12 +125,34 @@
                 @close="$emit('close-replace')"
             />
         </div>
+
+        <!-- ═══ VUE DE COMPARAISON ═══
+             Teleport vers <body> : un parent avec `transform` (ex. popup déplaçable) casserait `fixed`.
+             Le contenu (GenesisItemComparator) est fourni par la feature via le slot. -->
+        <!-- <Teleport to="body"> -->
+        <div
+            v-if="comparing"
+            class="absolute inset-0 z-[200] bg-black/80 flex flex-col p-2"
+            @click.self="$emit('close-compare')"
+        >
+            <!-- 
+              Ce conteneur interne est la clé :
+              1. flex-1 + h-full : il prend tout l'espace disponible dans l'overlay (moins le padding p-2)
+              2. min-h-0 + overflow-hidden : il EMPÊCHE strictement le contenu de dépasser et de pousser la hauteur du parent.
+              3. Le scroll sera géré en interne par GenesisItemComparator -> GenesisPanelContainer.
+            -->
+            <div class="flex-1 min-h-0 w-full h-full overflow-hidden rounded-lg">
+                <slot name="comparator" />
+            </div>
+        </div>
+        <!-- </Teleport> -->
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import GenesisBackButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisBackButton.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
@@ -148,6 +186,14 @@ interface Props {
     showReplacePopup?: boolean;
     mouseX?: number | null;
     mouseY?: number | null;
+
+    /** Le trigger « Comparer » est actif (mode Compare et au moins 2 slots remplis) */
+    canCompare?: boolean;
+    /** Nombre de slots remplis, affiché dans le trigger */
+    compareCount?: number;
+
+    /** La vue de comparaison est ouverte (son contenu vient du slot #comparator) */
+    comparing?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -159,7 +205,10 @@ const props = withDefaults(defineProps<Props>(), {
     showBackButton: false,
     showFilter: true,
     showSort: false,
-    showCarousel: true
+    showCarousel: true,
+    canCompare: false,
+    compareCount: 0,
+    comparing: false
 });
 
 const emit = defineEmits<{
@@ -171,6 +220,9 @@ const emit = defineEmits<{
 
     'select-replace': [slotId: string | number];
     'close-replace': [];
+
+    'compare': [];
+    'close-compare': [];
 }>();
 
 const carouselSlides = ref<CarouselSlide[]>([

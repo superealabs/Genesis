@@ -11,6 +11,10 @@ import { useDatabaseStore } from '../store/useDatabase.store';
 
 // Composables
 import { useCompareSlotsWithPopup } from '@genesis-labs/web-core/core/composables/ux/useCompareSlotsWithPopup';
+import { useComparator } from '@genesis-labs/web-core/core/composables/ux/useComparator';
+
+// Components
+import DatabaseDetails from '../components/DatabaseDetails.vue';
 
 /**
  * Composable métier pour la gestion des bases de données.
@@ -63,6 +67,16 @@ export function useDatabase() {
       if (db) map.set(db.id, slot);
     }
     return map;
+  });
+
+  // ✅ AJOUT : Initialisation du comparateur pour la vue de comparaison
+  const comparator = useComparator<DatabaseEngineDto>({
+    compare,
+    items: availableEngines,
+    getId: (db) => db.id,
+    getLabel: (db) => db.name,
+    component: DatabaseDetails,
+    propName: 'engine'
   });
 
   // ==========================================================================
@@ -146,6 +160,7 @@ export function useDatabase() {
     
     // Comparaison & Popup
     compare,
+    comparator, // ✅ AJOUT : Exposition du comparateur
     showReplacePopup: compare.showReplacePopup,
     pendingEngine: compare.pendingItem,
     mouseX: compare.mouseX,

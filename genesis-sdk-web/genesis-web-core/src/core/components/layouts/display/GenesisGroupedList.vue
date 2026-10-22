@@ -1,17 +1,5 @@
 <template>
   <div class="space-y-6">
-    <!-- ═══ CONTRÔLE DE REGROUPEMENT (Optionnel) ═══ -->
-    <div v-if="groupOptions && groupOptions.length > 0" class="flex justify-end mb-2">
-      <select 
-        :value="groupBy ?? 'null'" 
-        @change="$emit('update:groupBy', ($event.target as HTMLSelectElement).value === 'null' ? null : ($event.target as HTMLSelectElement).value)"
-        class="text-xs bg-bg-light border border-secondary rounded px-2 py-1 text-muted focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer hover:border-primary transition-colors"
-      >
-        <option v-for="opt in groupOptions" :key="String(opt.value ?? 'null')" :value="String(opt.value ?? 'null')">
-          {{ opt.label }}
-        </option>
-      </select>
-    </div>
 
     <!-- ═══ BOUCLE DES SECTIONS ═══ -->
     <div v-for="section in groupedItems" :key="section.title" class="animate-fade-in">
@@ -20,7 +8,6 @@
         :title="section.title"
         :default-open="true"
         :variant="'secondary'"
-        content-class="!pt-10"
       >
         <!-- Titre de la section avec compteur -->
         <template #title>

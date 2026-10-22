@@ -15,5 +15,7 @@ export * from '@genesis-labs/web-core/features/generator/manifest';
 
 export * from '@genesis-labs/web-core/features/database/manifest'
 
+
+
 // Expose les routes pour les modules consommateurs (Webview, etc.)
 export { commonRoutes, designSystemRoutes } from './router/router';

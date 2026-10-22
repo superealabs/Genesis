@@ -1,3 +1,4 @@
+<!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/display/configuration/GenesisItemConfig.vue -->
 <template>
     <div 
         class="flex items-center justify-between w-full p-3 rounded-lg transition-all duration-200 group cursor-pointer border-b-4 active:border"
@@ -18,7 +19,7 @@
                 class="text-sm font-medium truncate"
                 :class="isHidden ? 'text-text-muted line-through' : (isSelected ? 'text-primary-text font-semibold' : 'text-text')"
                 :title="name"
-                @dblclick="startEditing"
+                @dblclick="!readonly && startEditing()"
             >
                 {{ name }}
             </span>
@@ -36,8 +37,8 @@
             />
         </div>
 
-        <!-- ═══ DROITE : Actions de paramétrage ═══ -->
-        <div class="flex items-center gap-1 flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200" @click.stop>
+        <!-- ═══ DROITE : Actions de paramétrage (Masquées si readonly) ═══ -->
+        <div v-if="!readonly" class="flex items-center gap-1 flex-shrink-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200" @click.stop>
             
             <GenesisButtonIcon v-if="showRename" size="sm" variant="tertiary" title="Renommer" @click="startEditing">
                 <IconRename />
@@ -75,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick } from 'vue'; // ✅ AJOUT de ref et nextTick
+import { ref, nextTick } from 'vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconRename from '@genesis-labs/web-core/core/components/ui/icons/IconRename.vue';
 import IconEdit from '@genesis-labs/web-core/core/components/ui/icons/IconEdit.vue';
@@ -91,16 +92,17 @@ const props = withDefaults(defineProps<{
     showEdit?: boolean;
     showDelete?: boolean;
     showToggleVisibility?: boolean;
+    readonly?: boolean;
 }>(), {
     isHidden: false,
     isSelected: false,
     showRename: true,
-    showEdit: true,
-    showDelete: true,
-    showToggleVisibility: true
+    showEdit: false,
+    showDelete: false,
+    showToggleVisibility: true,
+    readonly: false
 });
 
-// ✅ SIGNATURE MODIFIÉE : on émet maintenant le nouveau nom
 const emit = defineEmits<{
     select: []; 
     rename: [newName: string];
@@ -109,15 +111,14 @@ const emit = defineEmits<{
     toggleVisibility: [];
 }>();
 
-// ═══ LOGIQUE D'ÉDITION INLINE ═══
 const isEditing = ref(false);
 const editName = ref('');
 const nameInput = ref<HTMLInputElement | null>(null);
 
 function startEditing() {
+    if (props.readonly) return;
     isEditing.value = true;
     editName.value = props.name;
-    // Focus et sélection du texte après le rendu du DOM
     nextTick(() => {
         nameInput.value?.focus();
         nameInput.value?.select();
@@ -129,6 +130,6 @@ function saveName() {
     if (trimmed && trimmed !== props.name) {
         emit('rename', trimmed);
     }
-    isEditing.value = false; // Quitte le mode édition dans tous les cas (Enter ou Blur)
+    isEditing.value = false;
 }
 </script>

@@ -18,7 +18,41 @@
     @select-replace="$emit('select-replace', $event)"
     @close-replace="$emit('close-replace')"
     :is-loading="isLoading"
+    
+    :can-compare="canCompare"
+    :compare-count="compareCount"
+    :comparing="comparing"
+    @compare="$emit('compare')"
+    @close-compare="$emit('close-compare')"
   >
+
+    <template #custom-menu>
+      <GenesisDropdown
+        v-if="frameworkGroupOptions && frameworkGroupOptions.length > 0"
+        triggerVariant="secondary"
+        trigger-size="lg"
+      >
+        <template #triggerIcon>
+          <IconCategory />
+        </template>
+        
+        <template #default="{ close }">
+          <div class="flex flex-col gap-1 p-1 min-w-[180px]">
+            <button
+              v-for="opt in frameworkGroupOptions"
+              :key="String(opt.value ?? 'null')"
+              class="w-full text-left px-3 py-2 text-sm rounded hover:bg-bg-secondary transition-colors flex items-center justify-between"
+              :class="groupBy === opt.value ? 'bg-bg-secondary font-medium text-text' : 'text-muted'"
+              @click="handleUpdateGroupBy(opt.value); close()"
+            >
+              {{ opt.label }}
+              <IconCheck v-if="groupBy === opt.value" class="w-4 h-4 text-primary shrink-0" />
+            </button>
+          </div>
+        </template>
+      </GenesisDropdown>
+    </template>
+
     <FrameworkList
       :frameworks="frameworks"
       :selectedId="selectedId"
@@ -31,8 +65,18 @@
       @info="(fw) => $emit('info', fw)"
       @update:groupBy="$emit('update:groupBy', $event)"
     />
+
+    <!-- ✅ Slot pour la vue de comparaison -->
+    <template #comparator>
+      <GenesisItemComparator
+        :editors="comparatorEditors"
+        :initial-editor-ids="comparatorEditorIds"
+        @close="$emit('close-compare')"
+      />
+    </template>
   </GenesisCollectionLayout>
 
+  <!-- ✅ Popup de Filtres -->
   <BaseFormPopup
     v-if="isFilterOpen"
     title="Filtres des Frameworks"
@@ -46,11 +90,17 @@
     />
   </BaseFormPopup>
 
-  <FrameworkDetail
+  <!-- ✅ CORRECTION : Popup d'affichage des détails du framework sélectionné -->
+  <BaseFormPopup
     v-if="detailFramework"
-    :framework="detailFramework"
+    title="Détails du framework"
+    size="lg"
     @close="$emit('closeDetail')"
-  />
+  >
+    <FrameworkDetails 
+      :framework="detailFramework" 
+    />
+  </BaseFormPopup>
 </template>
 
 <script setup lang="ts">
@@ -58,12 +108,16 @@ import { computed } from 'vue';
 import type { Framework, Language } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types.ts';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
+import type { PanelEditorDefinition } from '@genesis-labs/web-core/core/composables/ux/UseGenesisPanel.ts';
 
 import FrameworkList from './FrameworkList.vue'; 
 import FrameworkFilter from './FrameworkFilter.vue'; 
-import FrameworkDetail from './FrameworkDetail.vue'; 
+import FrameworkDetails from './FrameworkDetails.vue'; // ✅ Import du composant de détails
 import GenesisCollectionLayout from '@genesis-labs/web-core/core/components/layouts/GenesisCollectionLayout.vue';
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
+import GenesisItemComparator from '@genesis-labs/web-core/core/components/layouts/GenesisItemComparator.vue';
+import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
+import IconCategory from '@genesis-labs/web-core/core/components/ui/icons/IconCategory.vue';
 
 // ============================================================================
 // 1. INTERFACE DES PROPS
@@ -84,12 +138,19 @@ export interface FrameworkLayoutProps {
   mouseX: number | null;
   mouseY: number | null;
   filters?: any; 
-  detailFramework: Framework | null;
+  detailFramework: Framework | null; // ✅ Déjà présent
   isFilterOpen: boolean;
   pendingFramework: Framework | null;
   isLoading: boolean;
   groupBy?: keyof Framework | null; 
   groupLabels?: Record<string | number, string>;
+  
+  // ✅ Props de comparaison
+  canCompare?: boolean;
+  compareCount?: number;
+  comparing?: boolean;
+  comparatorEditors?: PanelEditorDefinition[];
+  comparatorEditorIds?: string[];
 }
 
 const props = withDefaults(defineProps<FrameworkLayoutProps>(), {
@@ -98,18 +159,24 @@ const props = withDefaults(defineProps<FrameworkLayoutProps>(), {
   showBackButton: true,
   isLoading: false,
   groupBy: null,
-  groupLabels: () => ({})
+  groupLabels: () => ({}),
+  detailFramework: null,
+  canCompare: false,
+  compareCount: 0,
+  comparing: false,
+  comparatorEditors: () => [],
+  comparatorEditorIds: () => []
 });
 
 // ============================================================================
 // 2. EMITS
 // ============================================================================
-defineEmits<{
+const emit = defineEmits<{
   // Navigation
   'back': [];
   'openFilter': [];
   'closeFilter': [];
-  'closeDetail': [];
+  'closeDetail': []; // ✅ Déjà présent
   
   // Actions utilisateur
   'select-replace': [slotId: string | number];
@@ -117,21 +184,21 @@ defineEmits<{
   'select': [framework: Framework, event?: MouseEvent];
   'info': [framework: Framework];
   
+  // Actions de comparaison
+  'compare': [];
+  'close-compare': [];
+  
   // Mises à jour réactives (v-model)
   'update:searchValue': [value: string];
   'update:displayMode': [mode: DisplayMode];
   'update:mode': [mode: 'selection' | 'compare'];
   'update:filters': [filters: any];
-  'update:groupBy': [value: keyof Framework | null];
+  'update:groupBy': [value: string | null]; 
 }>();
 
 // ============================================================================
 // 3. CONSTANTES DE CONFIGURATION
 // ============================================================================
-/**
- * Options disponibles pour le menu de regroupement.
- * Les valeurs doivent correspondre exactement aux clés de l'interface Framework.
- */
 const frameworkGroupOptions: { label: string; value: keyof Framework | null }[] = [
   { label: 'Tous les frameworks', value: null },
   { label: 'Par Core Framework', value: 'coreFramework' },
@@ -142,14 +209,6 @@ const frameworkGroupOptions: { label: string; value: keyof Framework | null }[] 
 // ============================================================================
 // 4. COMPUTEDS (LOGIQUE METIER LOCALE)
 // ============================================================================
-/**
- * Génère un dictionnaire de traduction pour le composant générique GenesisGroupedList.
- * 
- * Pourquoi c'est nécessaire : Le composant générique ne connaît que les IDs bruts 
- * (ex: languageId = 1). Ce computed transforme ces IDs en noms lisibles (ex: "Java") 
- * en utilisant les données récupérées depuis l'API, tout en fournissant des valeurs 
- * par défaut pour les types booléens et les valeurs nulles.
- */
 const dynamicGroupLabels = computed<Record<string | number, string>>(() => {
   const labels: Record<string | number, string> = {
     'null': 'Non spécifié',
@@ -166,4 +225,8 @@ const dynamicGroupLabels = computed<Record<string | number, string>>(() => {
   
   return labels;
 });
+
+function handleUpdateGroupBy(value: keyof Framework | null) {
+  emit('update:groupBy', value as string | null);
+}
 </script>

@@ -8,8 +8,6 @@
       <div class="flex flex-col gap-3">
         <h3 class="text-sm font-semibold text-text">Ajouter une relation</h3>
         <div class="flex flex-wrap items-end gap-3">
-
-          <!-- Sélection Table Parent -->
           <GenesisInput
             v-model="newRelation.parentTable"
             type="select"
@@ -20,8 +18,6 @@
             fill-width
             class="flex-1 min-w-[200px]"
           />
-
-          <!-- Sélection Table Child -->
           <GenesisInput
             v-model="newRelation.childTable"
             type="select"
@@ -32,8 +28,6 @@
             fill-width
             class="flex-1 min-w-[200px]"
           />
-
-          <!-- Bouton d'ajout et Switcher de vue -->
           <GenesisButton 
             variant="primary" 
             size="lg" 
@@ -43,61 +37,18 @@
             <template #leftIcon><IconPlus /></template>
             Ajouter
           </GenesisButton>
-          
-          <LayoutSwitcherAlt v-model="internalDisplayMode" align="right" />
         </div>
       </div>
 
-      <!-- 2. LISTE DES RELATIONS CONFIGURÉES -->
+      <!-- 2. LISTE DES RELATIONS CONFIGURÉES (Nouveau composant) -->
       <div class="flex flex-col gap-2">
-        <h3 class="text-sm font-semibold text-text">Relations configurées</h3>
-        
-        <GenesisList
-          :display="listDisplay"
-          :have-actions="true"
-          :headers="[
-            { label: 'Parent (Entity)', class: 'p-3 text-center' },
-            { label: 'Child (Entity)',  class: 'p-3 text-center' },
-            { label: 'Form',            class: 'p-3 text-center' },
-            { label: 'Mandatory',       class: 'p-3 text-center' },
-          ]"
-          min-col-width="200px"
-        >
-          <GenesisItem
-            v-for="(rel, index) in getRelations"
-            :key="`${rel.parentTable}-${rel.childTable}`"
-            :label="rel.parentTable"
-            :sublabel="rel.childTable"
-            :show-logo="false"
-            @close="removeRelation(index)"
-          >
-            <!-- Mode list : Colonnes de tableau -->
-            <template #default>
-              <td class="p-3 text-center truncate">{{ rel.parentTable }}</td>
-              <td class="p-3 text-center truncate">{{ rel.childTable }}</td>
-              <td class="p-3 text-center">
-                <GenesisSwitch v-model="rel.hasForm" size="sm" />
-              </td>
-              <td class="p-3 text-center">
-                <GenesisSwitch v-model="rel.mandatory" size="sm" />
-              </td>
-            </template>
-
-            <!-- Mode grid : Affichage en blocs -->
-            <template #header>
-              <div class="inline-flex flex-col gap-1">
-                <label class="text-lg font-medium text-muted">Parent :</label>
-                <span>{{ rel.parentTable }}</span>
-              </div>
-              <div class="inline-flex flex-col gap-1">
-                <label class="text-lg font-medium text-muted">Child :</label>
-                <span>{{ rel.childTable }}</span>
-              </div>
-              <GenesisInput v-model="rel.hasForm" size="sm" type="boolean" label="hasForm" />
-              <GenesisInput v-model="rel.mandatory" size="sm" type="boolean" label="Mandatory" />
-            </template>
-          </GenesisItem>
-        </GenesisList>
+        <RelationTableView 
+          :relations="getRelations" 
+          :is-editable="true"
+          :max-height="size"
+          @remove="handleRemoveRelation"
+          @update-relation="handleUpdateRelation"
+        />
       </div>
 
     </div>
@@ -118,17 +69,16 @@ import type { RelationParameter } from '@genesis-labs/shared-types';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 
 // UI Components
-import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
-import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.vue';
-import LayoutSwitcherAlt from '@genesis-labs/web-core/core/components/ui/dropdown/LayoutSwitcherAlt.vue';
-import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
-import GenesisSwitch from '@genesis-labs/web-core/core/components/ui/inputs/GenesisSwitch.vue';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
-import { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
-
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+
+// ✅ NOUVEAU COMPOSANT
+import RelationTableView from '../relation/RelationTableView.vue';
+
+const size = window.innerHeight * 0.4;
 
 // ============================================================================
 // 1. COMPOSABLES
@@ -154,8 +104,6 @@ const newRelation = ref<Partial<RelationParameter>>({
   hasForm: false 
 });
 
-const internalDisplayMode = ref<DisplayMode>('grid');
-
 const panelSlides: CarouselSlide[] = [
   { color: '#3B82F6', label: 'Étape 1 : Sélection des entités' },
   { color: '#EF4444', label: 'Étape 2 : Configuration des relations' },
@@ -165,13 +113,10 @@ const panelSlides: CarouselSlide[] = [
 // ============================================================================
 // 3. COMPUTEDS
 // ============================================================================
-const listDisplay = computed(() => internalDisplayMode.value);
-
 const canAddRelation = computed(() => 
   !!newRelation.value.parentTable && !!newRelation.value.childTable
 );
 
-// ✅ Options formatées pour GenesisInput (avec indication visuelle pour les Vues)
 const parentTableOptions = computed(() => 
   getTablesParents.value.map(t => ({ 
     label: `${t.className}${t.isView ? ' (Vue)' : ''}`, 
@@ -189,7 +134,6 @@ const childTableOptions = computed(() =>
 // ============================================================================
 // 4. ACTIONS
 // ============================================================================
-
 function handleAddRelation() {
   if (!canAddRelation.value) return;
   
@@ -203,6 +147,25 @@ function handleAddRelation() {
   if (success) {
     newRelation.value = { parentTable: '', childTable: '', mandatory: false, hasForm: false };
   }
+}
+
+// ✅ Gère la suppression depuis le tableau
+function handleRemoveRelation(relationToRemove: RelationParameter) {
+  const index = getRelations.value.findIndex(r => 
+    r.parentTable === relationToRemove.parentTable && 
+    r.childTable === relationToRemove.childTable
+  );
+  if (index !== -1) {
+    removeRelation(index);
+  }
+}
+
+// ✅ Gère la mise à jour des switches depuis le tableau
+function handleUpdateRelation(relation: RelationParameter, field: 'hasForm' | 'mandatory', value: boolean) {
+  // Note: Si ton store Pinia est en mode strict, tu devras peut-être appeler une action 
+  // 'updateRelation' dédiée. Sinon, la mutation réactive directe fonctionne.
+  // Exemple avec une action hypothétique : updateRelation(index, field, value);
+  console.log(`Mise à jour de ${field} pour ${relation.parentTable} -> ${relation.childTable} : ${value}`);
 }
 
 // ============================================================================

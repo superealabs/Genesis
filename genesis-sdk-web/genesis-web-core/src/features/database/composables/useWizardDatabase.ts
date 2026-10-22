@@ -87,6 +87,10 @@ export function useWizardDatabase(onSelect: (engine: DatabaseEngineDto, event?: 
     isLoading: db.isLoading,
     replaceOptions,
     
+    // Comparaison (Ajouté pour le Stepper)
+    compare: db.compare,
+    comparator: db.comparator,
+    
     // Actions
     handleSelectWrapper,
     handleReplaceSelection,

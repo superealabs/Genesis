@@ -62,8 +62,8 @@
 /* Genesis SOMBRE (auto ET forcé) */
 body.theme-genesis.vscode-dark,
 body.theme-genesis.genesis-dark {
-    --color-bg-light:    hsl(175, 100%, 8%);
-    --color-bg:          hsl(175, 100%, 6%);
+    --color-bg-light:    hsl(175, 100%, 10%);
+    --color-bg:          hsl(175, 100%, 7%);
     --color-bg-dark:     hsl(180, 100%, 3%);
 
     --color-text:        hsl(180, 100%, 94%);
@@ -89,8 +89,8 @@ body.theme-genesis.genesis-dark {
 /* Genesis CLAIR (auto ET forcé) */
 body.theme-genesis.vscode-light,
 body.theme-genesis.genesis-light {
-    --color-bg-light:    hsl(140, 100%, 92%);
-    --color-bg:          hsl(140, 58%, 86%);
+    --color-bg-light:    hsl(140, 100%, 90%);
+    --color-bg:          hsl(140, 58%, 80%);
     --color-bg-dark:     hsl(140, 100%, 98%);
 
     --color-text:        hsl(180, 100%, 6%);

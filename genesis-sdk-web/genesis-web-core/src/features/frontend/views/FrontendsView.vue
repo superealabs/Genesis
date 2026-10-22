@@ -8,12 +8,15 @@
     @select-replace="handleReplaceSelection"
     @close-replace="cancelReplace"
     @select="handleSelectWrapper"
-    @info="handleInfo"
+    @info="(fw) => detailFramework = fw"
+    @close-detail="detailFramework = null"
+    @compare="comparator.open"
+    @close-compare="comparator.close"
   />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 
 // Types
 import type { FrontendFramework } from '@genesis-labs/shared-types';
@@ -49,6 +52,7 @@ const {
   searchQuery,
   compareMode,
   compare,
+  comparator, // ✅ AJOUTÉ : Récupération du comparateur
   initialize,
   setSearch,
   setDisplayMode,
@@ -60,12 +64,16 @@ const {
   mouseX,
   mouseY,
   cancelReplace,
-  handleInfo,
   isLoading
 } = useFrontend();
 
 // ============================================================================
-// 3. COMPUTEDS (Données dérivées pour l'UI)
+// 3. ÉTAT LOCAL
+// ============================================================================
+const detailFramework = ref<FrontendFramework | null>(null); // ✅ AJOUTÉ : Pour le popup de détails
+
+// ============================================================================
+// 4. COMPUTEDS (Données dérivées pour l'UI)
 // ============================================================================
 
 /**
@@ -99,12 +107,22 @@ const layoutProps = computed<FrontendLayoutProps>(() => ({
   showReplacePopup: showReplacePopup.value,
   mouseX: mouseX.value,
   mouseY: mouseY.value,
-  isLoading: isLoading.value, // Utilisation correcte de l'état réactif du composable
-  showBackButton: props.showBackButton
+  isLoading: isLoading.value,
+  showBackButton: props.showBackButton,
+  
+  // ✅ AJOUT : État des détails
+  detailFramework: detailFramework.value,
+
+  // ✅ AJOUT : Props de comparaison (trigger + vue)
+  canCompare: comparator.canOpen.value,
+  compareCount: compare.compareCount.value,
+  comparing: comparator.isOpen.value,
+  comparatorEditors: comparator.editors.value,
+  comparatorEditorIds: comparator.initialEditorIds.value
 }));
 
 // ============================================================================
-// 4. ACTIONS & HANDLERS
+// 5. ACTIONS & HANDLERS
 // ============================================================================
 
 /**
@@ -132,7 +150,7 @@ function handleReplaceSelection(slotId: string | number) {
 }
 
 // ============================================================================
-// 5. LIFECYCLE & EXPOSE
+// 6. LIFECYCLE & EXPOSE
 // ============================================================================
 
 // Permet aux composants parents de déclencher manuellement le chargement si nécessaire

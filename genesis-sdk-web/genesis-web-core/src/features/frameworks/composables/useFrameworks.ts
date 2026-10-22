@@ -5,7 +5,9 @@ import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
 
 import { FRAMEWORK_SERVICE_KEY, type IFrameworkService } from '../types/framework.service.interface';
 import { useFrameworkStore } from '../store/useFramework.store';
+import FrameworkDetails from '../components/FrameworkDetails.vue';
 import { useCompareSlotsWithPopup } from '@genesis-labs/web-core/core/composables/ux/useCompareSlotsWithPopup';
+import { useComparator } from '@genesis-labs/web-core/core/composables/ux/useComparator';
 
 export function useFrameworks() {
   // ═══ 1. INJECTIONS & STORES ═══
@@ -17,7 +19,7 @@ export function useFrameworks() {
   const store = useFrameworkStore();
 
   // ═══ 2. ÉTAT RÉACTIF (Depuis le store) ═══
-  const { filteredFrameworks, displayMode, filters, searchQuery, isLoading, languages } = storeToRefs(store);
+  const { frameworks: allFrameworks, filteredFrameworks, displayMode, filters, searchQuery, isLoading, languages } = storeToRefs(store);
 
   // ═══ 3. ÉTAT LOCAL & LOGIQUE MÉTIER (Comparaison) ═══
   const compare = useCompareSlotsWithPopup<Framework>({
@@ -25,7 +27,27 @@ export function useFrameworks() {
     getId: (f) => f.id
   });
 
+  // watchEffect(() => {
+  //   console.group('🔍 DEBUG COMPARAISON');
+  //   console.log('1. Mode actuel:', compare.mode.value);
+  //   console.log('2. Nombre d\'éléments sélectionnés (compareCount):', compare.compareCount.value);
+  //   console.log('3. Détail des slots:', compare.slots.value);
+  //   console.log('4. comparator.canOpen (La valeur finale):', comparator.canOpen.value);
+  //   console.groupEnd();
+  // });
+
   const { mode: compareMode, slots: compareSlots, selectedItem } = compare;
+
+  // Vue de comparaison : lit les slots ci-dessus. La liste du sélecteur de chaque colonne
+  // contient TOUS les frameworks (pas seulement ceux filtrés dans la liste).
+  const comparator = useComparator<Framework>({
+    compare,
+    items: allFrameworks,
+    getId: (f) => f.id,
+    getLabel: (f) => f.name,
+    component: FrameworkDetails,
+    propName: 'framework'
+  });
 
   // ═══ 4. COMPUTEDS (Getters locaux) ═══
   const currentSelectedId = computed(() => {
@@ -94,6 +116,7 @@ export function useFrameworks() {
     
     // Comparaison
     compare,
+    comparator,
     showReplacePopup: compare.showReplacePopup,
     pendingFramework: compare.pendingItem,
     mouseX: compare.mouseX,

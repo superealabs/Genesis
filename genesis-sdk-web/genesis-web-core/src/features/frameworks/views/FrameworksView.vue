@@ -3,7 +3,7 @@
     v-bind="layoutProps"
     :group-by="groupBy"
     :languages="languages"
-    @update:group-by="groupBy = $event"
+
     @back="$emit('back')"
     @update:mode="handleModeChange"
     @update:searchValue="setSearch"
@@ -16,6 +16,11 @@
     @close-replace="cancelReplace"
     @select="handleSelectWrapper"
     @info="handleInfo"
+    @compare="comparator.open"
+    @close-compare="comparator.close"
+
+    @update:group-by="handleUpdateGroupBy"
+
   />
 </template>
 
@@ -57,6 +62,7 @@ const {
   mouseX,
   mouseY,
   compare,
+  comparator,
   initialize,
   setSearch,
   setFilters,
@@ -76,7 +82,7 @@ const detailFramework = ref<Framework | null>(null);
 const isFilterOpen = ref(false);
 
 //  ÉTAT DE REGROUPEMENT LOCAL (Rend le composant autonome)
-const groupBy = ref<keyof Framework | null>('coreFramework');
+const groupBy = ref<keyof Framework | null>(null);
 
 // ============================================================================
 // 4. COMPUTEDS (Données dérivées)
@@ -102,30 +108,48 @@ const replaceOptions = computed(() => {
  * Regroupe toutes les propriétés réactives nécessaires au composant 
  * FrameworkLayout pour éviter une imbrication excessive dans le template.
  */
-const layoutProps = computed<FrameworkLayoutProps>(() => ({
-  frameworks: frameworks.value,
-  selectedId: selectedId.value,
-  displayMode: displayMode.value,
-  compareMode: compareMode.value,
-  frameworkSlots: frameworkSlots.value,
-  filters: filters.value,
-  searchQuery: searchQuery.value,
-  showReplacePopup: showReplacePopup.value,
-  replaceOptions: replaceOptions.value,
-  mouseX: mouseX.value,
-  mouseY: mouseY.value,
-  pendingFramework: pendingFramework.value,
-  detailFramework: detailFramework.value,
-  isFilterOpen: isFilterOpen.value,
-  isLoading: isLoading.value,
-  showBackButton: props.showBackButton,
-  groupBy: groupBy.value,
-  languages: languages.value
-}));
+const layoutProps = computed<FrameworkLayoutProps>(() => {
+  const propsObj = {
+    frameworks: frameworks.value,
+    selectedId: selectedId.value,
+    displayMode: displayMode.value,
+    compareMode: compareMode.value,
+    frameworkSlots: frameworkSlots.value,
+    filters: filters.value,
+    searchQuery: searchQuery.value,
+    showReplacePopup: showReplacePopup.value,
+    replaceOptions: replaceOptions.value,
+    mouseX: mouseX.value,
+    mouseY: mouseY.value,
+    pendingFramework: pendingFramework.value,
+    detailFramework: detailFramework.value,
+    isFilterOpen: isFilterOpen.value,
+    isLoading: isLoading.value,
+    showBackButton: props.showBackButton,
+    groupBy: groupBy.value,
+    languages: languages.value,
+
+    // ── Comparaison (trigger + vue) ──
+    canCompare: comparator.canOpen.value,
+    compareCount: compare.compareCount.value,
+    comparing: comparator.isOpen.value,
+    comparatorEditors: comparator.editors.value,
+    comparatorEditorIds: comparator.initialEditorIds.value
+  };
+
+  // 🐛 LOG DE CONTRÔLE : Est-ce que 'true' sort bien d'ici ?
+  console.log('📤 [FrameworksView] layoutProps.canCompare =', propsObj.canCompare);
+
+  return propsObj;
+});
 
 // ============================================================================
 // 5. ACTIONS & HANDLERS
 // ============================================================================
+
+function handleUpdateGroupBy(value: string | null) {
+  groupBy.value = value as keyof Framework | null;
+}
 
 function handleInfo(framework: Framework) { 
   detailFramework.value = framework; 

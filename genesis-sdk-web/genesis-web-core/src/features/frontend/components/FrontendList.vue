@@ -1,68 +1,127 @@
 <template>
-  <GenesisList :display="display" minColWidth="200px">
-    <GenesisItem
-      v-for="fw in frontends"
-      :key="fw.id"
-      :label="fw.name"
-      :selected="selectedId === fw.id"
-      :show-info-button="true"
-      :badge="frameworkSlots?.get(fw.id) ?? null"
-      :logo-src="resolveFrontendLogo(fw)"
-      @click="$emit('select', fw, $event)"
-      @info="$emit('info', fw)"
-    >
-      <!-- 
-        Préservation de la structure pour le mode 'table'.
-        Ces balises <td> seront injectées dans les colonnes définies par le parent 
-        si le mode d'affichage est défini sur 'table'.
-      -->
-      <template #default>
-        <td class="p-3 text-center">{{ fw.name }}</td>
-      </template>
-    </GenesisItem>
-  </GenesisList>
+  <!-- État vide global -->
+  <div v-if="frontends.length === 0" class="p-6 text-center text-muted bg-bg-light rounded-lg">
+    Aucun framework frontend disponible.
+  </div>
+
+  <!-- ═══ SECTION DÉDIÉE : FRAMEWORKS FRONTEND RÉCENTS ═══ -->
+  <GenesisDisclosure
+    v-if="recentFrontends.length > 0"
+    title="Récents"
+    :default-open="true"
+    variant="secondary"
+    class="mb-6"
+  >
+    <template #title>
+      <span class="text-2xl font-semibold">Récemment</span>
+      <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border border-secondary">
+        {{ recentFrontends.length }}
+      </span>
+    </template>
+
+    <div class="section-body">
+      <GenesisList :display="display" minColWidth="100px">
+        <GenesisItem
+          v-for="fw in recentFrontends"
+          :key="`recent-${fw.id}`"
+          :logo-src="resolveFrontendLogo(fw)"
+          :selected="selectedId === fw.id"
+          :badge="frameworkSlots?.get(fw.id) ?? null"
+          :size="'sm'"
+          @click="$emit('select', fw, $event)"
+          @info="$emit('info', fw)"
+        >
+          <template #default>
+            <td class="p-3 text-center">{{ fw.name }}</td>
+          </template>
+        </GenesisItem>
+      </GenesisList>
+    </div>
+  </GenesisDisclosure>
+
+  <!-- ═══ LISTE GROUPÉE GÉNÉRIQUE (TOUS LES FRAMEWORKS FRONTEND) ═══ -->
+  <GenesisGroupedList
+    v-if="frontends.length > 0"
+    :items="frontends"
+    :group-by="groupBy"
+    :group-options="groupOptions"
+    :display="display"
+    minColWidth="200px"
+    @update:group-by="$emit('update:groupBy', $event)"
+  >
+    <template #default="{ items }">
+      <GenesisItem
+        v-for="fw in items"
+        :key="fw.id"
+        :label="fw.name"
+        :logo-src="resolveFrontendLogo(fw)"
+        :selected="selectedId === fw.id"
+        :show-info-button="true"
+        :badge="frameworkSlots?.get(fw.id) ?? null"
+        @click="$emit('select', fw, $event)"
+        @info="$emit('info', fw)"
+      >
+        <template #default>
+          <td class="p-3 text-center">{{ fw.name }}</td>
+        </template>
+      </GenesisItem>
+    </template>
+  </GenesisGroupedList>
 </template>
 
 <script setup lang="ts">
-// ============================================================================
-// 1. IMPORTS
-// ============================================================================
+import { computed } from 'vue';
 import type { FrontendFramework } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
+import GenesisGroupedList from '@genesis-labs/web-core/core/components/layouts/display/GenesisGroupedList.vue';
 import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.vue';
+import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
 import { resolveFrontendLogo } from '../assets/frontendLogo';
 
+// ✅ Import du composable de récence
+import { useRecency } from '@genesis-labs/web-core/core/features/recent/composables/useRecency';
+
 // ============================================================================
-// 2. PROPS
+// 1. PROPS
 // ============================================================================
-/**
- * Composant de liste spécifique aux frameworks frontend.
- * Il délègue la mise en page (grille, liste, tableau) au composant générique GenesisList.
- */
-defineProps<{
-  /** Liste des frameworks frontend à afficher. */
+const props = defineProps<{
   frontends: FrontendFramework[];
-  
-  /** ID du framework actuellement sélectionné. */
   selectedId?: number;
-  
-  /** Mode d'affichage actuel (grid, list, ou table). */
   display: DisplayMode;
-  
-  /** Map des slots de comparaison occupés (ex: Map(1 => 'A')). */
   frameworkSlots?: Map<number, string>;
+  groupBy?: keyof FrontendFramework | null;
+  groupOptions?: { label: string; value: keyof FrontendFramework | null }[];
 }>();
 
 // ============================================================================
-// 3. EMITS
+// 2. EMITS
 // ============================================================================
 defineEmits<{
-  /** Émis lorsque l'utilisateur clique sur un framework frontend. */
   select: [framework: FrontendFramework, event?: MouseEvent];
-  
-  /** Émis lorsque l'utilisateur clique sur le bouton d'information. */
   info: [framework: FrontendFramework];
+  'update:groupBy': [value: keyof FrontendFramework | null];
 }>();
+
+// ============================================================================
+// 3. LOGIQUE DE RÉCENCE
+// ============================================================================
+const { recentFrontends: recentFrontendItems } = useRecency();
+
+/**
+ * Mappe les IDs des frameworks frontend récents vers les objets complets 
+ * présents dans la prop `frontends`, en conservant l'ordre de récence.
+ */
+const recentFrontends = computed<FrontendFramework[]>(() => {
+  return recentFrontendItems.value
+    .map(recent => props.frontends.find(f => f.id === recent.id))
+    .filter((f): f is FrontendFramework => f !== undefined); // Sécurité
+});
 </script>
+
+<style scoped>
+.section-body {
+  padding-top: 1rem; 
+}
+</style>

@@ -6,37 +6,20 @@
         :aria-label="current?.label"
     >
         <!-- ═══ En-tête : sélecteur d'éditeur, puis bouton de fermeture à sa droite ═══ -->
-        <header class="relative flex items-center justify-between gap-1 h-8 shrink-0">
-            <GenesisDropdown
-                trigger-size="sm"
-                dropdown-size="md"
-                align="left"
-            >
-                <template v-if="current?.icon" #triggerIcon>
-                    <component :is="current.icon" />
-                </template>
+         <!-- désactivation intentionnel de la taille maximale, = h-8 -->
+        <header class="relative flex justify-between gap-1 shrink-0">
+            <!-- GenesisInput select : passe tout seul en combobox (recherche) à partir de 7 options -->
+            <GenesisInput
+                type="select"
+                :size="dropdownSize"
+                fill-width
+                class="flex-1 min-w-0"
+                :model-value="editorId"
+                :options="editorOptions"
+                placeholder="Choisir un éditeur…"
+                @update:model-value="select"
+            />
 
-                <template #trigger>
-                    <span class="truncate">{{ current?.label ?? 'Choisir un éditeur…' }}</span>
-                </template>
-
-                <template #default="{ close }">
-                    <div class="p-1 space-y-1">
-                        <button
-                            v-for="editor in editors"
-                            :key="editor.id"
-                            type="button"
-                            class="w-full flex items-center gap-2 text-left px-3 py-2 text-sm text-text hover:bg-bg-secondary hover:text-secondary rounded-md transition-colors"
-                            :class="{ 'text-accent font-medium': editor.id === editorId }"
-                            @click="select(editor.id, close)"
-                        >
-                            <component :is="editor.icon" v-if="editor.icon" class="w-4 h-4 shrink-0" />
-                            <span class="truncate">{{ editor.label }}</span>
-                        </button>
-                    </div>
-                </template>
-            </GenesisDropdown>
-        
             <GenesisButtonIcon
                 variant="tertiary"
                 size="sm"
@@ -61,7 +44,7 @@
 
 <script setup lang="ts">
 import { ref, computed, provide, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
-import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
+import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconX from '@genesis-labs/web-core/core/components/ui/icons/IconX.vue';
 import {
@@ -70,8 +53,9 @@ import {
     type PanelView,
     type PanelViewPatch
 } from '@genesis-labs/web-core/core/composables/ux/UseGenesisPanel';
+import type { UI_Size_Unit } from '../../config/ui.config';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     /** Éditeurs proposés dans le menu */
     editors: PanelEditorDefinition[];
     /** Éditeur actuellement affiché */
@@ -79,7 +63,10 @@ const props = defineProps<{
     /** Point de vue de CE panneau (défilement, etc.) */
     view: PanelView;
     canClose: boolean;
-}>();
+    dropdownSize?: UI_Size_Unit;
+}>(), {
+    dropdownSize: 'sm'
+});
 
 const emit = defineEmits<{
     'update:editorId': [id: string];
@@ -89,9 +76,11 @@ const emit = defineEmits<{
 
 const current = computed(() => props.editors.find(e => e.id === props.editorId));
 
-function select(id: string, close: () => void) {
+// GenesisInput attend { label, value }
+const editorOptions = computed(() => props.editors.map(e => ({ label: e.label, value: e.id })));
+
+function select(id: string) {
     if (id !== props.editorId) emit('update:editorId', id);
-    close();
 }
 
 // ═══ Point de vue : défilement du contenu ═══

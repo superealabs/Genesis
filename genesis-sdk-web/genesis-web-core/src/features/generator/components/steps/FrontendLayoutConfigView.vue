@@ -332,21 +332,20 @@ const languagesLogic = useConfigManagerLogic({
   configType: 'frontend_languages-configuration',
   defaultValues: [],
   getCurrentValues: () => layoutConfig.value.selectedInterfaceLanguages || [],
+  
+  // ✅ CORRECTION 1 : Payload simplifié, sans référence au framework
   buildPayload: (values) => ({
-    frontendFrameworkId: frontend.value?.id || 0,
-    frontendFrameworkName: frontend.value?.name || 'Inconnu',
     languages: values || layoutConfig.value.selectedInterfaceLanguages || []
   }),
+  
   fileNamePrefix: 'languages',
   watchSource: () => layoutConfig.value.selectedInterfaceLanguages,
   applyValues: (vals) => {
     isApplyingLanguagesConfig.value = true;
     
-    // 1. Retirer toutes les langues actuellement sélectionnées
     const currentLangs = [...layoutConfig.value.selectedInterfaceLanguages];
     currentLangs.forEach(code => toggleLanguage(code));
     
-    // 2. Ajouter les nouvelles langues du profil sélectionné
     vals.forEach(code => {
       if (!layoutConfig.value.selectedInterfaceLanguages.includes(code)) {
         toggleLanguage(code);
@@ -356,7 +355,7 @@ const languagesLogic = useConfigManagerLogic({
     nextTick(() => { isApplyingLanguagesConfig.value = false; });
   },
   isApplyingRef: isApplyingLanguagesConfig,
-  framework: frontend,
+  framework: frontend, // Peut être retiré si useConfigManagerLogic n'en a plus besoin, mais on le laisse par sécurité
   saveConfiguration,
   deleteConfiguration,
   persistedConfigs
@@ -370,11 +369,11 @@ function getLanguageName(code: string): string {
   return lang ? lang.name : code;
 }
 
-async function syncLanguagesConfigsToCurrentFrontend() {
-  if (!frontend.value) return;
-  const { id: fwId, name: fwName } = frontend.value;
-
-  const languagesData = await loadFrontendLanguagesConfigurations(fwId, fwName);
+// ✅ CORRECTION 2 : Fonction de chargement globale (plus de dépendance au framework)
+async function loadLanguagesConfigurations() {
+  // On appelle la fonction de chargement SANS passer d'ID de framework
+  const languagesData = await loadFrontendLanguagesConfigurations(); 
+  
   languagesConfigManager.configurations.value = languagesData.map(c => {
     const p = c.payload as any;
     return { 
@@ -391,13 +390,7 @@ async function syncLanguagesConfigsToCurrentFrontend() {
 
 onMounted(async () => {
   await fetchAvailableLanguages();
-  await syncLanguagesConfigsToCurrentFrontend();
+  await loadLanguagesConfigurations(); // ✅ Appel simplifié
 });
 
-// Recharger les configs de langues si le framework frontend change
-watch(() => frontend.value?.id, async (newId, oldId) => {
-  if (newId && newId !== oldId && frontend.value) {
-    await syncLanguagesConfigsToCurrentFrontend();
-  }
-});
 </script>

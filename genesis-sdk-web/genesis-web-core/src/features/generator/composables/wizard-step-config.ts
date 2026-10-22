@@ -12,6 +12,11 @@ import { useFrameworkStore } from '../../frameworks/store/useFramework.store';
 import { useDatabaseStore } from '../../database/store/useDatabase.store';
 import { useFrontendStore } from '../../frontend/store/useFrontend.store';
 
+import { useRecentStore } from '@genesis-labs/web-core/core/features/recent/store/useRecent.store';
+import { RecentItem } from '@genesis-labs/shared-types';
+import type { IRecentService } from '@genesis-labs/web-core/core/features/recent/types/recent.service.interface';
+
+
 // ============================================================================
 // INTERFACES & TYPES
 // ============================================================================
@@ -21,6 +26,7 @@ export interface WizardServices {
   fdsvc: IFrontendService;
   dbsvc: IDatabaseService;
   fsvc: IFrameworkService;
+  recentSvc: IRecentService;
 }
 
 export interface StepConfig {
@@ -45,7 +51,8 @@ export type StepId =
   | 'relations'
   | 'frontend_select'
   | 'frontend_layout'
-  | 'git_config';
+  | 'git_config'
+  | 'summary';
 
 // ============================================================================
 // SOURCE DE VÉRITÉ : ORDRE DES ÉTAPES
@@ -65,7 +72,8 @@ export const WIZARD_STEP_ORDER: StepId[] = [
   'relations',
   'frontend_select',
   'frontend_layout',
-  'git_config'
+  'git_config',
+  'summary'
 ];
 
 // ============================================================================
@@ -75,20 +83,24 @@ export const WIZARD_STEP_ORDER: StepId[] = [
 export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   
   framework: {
-    onEnter: async (_store, { fsvc }) => {
-      console.log("[Wizard: framework] Chargement des frameworks et langues...");
+    onEnter: async (_store, { fsvc, recentSvc }) => {
+      console.log("[Wizard: framework] Chargement des frameworks, langues et données récentes...");
+      
       const frameworkStore = useFrameworkStore();
+      const recentStore = useRecentStore();
       
       try { 
-        const [frameworksData, languagesData] = await Promise.all([
+        const [frameworksData, languagesData, recencyData] = await Promise.all([
           fsvc.fetchFrameworks(),
-          fsvc.fetchLanguages()
+          fsvc.fetchLanguages(),
+          recentSvc.getRecencyData() 
         ]);
         
         frameworkStore.setFrameworks(frameworksData);
         frameworkStore.setLanguages(languagesData);
+        recentStore.setRecencyData(recencyData); // Les données sont maintenant réactives pour l'UI !
         
-        console.log(`[Wizard: framework] Chargement réussi : ${frameworksData.length} frameworks, ${languagesData.length} langues`);
+        console.log(`[Wizard: framework] Chargement réussi : ${frameworksData.length} frameworks, ${languagesData.length} langues, ${recencyData.frameworks.length} récents.`);
       } catch (error) {
         console.error("[Wizard: framework] Échec du chargement:", error);
         _store.setWizardError("Impossible de charger la liste des frameworks.");
@@ -254,11 +266,22 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
           // Trouver l'association correspondante
           const assoc = associations.find(a => a.configId === profile.id);
           
-          // Construire le GenerationParameter
+          const assignedTables = assoc?.associatedTables || [];
+          const assignedViews = assoc?.associatedViews || [];
+          
+          // On ignore totalement les profils qui n'ont 
+          // aucune table ou vue assignée. Cela garantit que seules les entités 
+          // explicitement liées à une configuration sont envoyées au backend.
+          if (assignedTables.length === 0 && assignedViews.length === 0) {
+            console.log(`[Wizard: tables] Profil "${profile.name}" ignoré : aucune entité assignée.`);
+            continue; // On passe au profil suivant sans l'ajouter au tableau
+          }
+          
+          // Construire le GenerationParameter uniquement avec les données assignées
           const param: GenerationParameter = {
             profileName: profile.name,
-            selectedTables: assoc?.associatedTables || [],
-            selectedViews: assoc?.associatedViews || [],
+            selectedTables: assignedTables,
+            selectedViews: assignedViews,
             selectedComponents: profile.components as ComponentType[]
           };
           
@@ -268,7 +291,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         // 3. Stocker dans stepperData pour l'envoi au backend
         store.stepperData.generationParameters = generationParameters;
         
-        console.log("[Wizard: tables] Sélection des tables validée. Profils générés :", generationParameters);
+        console.log("[Wizard: tables] Sélection validée. Seules les entités assignées sont incluses :", generationParameters);
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des tables.");
@@ -392,6 +415,74 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       return true;
     },
     skipCascade: []
+  },
+
+  summary: {
+    onEnter: (/** store */) => {
+      console.log("[Wizard: summary] Affichage du résumé final de la configuration.");
+      // Aucune action de chargement requise ici, toutes les données sont déjà dans le store.
+      // Le composant SummaryView se chargera de les afficher via les composantes enfants.
+    },
+    
+    beforeNext: async (store, { recentSvc }) => {
+      try {
+        console.log("[Wizard: summary] Résumé validé. Prêt pour la génération finale.");
+        
+        try {
+          const data = store.stepperData;
+
+          // 1. Sauvegarder le Framework Backend
+          if (data.framework) {
+            await recentSvc.addRecentItem('frameworks', {
+              id: data.framework.id,
+              name: data.framework.name,
+              lastUsed: Date.now()
+            } as RecentItem);
+            console.log(`[Recency] Framework ajouté aux récents: ${data.framework.name}`);
+          }
+
+          // 2. Sauvegarder le Moteur de Base de Données
+          if (data.database?.engine) {
+            const databaseStore = useDatabaseStore();
+            
+            // 1. Retrouver l'objet moteur complet grâce à son nom (string)
+            const matchedEngine = databaseStore.availableEngines.find(eng => {
+              const normalizedName = eng.name.toLowerCase().replace(/\s+/g, '');
+              const normalizedConfig = data.database!.engine.toLowerCase().replace(/\s+/g, '');
+              return normalizedName === normalizedConfig;
+            });
+            
+            // 2. Sauvegarder en utilisant le VRAI ID numérique du moteur
+            if (matchedEngine) {
+              await recentSvc.addRecentItem('databases', {
+                id: matchedEngine.id,  // ✅ Maintenant c'est un number, comme e.id
+                name: matchedEngine.name,
+                lastUsed: Date.now()
+              } as RecentItem);
+              console.log(`[Recency] Database ajouté aux récents: ${matchedEngine.name} (ID: ${matchedEngine.id})`);
+            }
+          }
+
+          // 3. Sauvegarder le Framework Frontend (si sélectionné)
+          if (data.frontend) {
+            await recentSvc.addRecentItem('frontends', {
+              id: data.frontend.id,
+              name: data.frontend.name,
+              lastUsed: Date.now()
+            } as RecentItem);
+            console.log(`[Recency] Frontend ajouté aux récents: ${data.frontend.name}`);
+          }
+
+        } catch (error) {
+          console.error("[Wizard: summary] Échec de la mise à jour de la récence:", error);
+        }
+
+        return true;
+      } catch (error) {
+        store.setWizardError(error instanceof Error ? error.message : "Échec de la validation du résumé.");
+        return false;
+      }
+    }
   }
 };
 
