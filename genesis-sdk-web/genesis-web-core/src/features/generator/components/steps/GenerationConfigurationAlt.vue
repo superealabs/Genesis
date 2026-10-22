@@ -1,155 +1,216 @@
 <template>
-  <main class="flex gap-4 h-full overflow-hidden">
+  <main class="flex gap-6 h-full p-6 overflow-hidden">
     
-    <!-- PARTIE GAUCHE : CONTENU PRINCIPAL (Scrollable) -->
-    <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+    <!-- ═══ COLONNE 1 : TABLES ET VUES NON ASSIGNÉES (Disponibles) ═══ -->
+    <div class="flex-1 min-h-0 flex flex-col space-y-3">
+      <div class="flex items-center justify-between flex-shrink-0">
+        <h3 class="text-lg font-semibold text-text flex items-center gap-2">
+          Disponibles (Non assignées)
+          <span class="text-primary text-sm font-normal">*</span>
+        </h3>
+        <button 
+          v-if="unassignedItems.length > 0"
+          type="button"
+          class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+          @click="toggleAllUnassigned"
+        >
+          {{ areAllUnassignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+        </button>
+      </div>
       
-      <div class="flex gap-6">
-        <!-- 1. PANNEAU GAUCHE : TABLES ET VUES -->
-        <div class="space-y-3 flex-1 min-h-0 flex flex-col">
-          <div class="flex items-center justify-between flex-shrink-0">
-            <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-              Tables et Vues à inclure
-              <span class="text-primary text-sm font-normal">*</span>
-            </h3>
-            <button 
-              v-if="tables.length > 0"
-              type="button"
-              class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-              @click="toggleAllVisibleItems"
-            >
-              {{ areAllVisibleSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
-            </button>
-          </div>
-          
-          <p class="text-sm text-text-muted flex-shrink-0">
-            Choisissez les entités de votre base de données à inclure.
-          </p>
+      <p class="text-sm text-text-muted flex-shrink-0">
+        Choisissez les entités à inclure dans vos profils.
+      </p>
 
-          <div class="flex flex-row gap-2">
-            <GenesisInput
-              v-model="tableSearchQuery"
-              type="text"
-              placeholder="Rechercher une table ou une vue..."
-              size="md"
-              fill-width
-            >
-              <template #left>
-                <IconSearch :size="16" class="text-text-muted" />
-              </template>
-            </GenesisInput>
+      <div class="flex flex-row gap-2 flex-shrink-0">
+        <GenesisInput
+          v-model="searchQueryUnassigned"
+          type="text"
+          placeholder="Rechercher une table ou une vue..."
+          size="md"
+          fill-width
+        >
+          <template #left>
+            <IconSearch :size="16" class="text-text-muted" />
+          </template>
+        </GenesisInput>
+        <GenesisSegmentedControl v-model="activeFilterLeft" :options="filterOptions" size="md" />
+      </div>
 
-            <GenesisSegmentedControl v-model="activeFilter" :options="filterOptions" size="md" />
-          </div>
-
-          <!-- APRÈS (Propre et Réutilisable) -->
-          <GenesisContainer
-            :is-loading="isLoading"
-            loading-text="Chargement des métadonnées..."
-            :is-empty="filteredCombinedItems.length === 0"
-            empty-text="Aucune table ou vue trouvée."
-            :min-height="200"
-            :max-height="500"
-            :height="400" 
-          >
-            <!-- Le contenu de ta boucle v-for va directement ici -->
-            <div 
-              v-for="item in filteredCombinedItems" 
-              :key="item.tableName"
-              class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
-              @click="toggleItem(item)"
-            >
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
-                <div class="flex flex-col min-w-0">
-                  <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
-                  <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
-                </div>
-              </div>
-              
-              <div class="flex-shrink-0 text-xs text-text-muted ml-4 text-right min-w-[120px] truncate" :title="getAssignedConfig(item)">
-                {{ getAssignedConfig(item) }}
-              </div>
+      <GenesisContainer
+        :is-loading="isLoading"
+        loading-text="Chargement des métadonnées..."
+        :is-empty="unassignedItems.length === 0"
+        empty-text="Aucune table disponible."
+        :min-height="200"
+        :max-height="500"
+        :height="400" 
+      >
+        <div 
+          v-for="item in unassignedItems" 
+          :key="item.tableName"
+          class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
+          @click="toggleItem(item)"
+        >
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
+            <div class="flex flex-col min-w-0">
+              <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
+              <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
             </div>
+          </div>
+        </div>
+      </GenesisContainer>
+    </div>
 
-            <!-- Optionnel : Tu peux aussi utiliser le slot nommé 'empty' pour un contenu personnalisé -->
-            <!-- <template #empty>
-              <div class="p-6 text-center text-text-muted text-sm flex-shrink-0">
-                Message personnalisé si vide
-              </div>
-            </template> -->
-          </GenesisContainer>
+    <!-- ═══ COLONNE 2 : GESTION DES CONFIGURATIONS (Centrale) ═══ -->
+    <section class="w-80 flex-shrink-0 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
+      <div>
+        <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
+          Profils de Génération
+          <span class="text-primary text-sm font-normal">*</span>
+          
+          <!-- ✅ BOUTON D'AIDE / TUTORIEL -->
+          <button 
+            type="button" 
+            class="text-text-muted hover:text-primary transition-colors ml-1 flex items-center justify-center"
+            title="Voir le tutoriel d'utilisation"
+            @click="isTutorialOpen = true"
+          >
+            <IconHelpCircle :size="18" />
+          </button>
+        </h3>
+        
+        <GenesisConfigurationSelector
+          :configurations="configManager.configurations.value"
+          :selected-config-id="configManager.selectedConfigId.value"
+          :filtered-configs="configManager.filteredConfigs.value"
+          :search-query="configManager.searchQuery.value"
+          :can-move-up="configManager.canMoveUp.value"
+          :can-move-down="configManager.canMoveDown.value"
+          :selected-items="selectedItemsInListRef" 
+          @update:search-query="(val) => configManager.searchQuery.value = val"
+          @add="handleAddConfig" 
+          @delete="handleDeleteConfig" 
+          @rename="handleRename"
+          @toggle-visibility="configManager.toggleVisibility"
+          @move-up="configManager.moveUp"
+          @move-down="configManager.moveDown"
+          @select-configuration="configManager.selectConfiguration"
+          @assign="handleAssign"
+          @remove="handleRemove"
+        />
+      </div>
+
+      <div v-if="activeConfig" class="p-4 rounded-lg border border-bg-neutral-genesis space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-sm font-semibold text-text">
+            Composants : <span class="text-primary">{{ activeConfig.name }}</span>
+          </h4>
+        </div>
+        
+        <div class="flex items-center justify-between py-2 border-b border-secondary/50 mb-2">
+          <span class="text-xs font-medium text-text-muted">
+            Dépendances hiérarchiques
+          </span>
+          <GenesisSwitch v-model="enforceDependencies" size="sm" />
         </div>
 
-        <!-- 2. PANNEAU DROIT : GESTION DES CONFIGURATIONS -->
-        <section class="flex flex-col gap-8 w-80 flex-shrink-0">
-          <div>
-            <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
-              Profils de Génération
-              <span class="text-primary text-sm font-normal">*</span>
-            </h3>
-            
-            <GenesisConfigurationSelector
-              :configurations="configManager.configurations.value"
-              :selected-config-id="configManager.selectedConfigId.value"
-              :filtered-configs="configManager.filteredConfigs.value"
-              :search-query="configManager.searchQuery.value"
-              :can-move-up="configManager.canMoveUp.value"
-              :can-move-down="configManager.canMoveDown.value"
-              :selected-items="selectedItemsInListRef" 
-              @update:search-query="(val) => configManager.searchQuery.value = val"
-              @add="handleAddConfig" 
-              @delete="handleDeleteConfig" 
-              @rename="handleRename"
-              @toggle-visibility="configManager.toggleVisibility"
-              @move-up="configManager.moveUp"
-              @move-down="configManager.moveDown"
-              @select-configuration="configManager.selectConfiguration"
-              @assign="handleAssign"
-              @remove="handleRemove"
-            />
-          </div>
-
-          <!-- 3. PANNEAU DROIT : COMPOSANTS DE LA CONFIGURATION ACTIVE -->
-          <div v-if="activeConfig" class="p-4 rounded-lg border border-bg-neutral-genesis space-y-3">
-            <div class="flex items-center justify-between">
-              <h4 class="text-sm font-semibold text-text">
-                Composants pour : <span class="text-primary">{{ activeConfig.name }}</span>
-              </h4>
-            </div>
-            
-            <!-- ✅ AJOUT : Switch pour activer/désactiver les dépendances hiérarchiques -->
-            <div class="flex items-center justify-between py-2 border-b border-secondary/50 mb-2">
-              <span class="text-xs font-medium text-text-muted">
-                Appliquer les dépendances hiérarchiques
-              </span>
-              <GenesisSwitch
-                v-model="enforceDependencies"
-                size="sm"
-              />
-            </div>
-
-            <div class="flex flex-col gap-2">
-              <GenesisCheckboxSimple
-                v-for="comp in AVAILABLE_COMPONENTS"
-                :key="comp.value"
-                :model-value="activeConfig.components.includes(comp.value)"
-                :label="comp.label"
-                :disabled="isComponentDisabled(comp.value)"
-                size="md"
-                @update:model-value="(isChecked) => handleComponentToggle(comp.value, isChecked)"
-              />
-            </div>
-          </div>
-        </section>
+        <div class="flex flex-col gap-2">
+          <GenesisCheckboxSimple
+            v-for="comp in AVAILABLE_COMPONENTS"
+            :key="comp.value"
+            :model-value="activeConfig.components.includes(comp.value)"
+            :label="comp.label"
+            :disabled="isComponentDisabled(comp.value)"
+            size="md"
+            @update:model-value="(isChecked) => handleComponentToggle(comp.value, isChecked)"
+          />
+        </div>
       </div>
-    </div>
+    </section>
 
-    <!-- PARTIE DROITE : CARROUSEL TUTORIEL (Fixe) -->
-    <div class="w-2/5 min-w-[300px] h-full shrink-0">
-      <CarrouselPanel :slides="panelSlides" />
-    </div>
+    <!-- ═══ COLONNE 3 : TABLES ET VUES ASSIGNÉES ═══ -->
+    <div class="flex-1 min-h-0 flex flex-col space-y-3">
+      <div class="flex items-center justify-between flex-shrink-0">
+        <h3 class="text-lg font-semibold text-text flex items-center gap-2">
+          Déjà assignées
+        </h3>
+        <button 
+          v-if="assignedItems.length > 0"
+          type="button"
+          class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+          @click="toggleAllAssigned"
+        >
+          {{ areAllAssignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+        </button>
+      </div>
+      
+      <p class="text-sm text-text-muted flex-shrink-0">
+        Entités liées à un profil de génération.
+      </p>
 
+      <div class="flex flex-row gap-2 flex-shrink-0">
+        <GenesisInput
+          v-model="searchQueryAssigned"
+          type="text"
+          placeholder="Rechercher une table ou une vue..."
+          size="md"
+          fill-width
+        >
+          <template #left>
+            <IconSearch :size="16" class="text-text-muted" />
+          </template>
+        </GenesisInput>
+        <GenesisSegmentedControl v-model="activeFilterRight" :options="filterOptions" size="md" />
+      </div>
+
+      <GenesisContainer
+        :is-loading="false"
+        :is-empty="assignedItems.length === 0"
+        empty-text="Aucune table assignée."
+        :min-height="200"
+        :max-height="500"
+        :height="400" 
+      >
+        <div 
+          v-for="item in assignedItems" 
+          :key="item.tableName"
+          class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
+          @click="toggleItem(item)"
+        >
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
+            <div class="flex flex-col min-w-0">
+              <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
+              <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
+            </div>
+          </div>
+          
+          <div class="flex-shrink-0 text-xs text-primary ml-4 text-right min-w-[120px] truncate font-medium" :title="getAssignedConfig(item)">
+            {{ getAssignedConfig(item) }}
+          </div>
+        </div>
+      </GenesisContainer>
+    </div>
+    <BaseFormPopup
+      v-if="isTutorialOpen"
+      title="Comment configurer la génération ?"
+      size="md"
+      @close="isTutorialOpen = false"
+    >
+      <div class="space-y-6 p-2">
+        <CarrouselPanel :slides="tutorialSlides" />
+        
+        <div class="bg-bg-light/50 p-4 rounded-lg border border-bg-neutral-genesis">
+          <h4 class="text-sm font-semibold text-text mb-2">💡 Astuce rapide</h4>
+          <p class="text-sm text-text-muted leading-relaxed">
+            Utilisez les cases à cocher dans les colonnes de gauche ou de droite pour sélectionner des entités en masse, 
+            puis utilisez les boutons <strong>Assigner</strong> ou <strong>Retirer</strong> dans le panneau central pour les lier à votre profil actif.
+          </p>
+        </div>
+      </div>
+    </BaseFormPopup>
   </main>
 </template>
 
@@ -164,54 +225,53 @@ import { useConfig } from '@genesis-labs/web-core/core/features/config/composabl
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisCheckboxSimple from '@genesis-labs/web-core/core/components/ui/inputs/GenesisCheckboxSimple.vue';
-import GenesisSwitch from '@genesis-labs/web-core/core/components/ui/inputs/GenesisSwitch.vue'; // ✅ AJOUTÉ
+import GenesisSwitch from '@genesis-labs/web-core/core/components/ui/inputs/GenesisSwitch.vue';
 import GenesisConfigurationSelector from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationSelector.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
-import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
-import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
-
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 import { useGeneratorStore } from '../../manifest';
 import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
+import IconHelpCircle from '@genesis-labs/web-core/core/components/ui/icons/IconHelpCircle.vue';
+import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
+import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
+import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
 // ============================================================================
 const configManager = useConfigurationManager([], { singleConfiguration: true });
 const store = useGeneratorStore();
-
 const { tables, views, fetchTablesMetadata } = useGenerator();
 
 const isLoading = ref(false);
-const tableSearchQuery = ref('');
-
 const enforceDependencies = ref(false);
+const isTutorialOpen = ref(false); 
 
+//  Recherches et filtres INDÉPENDANTS pour chaque colonne
+const searchQueryUnassigned = ref('');
+const activeFilterLeft = ref<'all' | 'table' | 'view'>('all');
 
-const { 
-  loadGenerationOptionsConfigurations, 
-  saveConfiguration, 
-  deleteConfiguration,
-} = useConfig();
+const searchQueryAssigned = ref('');
+const activeFilterRight = ref<'all' | 'table' | 'view'>('all');
+
+const { loadGenerationOptionsConfigurations, saveConfiguration, deleteConfiguration } = useConfig();
 
 // ============================================================================
 // 2. CONSTANTES & HIÉRARCHIE
 // ============================================================================
-const panelSlides: CarouselSlide[] = [
-  { color: '#3B82F6', label: 'Étape 1 : Sélection des tables' },
-  { color: '#EF4444', label: 'Étape 2 : Profils de génération' },
-  { color: '#10B981', label: 'Étape 3 : Composants' },
-];
-
 const filterOptions = [
   { label: 'Tous', value: 'all' },
   { label: 'Tables', value: 'table' },
   { label: 'Vues', value: 'view' }
 ];
 
-const activeFilter = ref<'all' | 'table' | 'view'>('all');
+const tutorialSlides: CarouselSlide[] = [
+  { color: '#3B82F6', label: '1. Sélectionnez les tables/vues disponibles à gauche.' },
+  { color: '#EF4444', label: '2. Créez ou sélectionnez un profil de génération au centre.' },
+  { color: '#10B981', label: '3. Cliquez sur "Assigner" pour lier les tables au profil.' },
+];
 
-// ✅ AJOUT : Définition stricte de l'ordre hiérarchique
 const COMPONENT_HIERARCHY: ComponentType[] = ['model', 'dao', 'service', 'controller'];
 
 const getPrerequisites = (comp: ComponentType): ComponentType[] => {
@@ -238,21 +298,40 @@ const combinedItems = computed<(TableMetadataDto & { type: 'table' | 'view' })[]
   ...views.value.map(v => ({ ...v, type: 'view' as const }))
 ]);
 
-const filteredCombinedItems = computed(() => {
-  let items = combinedItems.value;
-  if (activeFilter.value === 'table') items = items.filter(item => !item.isView);
-  else if (activeFilter.value === 'view') items = items.filter(item => item.isView);
+// Fonction utilitaire pour appliquer les filtres et la recherche
+const applyFilters = (items: typeof combinedItems.value, searchQuery: string, filter: string) => {
+  let filtered = items;
+  if (filter === 'table') filtered = filtered.filter(item => !item.isView);
+  else if (filter === 'view') filtered = filtered.filter(item => item.isView);
   
-  if (tableSearchQuery.value.trim()) {
-    const query = tableSearchQuery.value.toLowerCase();
-    items = items.filter(item => item.tableName.toLowerCase().includes(query));
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    filtered = filtered.filter(item => item.tableName.toLowerCase().includes(query));
   }
-  return items;
+  return filtered;
+};
+
+//  Tables NON assignées (déjà filtrées)
+const unassignedItems = computed(() => {
+  const items = combinedItems.value.filter(item => getAssignedConfig(item) === 'Non assigné');
+  return applyFilters(items, searchQueryUnassigned.value, activeFilterLeft.value);
 });
 
-const areAllVisibleSelected = computed(() => {
-  if (filteredCombinedItems.value.length === 0) return false;
-  return filteredCombinedItems.value.every(item => store.selectedItemsInList.includes(item.tableName));
+//  Tables ASSIGNÉES (déjà filtrées)
+const assignedItems = computed(() => {
+  const items = combinedItems.value.filter(item => getAssignedConfig(item) !== 'Non assigné');
+  return applyFilters(items, searchQueryAssigned.value, activeFilterRight.value);
+});
+
+//  Vérifie si TOUS les éléments VISIBLES (filtrés) sont sélectionnés
+const areAllUnassignedSelected = computed(() => {
+  if (unassignedItems.value.length === 0) return false;
+  return unassignedItems.value.every(item => store.selectedItemsInList.includes(item.tableName));
+});
+
+const areAllAssignedSelected = computed(() => {
+  if (assignedItems.value.length === 0) return false;
+  return assignedItems.value.every(item => store.selectedItemsInList.includes(item.tableName));
 });
 
 // ============================================================================
@@ -269,11 +348,8 @@ async function persistConfig(id: string | number) {
     configType: 'generator_generation-options',
     schemaVersion: '1.0.0',
     createdAt: new Date().toISOString(),
-    payload: {
-      components: [...uiConfig.components]
-    }
+    payload: { components: [...uiConfig.components] }
   };
-  
   await saveConfiguration(updatedConfig);
 }
 
@@ -289,7 +365,6 @@ async function handleAddConfig() {
     createdAt: new Date().toISOString(),
     payload: { components: [...defaultComponents] }
   };
-  
   await saveConfiguration(newGenesisConfig);
 }
 
@@ -321,7 +396,6 @@ async function handleDeleteConfig(id: string | number) {
   await deleteConfiguration(String(id));
 }
 
-// ✅ MODIFIÉ : Gère la logique de cascade si enforceDependencies est actif
 function handleComponentToggle(comp: ComponentType, isChecked: boolean) {
   if (!activeConfig.value) return;
   
@@ -329,27 +403,22 @@ function handleComponentToggle(comp: ComponentType, isChecked: boolean) {
 
   if (enforceDependencies.value) {
     if (isChecked) {
-      // Mode strict : On coche le composant ET tous ses prérequis
       const prereqs = getPrerequisites(comp);
       [...prereqs, comp].forEach(c => {
-        if (!newComponents.includes(c)) {
-          newComponents.push(c);
-        }
+        if (!newComponents.includes(c)) newComponents.push(c);
       });
     } else {
-      // Mode strict : On décoche le composant ET tous ses dépendants
       const dependents = getDependents(comp);
       newComponents = newComponents.filter(c => c !== comp && !dependents.includes(c as ComponentType));
     }
   } else {
-    // Mode libre : Comportement standard
     const idx = newComponents.indexOf(comp);
     if (isChecked && idx === -1) {
       newComponents.push(comp);
     } else if (!isChecked && idx !== -1) {
       newComponents.splice(idx, 1);
     } else {
-      return; // Aucun changement
+      return;
     }
   }
   
@@ -357,25 +426,15 @@ function handleComponentToggle(comp: ComponentType, isChecked: boolean) {
   persistConfig(activeConfig.value.id);
 }
 
-//  AJOUT : Détermine si une checkbox doit être verrouillée (disabled)
 function isComponentDisabled(comp: ComponentType): boolean {
   if (!enforceDependencies.value || !activeConfig.value) return false;
-
   const currentIndex = COMPONENT_HIERARCHY.indexOf(comp);
   const isChecked = activeConfig.value.components.includes(comp);
 
   if (isChecked) {
-    // Si ce composant est coché, on vérifie si un composant de niveau supérieur l'est aussi.
-    // Si oui, on ne peut pas le décocher sans casser la hiérarchie.
     const higherComponents = COMPONENT_HIERARCHY.slice(currentIndex + 1);
-    const hasHigherChecked = higherComponents.some(higherComp => 
-      activeConfig.value!.components.includes(higherComp)
-    );
-    return hasHigherChecked;
+    return higherComponents.some(higherComp => activeConfig.value!.components.includes(higherComp));
   }
-
-  // S'il n'est pas coché, l'utilisateur peut toujours cliquer pour le cocher 
-  // (ce qui déclenchera l'ajout des prérequis).
   return false;
 }
 
@@ -387,9 +446,26 @@ const toggleItem = (item: TableMetadataDto): void => {
   store.toggleItemInList(item.tableName);
 };
 
-const toggleAllVisibleItems = (): void => {
-  const allSelected = areAllVisibleSelected.value;
-  filteredCombinedItems.value.forEach(item => {
+//  "Tout sélectionner" agit UNIQUEMENT sur les éléments visibles (filtrés) de la colonne de gauche
+const toggleAllUnassigned = (): void => {
+  const allSelected = areAllUnassignedSelected.value;
+  unassignedItems.value.forEach(item => {
+    if (allSelected) {
+      // Désélectionne l'élément (toggleItemInList le retirera s'il est présent)
+      store.toggleItemInList(item.tableName);
+    } else {
+      // Sélectionne l'élément s'il ne l'est pas déjà
+      if (!store.selectedItemsInList.includes(item.tableName)) {
+        store.selectedItemsInList.push(item.tableName);
+      }
+    }
+  });
+};
+
+//  "Tout sélectionner" agit UNIQUEMENT sur les éléments visibles (filtrés) de la colonne de droite
+const toggleAllAssigned = (): void => {
+  const allSelected = areAllAssignedSelected.value;
+  assignedItems.value.forEach(item => {
     if (allSelected) {
       store.toggleItemInList(item.tableName);
     } else {
@@ -418,22 +494,14 @@ function getAssignedConfig(item: TableMetadataDto): string {
 
 async function syncGenerationConfigs() {
   const data = await loadGenerationOptionsConfigurations();
-  
   const validComponentValues = AVAILABLE_COMPONENTS.map(c => c.value);
   
   configManager.configurations.value = data.map(c => {
     const p = c.payload as unknown as GeneratorGenerationOptionsPayload;
-    
     const cleanComponents = (p.components || []).filter((comp): comp is ComponentType => 
       validComponentValues.includes(comp as ComponentType)
     );
-
-    return {
-      id: c.id,
-      name: c.name,
-      isHidden: false,
-      components: cleanComponents
-    };
+    return { id: c.id, name: c.name, isHidden: false, components: cleanComponents };
   });
   
   if (configManager.configurations.value.length > 0) {
@@ -444,10 +512,7 @@ async function syncGenerationConfigs() {
 onMounted(async () => {
   isLoading.value = true;
   try {
-    await Promise.all([
-      fetchTablesMetadata(),
-      syncGenerationConfigs()
-    ]);
+    await Promise.all([ fetchTablesMetadata(), syncGenerationConfigs() ]);
   } catch (error) {
     console.error('[GenerationConfigurationAlt] Erreur lors de l\'initialisation:', error);
   } finally {
@@ -458,13 +523,9 @@ onMounted(async () => {
 watch(
   () => configManager.configurations.value,
   (newConfigs) => {
-    store.setGenerationProfiles(
-      newConfigs.map(c => ({
-        id: c.id,
-        name: c.name,
-        components: c.components as ComponentType[]
-      }))
-    );
+    store.setGenerationProfiles(newConfigs.map(c => ({
+      id: c.id, name: c.name, components: c.components as ComponentType[]
+    })));
   },
   { deep: true }
 );
@@ -473,8 +534,7 @@ watch(enforceDependencies, (isEnforced) => {
   if (isEnforced && activeConfig.value) {
     let newComponents = [...activeConfig.value.components];
     let hasChanged = false;
-    // tada
-    // Pour chaque composant actuellement coché, on s'assure que ses prérequis le sont aussi
+    
     newComponents.forEach((comp) => {
       const prereqs = getPrerequisites(comp as ComponentType);
       prereqs.forEach((prereq) => {
@@ -485,7 +545,6 @@ watch(enforceDependencies, (isEnforced) => {
       });
     });
 
-    // Si des prérequis manquants ont été ajoutés, on sauvegarde la mise à jour
     if (hasChanged) {
       configManager.editConfiguration(activeConfig.value.id, newComponents);
       persistConfig(activeConfig.value.id);
