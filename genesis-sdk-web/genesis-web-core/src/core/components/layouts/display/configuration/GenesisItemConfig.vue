@@ -92,13 +92,13 @@ const props = withDefaults(defineProps<{
     showEdit?: boolean;
     showDelete?: boolean;
     showToggleVisibility?: boolean;
-    readonly?: boolean; // ✅ AJOUTÉ
+    readonly?: boolean;
 }>(), {
     isHidden: false,
     isSelected: false,
     showRename: true,
-    showEdit: true,
-    showDelete: true,
+    showEdit: false,
+    showDelete: false,
     showToggleVisibility: true,
     readonly: false
 });

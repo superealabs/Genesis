@@ -69,16 +69,10 @@
         <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
           Profils de Génération
           <span class="text-primary text-sm font-normal">*</span>
-          
-          <!-- ✅ BOUTON D'AIDE / TUTORIEL -->
-          <button 
-            type="button" 
-            class="text-text-muted hover:text-primary transition-colors ml-1 flex items-center justify-center"
-            title="Voir le tutoriel d'utilisation"
-            @click="isTutorialOpen = true"
-          >
-            <IconHelpCircle :size="18" />
-          </button>
+
+          <GenesisButtonIcon @click="isTutorialOpen = true" :variant="'neutral'">
+            <IconHelpCircle :size="16" />
+          </GenesisButtonIcon>
         </h3>
         
         <GenesisConfigurationSelector
@@ -199,11 +193,20 @@
       size="md"
       @close="isTutorialOpen = false"
     >
-      <div class="space-y-6 p-2">
-        <CarrouselPanel :slides="tutorialSlides" />
+      <!-- 1. Conteneur flexible qui prend toute la hauteur disponible du popup -->
+      <div class="flex flex-col h-full gap-6 p-2">
         
-        <div class="bg-bg-light/50 p-4 rounded-lg border border-bg-neutral-genesis">
-          <h4 class="text-sm font-semibold text-text mb-2">💡 Astuce rapide</h4>
+        <!-- 2. Le carrousel prend tout l'espace restant (flex-1) -->
+        <!-- min-h-0 est crucial ici pour éviter les bugs de débordement flexbox dans les modales -->
+        <div class="flex-1 min-h-0">
+          <CarrouselPanel :slides="tutorialSlides" />
+        </div>
+        
+        <!-- 3. L'astuce reste en bas avec sa taille naturelle (shrink-0 l'empêche de s'écraser) -->
+        <div class="shrink-0 bg-bg-neutral-genesis p-4 rounded-lg">
+          <h4 class="text-sm font-semibold text-text mb-2 flex items-center gap-2">
+            Astuce rapide
+          </h4>
           <p class="text-sm text-text-muted leading-relaxed">
             Utilisez les cases à cocher dans les colonnes de gauche ou de droite pour sélectionner des entités en masse, 
             puis utilisez les boutons <strong>Assigner</strong> ou <strong>Retirer</strong> dans le panneau central pour les lier à votre profil actif.
@@ -235,7 +238,7 @@ import IconHelpCircle from '@genesis-labs/web-core/core/components/ui/icons/Icon
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
-
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
@@ -477,14 +480,22 @@ const toggleAllAssigned = (): void => {
 };
 
 function getAssignedConfig(item: TableMetadataDto): string {
-  const assoc = store.generationAssociations.find((a: GenerationAssociatedToConfig) => 
+  // 1. Trouver TOUTES les associations pour cet élément (au cas où il serait dans plusieurs profils)
+  const assocs = store.generationAssociations.filter((a: GenerationAssociatedToConfig) => 
     item.isView ? a.associatedViews.includes(item.tableName) : a.associatedTables.includes(item.tableName)
   );
   
-  if (assoc) {
+  // 2. Vérifier si au moins une de ces associations appartient à une configuration VISIBLE
+  for (const assoc of assocs) {
     const config = configManager.configurations.value.find(c => c.id === assoc.configId);
-    return config ? config.name : 'Non assigné';
+    
+    // Si la config existe et n'est PAS cachée, on affiche son nom
+    if (config && !config.isHidden) {
+      return config.name;
+    }
   }
+  
+  // 3. Si l'élément n'est pas assigné, ou s'il n'est assigné qu'à des configurations cachées
   return 'Non assigné';
 }
 
