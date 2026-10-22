@@ -14,3 +14,4 @@ export * from './configStorage/config.types'
 
 export * from './recent/recent.service.interface';
 export * from './recent/recent.types';
+export * from './repository/index';
