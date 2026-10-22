@@ -133,12 +133,25 @@
     </div>
 
     <!-- ═══ DROITE : visuel (statique, ne rétrécit jamais sous sa largeur) ═══ -->
-    <div class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center gap-2 text-muted border border-secondary border-dashed bg-secondary/10 rounded-lg">
-      <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
-      </svg>
-      <span class="text-sm font-medium">Aperçu des entités</span>
-      <span class="text-xs text-muted text-center px-4">La représentation visuelle du schéma de base de données sera intégrée ici.</span>
+    <div 
+      class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center rounded-lg overflow-hidden relative min-h-[300px]" 
+      :class="generationIllustration ? '' : 'border border-secondary border-dashed bg-secondary/10'"
+    >
+
+      <img 
+        v-if="generationIllustration"
+        :src="generationIllustration" 
+        alt="Generation" 
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+      <template v-else>
+        <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+        </svg>
+        <span class="text-sm font-medium">Aperçu des entités</span>
+        <span class="text-xs text-muted text-center px-4">La représentation visuelle du schéma de base de données sera intégrée ici.</span>
+      </template>
+
     </div>
 
   </main>
@@ -155,6 +168,8 @@ import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/a
 import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
 import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
+
+import generationIllustration from '../../assets/generation-illustration.png';
 
 const { tables, views, stepperData } = useGenerator();
 

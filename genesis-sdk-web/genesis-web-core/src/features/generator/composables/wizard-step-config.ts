@@ -443,12 +443,24 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
           // 2. Sauvegarder le Moteur de Base de Données
           if (data.database?.engine) {
-            await recentSvc.addRecentItem('databases', {
-              id: data.database.engine,
-              name: data.database.engine.toUpperCase(),
-              lastUsed: Date.now()
-            } as RecentItem);
-            console.log(`[Recency] Database ajouté aux récents: ${data.database.engine}`);
+            const databaseStore = useDatabaseStore();
+            
+            // 1. Retrouver l'objet moteur complet grâce à son nom (string)
+            const matchedEngine = databaseStore.availableEngines.find(eng => {
+              const normalizedName = eng.name.toLowerCase().replace(/\s+/g, '');
+              const normalizedConfig = data.database!.engine.toLowerCase().replace(/\s+/g, '');
+              return normalizedName === normalizedConfig;
+            });
+            
+            // 2. Sauvegarder en utilisant le VRAI ID numérique du moteur
+            if (matchedEngine) {
+              await recentSvc.addRecentItem('databases', {
+                id: matchedEngine.id,  // ✅ Maintenant c'est un number, comme e.id
+                name: matchedEngine.name,
+                lastUsed: Date.now()
+              } as RecentItem);
+              console.log(`[Recency] Database ajouté aux récents: ${matchedEngine.name} (ID: ${matchedEngine.id})`);
+            }
           }
 
           // 3. Sauvegarder le Framework Frontend (si sélectionné)

@@ -35,8 +35,8 @@ const emit = defineEmits<{ select: [index: number] }>();
 
 // Actuelle : primary — passée : primary/50 — à venir : neutral-genesis
 const stateClass = (i: number) => {
-    if (i === props.current) return 'bg-primary text-bg';
-    if (i < props.current) return 'bg-primary/50 text-bg';
+    if (i === props.current) return 'bg-primary text-primary-text';
+    if (i < props.current) return 'bg-primary/50 text-primary-text';
     return 'bg-bg-neutral-genesis text-text-muted';
 };
 </script>

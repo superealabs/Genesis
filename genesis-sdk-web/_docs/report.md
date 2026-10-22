@@ -25,111 +25,85 @@
         - optimisation du code web-core
 
 
-- Normalement le chargement est gérer par useWizard, donc on corrige plus tard
-
-
-# ajouter
-Rajouter une image sur
-    - ProjecConfig
-    - DatabaseConfig
-
-Modifier la valeur par defaut de l'affichage :
-    RelationView : Grid -> Table
-
-Modifier la structure des disclosures sur FrontEndConfiguration 11
-    - associer Framework&Port et rajouter la langue
-    - associer structure et navigation & charte graphique
-
-modifier l'étape de git :
-    - modifier l'interface pour que le hide -> devienne le disabled
-
-Rajouter une étape de résumer
-
-corriger l'interface de configuration de relation
-
-
 DRY
 UR
 
-
 - Présentation
-    - Créer la page de chargement
-    - Créer la première page d'affichage
-    - popup de séléction des tâches à faire
-        - créer un nouveau projet
-        - add new Rules
-        - etc
-    - 
+    - très urgent(hors de portée)
+    - Urgence
+        - Gestion de Génération :
+            - retirer le tuto(mettre en popup avec le petit point d'interrogration dessus)
+            - rajouter un tableau à droite pour les éléments assignés
 
-- Steps
-    - GenesisInput
-        - amélioration du type color
-        - amélioration du type number
-    - GenesisCollection layout
-        UI :
-            - améliorer l'UI du tableau en se basant sur le 
-            - amélioration de l'interface de détails
-        UX :
-            - fonctionnalité de compare
-            - fonctionnalité de détail
-    - Project Config
-        UI :
-            - TextArea Input : le texte semble bizarre quand c'est super long
-            - disclosure backend advanced
-                - modification de la size des inputs en lg
-                - 
+        - mettre en place le set des étapes(nécessite l'intervention de Nomena)
+            - déterminer le comportement lors du setStep from Summary
+            - corriger le comportement onSkip step aussi(quoi faire durant le onSkip quoi)
+                - Script Config View
+                    - rajouter une variable already sended
+            - Corriger l'interface de LLM Assistants
+            - Gestion des exceptions
 
-        Content :
-            - Corriger les entêtes
-    - Script Config
-        UI : 
-            LLM_ASSISTANT Panel need an optimization
-    - Relation Parameter
-        - remplacer le layout switcher en tableau de configuration mais provenant du résumé
-        - comment rajouter un système de tri avec le peu d'élément d'interface ?
+        - rajouter un bouton executer le script en dehors de la gestion des étapes
 
+        - GenesisConfigurationPanel
+            - rajouter un slot/prop de niveau Notice au dessus de chaque configuration(indiquateur de ce qu'il faut faire)
+            - Ajouter un petit titre pour dire a quoi sert la partie configuration, genre dire "importer une configuration"
+            - pour les base de donnée utilisée récemment, on devrait peut etre avoir ne serait ce qu'un petit texte dessous
 
+        - GenesisPanel
+            - Vitesse du slide de tutoriel(désactiver l'autoplay)
 
+        - rajouter un système de gestion de multiple repo à distance
+            - GitHub, GitLab
 
+        - StepperPopup et GenesisStepper et Summary
+            - désactiver le bouton générer tant qu'on est pas à la dernière étape
 
-Summary
-        Pour toute :             
-            - rajouter une partie image à droite
-            - modifier le curseur en pointer une fois sur une étape
-            - il faut corriger le component resizable
-            - rajouter un bouton edit qui permet de rediriger vers l'étape correspondante
+        - Database Configuration
+            - A voir les notions de Pluggable Database de Oracle avec les versions compatible multitenant (C'est quoi)
 
-            - si une étape est skippé, elle ne fait pas partie du résumer
-        Conteneur
-            UI
-                - corriger la couleur des bg des step indicator non actif
-        ProjectSummary
-            UI
-                - retirez les bg, les borders, les icônes et les rounded
-                - jouer sur la hierarchie des titres des labels
+        - Créer une nouvelle étape de séléction de Repo
+            - mise en place d'un code en dure dans le genesis
 
-        DatabaseSummary
-            - UI
-                - retirez les bg, les borders, les icônes et les rounded
+        - Créer une nouvelle étape de configuration de Repo
 
-        GenerationSummary
-            - UI
-                - créer un component GenesisContainerList qui utilise GenesisContainer pour lister le contenu du tableau.
-                    un item dans GenesisContainerList à la partie gauche et la partie droite(les deux sont en slots)
-                
-                - utiliser le component GenesisContainer, peux être resizable
-                - afficher le profil de génération en bas de GenesisConfigurationPanel
-            - UX
-                - correction de GenesisItemConfig et de GenesisConfigurationPanel, Normalement on peut séléction même en readonly
-                - on affiche la liste des profils dans GeneratorData
+        - Corriger le système de filtre dans framework
+            - récupérer les vrai donner
+            - faire fonctionner les filtres
 
-                - séléction
-                    - séléctionner un profil affiche uniquement les tables et vues assignées avec
-                    - si aucune séléction, alors on affiche tout
-        RelationSummary
-            - UI
+        - Popup de détail :
+            - Amélioration de L'ui nécessaire
+            - Logo pas encore dans la fiche de details d'un projet
+            - information de version(framework, base de donnée)
 
-        FrontendSummary
-            - UI
+    - Secondaire
+        - Créer la page de chargement
+        - Créer la première page d'affichage
+        - popup de séléction des tâches à faire
+            - créer un nouveau projet
+            - add new Rules
+            - etc
 
+        GenesisItem
+            - Lisibilité des textes vert fluo sur vert pomme (comment fixé cela ?)
+            - On ne sait pas si c'est fait de quel langage qu'en cliquant sur le grouper par langage, le mieux serait par exemple de mettre une petite pile avec le langage
+            - quand on est en hover, on peut afficher une information(language F, D, FE)
+
+        - Fiche projet: 
+            - ajouter un indicateur de version language prise en charge  (ex: php 6-8)
+            - ajouter un indicateur de version framework prise en charge  (ex: laravel 6-8)
+
+            - ordonner l'etape d'import par script (plusieurs script? dump au lieu de script? a voir)
+
+        - Gestion mèreFille
+            - comment on fait pour deviner les filles d'une table mère
+
+        - Summary
+            - Project Summary
+                augmenter l'espacement entre les étapes
+            - Screen Summary Skipped
+
+        - Gestion des étapes skippées
+
+        - quand le projet est générer, vsc ouvre automatiquement le chemin indiqué
 

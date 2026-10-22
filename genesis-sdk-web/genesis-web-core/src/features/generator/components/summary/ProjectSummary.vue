@@ -52,11 +52,22 @@
     </div>
 
     <!-- ═══ DROITE : visuel (statique, ne rétrécit jamais sous sa largeur) ═══ -->
-    <div class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center gap-2 text-muted border border-secondary border-dashed bg-secondary/10 rounded-lg">
-      <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-      </svg>
-      <span class="text-sm font-medium">Aperçu du projet</span>
+    <div 
+      class="w-2/5 min-w-[280px] shrink-0 flex flex-col items-center justify-center rounded-lg overflow-hidden relative min-h-[300px]" 
+      :class="projectIllustration ? '' : 'border border-secondary border-dashed bg-secondary/10'"
+    >
+      <img 
+        v-if="projectIllustration"
+        :src="projectIllustration" 
+        alt="Project" 
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+      <template v-else>
+        <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-sm font-medium">Aperçu du projet</span>
+      </template>
     </div>
 
   </main>
@@ -66,6 +77,7 @@
 import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
+import projectIllustration from '../../assets/project-illustration.png';
 
 const { stepperData } = useGenerator();
 const frameworkStore = useFrameworkStore();

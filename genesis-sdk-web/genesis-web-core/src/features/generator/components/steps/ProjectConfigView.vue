@@ -188,7 +188,8 @@
                 @update:model-value="(val) => updateConfig('loggingLevel', val)"
                 label="Niveau de Logging" 
                 placeholder="INFO" 
-                fill-width 
+                fill-width
+                :size="'lg'"
               />
 
               <GenesisInput 
@@ -198,7 +199,8 @@
                 @update:model-value="(val) => updateConfig('securityType', val)"
                 label="Type de Sécurité" 
                 placeholder="Aucune" 
-                fill-width 
+                fill-width
+                :size="'lg'"
               />
 
               <GenesisInput 
@@ -208,7 +210,8 @@
                 @update:model-value="(val) => updateConfig('cacheProvider', val)"
                 label="Fournisseur de Cache" 
                 placeholder="Aucun" 
-                fill-width 
+                fill-width
+                :size="'lg'"
               />
 
               <div v-if="showHibernateDdl" class="space-y-1">
@@ -220,6 +223,7 @@
                   label="Hibernate DDL Auto" 
                   placeholder="none" 
                   fill-width 
+                  :size="'lg'"
                 />
               </div>
             </div>
