@@ -6,6 +6,10 @@
     size="full"
     :content-class="stepContentClass"
     :is-skippable="props.isSkippable" 
+
+    :show-back-to-summary="props.hasReachedSummary && currentStepId !== 'summary'"
+    @back-to-summary="emit('back-to-summary')"
+
     @close="handleClose"
     @previous="emit('previous')"
     @next="emit('next')"
@@ -124,7 +128,11 @@
       @test-connection-error="handleChildError" 
     />
 
-    <SummaryView v-else-if="currentStepId === 'summary'" />
+    <SummaryView 
+      v-else-if="currentStepId === 'summary'" 
+      :initial-index="props.targetSummaryIndex"
+      @request-edit="(idx) => emit('request-edit', idx)"
+    />
 
   </StepperPopup>
 
@@ -143,6 +151,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import type { Framework, FrontendFramework, DatabaseEngineDto, FileRequestPayload } from '@genesis-labs/shared-types';
+
 
 // Core Components
 import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
@@ -169,7 +178,6 @@ import { useWizardFrontend } from '@genesis-labs/web-core/features/frontend/comp
 // Store
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 
-// ✅ IMPORT POUR LE MAPPING SÉMANTIQUE
 import { getStepIdByNumber } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
 import { RepositoryProviderMetadata } from '@genesis-labs/shared-types';
 import { useWizardRepository } from '@genesis-labs/web-core/features/repository/composables/useWizardRepository';
@@ -180,7 +188,9 @@ import { useWizardRepository } from '@genesis-labs/web-core/features/repository/
 const props = defineProps<{ 
   currentStep: number; 
   totalSteps: number; 
-  isSkippable?: boolean; 
+  isSkippable?: boolean;
+  targetSummaryIndex?: number;
+  hasReachedSummary?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -188,6 +198,8 @@ const emit = defineEmits<{
   next: []; 
   previous: []; 
   skip: [];
+  'back-to-summary': [];
+  'request-edit': [index: number];
   'select-framework': [framework: Framework];
   'select-frontend': [framework: FrontendFramework];
   'select-database': [engine: DatabaseEngineDto];

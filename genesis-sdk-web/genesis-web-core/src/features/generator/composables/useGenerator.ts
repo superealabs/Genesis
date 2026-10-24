@@ -1,5 +1,5 @@
 // genesis-sdk-web/genesis-web-core/src/features/generator/composables/useGenerator.ts
-import { inject, computed } from 'vue';
+import { inject, computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 
 // Types & Interfaces
@@ -28,6 +28,8 @@ import { IRecentService } from '@genesis-labs/shared-types';
 import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/useGenesisWizard';
 import { 
   WIZARD_STEP_CONFIG, 
+  STEP_TO_SUMMARY_MAP,
+  WIZARD_STEP_ORDER,
   type WizardServices,
   getTotalSteps,
   getStepIdByNumber,
@@ -58,6 +60,8 @@ export function useGenerator() {
   // ==========================================================================
   const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc, recentSvc, repoSvc };
 
+  const hasReachedSummary = ref(false);
+
   const wizard = useGenesisWizard({
     totalSteps: getTotalSteps(),
     skippableStepsConfig: getSkippableStepsConfig(),
@@ -69,6 +73,10 @@ export function useGenerator() {
     onStepEnter: async (currentStep: number) => {
       const stepId = getStepIdByNumber(currentStep);
       if (!stepId) return;
+
+      if (stepId === 'summary') {
+        hasReachedSummary.value = true;
+      }
 
       const stepConfig = WIZARD_STEP_CONFIG[stepId];
       if (stepConfig?.onEnter) {
@@ -124,6 +132,8 @@ export function useGenerator() {
     getAvailableHibernateDdlAutoOptions,
   } = storeToRefs(store);
 
+  const targetSummaryIndex = ref(0);
+
   // ==========================================================================
   // 4. COMPUTEDS
   // ==========================================================================
@@ -152,6 +162,18 @@ export function useGenerator() {
       return handleComplete();
     }
     return null;
+  }
+
+  function backToSummary() {
+    const currentId = getStepIdByNumber(wizard.currentStep.value);
+    const summaryIndex = STEP_TO_SUMMARY_MAP[currentId || 'summary'];
+    
+    if (summaryIndex !== null) {
+      targetSummaryIndex.value = summaryIndex;
+      // On trouve le numéro d'étape du 'summary' dans l'ordre
+      const summaryStepNumber = WIZARD_STEP_ORDER.indexOf('summary') + 1;
+      wizard.goToStep(summaryStepNumber);
+    }
   }
 
   function resetWizard() {
@@ -262,6 +284,10 @@ export function useGenerator() {
     skipCurrentStep: wizard.skipCurrentStep,
     reset: resetWizard,
 
+    goToStep: wizard.goToStep,
+    backToSummary,
+    targetSummaryIndex,
+
     // Mutations d'état (Délégation au store)
     setFramework: store.setFramework,
     setPendingFramework: store.setPendingFramework,
@@ -297,5 +323,6 @@ export function useGenerator() {
     fetchFrameworkVersions,
     fetchBuildTools,
     fetchHibernateDdlAutoOptions,
+    hasReachedSummary,
   };
 }

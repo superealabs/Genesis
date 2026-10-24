@@ -16,13 +16,13 @@
             class="absolute right-4 top-1/2 -translate-y-1/2"
             :labels="labels"
             :current="index"
-            @select="goTo"
+            @select="handleRailSelect"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 import SummaryStepRail from '../summary/SummaryStepRail.vue';
 import { SUMMARY_SLIDES } from '../summary/summary-slides.ts';
 import { useSlideTransition } from '@genesis-labs/web-core/core/composables/ux/useSlideTransition';
@@ -37,6 +37,29 @@ const viewport = ref<HTMLElement | null>(null);
 const { show, play } = useSlideTransition(viewport);
 const { index, goTo, next, prev } = useStepSlider(SUMMARY_SLIDES.length, play);
 useStepInput(viewport, { next, prev });
+
+const props = defineProps<{
+    initialIndex?: number; // ✅ Reçoit l'index cible depuis le parent
+}>();
+
+const emit = defineEmits<{
+    requestEdit: [summaryIndex: number]; // ✅ Signale qu'on veut éditer cette section
+}>();
+
+function handleRailSelect(i: number) {
+    if (i === index.value) {
+        emit('requestEdit', i);
+    } else {
+        goTo(i);
+    }
+}
+
+
+watch(() => props.initialIndex, (newIndex) => {
+    if (newIndex !== undefined && newIndex !== index.value) {
+        goTo(newIndex);
+    }
+}, { immediate: true });
 
 onMounted(() => show(index.value));
 </script>

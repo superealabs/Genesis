@@ -18,7 +18,6 @@ export class WebviewMessageRouter {
     private configHandler: ConfigHandler;
     private recentHandler: RecentHandler;
 
-
     constructor(
         private panel: vscode.WebviewPanel,
         private genesisApi: GenesisApiService,

@@ -82,6 +82,35 @@ export const WIZARD_STEP_ORDER: StepId[] = [
 ];
 
 // ============================================================================
+// MAPPING WIZARD <-> SUMMARY
+// ============================================================================
+// Index du résumé : 0:Project, 1:Database, 2:Generation, 3:Relations, 4:Frontend, 5:Repository
+export const STEP_TO_SUMMARY_MAP: Record<StepId, number | null> = {
+  'framework_select': 0,
+  'project_config': 0,
+  'database_select': 1,
+  'database_config': 1,
+  'script': null, // Intentionnel : pas de résumé
+  'generation': 2,
+  'relations': 3,
+  'frontend_select': 4,
+  'frontend_config': 4,
+  'repository_select': 5,
+  'repository_config': 5,
+  'summary': null
+};
+
+// Mapping inverse : quel est le premier step de config associé à un index de résumé ?
+export const SUMMARY_TO_STEP_MAP: Record<number, StepId> = {
+  0: 'project_config',
+  1: 'database_config',
+  2: 'generation',
+  3: 'relations',
+  4: 'frontend_config',
+  5: 'repository_config'
+};
+
+// ============================================================================
 // CONFIGURATION MÉTIER PAR ÉTAPE
 // ============================================================================
 

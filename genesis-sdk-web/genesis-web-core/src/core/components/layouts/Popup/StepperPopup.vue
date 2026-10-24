@@ -18,13 +18,24 @@
             <!--  CORRECTION : Footer fixé en bas, il ne doit JAMAIS rétrécir (flex-shrink-0) -->
             <!-- Footer fixé en bas -->
             <div class="flex-shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-secondary">
-                <GenesisButton
-                    variant="secondary"
-                    :disabled="currentStep === 1"
-                    @click="$emit('previous')"
-                >
-                    Précédent
-                </GenesisButton>
+                <div class="flex items-center gap-2">
+                    <GenesisButton
+                        variant="secondary"
+                        :disabled="currentStep === 1"
+                        @click="$emit('previous')"
+                    >
+                        Précédent
+                    </GenesisButton>
+
+                    <GenesisButton
+                        v-if="showBackToSummary"
+                        variant="tertiary"
+                        @click="$emit('back-to-summary')"
+                    >
+                        Retour au résumé
+                    </GenesisButton>
+                </div>
+
 
                 <!-- Indicateur d'étapes -->
                 <div class="flex items-center gap-2">
@@ -40,7 +51,6 @@
                     />
                 </div>
 
-                <!-- ✅ Groupe d'actions à droite -->
                 <div class="flex items-center gap-2">
                     <GenesisButton
                         v-if="isSkippable"
@@ -74,13 +84,15 @@ withDefaults(defineProps<{
     draggable?: boolean;
     contentClass?: string;
     isSkippable?: boolean;
+    showBackToSummary?: boolean;
 }>(), {
     size: 'md',
     isClosable: true,
     draggable: true,
     position: 'center',
     contentClass: 'overflow-hidden',
-    isSkippable: false
+    isSkippable: false,
+    showBackToSummary: false
 });
 
 defineEmits<{
@@ -88,5 +100,6 @@ defineEmits<{
     previous: [];
     next: [];
     skip: [];
+    'back-to-summary': [];
 }>();
 </script>

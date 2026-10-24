@@ -74,6 +74,19 @@ export function useGenesisWizard(config: WizardConfig) {
 
   // --- 4. Actions de Navigation ---
 
+  async function goToStep(targetStep: number): Promise<boolean> {
+    if (targetStep < 1 || targetStep > totalSteps.value) return false;
+    
+    // Si on revient en arrière, on réactive les branches sautées
+    if (targetStep < currentStep.value) {
+      unskipBranch(targetStep);
+    }
+
+    currentStep.value = targetStep;
+    await triggerStepEnter(currentStep.value);
+    return true;
+  }
+
   async function goToNextStep(isSkip = false): Promise<boolean> {
     if (!isSkip && config.onBeforeNext) {
       const canProceed = await config.onBeforeNext(currentStep.value, { skippedSteps: skippedSteps.value });
@@ -162,6 +175,7 @@ export function useGenesisWizard(config: WizardConfig) {
     isFirstStep,
     isLastStep,
     skippedSteps,
+    goToStep,
     goToNextStep,
     goToPreviousStep,
     skipCurrentStep,
