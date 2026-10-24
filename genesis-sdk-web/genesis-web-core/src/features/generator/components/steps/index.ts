@@ -8,3 +8,4 @@ export { default as GenerationConfigurationAlt } from '@genesis-labs/web-core/fe
 export { default as RelationConfigView } from '@genesis-labs/web-core/features/generator/components/steps/RelationConfigView.vue';
 export { default as FrontendLayoutConfigView } from '@genesis-labs/web-core/features/generator/components/steps/FrontendLayoutConfigView.vue';
 export { default as GitConfigView } from '@genesis-labs/web-core/features/generator/components/steps/GitConfigView.vue';
+export { default as RepositoryConfigView } from '@genesis-labs/web-core/features/generator/components/steps/RepositoryConfigView.vue';

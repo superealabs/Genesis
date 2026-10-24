@@ -387,13 +387,15 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     },
     
     beforeNext: async (store) => {
-      // CORRECTION : On vérifie pendingRepositoryProvider comme pour les frameworks
       if (!store.pendingRepositoryProvider) {
         store.setWizardError("Veuillez sélectionner un fournisseur de dépôt avant de continuer.");
         return false;
       }
 
-      console.log(`[Wizard: repository_select] Fournisseur sélectionné :`, store.pendingRepositoryProvider.name);
+      // ✅ CORRECTION MAJEURE : Persister le choix dans repositoryConfig avant de changer d'étape
+      store.updateRepositoryConfig('provider', store.pendingRepositoryProvider.id);
+      
+      console.log(`[Wizard: repository_select] Fournisseur sélectionné et persisté :`, store.pendingRepositoryProvider.name);
       return true;
     }
   },

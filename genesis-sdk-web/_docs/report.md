@@ -35,7 +35,6 @@ UR
             - déterminer le comportement lors du setStep from Summary
             - corriger le comportement onSkip step aussi(quoi faire durant le onSkip quoi)
                 - Script Config View
-                    - rajouter une variable already sended
             - Corriger l'interface de LLM Assistants
             - Gestion des exceptions
 

@@ -288,5 +288,7 @@ export function useGenerator() {
     fetchBuildTools,
     fetchHibernateDdlAutoOptions,
 
+    pendingRepositoryProvider: store.pendingRepositoryProvider
+
   };
 }

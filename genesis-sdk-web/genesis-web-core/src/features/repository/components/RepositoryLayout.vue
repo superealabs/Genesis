@@ -137,7 +137,7 @@ export interface RepositoryLayoutProps {
 /*const props = */withDefaults(defineProps<RepositoryLayoutProps>(), {
   title: 'Fournisseurs de Dépôt',
   searchPlaceholder: 'Rechercher un fournisseur...',
-  showBackButton: true,
+  showBackButton: false,
   isLoading: false,
   groupBy: null,
   groupLabels: () => ({}),

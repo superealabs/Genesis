@@ -119,7 +119,10 @@
     />
 
     <!-- ÉTAPE : CONFIGURATION GIT -->
-    <GitConfigView v-else-if="currentStepId === 'git_config'" />
+    <RepositoryConfigView 
+      v-else-if="currentStepId === 'git_config'" 
+      @test-connection-error="handleChildError" 
+    />
 
     <SummaryView v-else-if="currentStepId === 'summary'" />
 
@@ -155,7 +158,7 @@ import SummaryView from './steps/SummaryView.vue';
 
 import { 
   ProjectConfigView, DatabaseConfigView, ScriptConfigView, GenerationConfigurationAlt,
-  RelationConfigView, FrontendLayoutConfigView, GitConfigView 
+  RelationConfigView, FrontendLayoutConfigView, RepositoryConfigView
 } from '@genesis-labs/web-core/features/generator/components/steps';
 
 // Feature Composables (Ponts vers le Wizard)
