@@ -1,5 +1,5 @@
 // genesis-sdk-web/genesis-web-core/src/core/composables/ux/useGenesisWizard.ts
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -25,6 +25,12 @@ export function useGenesisWizard(config: WizardConfig) {
   const totalSteps = ref(config.totalSteps);
   const skippedSteps = ref<Set<number>>(new Set());
   const stepDependencies = config.skippableStepsConfig || {};
+
+  const visitedSteps = ref<Set<number>>(new Set([1]));
+
+  watch(currentStep, (newStep) => {
+    visitedSteps.value.add(newStep);
+  });  
 
   // NOUVEAU : Map inverse pour retrouver le déclencheur d'une étape sautée
   // Exemple : si skippableStepsConfig est { 5: [6] }, cette map contiendra { 6: 5 }
@@ -175,6 +181,7 @@ export function useGenesisWizard(config: WizardConfig) {
     isFirstStep,
     isLastStep,
     skippedSteps,
+    visitedSteps,
     goToStep,
     goToNextStep,
     goToPreviousStep,

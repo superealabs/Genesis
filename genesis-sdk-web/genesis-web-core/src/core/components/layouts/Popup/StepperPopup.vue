@@ -39,16 +39,29 @@
 
                 <!-- Indicateur d'étapes -->
                 <div class="flex items-center gap-2">
-                    <span
-                        v-for="step in totalSteps"
+                    <div
+                        v-for="(step, index) in totalSteps"
                         :key="step"
-                        class="h-2 rounded-full transition-all duration-200"
-                        :class="{
-                            'w-6 bg-primary': step === currentStep,
-                            'w-2 bg-primary/40': step < currentStep,
-                            'w-2 bg-bg-neutral-genesis': step > currentStep
-                        }"
-                    />
+                        class="relative flex flex-col items-center group"
+                    >
+                        <span
+                            class="h-2 rounded-full transition-all duration-200"
+                            :class="{
+                                'w-6 bg-primary cursor-default': step === currentStep,
+                                'w-2 bg-primary/40 hover:scale-110 cursor-pointer': visitedSteps?.has(step) && step !== currentStep,
+                                'w-2 bg-bg-neutral-genesis opacity-50 cursor-not-allowed': !visitedSteps?.has(step)
+                            }"
+                            @click="visitedSteps?.has(step) && step !== currentStep ? $emit('go-to-step', step) : null"
+                        >
+                            <!-- Tooltip au survol -->
+                            <span 
+                                v-if="stepLabels && stepLabels[index]"
+                                class="absolute bottom-full mb-2 hidden group-hover:block px-2 py-1 text-xs text-text bg-bg-dark border border-secondary rounded shadow-lg whitespace-nowrap z-50 pointer-events-none"
+                            >
+                                {{ stepLabels[index] }}
+                            </span>
+                        </span>
+                    </div>
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -85,6 +98,8 @@ withDefaults(defineProps<{
     contentClass?: string;
     isSkippable?: boolean;
     showBackToSummary?: boolean;
+    visitedSteps?: Set<number>;
+    stepLabels?: string[];    
 }>(), {
     size: 'md',
     isClosable: true,
@@ -101,5 +116,6 @@ defineEmits<{
     next: [];
     skip: [];
     'back-to-summary': [];
+    'go-to-step': [step: number];
 }>();
 </script>

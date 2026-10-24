@@ -324,5 +324,6 @@ export function useGenerator() {
     fetchBuildTools,
     fetchHibernateDdlAutoOptions,
     hasReachedSummary,
+    visitedSteps: wizard.visitedSteps,
   };
 }

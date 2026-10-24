@@ -5,7 +5,7 @@ import type { DatabaseEngineDto, RepositoryProviderMetadata } from '@genesis-lab
 import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
 import { FrontendFramework } from '@genesis-labs/shared-types';
 // ✅ Import des utilitaires de mapping pour la navigation
-import { SUMMARY_TO_STEP_MAP, getStepNumberById } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
+import { SUMMARY_TO_STEP_MAP, getStepNumberById, STEP_LABELS } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
 
 const {
     currentStep,
@@ -22,7 +22,7 @@ const {
     setPendingDatabaseEngine,
     setPendingFrontendFramework,
     setPendingRepositoryProvider,
-    
+    visitedSteps,
     backToSummary,
     targetSummaryIndex,
     goToStep,
@@ -56,12 +56,12 @@ function onSelectRepository(repoProvider: RepositoryProviderMetadata) {
     setPendingRepositoryProvider(repoProvider);
 }
 
-// ✅ GESTION DU RETOUR AU RÉSUMÉ
+// GESTION DU RETOUR AU RÉSUMÉ
 function handleBackToSummary() {
     backToSummary();
 }
 
-// ✅ GESTION DE LA DEMANDE D'ÉDITION DEPUIS LE RÉSUMÉ (Double-clic sur le rail)
+// GESTION DE LA DEMANDE D'ÉDITION DEPUIS LE RÉSUMÉ (Double-clic sur le rail)
 function handleSummaryRequestEdit(summaryIndex: number) {
     const targetStepId = SUMMARY_TO_STEP_MAP[summaryIndex];
     if (targetStepId) {
@@ -78,12 +78,15 @@ function handleSummaryRequestEdit(summaryIndex: number) {
         :is-skippable="isCurrentStepSkippable"
         :target-summary-index="targetSummaryIndex" 
         :has-reached-summary="hasReachedSummary"
+        :visited-steps="visitedSteps"
+        :step-labels="STEP_LABELS"
         @close="handleClose"
         @previous="goToPreviousStep"
         @next="handleNextStep"
         @skip="skipCurrentStep"
         @back-to-summary="handleBackToSummary"
         @request-edit="handleSummaryRequestEdit"
+        @go-to-step="goToStep"
         @select-framework="onSelectFramework"
         @select-database="onSelectDatabase"
         @select-frontend="onSelectFrontend"

@@ -58,6 +58,22 @@ export type StepId =
   | 'repository_select'
   | 'repository_config'
   | 'summary';
+
+export const STEP_LABELS: string[] = [
+  'Framework',
+  'Configuration Projet',
+  'Sélection BDD',
+  'Configuration BDD',
+  'Script / IA',
+  'Génération',
+  'Relations',
+  'Sélection Frontend',
+  'Configuration Frontend',
+  'Sélection Dépôt',
+  'Configuration Dépôt',
+  'Résumé'
+];
+
 // ============================================================================
 // SOURCE DE VÉRITÉ : ORDRE DES ÉTAPES
 // ============================================================================

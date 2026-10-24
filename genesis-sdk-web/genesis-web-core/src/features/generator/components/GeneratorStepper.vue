@@ -5,15 +5,16 @@
     :total-steps="props.totalSteps"
     size="full"
     :content-class="stepContentClass"
-    :is-skippable="props.isSkippable" 
-
+    :is-skippable="props.isSkippable"
     :show-back-to-summary="props.hasReachedSummary && currentStepId !== 'summary'"
-    @back-to-summary="emit('back-to-summary')"
-
+    :visited-steps="props.visitedSteps"
+    :step-labels="props.stepLabels"
     @close="handleClose"
     @previous="emit('previous')"
     @next="emit('next')"
-    @skip="emit('skip')" 
+    @skip="emit('skip')"
+    @back-to-summary="emit('back-to-summary')"
+    @go-to-step="(step) => emit('go-to-step', step)"
   >
     <!-- ÉTAPE : FRAMEWORK -->
     <FrameworkLayout
@@ -191,6 +192,8 @@ const props = defineProps<{
   isSkippable?: boolean;
   targetSummaryIndex?: number;
   hasReachedSummary?: boolean;
+  visitedSteps?: Set<number>;
+  stepLabels?: string[];
 }>();
 
 const emit = defineEmits<{
@@ -200,6 +203,7 @@ const emit = defineEmits<{
   skip: [];
   'back-to-summary': [];
   'request-edit': [index: number];
+  'go-to-step': [step: number];
   'select-framework': [framework: Framework];
   'select-frontend': [framework: FrontendFramework];
   'select-database': [engine: DatabaseEngineDto];
