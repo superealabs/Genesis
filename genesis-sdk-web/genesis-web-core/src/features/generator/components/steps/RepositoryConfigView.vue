@@ -210,6 +210,7 @@ const emit = defineEmits<{ 'test-connection-error': [message: string] }>();
 
 const { 
   stepperData, 
+  pendingRepositoryProvider,
   updateRepositoryConfig, 
   setPendingRepositoryProvider 
 } = useGenerator();
@@ -228,6 +229,10 @@ const isEditingProvider = ref(false);
 const tempProviderName = ref('');
 
 const selectedProviderName = computed(() => {
+  if (pendingRepositoryProvider.value) {
+    return pendingRepositoryProvider.value.name;
+  }
+  
   const providerId = repoConfig.value?.provider;
   if (!providerId) return 'Aucun fournisseur sélectionné';
   

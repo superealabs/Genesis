@@ -13,7 +13,7 @@
   >
     <!-- ÉTAPE : FRAMEWORK -->
     <FrameworkLayout
-      v-if="currentStepId === 'framework'"
+      v-if="currentStepId === 'framework_select'"
       v-bind="frameworkLayoutProps"
       :group-by="frameworkGroupBy"
       :languages="languages"
@@ -73,7 +73,7 @@
     />
 
     <!-- ÉTAPE : SÉLECTION TABLES/VUES -->
-    <GenerationConfigurationAlt v-else-if="currentStepId === 'tables'" />
+    <GenerationConfigurationAlt v-else-if="currentStepId === 'generation'" />
 
     <!-- ÉTAPE : RELATIONS -->
     <RelationConfigView v-else-if="currentStepId === 'relations'" />
@@ -101,7 +101,7 @@
     
     <!-- ÉTAPE : CONFIGURATION LAYOUT FRONTEND -->
     <FrontendLayoutConfigView 
-      v-else-if="currentStepId === 'frontend_layout'" 
+      v-else-if="currentStepId === 'frontend_config'" 
       @request-file-path="handleRequestFilePath" 
     />
 
@@ -120,7 +120,7 @@
 
     <!-- ÉTAPE : CONFIGURATION GIT -->
     <RepositoryConfigView 
-      v-else-if="currentStepId === 'git_config'" 
+      v-else-if="currentStepId === 'repository_config'" 
       @test-connection-error="handleChildError" 
     />
 

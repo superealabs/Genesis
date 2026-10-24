@@ -46,19 +46,18 @@ export interface StepConfig {
 
 // Identifiants sémantiques des étapes (Le contrat TypeScript)
 export type StepId = 
-  | 'framework'
+  | 'framework_select'
   | 'project_config'
   | 'database_select'
   | 'database_config'
   | 'script'
-  | 'tables'
+  | 'generation'
   | 'relations'
   | 'frontend_select'
-  | 'frontend_layout'
+  | 'frontend_config'
   | 'repository_select'
-  | 'git_config'
+  | 'repository_config'
   | 'summary';
-
 // ============================================================================
 // SOURCE DE VÉRITÉ : ORDRE DES ÉTAPES
 // ============================================================================
@@ -68,17 +67,17 @@ export type StepId =
  * Pour réorganiser le wizard, il suffit de réorganiser ce tableau.
  */
 export const WIZARD_STEP_ORDER: StepId[] = [
-  'framework',
+  'framework_select',
   'project_config',
   'database_select',
   'database_config',
   'script',
-  'tables',
+  'generation',
   'relations',
   'frontend_select',
-  'frontend_layout',
+  'frontend_config',
   'repository_select',
-  'git_config',
+  'repository_config',
   'summary'
 ];
 
@@ -88,7 +87,7 @@ export const WIZARD_STEP_ORDER: StepId[] = [
 
 export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   
-  framework: {
+  framework_select: {
     onEnter: async (_store, { fsvc, recentSvc }) => {
       console.log("[Wizard: framework] Chargement des frameworks, langues et données récentes...");
       
@@ -242,7 +241,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     skipCascade: [] // Peut être sauté sans conséquence sur les autres
   },
 
-  tables: {
+  generation: {
     onEnter: async (store, { svc }) => {
       console.log("[Wizard: tables] Chargement des tables et vues...");
       
@@ -342,10 +341,12 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       return true;
     },
     // CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
-    skipCascade: ['frontend_layout'] 
+    skipCascade: [
+      'frontend_config'
+    ] 
   },
 
-  frontend_layout: {
+  frontend_config: {
     beforeNext: async (store) => {
       try {
         if (store.pendingFrontendFramework) {
@@ -383,64 +384,96 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
-      // ✅ CORRECTION MAJEURE : Persister le choix dans repositoryConfig avant de changer d'étape
       store.updateRepositoryConfig('provider', store.pendingRepositoryProvider.id);
       
       console.log(`[Wizard: repository_select] Fournisseur sélectionné et persisté :`, store.pendingRepositoryProvider.name);
       return true;
-    }
+    },
+
+    onSkip: (store) => {
+      // L'utilisateur a cliqué sur "Passer" : on désactive Git et on nettoie
+      store.skipGitConfig();
+    },
+    
+    skipCascade: [
+      'repository_config'
+    ]
   },
 
-  git_config: {
+  repository_config: {
     onEnter: (store) => {
-      // Par défaut, on considère que Git local est voulu, mais pas de remote
-      // Cela garde l'interface propre tout en préparant le terrain pour "Suivant"
+      // Initialisation par défaut si l'objet n'existe pas encore
+      if (!store.stepperData.repositoryConfig) {
+        store.updateRepositoryConfig('provider', store.pendingRepositoryProvider?.id || 'github');
+        store.updateRepositoryConfig('useRemote', false);
+        store.updateRepositoryConfig('isNewRemote', true);
+        store.updateRepositoryConfig('scope', 'monorepo');
+        store.updateRepositoryConfig('authMethod', 'personal_access_token');
+      }
+      
+      // On s'assure que les valeurs par défaut Git sont propres
       store.stepperData.git.useGit = true;
-      // On s'assure que les valeurs par défaut sont propres
       if (!store.stepperData.git.useRemoteRepo) {
         store.stepperData.git.isNewRemoteRepo = true;
         store.stepperData.git.separateRepositories = false;
       }
     },
     
-    onSkip: (store) => {
-      // L'utilisateur a cliqué sur "Passer" : on désactive Git et on nettoie
-      store.skipGitConfig();
-    },
-
     beforeNext: (store) => {
-      // L'utilisateur clique sur "Suivant" : on valide que Git est actif
-      store.stepperData.git.useGit = true;
+      const repo = store.stepperData.repositoryConfig;
       
-      const git = store.stepperData.git;
+      // On active Git par défaut
+      store.updateGitConfig('useGit', true);
 
-      // Si l'utilisateur a activé le remote, on valide les champs obligatoires
-      if (git.useRemoteRepo) {
-        if (!git.githubUsername) {
-          store.setWizardError("Le nom d'utilisateur GitHub est obligatoire pour un dépôt distant.");
+      if (repo?.useRemote) {
+        // 1. Validation des champs obligatoires du formulaire
+        if (!repo.username) {
+          store.setWizardError("Le nom d'utilisateur est obligatoire pour un dépôt distant.");
           return false;
         }
-        if (git.isNewRemoteRepo && !git.githubToken) {
+        if (repo.isNewRemote && !repo.token) {
           store.setWizardError("Le Personal Access Token est obligatoire pour créer un nouveau dépôt.");
           return false;
         }
-        if (git.separateRepositories) {
-          if (!git.backendRepositoryName || !git.frontendRepositoryName) {
+        if (repo.scope === 'separated') {
+          if (!repo.backendRepoName || !repo.frontendRepoName) {
             store.setWizardError("Les noms des dépôts Backend et Frontend sont obligatoires.");
             return false;
           }
         } else {
-          if (!git.repositoryName) {
-            store.setWizardError("Le nom du dépôt est obligatoire.");
+          if (!repo.monorepoName) {
+            store.setWizardError("Le nom du dépôt unique est obligatoire.");
             return false;
           }
         }
+
+        // 2. 🔄 MAPPING (FORCING) : Conversion de RepositoryConfig vers GitConfiguration
+        // Le backend ne supporte que GitHub pour l'instant, on mappe donc les données génériques 
+        // vers les champs spécifiques GitHub attendus par l'interface GitConfiguration.
+        store.updateGitConfig('separateRepositories', repo.scope === 'separated');
+        store.updateGitConfig('useRemoteRepo', true);
+        store.updateGitConfig('isNewRemoteRepo', repo.isNewRemote);
+        store.updateGitConfig('repositoryName', repo.monorepoName || '');
+        store.updateGitConfig('backendRepositoryName', repo.backendRepoName || '');
+        store.updateGitConfig('frontendRepositoryName', repo.frontendRepoName || '');
+        store.updateGitConfig('githubUsername', repo.username || '');
+        store.updateGitConfig('githubToken', repo.token || '');
+        
+      } else {
+        // 3. Si pas de remote, on s'assure que Git est configuré en local uniquement
+        store.updateGitConfig('useRemoteRepo', false);
+        store.updateGitConfig('isNewRemoteRepo', true);
+        store.updateGitConfig('separateRepositories', false);
+        store.updateGitConfig('repositoryName', '');
+        store.updateGitConfig('backendRepositoryName', '');
+        store.updateGitConfig('frontendRepositoryName', '');
+        store.updateGitConfig('githubUsername', '');
+        store.updateGitConfig('githubToken', '');
       }
       
-      console.log("[Wizard: git_config] Configuration Git validée");
+      console.log("[Wizard: git_config] Configuration Repository validée et mappée pour le backend.");
       return true;
-    },
-    skipCascade: []
+    }
   },
 
   summary: {
