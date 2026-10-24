@@ -54,8 +54,7 @@ class GitIntegrationTest {
         context.setGenerateProjectStructure(true);
         context.setGenerateFrontendApp(true);
         new FrameworkService(store).select(1);
-        new FrontendConfigService(store, new FrontendFrameworkIsolationService()).configure(
-                new FrontendConfigService.FrontendConfigRequest(1, null, null));
+        new FrontendConfigService(store, new FrontendFrameworkIsolationService(), new FrontendAssetService()).configure(new FrontendConfigService.FrontendConfigRequest(1, null, null));
         context.setGitConfiguration(new GitConfiguration());
         root = Path.of(context.getDestinationFolder());
         var staging = new GenerationStagingService();

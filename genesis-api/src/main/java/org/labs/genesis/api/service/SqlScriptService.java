@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Connection;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class SqlScriptService {
@@ -18,6 +19,8 @@ public class SqlScriptService {
 
     private final GenerationContextStore contextStore;
     private final boolean executionEnabled;
+
+    private final AtomicReference<ScriptConfigRequest> savedScript = new AtomicReference<>();
 
     public SqlScriptService(GenerationContextStore contextStore, @Value("${genesis.sql.execution-enabled:false}") boolean executionEnabled) {
         this.contextStore = contextStore;
@@ -82,5 +85,44 @@ public class SqlScriptService {
         }
 
         return new SqlExecutionResponse(true, "Script SQL exécuté");
+    }
+
+    public ScriptConfigResponse saveScriptConfig(ScriptConfigRequest request) {
+        if (request == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Configuration SQL manquante");
+        }
+
+        String path = request.path() == null
+                ? ""
+                : request.path().trim();
+
+        String content = request.content() == null
+                ? ""
+                : request.content();
+
+        if (path.length() > 1024) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chemin de script trop long");
+        }
+
+        if (content.length() > MAX_SCRIPT_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Script SQL trop volumineux");
+        }
+
+        if (!content.isBlank()) {
+            SqlValidationResponse validation = validate(new SqlScriptRequest(content, false));
+
+            if (!validation.valid()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, validation.message());
+            }
+        }
+
+        if (path.isBlank() && content.isBlank()) {
+            savedScript.set(null);
+            return new ScriptConfigResponse(true, "Configuration SQL effacée");
+        }
+
+        savedScript.set(new ScriptConfigRequest(path, content));
+
+        return new ScriptConfigResponse(true, "Configuration du script SQL enregistrée");
     }
 }

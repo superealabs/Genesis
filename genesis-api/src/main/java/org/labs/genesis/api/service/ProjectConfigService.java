@@ -5,6 +5,7 @@ import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigOptionsResponse;
 import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigRequest;
 import org.labs.genesis.api.dto.ProjectDtos.ProjectConfigResponse;
 import org.labs.genesis.api.exception.ProjectConfigException;
+import org.labs.genesis.api.exception.FrameworkNotFoundException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.ConfigurationMetadata;
 import org.labs.genesis.config.langage.Framework;
@@ -276,4 +277,39 @@ public class ProjectConfigService {
             throw new ProjectConfigException(errorMessage + " : " + selectedValue);
         }
     }
+
+    public List<String> frameworkOptions(int frameworkId, String variableName) {
+        Framework framework = ProjectGenerator.frameworks.get(frameworkId);
+
+        if (framework == null) {
+            throw new FrameworkNotFoundException(frameworkId);
+        }
+
+        return getOptions(framework.getConfigurations(), variableName);
+    }
+
+    public List<String> languageVersions(int languageId) {
+        Language language = ProjectGenerator.findLanguageById(languageId);
+
+        if (language == null) {
+            throw new ProjectConfigException("Langage inconnu : " + languageId);
+        }
+
+        return getOptions(language.getConfigurations(), "languageVersion");
+    }
+
+    public List<String> buildTools(int frameworkId) {
+        Framework framework = ProjectGenerator.frameworks.get(frameworkId);
+
+        if (framework == null) {
+            throw new FrameworkNotFoundException(frameworkId);
+        }
+
+        return getCompatibleProjects(framework)
+                .stream()
+                .map(Project::getName)
+                .map(name -> name.trim().toLowerCase(Locale.ROOT))
+                .toList();
+    }
+
 }

@@ -9,10 +9,10 @@ import static org.assertj.core.api.Assertions.*;
 
 class FrontendConfigServiceTest {
     @Test
-    void configuresEachFrontendWithoutMutatingTheRegistry() {
+    void configuresEachFrontendWithoutMutatingTheRegistry() throws Exception {
         var store = new GenerationContextStore();
         new FrameworkService(store).select(1);
-        var service = new FrontendConfigService(store, new FrontendFrameworkIsolationService());
+        var service = new FrontendConfigService(store, new FrontendFrameworkIsolationService(), new FrontendAssetService());
         for (int identifier : new int[]{1, 2, 3}) {
             var response = service.configure(new FrontendConfigService.FrontendConfigRequest(identifier, null, null));
             assertThat(response.success()).isTrue();
@@ -23,9 +23,9 @@ class FrontendConfigServiceTest {
     }
 
     @Test
-    void rejectsInvalidConfigurationBeforeChangingTheContext() {
+    void rejectsInvalidConfigurationBeforeChangingTheContext() throws Exception {
         var store = new GenerationContextStore();
-        var service = new FrontendConfigService(store, new FrontendFrameworkIsolationService());
+        var service = new FrontendConfigService(store, new FrontendFrameworkIsolationService(), new FrontendAssetService());
         assertThatThrownBy(() -> service.configure(new FrontendConfigService.FrontendConfigRequest(1, null, null)))
                 .isInstanceOf(ProjectConfigException.class);
         new FrameworkService(store).select(1);

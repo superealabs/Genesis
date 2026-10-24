@@ -18,4 +18,15 @@ public final class SqlScriptDtos {
             boolean success,
             String message
     ) {}
+
+    public record ScriptConfigRequest(
+            String path,
+            String content
+    ) {}
+
+    public record ScriptConfigResponse(
+            boolean success,
+            String message
+    ) {}
+
 }
