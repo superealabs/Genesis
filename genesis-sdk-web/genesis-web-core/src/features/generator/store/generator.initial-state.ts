@@ -59,5 +59,6 @@ export const INITIAL_STATE: GeneratorData = {
         frontendRepositoryName: '',
         githubUsername: '',
         githubToken: ''
-    }
+    },
+    repositoryConfig : null
 };

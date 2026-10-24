@@ -17,7 +17,8 @@ import type {
   DatabaseEngineDto,
   GenerationAssociatedToConfig,
   ComponentType,
-  RepositoryProviderMetadata
+  RepositoryProviderMetadata,
+  RepositoryConfig
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -317,6 +318,16 @@ export const useGeneratorStore = defineStore('generator', () => {
     }
   }
 
+  function updateRepositoryConfig<K extends keyof RepositoryConfig>(key: K, value: RepositoryConfig[K]) { 
+    if (!stepperData.value.repositoryConfig) {
+      // Initialisation par défaut si nul
+      stepperData.value.repositoryConfig = {
+        provider: 'github', useRemote: false, isNewRemote: true, scope: 'monorepo', authMethod: 'personal_access_token'
+      } as RepositoryConfig;
+    }
+    (stepperData.value.repositoryConfig as any)[key] = value; 
+  }
+
   function skipGitConfig() {
     stepperData.value.git = {
       useGit: false, // C'est ici qu'on désactive Git globalement
@@ -381,6 +392,8 @@ export const useGeneratorStore = defineStore('generator', () => {
 
     // Étape 10 : Git
     updateGitConfig,
-    skipGitConfig
+    skipGitConfig,
+    
+    updateRepositoryConfig,
   };
 });

@@ -266,6 +266,7 @@ export function useGenerator() {
     updateScript: store.updateScript,
     updateFrontendLayout: store.updateFrontendLayout,
     updateGitConfig: store.updateGitConfig,
+    updateRepositoryConfig: store.updateRepositoryConfig,
     
     toggleLanguage: store.toggleLanguage,
     
@@ -286,5 +287,6 @@ export function useGenerator() {
     fetchFrameworkVersions,
     fetchBuildTools,
     fetchHibernateDdlAutoOptions,
+
   };
 }

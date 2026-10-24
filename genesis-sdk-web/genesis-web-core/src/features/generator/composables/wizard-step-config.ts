@@ -355,7 +355,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
     },
-    // ✅ CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
+    // CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
     skipCascade: ['frontend_layout'] 
   },
 
