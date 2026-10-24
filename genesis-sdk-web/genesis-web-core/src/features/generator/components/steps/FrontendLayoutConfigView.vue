@@ -233,10 +233,11 @@ const emit = defineEmits<{
 // ============================================================================
 const { 
   stepperData, 
+  pendingFrontendFramework,
+  setPendingFrontendFramework,
   fetchAvailableLanguages, 
   updateFrontendLayout, 
-  toggleLanguage,
-  setSelectedFrontendFramework
+  toggleLanguage
 } = useGenerator();
 
 const { saveConfiguration, deleteConfiguration, configurations: persistedConfigs, loadFrontendLanguagesConfigurations } = useConfig();
@@ -271,7 +272,8 @@ const languagesConfigManager = useConfigurationManager([], { singleConfiguration
 // 4. COMPUTEDS (Données dérivées)
 // ============================================================================
 const layoutConfig = computed(() => stepperData.value.frontendLayout);
-const frontend = computed(() => stepperData.value.frontend);
+const frontend = computed(() => pendingFrontendFramework.value || stepperData.value.frontend);
+
 
 const selectedFrontendName = computed(() => 
   frontend.value?.name || 'Aucun framework sélectionné'
@@ -305,7 +307,7 @@ function cancelEditingFrontend() {
 function handleFrontendSelect(value: any) {
   if (typeof value === 'string') return; 
   if (value && value.id) { 
-    setSelectedFrontendFramework(value); 
+    setPendingFrontendFramework(value); 
     isEditingFrontend.value = false; 
   }
 }

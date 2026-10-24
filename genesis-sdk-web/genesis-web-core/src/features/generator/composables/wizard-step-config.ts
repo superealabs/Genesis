@@ -332,24 +332,14 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     },
     
     beforeNext: async (store) => {
+      // Si aucun framework n'est sélectionné, c'est skippable, on passe à la suite
       if (!store.pendingFrontendFramework) {
         console.log("[Wizard: frontend_select] Frontend ignoré (skippable)");
         return true;
       }
 
-      try {
-        store.setSelectedFrontendFramework(store.pendingFrontendFramework);
-
-        const frontendId = store.stepperData.frontend?.id;
-        if (frontendId) {
-          console.log(`[Wizard: frontend_select] Sélection Frontend validée. ID : ${frontendId}`);
-        }
-        
-        return true;
-      } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du frontend.");
-        return false;
-      }
+      console.log(`[Wizard: frontend_select] Framework Frontend en attente de validation :`, store.pendingFrontendFramework.name);
+      return true;
     },
     // CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
     skipCascade: ['frontend_layout'] 
@@ -358,6 +348,11 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   frontend_layout: {
     beforeNext: async (store) => {
       try {
+        if (store.pendingFrontendFramework) {
+          store.setSelectedFrontendFramework(store.pendingFrontendFramework);
+          console.log(`[Wizard: frontend_layout] Framework Frontend validé et commit :`, store.pendingFrontendFramework.name);
+        }
+
         console.log("[Wizard: frontend_layout] Configuration layout Frontend validée");
         return true;
       } catch (error) {
