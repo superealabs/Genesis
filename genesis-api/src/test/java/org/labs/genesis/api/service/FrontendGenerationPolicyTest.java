@@ -1,7 +1,9 @@
 package org.labs.genesis.api.service;
 
+import org.labs.genesis.api.dto.GenerationDtos;
+
 import org.junit.jupiter.api.Test;
-import org.labs.genesis.api.dto.GenerationExecutionPlanDtos.ExecutionBatch;
+import org.labs.genesis.api.dto.GenerationDtos.ExecutionBatch;
 import org.labs.genesis.config.ProjectGenerationContext;
 
 import java.util.ArrayList;
@@ -20,7 +22,7 @@ class FrontendGenerationPolicyTest {
                     selected.add(components.get(index));
                 }
             }
-            var task = new FrontendGenerationPolicy().resolve(
+            var task = new FrontendPlanningService().resolve(
                     List.of(new ExecutionBatch("Partial", "customer", false, selected))).getFirst();
             assertThat(task.complete()).as(selected.toString()).isFalse();
             assertThat(task.frontendOptions()).doesNotContain(ProjectGenerationContext.FRONTEND_COMPONENT);
@@ -33,7 +35,7 @@ class FrontendGenerationPolicyTest {
 
     @Test
     void combinesProfilesOnlyForTheSameEntity() {
-        var tasks = new FrontendGenerationPolicy().resolve(List.of(
+        var tasks = new FrontendPlanningService().resolve(List.of(
                 new ExecutionBatch("Models", "customer", false, List.of("model", "dao")),
                 new ExecutionBatch("Actions", "customer", false, List.of("service", "controller")),
                 new ExecutionBatch("Models", "product", false, List.of("model"))));

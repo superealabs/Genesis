@@ -31,7 +31,7 @@ public class ConsolidatedFrontendGenerationService {
     }
 
     public Path generate(
-            List<FrontendExecutionTaskPlanner.FrontendExecutionTask> tasks,
+            List<FrontendPlanningService.FrontendExecutionTask> tasks,
             Path stagingDirectory,
             GenerationConfigurationSnapshot snapshot
     ) throws Exception {
@@ -40,7 +40,7 @@ public class ConsolidatedFrontendGenerationService {
         Objects.requireNonNull(stagingDirectory, "Dossier temporaire obligatoire");
         Objects.requireNonNull(snapshot, "Instantané obligatoire");
 
-        List<FrontendExecutionTaskPlanner.FrontendExecutionTask> selected =
+        List<FrontendPlanningService.FrontendExecutionTask> selected =
                 tasks.stream()
                         .filter(Objects::nonNull)
                         .filter(task -> !task.mvc())

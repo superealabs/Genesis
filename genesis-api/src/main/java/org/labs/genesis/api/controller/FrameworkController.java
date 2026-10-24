@@ -1,17 +1,11 @@
 package org.labs.genesis.api.controller;
 
+import java.util.List;
 import org.labs.genesis.api.dto.FrameworkDtos.*;
 import org.labs.genesis.api.service.FrameworkService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/frameworks")
 public class FrameworkController {
 
     private final FrameworkService frameworkService;
@@ -20,28 +14,33 @@ public class FrameworkController {
         this.frameworkService = frameworkService;
     }
 
-    @GetMapping
+    @GetMapping("/api/frameworks")
     public List<FrameworkResponse> getAll() {
         return frameworkService.getAll();
     }
 
-    @GetMapping("/languages")
+    @GetMapping("/api/frameworks/languages")
     public List<LanguageResponse> getLanguages() {
         return frameworkService.getLanguages();
     }
 
-    @GetMapping("/cores")
+    @GetMapping("/api/frameworks/cores")
     public List<CoreFrameworkResponse> getCoreFrameworks() {
         return frameworkService.getCoreFrameworks();
     }
 
-    @GetMapping("/templates")
+    @GetMapping("/api/frameworks/templates")
     public List<ViewTemplateResponse> getViewTemplates() {
         return frameworkService.getViewTemplates();
     }
 
-    @PostMapping("/{id}/select")
+    @PostMapping("/api/frameworks/{id}/select")
     public FrameworkSelectionResponse select(@PathVariable int id) {
+        return frameworkService.select(id);
+    }
+
+    @PostMapping("/api/generator/frameworks/{id}/select")
+    public FrameworkSelectionResponse selectFramework(@PathVariable int id) {
         return frameworkService.select(id);
     }
 }

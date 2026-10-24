@@ -36,7 +36,7 @@ public class FrontendBatchGenerationService {
      * @return le répertoire réel contenant les fichiers,
      *         ou null si la tâche ne nécessite aucune génération.
      */
-    public Path generate(FrontendExecutionTaskPlanner.FrontendExecutionTask task, String profileName, Path stagingDirectory) throws Exception {
+    public Path generate(FrontendPlanningService.FrontendExecutionTask task, String profileName, Path stagingDirectory) throws Exception {
         Objects.requireNonNull(task, "La tâche frontend est obligatoire");
         Objects.requireNonNull(stagingDirectory, "Le dossier temporaire est obligatoire");
 
@@ -82,7 +82,7 @@ public class FrontendBatchGenerationService {
         }
     }
 
-    private void generateMvcViews(ProjectGenerator generator, ProjectGenerationContext context, TableMetadata entity, FrontendExecutionTaskPlanner.FrontendExecutionTask task) throws Exception {
+    private void generateMvcViews(ProjectGenerator generator, ProjectGenerationContext context, TableMetadata entity, FrontendPlanningService.FrontendExecutionTask task) throws Exception {
         if (!(context.getFramework() instanceof FrameworkMVC)) {
             throw new IllegalStateException("Le framework sélectionné n'est pas MVC");
         }
@@ -93,7 +93,7 @@ public class FrontendBatchGenerationService {
         generator.generateViewsComponents(context, new ViewsGenerator(ProjectGenerator.engine), entity, true);
     }
 
-    private void generateFrontend(ProjectGenerator generator, ProjectGenerationContext context, TableMetadata entity, FrontendExecutionTaskPlanner.FrontendExecutionTask task) throws Exception {
+    private void generateFrontend(ProjectGenerator generator, ProjectGenerationContext context, TableMetadata entity, FrontendPlanningService.FrontendExecutionTask task) throws Exception {
 
         if (!context.isGenerateFrontendApp() || context.getFrontendFramework() == null || context.getFrontendLanguage() == null) {
             throw new IllegalStateException("Frontend non configuré");

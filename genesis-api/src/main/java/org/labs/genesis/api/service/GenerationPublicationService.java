@@ -1,5 +1,7 @@
 package org.labs.genesis.api.service;
 
+import org.labs.genesis.api.dto.GenerationDtos.*;
+
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -83,16 +85,7 @@ public class GenerationPublicationService {
         );
     }
 
-    public record PublicationReport(
-            int preparedFileCount,
-            List<String> createdFiles,
-            List<String> skippedExistingFiles
-    ) {
-        public PublicationReport {
-            createdFiles = List.copyOf(createdFiles);
-            skippedExistingFiles = List.copyOf(skippedExistingFiles);
-        }
-    }
+
 
     public static class GenerationCollisionException extends IOException {
         private final List<String> collisions;

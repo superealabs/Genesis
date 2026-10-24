@@ -16,9 +16,9 @@ public class ConsolidatedGenerationContextService {
     private final GenerationContextStore contextStore;
     private final GenerationProfilesStore profilesStore;
     private final ProfileRelationService profileRelationService;
-    private final GenerationRelationConflictValidator conflictValidator;
+    private final GenerationRelationService conflictValidator;
 
-    public ConsolidatedGenerationContextService(GenerationContextStore contextStore, GenerationProfilesStore profilesStore, ProfileRelationService profileRelationService, GenerationRelationConflictValidator conflictValidator) {
+    public ConsolidatedGenerationContextService(GenerationContextStore contextStore, GenerationProfilesStore profilesStore, ProfileRelationService profileRelationService, GenerationRelationService conflictValidator) {
         this.contextStore = contextStore;
         this.profilesStore = profilesStore;
         this.profileRelationService = profileRelationService;

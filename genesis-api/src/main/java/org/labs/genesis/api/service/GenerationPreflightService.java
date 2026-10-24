@@ -1,35 +1,33 @@
 package org.labs.genesis.api.service;
 
+import java.util.List;
 import org.labs.genesis.api.context.GenerationContextStore;
-import org.labs.genesis.api.dto.GenerationExecutionPlanDtos.ExecutionPlanResponse;
+import org.labs.genesis.api.dto.GenerationDtos.ExecutionPlanResponse;
 import org.labs.genesis.api.dto.MetadataDtos.GenerationParameterRequest;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.springframework.stereotype.Service;
-
-import java.sql.SQLException;
-import java.util.List;
 
 @Service
 public class GenerationPreflightService {
 
     private final GenerationContextStore contextStore;
     private final GenerationProfilesStore profilesStore;
-    private final GenerationRelationConflictValidator conflictValidator;
-    private final GenerationExecutionPlanner executionPlanner;
+    private final GenerationRelationService conflictValidator;
+    private final GenerationPlanningService executionPlanner;
 
     private final GenerationExecutionContextFactory contextFactory;
 
-    private final CrossProfileRelationAuditService relationAuditService;
-    private final FrontendExecutionTaskPlanner frontendPlanner;
+    private final GenerationRelationService relationAuditService;
+    private final FrontendPlanningService frontendPlanner;
 
     public GenerationPreflightService(
             GenerationContextStore contextStore,
             GenerationProfilesStore profilesStore,
-            GenerationRelationConflictValidator conflictValidator,
-            GenerationExecutionPlanner executionPlanner,
+            GenerationRelationService conflictValidator,
+            GenerationPlanningService executionPlanner,
             GenerationExecutionContextFactory contextFactory,
-            CrossProfileRelationAuditService relationAuditService,
-            FrontendExecutionTaskPlanner frontendPlanner
+            GenerationRelationService relationAuditService,
+            FrontendPlanningService frontendPlanner
     ) {
         this.contextStore = contextStore;
         this.profilesStore = profilesStore;
@@ -49,8 +47,8 @@ public class GenerationPreflightService {
         }
 
         ExecutionPlanResponse executionPlan = executionPlanner.prepare(profiles);
-        CrossProfileRelationAuditService.RelationAuditReport relationReport;
-        List<FrontendExecutionTaskPlanner.FrontendExecutionTask> frontendTasks;
+        GenerationRelationService.RelationAuditReport relationReport;
+        List<FrontendPlanningService.FrontendExecutionTask> frontendTasks;
 
         // La construction du contexte consolidé assure
         // également la validation des relations.
@@ -67,8 +65,8 @@ public class GenerationPreflightService {
 
     public record PreflightResult(
             ExecutionPlanResponse executionPlan,
-            CrossProfileRelationAuditService.RelationAuditReport relations,
-            List<FrontendExecutionTaskPlanner.FrontendExecutionTask> frontendTasks
+            GenerationRelationService.RelationAuditReport relations,
+            List<FrontendPlanningService.FrontendExecutionTask> frontendTasks
     ) {
     }
 }

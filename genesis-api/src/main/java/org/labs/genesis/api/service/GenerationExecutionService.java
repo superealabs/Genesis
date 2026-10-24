@@ -1,10 +1,14 @@
 package org.labs.genesis.api.service;
 
+import org.labs.genesis.api.dto.GenerationDtos;
+
+import org.labs.genesis.api.dto.GenerationDtos.*;
+
 import org.labs.genesis.api.exception.GenerationAlreadyRunningException;
 import org.labs.utils.GenerationWriteScope;
 
-import org.labs.genesis.api.dto.GenerationExecutionPlanDtos.ExecutionBatch;
-import org.labs.genesis.api.service.FrontendExecutionTaskPlanner.FrontendExecutionTask;
+import org.labs.genesis.api.dto.GenerationDtos.ExecutionBatch;
+import org.labs.genesis.api.service.FrontendPlanningService.FrontendExecutionTask;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
@@ -250,7 +254,7 @@ public class GenerationExecutionService {
     /**
      * Consolide et publie les fichiers préparés.
      */
-    private GenerationPublicationService.PublicationReport publishPreparedGeneration(PreparedGeneration prepared) throws Exception {
+    private GenerationDtos.PublicationReport publishPreparedGeneration(PreparedGeneration prepared) throws Exception {
         if (prepared == null || prepared.generatedRoots().isEmpty()) {
             throw new IllegalStateException("Aucun fichier à publier");
         }
@@ -326,11 +330,5 @@ public class GenerationExecutionService {
         }
     }
 
-    public record LaunchResult(
-            boolean success,
-            int backendBatchCount,
-            int frontendTaskCount,
-            GenerationPublicationService.PublicationReport publication
-    ) {
-    }
+
 }

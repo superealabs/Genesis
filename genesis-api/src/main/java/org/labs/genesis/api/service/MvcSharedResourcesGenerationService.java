@@ -18,7 +18,7 @@ import java.util.Set;
 
 @Service
 public class MvcSharedResourcesGenerationService {
-    public List<String> generate(ProjectGenerationContext context, List<FrontendExecutionTaskPlanner.FrontendExecutionTask> tasks, Path stagingDirectory) throws Exception {
+    public List<String> generate(ProjectGenerationContext context, List<FrontendPlanningService.FrontendExecutionTask> tasks, Path stagingDirectory) throws Exception {
         Objects.requireNonNull(context, "Contexte obligatoire");
         Objects.requireNonNull(tasks, "Tâches obligatoires");
         Objects.requireNonNull(stagingDirectory, "Répertoire temporaire obligatoire");

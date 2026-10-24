@@ -1,26 +1,24 @@
 package org.labs.genesis.api.service;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.regex.Pattern;
 import org.labs.genesis.api.context.GenerationContextStore;
+import org.labs.genesis.api.dto.FrontendDtos.*;
 import org.labs.genesis.api.exception.ProjectConfigException;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.FrontendLanguage;
 import org.labs.genesis.frontend.generator.FrontendFramework;
-import org.labs.genesis.frontend.generator.model.InterfaceLang;
-import org.springframework.stereotype.Service;
 import org.labs.genesis.frontend.generator.model.FrontendLayout;
-import org.labs.genesis.frontend.generator.model.ProjectBranding;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
-
-import java.nio.file.Path;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.regex.Pattern;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import org.labs.genesis.frontend.generator.model.ProjectBranding;
+import org.springframework.stereotype.Service;
 
 @Service
 public class FrontendConfigService {
@@ -82,22 +80,14 @@ public class FrontendConfigService {
         return new FrontendConfigResponse(true, framework.getId(), language.getId(), port);
     }
 
-    public record FrameworkOption(int id, String name, String coreFramework, int languageId, String defaultPort) {}
-    public record FrontendConfigRequest(Integer frameworkId, Integer languageId, String port) {}
-    public record FrontendConfigResponse(boolean success, int frameworkId, int languageId, String port) {}
 
 
-    public record ProgrammingLanguageOption(
-            int id,
-            String name,
-            String extension
-    ) {}
 
-    public record InterfaceLanguageOption(
-            int id,
-            String code,
-            String name
-    ) {}
+
+
+
+
+
 
     public List<ProgrammingLanguageOption> programmingLanguages() {
         return ProjectGenerator.frontendLanguage.values()
@@ -122,17 +112,7 @@ public class FrontendConfigService {
     }
 
 
-    public record FrontendLayoutRequest(
-            List<String> selectedInterfaceLanguages,
-            String navbarType,
-            String primaryColor,
-            String secondaryColor,
-            String logoPath,
-            String faviconPath,
-            String port,
-            String logoAssetId,
-            String faviconAssetId
-    ) {}
+
 
 
     public void configureLayout(FrontendLayoutRequest request) {

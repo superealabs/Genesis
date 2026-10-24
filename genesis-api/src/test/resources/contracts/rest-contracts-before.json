@@ -1,0 +1,2478 @@
+{
+  "responses" : [ {
+    "path" : "/api/health",
+    "body" : {
+      "status" : "UP",
+      "service" : "genesis-api"
+    },
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/frameworks",
+    "body" : [ {
+      "id" : 1,
+      "languageId" : 1,
+      "name" : "Spring Boot - WEB API REST",
+      "coreFramework" : "Spring Boot",
+      "type" : "REST API",
+      "isProd" : true,
+      "useDB" : true,
+      "useCloud" : false,
+      "useEurekaServer" : false,
+      "isGateway" : false,
+      "useFrontendApp" : true
+    }, {
+      "id" : 2,
+      "languageId" : 2,
+      "name" : "ASP.NET Core - WEB API REST",
+      "coreFramework" : ".NET",
+      "type" : "REST API",
+      "isProd" : true,
+      "useDB" : true,
+      "useCloud" : false,
+      "useEurekaServer" : false,
+      "isGateway" : false,
+      "useFrontendApp" : true
+    }, {
+      "id" : 3,
+      "languageId" : 1,
+      "name" : "Spring Boot - Eureka Server",
+      "coreFramework" : "Spring Boot",
+      "type" : "REST API",
+      "isProd" : false,
+      "useDB" : false,
+      "useCloud" : true,
+      "useEurekaServer" : false,
+      "isGateway" : false,
+      "useFrontendApp" : false
+    }, {
+      "id" : 4,
+      "languageId" : 1,
+      "name" : "Spring Boot - API Gateway",
+      "coreFramework" : "Spring Boot",
+      "type" : "REST API",
+      "isProd" : false,
+      "useDB" : false,
+      "useCloud" : true,
+      "useEurekaServer" : false,
+      "isGateway" : true,
+      "useFrontendApp" : false
+    }, {
+      "id" : 5,
+      "languageId" : 2,
+      "name" : "ASP.NET Core - MVC",
+      "coreFramework" : ".NET",
+      "type" : "MVC",
+      "isProd" : true,
+      "useDB" : true,
+      "useCloud" : false,
+      "useEurekaServer" : false,
+      "isGateway" : false,
+      "useFrontendApp" : true
+    }, {
+      "id" : 6,
+      "languageId" : 1,
+      "name" : "Spring - MVC",
+      "coreFramework" : "Spring Boot",
+      "type" : "MVC",
+      "isProd" : false,
+      "useDB" : true,
+      "useCloud" : false,
+      "useEurekaServer" : false,
+      "isGateway" : false,
+      "useFrontendApp" : true
+    }, {
+      "id" : 7,
+      "languageId" : 5,
+      "name" : "Django - MVT",
+      "coreFramework" : "Django",
+      "type" : "MVC",
+      "isProd" : false,
+      "useDB" : true,
+      "useCloud" : false,
+      "useEurekaServer" : false,
+      "isGateway" : false,
+      "useFrontendApp" : true
+    }, {
+      "id" : 8,
+      "languageId" : 4,
+      "name" : "NestJS-WEB API",
+      "coreFramework" : "NestJS",
+      "type" : "REST API",
+      "isProd" : false,
+      "useDB" : true,
+      "useCloud" : false,
+      "useEurekaServer" : false,
+      "isGateway" : false,
+      "useFrontendApp" : true
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/frameworks/languages",
+    "body" : [ {
+      "id" : 1,
+      "name" : "Java",
+      "extension" : "java"
+    }, {
+      "id" : 2,
+      "name" : "C#",
+      "extension" : "cs"
+    }, {
+      "id" : 4,
+      "name" : "Typescript",
+      "extension" : "ts"
+    }, {
+      "id" : 5,
+      "name" : "Python",
+      "extension" : "py"
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/frameworks/cores",
+    "body" : [ {
+      "id" : 1,
+      "name" : ".NET"
+    }, {
+      "id" : 2,
+      "name" : "Django"
+    }, {
+      "id" : 3,
+      "name" : "NestJS"
+    }, {
+      "id" : 4,
+      "name" : "Spring Boot"
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/frameworks/templates",
+    "body" : [ {
+      "id" : 1,
+      "name" : "Template 1"
+    }, {
+      "id" : 2,
+      "name" : "Template 2"
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/generation/modes",
+    "body" : [ {
+      "id" : "GENERATE_NEW_PROJECT",
+      "label" : "Generate new Project"
+    }, {
+      "id" : "ADD_RULE_IN_PROJECT",
+      "label" : "Add rule in Project"
+    }, {
+      "id" : "SYNC_PROJECT",
+      "label" : "Sync Project"
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/databases",
+    "body" : [ {
+      "id" : 1,
+      "name" : "MySQL",
+      "defaultPort" : "3306"
+    }, {
+      "id" : 2,
+      "name" : "PostgreSQL",
+      "defaultPort" : "5432"
+    }, {
+      "id" : 3,
+      "name" : "SQL Server",
+      "defaultPort" : "1433"
+    }, {
+      "id" : 4,
+      "name" : "Oracle",
+      "defaultPort" : "1521"
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/database/engines",
+    "body" : [ {
+      "id" : 1,
+      "name" : "MySQL",
+      "driver" : "com.mysql.cj.jdbc.Driver",
+      "driverName" : null,
+      "port" : "3306",
+      "driverType" : "",
+      "sid" : "",
+      "driverVersion" : null,
+      "databaseMajorVersion" : 0
+    }, {
+      "id" : 2,
+      "name" : "PostgreSQL",
+      "driver" : "org.postgresql.Driver",
+      "driverName" : null,
+      "port" : "5432",
+      "driverType" : "",
+      "sid" : "",
+      "driverVersion" : null,
+      "databaseMajorVersion" : 0
+    }, {
+      "id" : 3,
+      "name" : "SQL Server",
+      "driver" : "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+      "driverName" : null,
+      "port" : "1433",
+      "driverType" : "",
+      "sid" : "",
+      "driverVersion" : null,
+      "databaseMajorVersion" : 0
+    }, {
+      "id" : 4,
+      "name" : "Oracle",
+      "driver" : "oracle.jdbc.driver.OracleDriver",
+      "driverName" : null,
+      "port" : "1521",
+      "driverType" : "thin",
+      "sid" : "ORCLCDB",
+      "driverVersion" : null,
+      "databaseMajorVersion" : 0
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/frontend/frameworks",
+    "body" : [ {
+      "id" : 1,
+      "name" : "Angular App",
+      "coreFramework" : "Angular",
+      "languageId" : 1,
+      "defaultPort" : "4200"
+    }, {
+      "id" : 2,
+      "name" : "Vue3 + Typescript App",
+      "coreFramework" : "VueJs",
+      "languageId" : 1,
+      "defaultPort" : "5173"
+    }, {
+      "id" : 3,
+      "name" : "React App",
+      "coreFramework" : "React",
+      "languageId" : 1,
+      "defaultPort" : "3000"
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/frontend/programming-languages",
+    "body" : [ {
+      "id" : 1,
+      "name" : "Typescript",
+      "extension" : "ts"
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/frontend/interface-languages",
+    "body" : [ {
+      "id" : 1,
+      "code" : "en",
+      "name" : "English"
+    }, {
+      "id" : 2,
+      "code" : "fr",
+      "name" : "French"
+    } ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/frontend/navbar-types",
+    "body" : [ "side" ],
+    "status" : 200,
+    "method" : "GET"
+  }, {
+    "path" : "/api/generator/plan",
+    "body" : {
+      "status" : 400,
+      "code" : "INVALID_GENERATION_CONFIGURATION",
+      "message" : "Aucun profil de génération enregistré"
+    },
+    "status" : 400,
+    "method" : "GET"
+  }, {
+    "path" : "/api/generator/execution-plan",
+    "body" : {
+      "status" : 400,
+      "code" : "INVALID_GENERATION_CONFIGURATION",
+      "message" : "Aucun profil de génération disponible"
+    },
+    "status" : 400,
+    "method" : "GET"
+  }, {
+    "path" : "/api/generator/validate-relations",
+    "body" : {
+      "status" : 400,
+      "code" : "INVALID_GENERATION_CONFIGURATION",
+      "message" : "Aucun profil de génération disponible"
+    },
+    "status" : 400,
+    "method" : "GET"
+  }, {
+    "path" : "/api/generator/launch",
+    "body" : {
+      "status" : 400,
+      "code" : "INVALID_GENERATION_CONFIGURATION",
+      "message" : "Aucun profil de génération disponible"
+    },
+    "status" : 400,
+    "method" : "POST"
+  }, {
+    "path" : "/api/generator/frontend-config",
+    "body" : {
+      "status" : 400,
+      "code" : "INVALID_GENERATION_CONFIGURATION",
+      "message" : "Sélectionnez un framework API compatible avec un frontend séparé"
+    },
+    "status" : 400,
+    "method" : "POST"
+  }, {
+    "path" : "/api/generator/project-config",
+    "body" : {
+      "status" : 400,
+      "code" : "INVALID_GENERATION_CONFIGURATION",
+      "message" : "Aucun framework sélectionné. Sélectionnez d'abord un framework."
+    },
+    "status" : 400,
+    "method" : "POST"
+  }, {
+    "path" : "/api/database/test-connection",
+    "body" : {
+      "status" : 400,
+      "code" : "INVALID_GENERATION_CONFIGURATION",
+      "message" : "Hôte, port, nom de base et utilisateur sont obligatoires"
+    },
+    "status" : 400,
+    "method" : "POST"
+  }, {
+    "path" : "/api/frameworks/999999/select",
+    "body" : {
+      "status" : 404,
+      "error" : "Not Found",
+      "path" : "/api/frameworks/999999/select"
+    },
+    "status" : 404,
+    "method" : "POST"
+  }, {
+    "path" : "/api/generator/frameworks/999999/select",
+    "body" : {
+      "status" : 404,
+      "error" : "Not Found",
+      "path" : "/api/generator/frameworks/999999/select"
+    },
+    "status" : 404,
+    "method" : "POST"
+  }, {
+    "path" : "/api/generation/modes/select",
+    "body" : {
+      "status" : 400,
+      "code" : "INVALID_GENERATION_CONFIGURATION",
+      "message" : "Le mode de génération est obligatoire"
+    },
+    "status" : 400,
+    "method" : "POST"
+  }, {
+    "path" : "/api/generator/git/config",
+    "body" : {
+      "createRemoteRepository" : false,
+      "separateRepositories" : false,
+      "useGit" : false,
+      "success" : true
+    },
+    "status" : 200,
+    "method" : "POST"
+  }, {
+    "path" : "/api/generator/sql/validate",
+    "body" : {
+      "valid" : false,
+      "message" : "Le script SQL est vide"
+    },
+    "status" : 200,
+    "method" : "POST"
+  } ],
+  "routes" : [ {
+    "path" : "/api/generator/generation-parameters",
+    "http" : "DELETE",
+    "javaClass" : "org.labs.genesis.api.controller.TableSelectionController",
+    "javaMethod" : "clearGenerationParameters",
+    "javaReturnType" : "org.labs.genesis.api.dto.MetadataDtos$GenerationParametersResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/cache_providers/{frameworkId}",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectOptionsController",
+    "javaMethod" : "cacheProviders",
+    "javaReturnType" : "java.util.List<java.lang.String>",
+    "responseShape" : {
+      "array" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/database/engines",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.DatabaseConfigController",
+    "javaMethod" : "getEngines",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.DatabaseDtos$DatabaseEngineResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "databaseMajorVersion" : "int",
+          "driver" : "java.lang.String",
+          "driverName" : "java.lang.String",
+          "driverType" : "java.lang.String",
+          "driverVersion" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String",
+          "port" : "java.lang.String",
+          "sid" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "databaseMajorVersion" : "int",
+          "driver" : "java.lang.String",
+          "driverName" : "java.lang.String",
+          "driverType" : "java.lang.String",
+          "driverVersion" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String",
+          "port" : "java.lang.String",
+          "sid" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/databases",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.DatabaseConfigController",
+    "javaMethod" : "getDatabases",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.DatabaseDtos$DatabaseResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "defaultPort" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "defaultPort" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/frameworks",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.FrameworkController",
+    "javaMethod" : "getAll",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.FrameworkDtos$FrameworkResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "coreFramework" : "java.lang.String",
+          "id" : "int",
+          "isGateway" : "boolean",
+          "isProd" : "boolean",
+          "languageId" : "int",
+          "name" : "java.lang.String",
+          "type" : "java.lang.String",
+          "useCloud" : "boolean",
+          "useDB" : "boolean",
+          "useEurekaServer" : "boolean",
+          "useFrontendApp" : "boolean"
+        },
+        "outputProperties" : {
+          "coreFramework" : "java.lang.String",
+          "id" : "int",
+          "isGateway" : "boolean",
+          "isProd" : "boolean",
+          "languageId" : "int",
+          "name" : "java.lang.String",
+          "type" : "java.lang.String",
+          "useCloud" : "boolean",
+          "useDB" : "boolean",
+          "useEurekaServer" : "boolean",
+          "useFrontendApp" : "boolean"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/frameworks/cores",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.FrameworkController",
+    "javaMethod" : "getCoreFrameworks",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.FrameworkDtos$CoreFrameworkResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "id" : "int",
+          "name" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "id" : "int",
+          "name" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/frameworks/languages",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.FrameworkController",
+    "javaMethod" : "getLanguages",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.FrameworkDtos$LanguageResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "extension" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "extension" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/frameworks/templates",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.FrameworkController",
+    "javaMethod" : "getViewTemplates",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.FrameworkDtos$ViewTemplateResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "id" : "int",
+          "name" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "id" : "int",
+          "name" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/frontend/frameworks",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.FrontendConfigController",
+    "javaMethod" : "frameworks",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.service.FrontendConfigService$FrameworkOption>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "coreFramework" : "java.lang.String",
+          "defaultPort" : "java.lang.String",
+          "id" : "int",
+          "languageId" : "int",
+          "name" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "coreFramework" : "java.lang.String",
+          "defaultPort" : "java.lang.String",
+          "id" : "int",
+          "languageId" : "int",
+          "name" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/frontend/interface-languages",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.FrontendConfigController",
+    "javaMethod" : "interfaceLanguages",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.service.FrontendConfigService$InterfaceLanguageOption>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "code" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "code" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/frontend/navbar-types",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.FrontendConfigController",
+    "javaMethod" : "navbarTypes",
+    "javaReturnType" : "java.util.List<java.lang.String>",
+    "responseShape" : {
+      "array" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/frontend/programming-languages",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.FrontendConfigController",
+    "javaMethod" : "programmingLanguages",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.service.FrontendConfigService$ProgrammingLanguageOption>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "extension" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "extension" : "java.lang.String",
+          "id" : "int",
+          "name" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/generation/modes",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.GenerationModeController",
+    "javaMethod" : "getModes",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.GenerationDtos$GenerationModeResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "id" : "java.lang.String",
+          "label" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "id" : "java.lang.String",
+          "label" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/generator/build-tools/{frameworkId}",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectOptionsController",
+    "javaMethod" : "buildTools",
+    "javaReturnType" : "java.util.List<java.lang.String>",
+    "responseShape" : {
+      "array" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/generator/execution-plan",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.GenerationExecutionPlanController",
+    "javaMethod" : "getExecutionPlan",
+    "javaReturnType" : "org.labs.genesis.api.dto.GenerationExecutionPlanDtos$ExecutionPlanResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "batchCount" : "int",
+        "batches" : {
+          "array" : {
+            "inputProperties" : {
+              "components" : {
+                "array" : "java.lang.String"
+              },
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            },
+            "outputProperties" : {
+              "components" : {
+                "array" : "java.lang.String"
+              },
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            }
+          }
+        },
+        "profileCount" : "int",
+        "skippedCount" : "int",
+        "taskCount" : "int"
+      },
+      "outputProperties" : {
+        "batchCount" : "int",
+        "batches" : {
+          "array" : {
+            "inputProperties" : {
+              "components" : {
+                "array" : "java.lang.String"
+              },
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            },
+            "outputProperties" : {
+              "components" : {
+                "array" : "java.lang.String"
+              },
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            }
+          }
+        },
+        "profileCount" : "int",
+        "skippedCount" : "int",
+        "taskCount" : "int"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/generator/framework-versions/{frameworkId}",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectOptionsController",
+    "javaMethod" : "frameworkVersions",
+    "javaReturnType" : "java.util.List<java.lang.String>",
+    "responseShape" : {
+      "array" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/generator/generation-parameters",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.TableSelectionController",
+    "javaMethod" : "getGenerationParameters",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.MetadataDtos$GenerationParameterRequest>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "profileName" : "java.lang.String",
+          "selectedComponents" : {
+            "array" : "java.lang.String"
+          },
+          "selectedTables" : {
+            "array" : "java.lang.String"
+          },
+          "selectedViews" : {
+            "array" : "java.lang.String"
+          }
+        },
+        "outputProperties" : {
+          "profileName" : "java.lang.String",
+          "selectedComponents" : {
+            "array" : "java.lang.String"
+          },
+          "selectedTables" : {
+            "array" : "java.lang.String"
+          },
+          "selectedViews" : {
+            "array" : "java.lang.String"
+          }
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/generator/language-versions/{languageId}",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectOptionsController",
+    "javaMethod" : "languageVersions",
+    "javaReturnType" : "java.util.List<java.lang.String>",
+    "responseShape" : {
+      "array" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/generator/plan",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.GenerationPlanController",
+    "javaMethod" : "getPlan",
+    "javaReturnType" : "org.labs.genesis.api.dto.GenerationPlanDtos$GenerationPlanResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "profileCount" : "int",
+        "skipped" : {
+          "array" : {
+            "inputProperties" : {
+              "alreadyAssignedTo" : "java.lang.String",
+              "component" : "java.lang.String",
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            },
+            "outputProperties" : {
+              "alreadyAssignedTo" : "java.lang.String",
+              "component" : "java.lang.String",
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            }
+          }
+        },
+        "skippedCount" : "int",
+        "taskCount" : "int",
+        "tasks" : {
+          "array" : {
+            "inputProperties" : {
+              "component" : "java.lang.String",
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            },
+            "outputProperties" : {
+              "component" : "java.lang.String",
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            }
+          }
+        }
+      },
+      "outputProperties" : {
+        "profileCount" : "int",
+        "skipped" : {
+          "array" : {
+            "inputProperties" : {
+              "alreadyAssignedTo" : "java.lang.String",
+              "component" : "java.lang.String",
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            },
+            "outputProperties" : {
+              "alreadyAssignedTo" : "java.lang.String",
+              "component" : "java.lang.String",
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            }
+          }
+        },
+        "skippedCount" : "int",
+        "taskCount" : "int",
+        "tasks" : {
+          "array" : {
+            "inputProperties" : {
+              "component" : "java.lang.String",
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            },
+            "outputProperties" : {
+              "component" : "java.lang.String",
+              "entityName" : "java.lang.String",
+              "profileName" : "java.lang.String",
+              "view" : "boolean"
+            }
+          }
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/generator/profiles/{profileName}/relations",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.RelationController",
+    "javaMethod" : "getProfileRelations",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.RelationDtos$RelationResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "childTable" : "java.lang.String",
+          "hasForm" : "boolean",
+          "mandatory" : "boolean",
+          "parentTable" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "childTable" : "java.lang.String",
+          "hasForm" : "boolean",
+          "mandatory" : "boolean",
+          "parentTable" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "java.lang.String",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "java.lang.String"
+    } ]
+  }, {
+    "path" : "/api/generator/project-config/options",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectConfigController",
+    "javaMethod" : "getOptions",
+    "javaReturnType" : "org.labs.genesis.api.dto.ProjectDtos$ProjectConfigOptionsResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "buildTools" : {
+          "array" : "java.lang.String"
+        },
+        "frameworkVersions" : {
+          "array" : "java.lang.String"
+        },
+        "languageVersions" : {
+          "array" : "java.lang.String"
+        },
+        "withGroupId" : "boolean"
+      },
+      "outputProperties" : {
+        "buildTools" : {
+          "array" : "java.lang.String"
+        },
+        "frameworkVersions" : {
+          "array" : "java.lang.String"
+        },
+        "languageVersions" : {
+          "array" : "java.lang.String"
+        },
+        "withGroupId" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/generator/validate-relations",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.GenerationValidationController",
+    "javaMethod" : "validateRelations",
+    "javaReturnType" : "org.labs.genesis.api.controller.GenerationValidationController$ValidationResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "valid" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "valid" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/health",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.HealthController",
+    "javaMethod" : "health",
+    "javaReturnType" : "java.util.Map<java.lang.String, java.lang.String>",
+    "responseShape" : {
+      "map" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/hibernate_ddl_auto_options/{frameworkId}",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectOptionsController",
+    "javaMethod" : "hibernateOptions",
+    "javaReturnType" : "java.util.List<java.lang.String>",
+    "responseShape" : {
+      "array" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/logging_levels/{frameworkId}",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectOptionsController",
+    "javaMethod" : "loggingLevels",
+    "javaReturnType" : "java.util.List<java.lang.String>",
+    "responseShape" : {
+      "array" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/project/config/options",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectConfigController",
+    "javaMethod" : "getOptions",
+    "javaReturnType" : "org.labs.genesis.api.dto.ProjectDtos$ProjectConfigOptionsResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "buildTools" : {
+          "array" : "java.lang.String"
+        },
+        "frameworkVersions" : {
+          "array" : "java.lang.String"
+        },
+        "languageVersions" : {
+          "array" : "java.lang.String"
+        },
+        "withGroupId" : "boolean"
+      },
+      "outputProperties" : {
+        "buildTools" : {
+          "array" : "java.lang.String"
+        },
+        "frameworkVersions" : {
+          "array" : "java.lang.String"
+        },
+        "languageVersions" : {
+          "array" : "java.lang.String"
+        },
+        "withGroupId" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/relations",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.RelationController",
+    "javaMethod" : "getRelations",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.RelationDtos$RelationResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "childTable" : "java.lang.String",
+          "hasForm" : "boolean",
+          "mandatory" : "boolean",
+          "parentTable" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "childTable" : "java.lang.String",
+          "hasForm" : "boolean",
+          "mandatory" : "boolean",
+          "parentTable" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/security_types/{frameworkId}",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectOptionsController",
+    "javaMethod" : "securityTypes",
+    "javaReturnType" : "java.util.List<java.lang.String>",
+    "responseShape" : {
+      "array" : "java.lang.String"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/tables_metadata/childs",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.RelationController",
+    "javaMethod" : "getChilds",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.MetadataDtos$TableMetadataResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "className" : "java.lang.String",
+          "isView" : "boolean",
+          "tableName" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "className" : "java.lang.String",
+          "isView" : "boolean",
+          "tableName" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/tables_metadata/parents",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.RelationController",
+    "javaMethod" : "getParents",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.MetadataDtos$TableMetadataResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "className" : "java.lang.String",
+          "isView" : "boolean",
+          "tableName" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "className" : "java.lang.String",
+          "isView" : "boolean",
+          "tableName" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/tables_metadata_all",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.TableMetadataController",
+    "javaMethod" : "loadAllMetadata",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.MetadataDtos$TableMetadataResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "className" : "java.lang.String",
+          "isView" : "boolean",
+          "tableName" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "className" : "java.lang.String",
+          "isView" : "boolean",
+          "tableName" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/tables_metadata_loaded",
+    "http" : "GET",
+    "javaClass" : "org.labs.genesis.api.controller.TableMetadataController",
+    "javaMethod" : "loadTablesMetadata",
+    "javaReturnType" : "org.labs.genesis.api.dto.MetadataDtos$TablesMetadataResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "tables" : {
+          "array" : {
+            "inputProperties" : {
+              "className" : "java.lang.String",
+              "isView" : "boolean",
+              "tableName" : "java.lang.String"
+            },
+            "outputProperties" : {
+              "className" : "java.lang.String",
+              "isView" : "boolean",
+              "tableName" : "java.lang.String"
+            }
+          }
+        },
+        "views" : {
+          "array" : {
+            "inputProperties" : {
+              "className" : "java.lang.String",
+              "isView" : "boolean",
+              "tableName" : "java.lang.String"
+            },
+            "outputProperties" : {
+              "className" : "java.lang.String",
+              "isView" : "boolean",
+              "tableName" : "java.lang.String"
+            }
+          }
+        }
+      },
+      "outputProperties" : {
+        "tables" : {
+          "array" : {
+            "inputProperties" : {
+              "className" : "java.lang.String",
+              "isView" : "boolean",
+              "tableName" : "java.lang.String"
+            },
+            "outputProperties" : {
+              "className" : "java.lang.String",
+              "isView" : "boolean",
+              "tableName" : "java.lang.String"
+            }
+          }
+        },
+        "views" : {
+          "array" : {
+            "inputProperties" : {
+              "className" : "java.lang.String",
+              "isView" : "boolean",
+              "tableName" : "java.lang.String"
+            },
+            "outputProperties" : {
+              "className" : "java.lang.String",
+              "isView" : "boolean",
+              "tableName" : "java.lang.String"
+            }
+          }
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/database/test-connection",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.DatabaseConfigController",
+    "javaMethod" : "testConnection",
+    "javaReturnType" : "org.labs.genesis.api.dto.DatabaseDtos$DatabaseConnectionTestResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.DatabaseDtos$DatabaseConfigRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "allowPublicKeyRetrieval" : "java.lang.Boolean",
+          "databaseId" : "java.lang.Integer",
+          "databaseName" : "java.lang.String",
+          "driverName" : "java.lang.String",
+          "driverType" : "java.lang.String",
+          "engine" : "java.lang.String",
+          "host" : "java.lang.String",
+          "password" : "java.lang.String",
+          "port" : "java.lang.String",
+          "schema" : "java.lang.String",
+          "sid" : "java.lang.String",
+          "trustCertificate" : "java.lang.Boolean",
+          "username" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "allowPublicKeyRetrieval" : "java.lang.Boolean",
+          "databaseId" : "java.lang.Integer",
+          "databaseName" : "java.lang.String",
+          "driverName" : "java.lang.String",
+          "driverType" : "java.lang.String",
+          "engine" : "java.lang.String",
+          "host" : "java.lang.String",
+          "password" : "java.lang.String",
+          "port" : "java.lang.String",
+          "schema" : "java.lang.String",
+          "sid" : "java.lang.String",
+          "trustCertificate" : "java.lang.Boolean",
+          "username" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/databases/config",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.DatabaseConfigController",
+    "javaMethod" : "configure",
+    "javaReturnType" : "org.labs.genesis.api.dto.DatabaseDtos$DatabaseConfigResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "connected" : "boolean",
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "connected" : "boolean",
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.DatabaseDtos$DatabaseConfigRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "allowPublicKeyRetrieval" : "java.lang.Boolean",
+          "databaseId" : "java.lang.Integer",
+          "databaseName" : "java.lang.String",
+          "driverName" : "java.lang.String",
+          "driverType" : "java.lang.String",
+          "engine" : "java.lang.String",
+          "host" : "java.lang.String",
+          "password" : "java.lang.String",
+          "port" : "java.lang.String",
+          "schema" : "java.lang.String",
+          "sid" : "java.lang.String",
+          "trustCertificate" : "java.lang.Boolean",
+          "username" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "allowPublicKeyRetrieval" : "java.lang.Boolean",
+          "databaseId" : "java.lang.Integer",
+          "databaseName" : "java.lang.String",
+          "driverName" : "java.lang.String",
+          "driverType" : "java.lang.String",
+          "engine" : "java.lang.String",
+          "host" : "java.lang.String",
+          "password" : "java.lang.String",
+          "port" : "java.lang.String",
+          "schema" : "java.lang.String",
+          "sid" : "java.lang.String",
+          "trustCertificate" : "java.lang.Boolean",
+          "username" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/frameworks/{id}/select",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.FrameworkController",
+    "javaMethod" : "select",
+    "javaReturnType" : "org.labs.genesis.api.dto.FrameworkDtos$FrameworkSelectionResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "framework" : {
+          "inputProperties" : {
+            "coreFramework" : "java.lang.String",
+            "id" : "int",
+            "isGateway" : "boolean",
+            "isProd" : "boolean",
+            "languageId" : "int",
+            "name" : "java.lang.String",
+            "type" : "java.lang.String",
+            "useCloud" : "boolean",
+            "useDB" : "boolean",
+            "useEurekaServer" : "boolean",
+            "useFrontendApp" : "boolean"
+          },
+          "outputProperties" : {
+            "coreFramework" : "java.lang.String",
+            "id" : "int",
+            "isGateway" : "boolean",
+            "isProd" : "boolean",
+            "languageId" : "int",
+            "name" : "java.lang.String",
+            "type" : "java.lang.String",
+            "useCloud" : "boolean",
+            "useDB" : "boolean",
+            "useEurekaServer" : "boolean",
+            "useFrontendApp" : "boolean"
+          }
+        },
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "framework" : {
+          "inputProperties" : {
+            "coreFramework" : "java.lang.String",
+            "id" : "int",
+            "isGateway" : "boolean",
+            "isProd" : "boolean",
+            "languageId" : "int",
+            "name" : "java.lang.String",
+            "type" : "java.lang.String",
+            "useCloud" : "boolean",
+            "useDB" : "boolean",
+            "useEurekaServer" : "boolean",
+            "useFrontendApp" : "boolean"
+          },
+          "outputProperties" : {
+            "coreFramework" : "java.lang.String",
+            "id" : "int",
+            "isGateway" : "boolean",
+            "isProd" : "boolean",
+            "languageId" : "int",
+            "name" : "java.lang.String",
+            "type" : "java.lang.String",
+            "useCloud" : "boolean",
+            "useDB" : "boolean",
+            "useEurekaServer" : "boolean",
+            "useFrontendApp" : "boolean"
+          }
+        },
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/generation/modes/select",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.GenerationModeController",
+    "javaMethod" : "select",
+    "javaReturnType" : "org.labs.genesis.api.dto.GenerationDtos$GenerationModeSelectionResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "mode" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "mode" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.GenerationDtos$GenerationModeSelectionRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "mode" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "mode" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/database-config",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.DatabaseConfigController",
+    "javaMethod" : "configure",
+    "javaReturnType" : "org.labs.genesis.api.dto.DatabaseDtos$DatabaseConfigResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "connected" : "boolean",
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "connected" : "boolean",
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.DatabaseDtos$DatabaseConfigRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "allowPublicKeyRetrieval" : "java.lang.Boolean",
+          "databaseId" : "java.lang.Integer",
+          "databaseName" : "java.lang.String",
+          "driverName" : "java.lang.String",
+          "driverType" : "java.lang.String",
+          "engine" : "java.lang.String",
+          "host" : "java.lang.String",
+          "password" : "java.lang.String",
+          "port" : "java.lang.String",
+          "schema" : "java.lang.String",
+          "sid" : "java.lang.String",
+          "trustCertificate" : "java.lang.Boolean",
+          "username" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "allowPublicKeyRetrieval" : "java.lang.Boolean",
+          "databaseId" : "java.lang.Integer",
+          "databaseName" : "java.lang.String",
+          "driverName" : "java.lang.String",
+          "driverType" : "java.lang.String",
+          "engine" : "java.lang.String",
+          "host" : "java.lang.String",
+          "password" : "java.lang.String",
+          "port" : "java.lang.String",
+          "schema" : "java.lang.String",
+          "sid" : "java.lang.String",
+          "trustCertificate" : "java.lang.Boolean",
+          "username" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/frameworks/{id}/select",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.GeneratorFrameworkController",
+    "javaMethod" : "selectFramework",
+    "javaReturnType" : "org.labs.genesis.api.dto.FrameworkDtos$FrameworkSelectionResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "framework" : {
+          "inputProperties" : {
+            "coreFramework" : "java.lang.String",
+            "id" : "int",
+            "isGateway" : "boolean",
+            "isProd" : "boolean",
+            "languageId" : "int",
+            "name" : "java.lang.String",
+            "type" : "java.lang.String",
+            "useCloud" : "boolean",
+            "useDB" : "boolean",
+            "useEurekaServer" : "boolean",
+            "useFrontendApp" : "boolean"
+          },
+          "outputProperties" : {
+            "coreFramework" : "java.lang.String",
+            "id" : "int",
+            "isGateway" : "boolean",
+            "isProd" : "boolean",
+            "languageId" : "int",
+            "name" : "java.lang.String",
+            "type" : "java.lang.String",
+            "useCloud" : "boolean",
+            "useDB" : "boolean",
+            "useEurekaServer" : "boolean",
+            "useFrontendApp" : "boolean"
+          }
+        },
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "framework" : {
+          "inputProperties" : {
+            "coreFramework" : "java.lang.String",
+            "id" : "int",
+            "isGateway" : "boolean",
+            "isProd" : "boolean",
+            "languageId" : "int",
+            "name" : "java.lang.String",
+            "type" : "java.lang.String",
+            "useCloud" : "boolean",
+            "useDB" : "boolean",
+            "useEurekaServer" : "boolean",
+            "useFrontendApp" : "boolean"
+          },
+          "outputProperties" : {
+            "coreFramework" : "java.lang.String",
+            "id" : "int",
+            "isGateway" : "boolean",
+            "isProd" : "boolean",
+            "languageId" : "int",
+            "name" : "java.lang.String",
+            "type" : "java.lang.String",
+            "useCloud" : "boolean",
+            "useDB" : "boolean",
+            "useEurekaServer" : "boolean",
+            "useFrontendApp" : "boolean"
+          }
+        },
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "int",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "int"
+    } ]
+  }, {
+    "path" : "/api/generator/frontend-config",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.FrontendConfigController",
+    "javaMethod" : "configure",
+    "javaReturnType" : "org.labs.genesis.api.service.FrontendConfigService$FrontendConfigResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "frameworkId" : "int",
+        "languageId" : "int",
+        "port" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "frameworkId" : "int",
+        "languageId" : "int",
+        "port" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.service.FrontendConfigService$FrontendConfigRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "frameworkId" : "java.lang.Integer",
+          "languageId" : "java.lang.Integer",
+          "port" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "frameworkId" : "java.lang.Integer",
+          "languageId" : "java.lang.Integer",
+          "port" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/frontend-layout-config",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.FrontendConfigController",
+    "javaMethod" : "configureLayout",
+    "javaReturnType" : "java.util.Map<java.lang.String, java.lang.Object>",
+    "responseShape" : {
+      "map" : "java.lang.Object"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.service.FrontendConfigService$FrontendLayoutRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "faviconAssetId" : "java.lang.String",
+          "faviconPath" : "java.lang.String",
+          "logoAssetId" : "java.lang.String",
+          "logoPath" : "java.lang.String",
+          "navbarType" : "java.lang.String",
+          "port" : "java.lang.String",
+          "primaryColor" : "java.lang.String",
+          "secondaryColor" : "java.lang.String",
+          "selectedInterfaceLanguages" : {
+            "array" : "java.lang.String"
+          }
+        },
+        "outputProperties" : {
+          "faviconAssetId" : "java.lang.String",
+          "faviconPath" : "java.lang.String",
+          "logoAssetId" : "java.lang.String",
+          "logoPath" : "java.lang.String",
+          "navbarType" : "java.lang.String",
+          "port" : "java.lang.String",
+          "primaryColor" : "java.lang.String",
+          "secondaryColor" : "java.lang.String",
+          "selectedInterfaceLanguages" : {
+            "array" : "java.lang.String"
+          }
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/frontend/assets/{kind}",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.FrontendAssetController",
+    "javaMethod" : "upload",
+    "javaReturnType" : "java.util.Map<java.lang.String, java.lang.String>",
+    "responseShape" : {
+      "map" : "java.lang.String"
+    },
+    "consumes" : [ "multipart/form-data" ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "java.lang.String",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "java.lang.String"
+    }, {
+      "javaType" : "org.springframework.web.multipart.MultipartFile",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestPart(name=\"\", value=\"file\", required=true)" ],
+      "shape" : "org.springframework.web.multipart.MultipartFile"
+    } ]
+  }, {
+    "path" : "/api/generator/generation-parameters",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.TableSelectionController",
+    "javaMethod" : "saveGenerationParameters",
+    "javaReturnType" : "org.labs.genesis.api.dto.MetadataDtos$GenerationParametersResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "java.util.List<org.labs.genesis.api.dto.MetadataDtos$GenerationParameterRequest>",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "array" : {
+          "inputProperties" : {
+            "profileName" : "java.lang.String",
+            "selectedComponents" : {
+              "array" : "java.lang.String"
+            },
+            "selectedTables" : {
+              "array" : "java.lang.String"
+            },
+            "selectedViews" : {
+              "array" : "java.lang.String"
+            }
+          },
+          "outputProperties" : {
+            "profileName" : "java.lang.String",
+            "selectedComponents" : {
+              "array" : "java.lang.String"
+            },
+            "selectedTables" : {
+              "array" : "java.lang.String"
+            },
+            "selectedViews" : {
+              "array" : "java.lang.String"
+            }
+          }
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/git/config",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.GitConfigurationController",
+    "javaMethod" : "configure",
+    "javaReturnType" : "org.springframework.http.ResponseEntity<java.util.Map<java.lang.String, java.lang.Object>>",
+    "responseShape" : {
+      "responseEntity" : {
+        "map" : "java.lang.Object"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.config.git.GitConfiguration",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "backendRepositoryName" : "java.lang.String",
+          "createRemoteRepository" : "boolean",
+          "frontendRepositoryName" : "java.lang.String",
+          "githubToken" : "java.lang.String",
+          "githubUsername" : "java.lang.String",
+          "repositoryName" : "java.lang.String",
+          "separateRepositories" : "boolean",
+          "useGit" : "boolean"
+        },
+        "outputProperties" : {
+          "backendRepositoryName" : "java.lang.String",
+          "createRemoteRepository" : "boolean",
+          "frontendRepositoryName" : "java.lang.String",
+          "githubToken" : "java.lang.String",
+          "githubUsername" : "java.lang.String",
+          "repositoryName" : "java.lang.String",
+          "separateRepositories" : "boolean",
+          "useGit" : "boolean"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/git/init",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.GitLocalController",
+    "javaMethod" : "init",
+    "javaReturnType" : "java.util.Map<java.lang.String, java.lang.Object>",
+    "responseShape" : {
+      "map" : "java.lang.Object"
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/generator/launch",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.GenerationLaunchController",
+    "javaMethod" : "launch",
+    "javaReturnType" : "org.labs.genesis.api.service.GenerationExecutionService$LaunchResult",
+    "responseShape" : {
+      "inputProperties" : {
+        "backendBatchCount" : "int",
+        "frontendTaskCount" : "int",
+        "publication" : {
+          "inputProperties" : {
+            "createdFiles" : {
+              "array" : "java.lang.String"
+            },
+            "preparedFileCount" : "int",
+            "skippedExistingFiles" : {
+              "array" : "java.lang.String"
+            }
+          },
+          "outputProperties" : {
+            "createdFiles" : {
+              "array" : "java.lang.String"
+            },
+            "preparedFileCount" : "int",
+            "skippedExistingFiles" : {
+              "array" : "java.lang.String"
+            }
+          }
+        },
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "backendBatchCount" : "int",
+        "frontendTaskCount" : "int",
+        "publication" : {
+          "inputProperties" : {
+            "createdFiles" : {
+              "array" : "java.lang.String"
+            },
+            "preparedFileCount" : "int",
+            "skippedExistingFiles" : {
+              "array" : "java.lang.String"
+            }
+          },
+          "outputProperties" : {
+            "createdFiles" : {
+              "array" : "java.lang.String"
+            },
+            "preparedFileCount" : "int",
+            "skippedExistingFiles" : {
+              "array" : "java.lang.String"
+            }
+          }
+        },
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/generator/project-config",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectConfigController",
+    "javaMethod" : "configure",
+    "javaReturnType" : "org.labs.genesis.api.dto.ProjectDtos$ProjectConfigResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "buildTool" : "java.lang.String",
+        "cacheProvider" : "java.lang.String",
+        "frameworkVersion" : "java.lang.String",
+        "groupId" : "java.lang.String",
+        "hibernateDdlAuto" : "java.lang.String",
+        "languageVersion" : "java.lang.String",
+        "loggingLevel" : "java.lang.String",
+        "message" : "java.lang.String",
+        "projectDescription" : "java.lang.String",
+        "projectLocation" : "java.lang.String",
+        "projectName" : "java.lang.String",
+        "projectPort" : "java.lang.String",
+        "securityType" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "buildTool" : "java.lang.String",
+        "cacheProvider" : "java.lang.String",
+        "frameworkVersion" : "java.lang.String",
+        "groupId" : "java.lang.String",
+        "hibernateDdlAuto" : "java.lang.String",
+        "languageVersion" : "java.lang.String",
+        "loggingLevel" : "java.lang.String",
+        "message" : "java.lang.String",
+        "projectDescription" : "java.lang.String",
+        "projectLocation" : "java.lang.String",
+        "projectName" : "java.lang.String",
+        "projectPort" : "java.lang.String",
+        "securityType" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.ProjectDtos$ProjectConfigRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "buildTool" : "java.lang.String",
+          "cacheProvider" : "java.lang.String",
+          "frameworkVersion" : "java.lang.String",
+          "groupId" : "java.lang.String",
+          "hibernateDdlAuto" : "java.lang.String",
+          "languageVersion" : "java.lang.String",
+          "loggingLevel" : "java.lang.String",
+          "projectDescription" : "java.lang.String",
+          "projectLocation" : "java.lang.String",
+          "projectName" : "java.lang.String",
+          "projectPort" : "java.lang.String",
+          "securityType" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "buildTool" : "java.lang.String",
+          "cacheProvider" : "java.lang.String",
+          "frameworkVersion" : "java.lang.String",
+          "groupId" : "java.lang.String",
+          "hibernateDdlAuto" : "java.lang.String",
+          "languageVersion" : "java.lang.String",
+          "loggingLevel" : "java.lang.String",
+          "projectDescription" : "java.lang.String",
+          "projectLocation" : "java.lang.String",
+          "projectName" : "java.lang.String",
+          "projectPort" : "java.lang.String",
+          "securityType" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/relation-parameters",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.RelationController",
+    "javaMethod" : "saveRelationParameters",
+    "javaReturnType" : "org.labs.genesis.api.dto.RelationDtos$RelationParametersResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.RelationDtos$RelationParametersRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "relations" : {
+            "array" : {
+              "inputProperties" : {
+                "childTable" : "java.lang.String",
+                "hasForm" : "boolean",
+                "mandatory" : "boolean",
+                "parentTable" : "java.lang.String"
+              },
+              "outputProperties" : {
+                "childTable" : "java.lang.String",
+                "hasForm" : "boolean",
+                "mandatory" : "boolean",
+                "parentTable" : "java.lang.String"
+              }
+            }
+          }
+        },
+        "outputProperties" : {
+          "relations" : {
+            "array" : {
+              "inputProperties" : {
+                "childTable" : "java.lang.String",
+                "hasForm" : "boolean",
+                "mandatory" : "boolean",
+                "parentTable" : "java.lang.String"
+              },
+              "outputProperties" : {
+                "childTable" : "java.lang.String",
+                "hasForm" : "boolean",
+                "mandatory" : "boolean",
+                "parentTable" : "java.lang.String"
+              }
+            }
+          }
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/script-config",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.ScriptConfigController",
+    "javaMethod" : "save",
+    "javaReturnType" : "org.labs.genesis.api.dto.SqlScriptDtos$ScriptConfigResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.SqlScriptDtos$ScriptConfigRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "content" : "java.lang.String",
+          "path" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "content" : "java.lang.String",
+          "path" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/sql/execute",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.SqlScriptController",
+    "javaMethod" : "execute",
+    "javaReturnType" : "org.labs.genesis.api.dto.SqlScriptDtos$SqlExecutionResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.SqlScriptDtos$SqlScriptRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "confirmExecution" : "java.lang.Boolean",
+          "script" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "confirmExecution" : "java.lang.Boolean",
+          "script" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/sql/validate",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.SqlScriptController",
+    "javaMethod" : "validate",
+    "javaReturnType" : "org.labs.genesis.api.dto.SqlScriptDtos$SqlValidationResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "valid" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "valid" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.SqlScriptDtos$SqlScriptRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "confirmExecution" : "java.lang.Boolean",
+          "script" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "confirmExecution" : "java.lang.Boolean",
+          "script" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/project/config",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.ProjectConfigController",
+    "javaMethod" : "configure",
+    "javaReturnType" : "org.labs.genesis.api.dto.ProjectDtos$ProjectConfigResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "buildTool" : "java.lang.String",
+        "cacheProvider" : "java.lang.String",
+        "frameworkVersion" : "java.lang.String",
+        "groupId" : "java.lang.String",
+        "hibernateDdlAuto" : "java.lang.String",
+        "languageVersion" : "java.lang.String",
+        "loggingLevel" : "java.lang.String",
+        "message" : "java.lang.String",
+        "projectDescription" : "java.lang.String",
+        "projectLocation" : "java.lang.String",
+        "projectName" : "java.lang.String",
+        "projectPort" : "java.lang.String",
+        "securityType" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "buildTool" : "java.lang.String",
+        "cacheProvider" : "java.lang.String",
+        "frameworkVersion" : "java.lang.String",
+        "groupId" : "java.lang.String",
+        "hibernateDdlAuto" : "java.lang.String",
+        "languageVersion" : "java.lang.String",
+        "loggingLevel" : "java.lang.String",
+        "message" : "java.lang.String",
+        "projectDescription" : "java.lang.String",
+        "projectLocation" : "java.lang.String",
+        "projectName" : "java.lang.String",
+        "projectPort" : "java.lang.String",
+        "securityType" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.ProjectDtos$ProjectConfigRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "buildTool" : "java.lang.String",
+          "cacheProvider" : "java.lang.String",
+          "frameworkVersion" : "java.lang.String",
+          "groupId" : "java.lang.String",
+          "hibernateDdlAuto" : "java.lang.String",
+          "languageVersion" : "java.lang.String",
+          "loggingLevel" : "java.lang.String",
+          "projectDescription" : "java.lang.String",
+          "projectLocation" : "java.lang.String",
+          "projectName" : "java.lang.String",
+          "projectPort" : "java.lang.String",
+          "securityType" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "buildTool" : "java.lang.String",
+          "cacheProvider" : "java.lang.String",
+          "frameworkVersion" : "java.lang.String",
+          "groupId" : "java.lang.String",
+          "hibernateDdlAuto" : "java.lang.String",
+          "languageVersion" : "java.lang.String",
+          "loggingLevel" : "java.lang.String",
+          "projectDescription" : "java.lang.String",
+          "projectLocation" : "java.lang.String",
+          "projectName" : "java.lang.String",
+          "projectPort" : "java.lang.String",
+          "securityType" : "java.lang.String"
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/relations/detect",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.RelationController",
+    "javaMethod" : "detectRelations",
+    "javaReturnType" : "java.util.List<org.labs.genesis.api.dto.RelationDtos$RelationResponse>",
+    "responseShape" : {
+      "array" : {
+        "inputProperties" : {
+          "childTable" : "java.lang.String",
+          "hasForm" : "boolean",
+          "mandatory" : "boolean",
+          "parentTable" : "java.lang.String"
+        },
+        "outputProperties" : {
+          "childTable" : "java.lang.String",
+          "hasForm" : "boolean",
+          "mandatory" : "boolean",
+          "parentTable" : "java.lang.String"
+        }
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ ]
+  }, {
+    "path" : "/api/tables_metadata/select",
+    "http" : "POST",
+    "javaClass" : "org.labs.genesis.api.controller.TableSelectionController",
+    "javaMethod" : "select",
+    "javaReturnType" : "org.labs.genesis.api.dto.MetadataDtos$TableSelectionResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "generationOptions" : {
+          "array" : "java.lang.String"
+        },
+        "selectedTables" : {
+          "array" : "java.lang.String"
+        },
+        "selectedViews" : {
+          "array" : "java.lang.String"
+        },
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "generationOptions" : {
+          "array" : "java.lang.String"
+        },
+        "selectedTables" : {
+          "array" : "java.lang.String"
+        },
+        "selectedViews" : {
+          "array" : "java.lang.String"
+        },
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "org.labs.genesis.api.dto.MetadataDtos$TableSelectionRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "selectedComponents" : {
+            "array" : "java.lang.String"
+          },
+          "selectedTables" : {
+            "array" : "java.lang.String"
+          },
+          "selectedViews" : {
+            "array" : "java.lang.String"
+          }
+        },
+        "outputProperties" : {
+          "selectedComponents" : {
+            "array" : "java.lang.String"
+          },
+          "selectedTables" : {
+            "array" : "java.lang.String"
+          },
+          "selectedViews" : {
+            "array" : "java.lang.String"
+          }
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/generator/profiles/{profileName}/relations",
+    "http" : "PUT",
+    "javaClass" : "org.labs.genesis.api.controller.RelationController",
+    "javaMethod" : "saveProfileRelations",
+    "javaReturnType" : "org.labs.genesis.api.dto.RelationDtos$RelationParametersResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "message" : "java.lang.String",
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "java.lang.String",
+      "annotations" : [ "@org.springframework.web.bind.annotation.PathVariable(name=\"\", value=\"\", required=true)" ],
+      "shape" : "java.lang.String"
+    }, {
+      "javaType" : "org.labs.genesis.api.dto.RelationDtos$RelationParametersRequest",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "inputProperties" : {
+          "relations" : {
+            "array" : {
+              "inputProperties" : {
+                "childTable" : "java.lang.String",
+                "hasForm" : "boolean",
+                "mandatory" : "boolean",
+                "parentTable" : "java.lang.String"
+              },
+              "outputProperties" : {
+                "childTable" : "java.lang.String",
+                "hasForm" : "boolean",
+                "mandatory" : "boolean",
+                "parentTable" : "java.lang.String"
+              }
+            }
+          }
+        },
+        "outputProperties" : {
+          "relations" : {
+            "array" : {
+              "inputProperties" : {
+                "childTable" : "java.lang.String",
+                "hasForm" : "boolean",
+                "mandatory" : "boolean",
+                "parentTable" : "java.lang.String"
+              },
+              "outputProperties" : {
+                "childTable" : "java.lang.String",
+                "hasForm" : "boolean",
+                "mandatory" : "boolean",
+                "parentTable" : "java.lang.String"
+              }
+            }
+          }
+        }
+      }
+    } ]
+  }, {
+    "path" : "/api/relations",
+    "http" : "PUT",
+    "javaClass" : "org.labs.genesis.api.controller.RelationController",
+    "javaMethod" : "updateRelations",
+    "javaReturnType" : "org.labs.genesis.api.dto.RelationDtos$RelationUpdateResponse",
+    "responseShape" : {
+      "inputProperties" : {
+        "relations" : {
+          "array" : {
+            "inputProperties" : {
+              "childTable" : "java.lang.String",
+              "hasForm" : "boolean",
+              "mandatory" : "boolean",
+              "parentTable" : "java.lang.String"
+            },
+            "outputProperties" : {
+              "childTable" : "java.lang.String",
+              "hasForm" : "boolean",
+              "mandatory" : "boolean",
+              "parentTable" : "java.lang.String"
+            }
+          }
+        },
+        "success" : "boolean"
+      },
+      "outputProperties" : {
+        "relations" : {
+          "array" : {
+            "inputProperties" : {
+              "childTable" : "java.lang.String",
+              "hasForm" : "boolean",
+              "mandatory" : "boolean",
+              "parentTable" : "java.lang.String"
+            },
+            "outputProperties" : {
+              "childTable" : "java.lang.String",
+              "hasForm" : "boolean",
+              "mandatory" : "boolean",
+              "parentTable" : "java.lang.String"
+            }
+          }
+        },
+        "success" : "boolean"
+      }
+    },
+    "consumes" : [ ],
+    "produces" : [ ],
+    "conditions" : "[]",
+    "parameters" : [ {
+      "javaType" : "java.util.List<org.labs.genesis.api.dto.RelationDtos$RelationUpdateRequest>",
+      "annotations" : [ "@org.springframework.web.bind.annotation.RequestBody(required=true)" ],
+      "shape" : {
+        "array" : {
+          "inputProperties" : {
+            "childTable" : "java.lang.String",
+            "hasForm" : "boolean",
+            "mandatory" : "boolean",
+            "parentTable" : "java.lang.String"
+          },
+          "outputProperties" : {
+            "childTable" : "java.lang.String",
+            "hasForm" : "boolean",
+            "mandatory" : "boolean",
+            "parentTable" : "java.lang.String"
+          }
+        }
+      }
+    } ]
+  } ]
+}

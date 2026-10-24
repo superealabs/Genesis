@@ -1,17 +1,16 @@
 package org.labs.genesis.api.controller;
 
+import java.util.List;
 import org.labs.genesis.api.dto.DatabaseDtos.*;
 import org.labs.genesis.api.service.DatabaseConfigService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
-public class DatabaseConfigController {
+public class DatabaseController {
 
     private final DatabaseConfigService databaseConfigService;
 
-    public DatabaseConfigController(DatabaseConfigService databaseConfigService) {
+    public DatabaseController(DatabaseConfigService databaseConfigService) {
         this.databaseConfigService = databaseConfigService;
     }
 
@@ -33,10 +32,7 @@ public class DatabaseConfigController {
     }
 
     // Ancienne et nouvelle route de sauvegarde
-    @PostMapping({
-            "/api/databases/config",
-            "/api/generator/database-config"
-    })
+    @PostMapping({ "/api/databases/config", "/api/generator/database-config" })
     public DatabaseConfigResponse configure(@RequestBody DatabaseConfigRequest request) {
         return databaseConfigService.configure(request);
     }

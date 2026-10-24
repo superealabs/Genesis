@@ -1,5 +1,11 @@
 package org.labs.genesis.api.service;
 
+import org.labs.genesis.api.dto.GenerationDtos;
+
+import org.labs.genesis.api.dto.FrontendDtos;
+
+import org.labs.genesis.api.dto.FrontendDtos.*;
+
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 import org.labs.genesis.api.GenesisApiApplication;
@@ -67,7 +73,7 @@ class GitIntegrationTest {
         context.setGenerateProjectStructure(true);
         context.setGenerateFrontendApp(true);
         new FrameworkService(store).select(1);
-        new FrontendConfigService(store, new FrontendFrameworkIsolationService(), new FrontendAssetService()).configure(new FrontendConfigService.FrontendConfigRequest(1, null, null));
+        new FrontendConfigService(store, new FrontendFrameworkIsolationService(), new FrontendAssetService()).configure(new FrontendDtos.FrontendConfigRequest(1, null, null));
         context.setGitConfiguration(new GitConfiguration());
         root = Path.of(context.getDestinationFolder());
         var staging = new GenerationStagingService();
@@ -271,8 +277,8 @@ class GitIntegrationTest {
         var snapshots = mock(GenerationConfigurationSnapshotService.class);
         when(snapshots.capture()).thenReturn(snapshot);
         var preflight = mock(GenerationPreflightService.class);
-        var batch = new org.labs.genesis.api.dto.GenerationExecutionPlanDtos.ExecutionBatch("test", "Demo", false, List.of("Model"));
-        var executionPlan = new org.labs.genesis.api.dto.GenerationExecutionPlanDtos.ExecutionPlanResponse(1, 1, 1, 0, List.of(batch));
+        var batch = new org.labs.genesis.api.dto.GenerationDtos.ExecutionBatch("test", "Demo", false, List.of("Model"));
+        var executionPlan = new org.labs.genesis.api.dto.GenerationDtos.ExecutionPlanResponse(1, 1, 1, 0, List.of(batch));
         when(preflight.prepare(snapshot)).thenReturn(new GenerationPreflightService.PreflightResult(executionPlan, null, List.of()));
         var contexts = mock(GenerationExecutionContextFactory.class);
         when(contexts.openConsolidated(snapshot)).thenAnswer(call ->
