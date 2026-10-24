@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useGeneratorVsc } from '@/features/generator/composables/useGeneratorVsc';
 
-import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
+import type { DatabaseEngineDto, RepositoryProviderMetadata } from '@genesis-labs/shared-types';
 
 import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
 import { FrontendFramework } from '@genesis-labs/shared-types';
@@ -19,7 +19,9 @@ const {
     stepperData,
     setPendingFramework,
     setPendingDatabaseEngine,
-    setPendingFrontendFramework
+    setPendingFrontendFramework,
+    setPendingRepositoryProvider
+    
 } = useGeneratorVsc();
 
 function handleClose() {
@@ -51,6 +53,10 @@ function onSelectDatabase(engine: DatabaseEngineDto) {
 function onSelectFrontend(framework: FrontendFramework) {
     setPendingFrontendFramework(framework);
 }
+
+function onSelectRepository(repoProvider: RepositoryProviderMetadata) {
+    setPendingRepositoryProvider(repoProvider);
+}
 </script>
 
 <template>
@@ -65,6 +71,7 @@ function onSelectFrontend(framework: FrontendFramework) {
         @select-framework="onSelectFramework"
         @select-database="onSelectDatabase"
         @select-frontend="onSelectFrontend"
+        @select-repository="onSelectRepository" 
         @request-folder-path="handleSelectFolderPath"
         @request-file-path="handleFileRequest"
     />

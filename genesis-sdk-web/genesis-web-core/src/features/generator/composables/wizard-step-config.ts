@@ -4,17 +4,20 @@
 import type { IGeneratorService } from '../types/generator.service.interface';
 import type { IFrontendService } from '../../frontend/types/frontend.service.interface';
 import type { IDatabaseService } from '../../database/types/database.service.interface';
-import type { IFrameworkService, GenerationParameter, ComponentType } from '@genesis-labs/shared-types';
+import type { IFrameworkService, GenerationParameter, ComponentType, IRepositoryService } from '@genesis-labs/shared-types';
 
 // Stores
 import { useGeneratorStore } from '../store/useGenerator.store';
 import { useFrameworkStore } from '../../frameworks/store/useFramework.store';
 import { useDatabaseStore } from '../../database/store/useDatabase.store';
 import { useFrontendStore } from '../../frontend/store/useFrontend.store';
+import { useRepositoryStore } from '../../repository/manifest';
 
 import { useRecentStore } from '@genesis-labs/web-core/core/features/recent/store/useRecent.store';
 import { RecentItem } from '@genesis-labs/shared-types';
 import type { IRecentService } from '@genesis-labs/web-core/core/features/recent/types/recent.service.interface';
+
+
 
 
 // ============================================================================
@@ -26,6 +29,7 @@ export interface WizardServices {
   fdsvc: IFrontendService;
   dbsvc: IDatabaseService;
   fsvc: IFrameworkService;
+  repoSvc: IRepositoryService;
   recentSvc: IRecentService;
 }
 
@@ -51,6 +55,7 @@ export type StepId =
   | 'relations'
   | 'frontend_select'
   | 'frontend_layout'
+  | 'repository_select'
   | 'git_config'
   | 'summary';
 
@@ -72,6 +77,7 @@ export const WIZARD_STEP_ORDER: StepId[] = [
   'relations',
   'frontend_select',
   'frontend_layout',
+  'repository_select',
   'git_config',
   'summary'
 ];
@@ -362,6 +368,33 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde du layout frontend.");
         return false;
       }
+    }
+  },
+
+  repository_select: {
+    onEnter: async (_store, { repoSvc }) => {
+      console.log("[Wizard: repository_select] Chargement des fournisseurs de dépôt...");
+      const repositoryStore = useRepositoryStore();
+      
+      try {
+        const providersData = await repoSvc.getSupportedProviders();
+        repositoryStore.setProviders(providersData);
+        console.log(`[Wizard: repository_select] ${providersData.length} fournisseur(s) chargé(s)`);
+      } catch (error) {
+        console.error("[Wizard: repository_select] Échec du chargement des fournisseurs:", error);
+        _store.setWizardError("Impossible de charger la liste des fournisseurs de dépôt.");
+      }
+    },
+    
+    beforeNext: async (store) => {
+      // CORRECTION : On vérifie pendingRepositoryProvider comme pour les frameworks
+      if (!store.pendingRepositoryProvider) {
+        store.setWizardError("Veuillez sélectionner un fournisseur de dépôt avant de continuer.");
+        return false;
+      }
+
+      console.log(`[Wizard: repository_select] Fournisseur sélectionné :`, store.pendingRepositoryProvider.name);
+      return true;
     }
   },
 

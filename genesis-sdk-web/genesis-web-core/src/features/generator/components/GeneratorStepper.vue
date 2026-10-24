@@ -105,6 +105,19 @@
       @request-file-path="handleRequestFilePath" 
     />
 
+    <RepositoryLayout 
+      v-else-if="currentStepId === 'repository_select'"
+      v-bind="repositoryLayoutProps"
+      @back="emit('close')"
+      @select-replace="handleReplaceSelectionRepo"
+      @close-replace="cancelReplaceRepo"
+      @select="handleSelectWrapperRepo"
+      @info="handleInfoRepo"
+      @close-detail="closeDetailRepo"
+      @compare="repoComparator.open"
+      @close-compare="repoComparator.close"
+    />
+
     <!-- ÉTAPE : CONFIGURATION GIT -->
     <GitConfigView v-else-if="currentStepId === 'git_config'" />
 
@@ -136,6 +149,8 @@ import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/Err
 import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-core/features/frameworks/components/FrameworkLayout.vue';
 import DatabaseLayout, { type DatabaseLayoutProps } from '@genesis-labs/web-core/features/database/components/DatabaseLayout.vue';
 import FrontendLayout, { type FrontendLayoutProps } from '@genesis-labs/web-core/features/frontend/components/FrontendLayout.vue';
+import RepositoryLayout, { type RepositoryLayoutProps } from '@genesis-labs/web-core/features/repository/components/RepositoryLayout.vue';
+
 import SummaryView from './steps/SummaryView.vue';
 
 import { 
@@ -153,6 +168,8 @@ import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/sto
 
 // ✅ IMPORT POUR LE MAPPING SÉMANTIQUE
 import { getStepIdByNumber } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
+import { RepositoryProviderMetadata } from '@genesis-labs/shared-types';
+import { useWizardRepository } from '@genesis-labs/web-core/features/repository/composables/useWizardRepository';
 
 // ============================================================================
 // 1. PROPS & EMITS
@@ -171,6 +188,7 @@ const emit = defineEmits<{
   'select-framework': [framework: Framework];
   'select-frontend': [framework: FrontendFramework];
   'select-database': [engine: DatabaseEngineDto];
+  'select-repository': [provider: RepositoryProviderMetadata];
   'request-folder-path': [];
   'request-file-path': [payload: FileRequestPayload];
 }>();
@@ -185,6 +203,8 @@ const frameworkGroupBy = ref<keyof Framework | null>(null);
 
 const feDetailFramework = ref<FrontendFramework | null>(null);
 const dbDetailEngine = ref<DatabaseEngineDto | null>(null);
+const repoDetailProvider = ref<RepositoryProviderMetadata | null>(null);
+
 
 const showError = ref(false);
 const errorMessage = ref('');
@@ -229,6 +249,29 @@ const {
   comparator: feComparator
 } = useWizardFrontend((framework: FrontendFramework) => {
   emit('select-frontend', framework);
+});
+
+const {
+  providers: repoProviders,
+  selectedId: repoSelectedId,
+  displayMode: repoDisplayMode,
+  compareMode: repoCompareMode,
+  providerSlots: repoProviderSlots,
+  searchQuery: repoSearchQuery,
+  isLoading: repoIsLoading,
+  showReplacePopup: repoShowReplacePopup,
+  pendingProvider: repoPendingProvider,
+  mouseX: repoMouseX,
+  mouseY: repoMouseY,
+  compare: repoCompare,
+  comparator: repoComparator,
+  handleSelectWrapper: handleSelectWrapperRepo,
+  handleReplaceSelection: handleReplaceSelectionRepo,
+  cancelReplace: cancelReplaceRepo,
+  closeDetail: closeDetailRepo,
+  handleInfo: handleInfoRepo
+} = useWizardRepository((provider: RepositoryProviderMetadata) => {
+  emit('select-repository', provider);
 });
 
 // ============================================================================
@@ -308,6 +351,27 @@ const frontendLayoutProps = computed<FrontendLayoutProps>(() => ({
   comparing: feComparator.isOpen.value,
   comparatorEditors: feComparator.editors.value,
   comparatorEditorIds: feComparator.initialEditorIds.value
+}));
+
+const repositoryLayoutProps = computed<RepositoryLayoutProps>(() => ({
+  providers: repoProviders.value,
+  selectedId: repoSelectedId.value,
+  displayMode: repoDisplayMode.value,
+  compareMode: repoCompareMode.value,
+  providerSlots: repoProviderSlots.value,
+  searchQuery: repoSearchQuery.value,
+  showReplacePopup: repoShowReplacePopup.value,
+  replaceOptions: [], // À adapter si tu utilises le replace pour les repos
+  mouseX: repoMouseX.value,
+  mouseY: repoMouseY.value,
+  isLoading: repoIsLoading.value,
+  detailProvider: repoDetailProvider.value,
+  pendingProvider: repoPendingProvider.value,
+  canCompare: repoComparator.canOpen.value,
+  compareCount: repoCompare.compareCount.value,
+  comparing: repoComparator.isOpen.value,
+  comparatorEditors: repoComparator.editors.value,
+  comparatorEditorIds: repoComparator.initialEditorIds.value
 }));
 
 // ============================================================================

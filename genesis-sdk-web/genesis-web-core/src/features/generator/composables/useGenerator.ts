@@ -7,7 +7,8 @@ import type {
   GeneratorData, 
   IDatabaseService, 
   IFrameworkService, 
-  IFrontendService 
+  IFrontendService, 
+  IRepositoryService
 } from '@genesis-labs/shared-types';
 
 // Stores
@@ -20,6 +21,7 @@ import { FRONTEND_SERVICE_KEY } from '../../frontend/manifest';
 import { DATABASE_SERVICE_KEY } from '../../database/manifest';
 import { FRAMEWORK_SERVICE_KEY } from '../../frameworks/manifest';
 import { RECENT_SERVICE_KEY } from '@genesis-labs/web-core/core/features/recent/manifest';
+import { REPOSITORY_SERVICE_KEY } from '../../repository/manifest';
 import { IRecentService } from '@genesis-labs/shared-types';
 
 // Core & Config
@@ -46,6 +48,7 @@ export function useGenerator() {
   const dbsvc = inject(DATABASE_SERVICE_KEY) as IDatabaseService;
   const fsvc = inject(FRAMEWORK_SERVICE_KEY) as IFrameworkService;
   const recentSvc = inject(RECENT_SERVICE_KEY) as IRecentService;
+  const repoSvc = inject(REPOSITORY_SERVICE_KEY) as IRepositoryService;
 
   const store = useGeneratorStore();
   const frontendStore = useFrontendStore();
@@ -53,7 +56,7 @@ export function useGenerator() {
   // ==========================================================================
   // 2. CONFIGURATION DU WIZARD (DYNAMIQUE)
   // ==========================================================================
-  const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc, recentSvc };
+  const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc, recentSvc, repoSvc };
 
   const wizard = useGenesisWizard({
     totalSteps: getTotalSteps(),
@@ -254,6 +257,7 @@ export function useGenerator() {
     setPendingFramework: store.setPendingFramework,
     setPendingDatabaseEngine: store.setPendingDatabaseEngine,
     setPendingFrontendFramework: store.setPendingFrontendFramework,
+    setPendingRepositoryProvider: store.setPendingRepositoryProvider,
     setDatabaseEngine: store.setDatabaseEngine,
     setSelectedFrontendFramework: store.setSelectedFrontendFramework,
     

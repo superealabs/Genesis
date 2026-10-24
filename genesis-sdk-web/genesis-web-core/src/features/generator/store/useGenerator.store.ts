@@ -16,7 +16,8 @@ import type {
   GitConfiguration,
   DatabaseEngineDto,
   GenerationAssociatedToConfig,
-  ComponentType
+  ComponentType,
+  RepositoryProviderMetadata
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -36,6 +37,8 @@ export const useGeneratorStore = defineStore('generator', () => {
   const pendingFramework = ref<Framework | null>(null);
   const pendingDatabaseEngine = ref<DatabaseEngineDto | null>(null);
   const pendingFrontendFramework = ref<FrontendFramework | null>(null);
+  const pendingRepositoryProvider = ref<RepositoryProviderMetadata | null>(null);
+
 
   // Domaine : Étape 2 - Options de configuration projet (Listes dynamiques)
   const availableLoggingLevels = ref<string[]>([]);
@@ -108,6 +111,10 @@ export const useGeneratorStore = defineStore('generator', () => {
   // --- Étape 1 : Framework ---
   function setPendingFramework(framework: Framework | null) {
     pendingFramework.value = framework;
+  }
+
+  function setPendingRepositoryProvider(provider: RepositoryProviderMetadata | null) { // ✅ AJOUT
+    pendingRepositoryProvider.value = provider;
   }
 
   function setFramework(framework: Framework) {
@@ -335,6 +342,7 @@ export const useGeneratorStore = defineStore('generator', () => {
 
     // Étape 1 : Framework
     pendingFramework, setPendingFramework, setFramework,
+    pendingRepositoryProvider, setPendingRepositoryProvider,
 
     // Étape 2 : Configuration Projet
     getAvailableLoggingLevels, getAvailableSecurityTypes, getAvailableCacheProviders,
