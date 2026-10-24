@@ -304,7 +304,10 @@ const panelSlides: CarouselSlide[] = [
 // 2. COMPOSABLES & STORES
 // ============================================================================
 const { 
-  stepperData, setFramework, updateConfig,
+  stepperData,
+  setPendingFramework,
+  pendingFramework, 
+  updateConfig,
   availableLoggingLevels, availableSecurityTypes, availableCacheProviders,
   availableLanguageVersions, availableFrameworkVersions, availableBuildTools, availableHibernateDdlAutoOptions,
   fetchLoggingLevels, fetchSecurityTypes, fetchCacheProviders, fetchLanguageVersions,
@@ -326,7 +329,7 @@ const tempFrameworkName = ref('');
 
 const availableFrameworksOptions = computed(() => frameworkStore.frameworks.map(f => ({ label: f.name, value: f })));
 const config = computed(() => stepperData.value.config);
-const framework = computed(() => stepperData.value.framework);
+const framework = computed(() => pendingFramework.value || stepperData.value.framework);
 const showGroupId = computed(() => framework.value?.withGroupId === true);
 const showHibernateDdl = computed(() => framework.value?.withHibernateDdlAuto === true);
 
@@ -335,7 +338,10 @@ function cancelEditingFramework() { isEditingFramework.value = false; tempFramew
 
 function handleFrameworkSelect(value: any) {
   if (typeof value === 'string') return; 
-  if (value && value.id) { setFramework(value); isEditingFramework.value = false; }
+  if (value && value.id) { 
+    setPendingFramework(value); 
+    isEditingFramework.value = false; 
+  }
 }
 
 function handleClickOutside(event: MouseEvent) {

@@ -104,7 +104,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         
         frameworkStore.setFrameworks(frameworksData);
         frameworkStore.setLanguages(languagesData);
-        recentStore.setRecencyData(recencyData); // Les données sont maintenant réactives pour l'UI !
+        recentStore.setRecencyData(recencyData);
         
         console.log(`[Wizard: framework] Chargement réussi : ${frameworksData.length} frameworks, ${languagesData.length} langues, ${recencyData.frameworks.length} récents.`);
       } catch (error) {
@@ -121,20 +121,15 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
-      try {
-        store.setFramework(framework);
-        console.log(`[Wizard: framework] Framework sélectionné :`, framework.name);
-        return true;
-      } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du framework.");
-        return false;
-      }
+      console.log(`[Wizard: framework] Framework en attente de validation :`, framework.name);
+      return true;
     }
   },
 
   project_config: {
     onEnter: async (store, { fsvc }) => {
-      const framework = store.stepperData.framework;
+      // On lit le pending en priorité pour charger les bonnes options
+      const framework = store.pendingFramework || store.stepperData.framework;
       if (!framework) return;
       
       console.log("[Wizard: project_config] Chargement des options de configuration...");
@@ -163,6 +158,12 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       }
 
       try {
+        // COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
+        if (store.pendingFramework) {
+          store.setFramework(store.pendingFramework);
+          console.log(`[Wizard: project_config] Framework validé et commit :`, store.pendingFramework.name);
+        }
+
         console.log("[Wizard: project_config] Configuration du projet validée");
         return true;
       } catch (error) {
@@ -193,33 +194,28 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
-      try {
-        store.setDatabaseEngine(store.pendingDatabaseEngine);
-
-        const databaseStore = useDatabaseStore();
-        const matchedEngine = databaseStore.availableEngines.find(eng => {
-          const normalizedName = eng.name.toLowerCase().replace(/\s+/g, '');
-          const normalizedConfig = store.pendingDatabaseEngine!.name.toLowerCase().replace(/\s+/g, '');
-          return normalizedName === normalizedConfig || eng.name.toLowerCase() === store.pendingDatabaseEngine!.name.toLowerCase();
-        });
-
-        if (!matchedEngine) {
-          store.setWizardError("Moteur de base de données invalide. Veuillez le sélectionner à nouveau.");
-          return false;
-        }
-
-        console.log(`[Wizard: database_select] Sélection BDD validée. ID : ${matchedEngine.id}`);
-        return true;
-      } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection de la base de données.");
-        return false;
-      }
+      console.log(`[Wizard: database_select] Moteur BDD en attente de validation :`, store.pendingDatabaseEngine.name);
+      return true;
     }
   },
 
   database_config: {
     beforeNext: async (store) => {
+      const db = store.stepperData.database;
+      
+      // 1. Validation basique des champs obligatoires du formulaire
+      if (!db.host || !db.port || !db.databaseName || !db.username) {
+        store.setWizardError("L'hôte, le port, le nom de la base de données et l'utilisateur sont obligatoires.");
+        return false;
+      }
+
       try {
+        // 2. COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
+        if (store.pendingDatabaseEngine) {
+          store.setDatabaseEngine(store.pendingDatabaseEngine);
+          console.log(`[Wizard: database_config] Moteur BDD validé et commit :`, store.pendingDatabaseEngine.name);
+        }
+
         console.log("[Wizard: database_config] Configuration BDD validée");
         return true;
       } catch (error) {

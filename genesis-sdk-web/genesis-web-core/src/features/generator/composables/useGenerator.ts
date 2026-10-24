@@ -102,8 +102,13 @@ export function useGenerator() {
   // ==========================================================================
   // 3. ÉTAT RÉACTIF (Depuis le store)
   // ==========================================================================
-  const { 
+  const {
     stepperData, 
+    pendingFramework,
+    pendingDatabaseEngine,
+    pendingFrontendFramework,
+    pendingRepositoryProvider,
+
     getTablesParents, 
     getTablesChilds, 
     getRelations,
@@ -230,6 +235,11 @@ export function useGenerator() {
 
     // Données du Store (Refs)
     stepperData,
+    pendingFramework,
+    pendingDatabaseEngine,
+    pendingFrontendFramework,
+    pendingRepositoryProvider,
+
     tables, 
     views, 
     availableTables,
@@ -287,8 +297,5 @@ export function useGenerator() {
     fetchFrameworkVersions,
     fetchBuildTools,
     fetchHibernateDdlAutoOptions,
-
-    pendingRepositoryProvider: store.pendingRepositoryProvider
-
   };
 }
