@@ -6,12 +6,15 @@ import { FrontendHandler } from './FrontEnd/FrontendFrameworkHandler';
 import { DatabaseHandler } from './database/DatabaseHandler';
 import { ConfigHandler } from './core/config/ConfigHandler';
 import { RecentHandler } from './core/recent/RecentHandler';
+import { RepositoryHandler } from './repository/RepositoryHandler';
 
 export class WebviewMessageRouter {
     private frameworkHandler: FrameworkHandler;
     private generatorHandler: GeneratorHandler;
     private frontendHandler: FrontendHandler;
     private databaseHandler: DatabaseHandler;
+    private repositoryHandler: RepositoryHandler;
+
     private configHandler: ConfigHandler;
     private recentHandler: RecentHandler;
 
@@ -26,6 +29,9 @@ export class WebviewMessageRouter {
         this.generatorHandler = new GeneratorHandler(this.panel);
         this.frontendHandler = new FrontendHandler(this.panel);
         this.databaseHandler = new DatabaseHandler(this.panel);
+        this.repositoryHandler = new RepositoryHandler();
+
+
         this.configHandler = new ConfigHandler(this.panel, this.context);
         this.recentHandler = new RecentHandler(this.panel, this.context);
     }
@@ -125,27 +131,36 @@ export class WebviewMessageRouter {
                 case 'GET_FRONTEND_FRAMEWORKS':
                     await this.frontendHandler.handleGetFrontendFrameworks(message.payload, this.panel);
                     break;
-                case 'GET_FRONTEND_PROGRAMMING_LANGUAGES': // ✅ NOUVEAU
+                case 'GET_FRONTEND_PROGRAMMING_LANGUAGES': // NOUVEAU
                     await this.frontendHandler.handleGetFrontendProgrammingLanguages(message.payload, this.panel);
                     break;
-                case 'GET_INTERFACE_LANGUAGES': // ✅ RENOMMÉ (était GET_AVAILABLE_LANGUAGES)
+                case 'GET_INTERFACE_LANGUAGES': // RENOMMÉ (était GET_AVAILABLE_LANGUAGES)
                     await this.frontendHandler.handleGetInterfaceLanguages(message.payload, this.panel);
                     break;
-                case 'GET_NAVBAR_TYPES': // ✅ NOUVEAU
+                case 'GET_NAVBAR_TYPES': // NOUVEAU
                     await this.frontendHandler.handleGetNavbarTypes(message.payload, this.panel);
                     break;
-                case 'SELECT_FRONTEND_FRAMEWORK': // ✅ NOUVEAU
+                case 'SELECT_FRONTEND_FRAMEWORK': // NOUVEAU
                     await this.generatorHandler.handleSelectFrontendFramework(message.payload, this.panel);
                     break;
-                case 'SAVE_FRONTEND_LAYOUT_CONFIG': // ✅ NOUVEAU
+                case 'SAVE_FRONTEND_LAYOUT_CONFIG': // NOUVEAU
                     await this.generatorHandler.handleSaveFrontendLayoutConfig(message.payload, this.panel);
                     break;
 
+                // ═══ REPOSITORY (Nouveau) ═══
+                // 4. Ajout des routes pour la sélection et la configuration des dépôts
+                case 'GET_SUPPORTED_PROVIDERS':
+                    await this.repositoryHandler.getSupportedProviders(message.payload, this.panel);
+                    break;
+                case 'TEST_REPO_CONNECTION':
+                    await this.repositoryHandler.testConnection(message.payload, this.panel);
+                    break;
+
                 // ═══ GIT & GÉNÉRATION FINALE (Étapes 10 & 11) ═══
-                case 'SAVE_GIT_CONFIGURATION': // ✅ NOUVEAU
+                case 'SAVE_GIT_CONFIGURATION': // NOUVEAU
                     await this.generatorHandler.handleSaveGitConfiguration(message.payload, this.panel);
                     break;
-                case 'LAUNCH_GENERATION': // ✅ NOUVEAU
+                case 'LAUNCH_GENERATION': // NOUVEAU
                     await this.generatorHandler.handleLaunchGeneration(message.payload, this.panel);
                     break;
 
@@ -200,7 +215,7 @@ export class WebviewMessageRouter {
             }
         } catch (err) {
             this.panel.webview.postMessage({
-                type: 'API_ERROR', // ✅ Harmonisé avec le reste de l'architecture
+                type: 'API_ERROR', // Harmonisé avec le reste de l'architecture
                 payload: { 
                     command: message.type || 'UNKNOWN',
                     message: (err as Error).message 

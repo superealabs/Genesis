@@ -25,6 +25,7 @@
           v-for="provider in recentProviders"
           :key="`recent-${provider.id}`"
           :label="provider.name"
+          :logo-src="resolveRepositoryLogo(provider)" 
           :selected="selectedId === provider.id"
           :badge="providerSlots?.get(provider.id) ?? null"
           :size="'sm'"
@@ -55,6 +56,7 @@
           v-for="provider in items"
           :key="provider.id"
           :label="provider.name"
+          :logo-src="resolveRepositoryLogo(provider)" 
           :selected="selectedId === provider.id"
           :badge="providerSlots?.get(provider.id) ?? null"
           :show-info-button="true"
@@ -78,6 +80,9 @@ import GenesisGroupedList from '@genesis-labs/web-core/core/components/layouts/d
 import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
 import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
+
+// ✅ NOUVEAU : Import du résolveur de logos
+import { resolveRepositoryLogo } from '../assets/repositoryLogos';
 
 // ✅ Import du composable de récence
 import { useRecency } from '@genesis-labs/web-core/core/features/recent/composables/useRecency';
@@ -108,16 +113,10 @@ defineEmits<{
 // ============================================================================
 // 3. LOGIQUE DE RÉCENCE
 // ============================================================================
-// const { recentFrontends: recentProviderItems } = useRecency(); 
-// Note: On utilise recentFrontends ou on adapte useRecency pour avoir recentProviders. 
-// Pour l'instant, supposons que le store de récence gère une catégorie 'repositories' 
-// ou qu'on mappe depuis une catégorie générique. Adaptons le computed pour être sûr :
-
 const { recencyData } = useRecency();
 
 const recentProviders = computed<RepositoryProviderMetadata[]>(() => {
-  // On suppose que les providers récents sont stockés sous une clé 'repositories' ou 'frameworks' par héritage.
-  // Ajuste 'repositories' selon la clé exacte que tu utiliseras dans le store de récence.
+  // On utilise la catégorie 'repositories' que nous avons ajoutée au store de récence
   const recentItems = recencyData.value.repositories || []; 
   
   return recentItems

@@ -19,6 +19,9 @@ import { generatorServiceVsc } from '@/features/generator/services/generator.ser
 import { DATABASE_SERVICE_KEY } from '@genesis-labs/web-core/features/database/manifest';
 import { databaseServiceVsc } from '@/features/database/services/database.service';
 
+import { REPOSITORY_SERVICE_KEY } from '@genesis-labs/web-core/features/repository/manifest';
+import { repositoryServiceVsc } from './features/repository/services/Repository.service.ts';
+
 import { CONFIG_SERVICE_KEY } from '@genesis-labs/web-core/core/features/config/manifest';
 import { configServiceVsc } from './core/features/config/services/config-storage.service';
 
@@ -37,6 +40,8 @@ app.provide(FRAMEWORK_SERVICE_KEY, frameworkServiceVsc);
 app.provide(FRONTEND_SERVICE_KEY, frontendServiceVsc); // <-- C'était la ligne manquante !
 app.provide(GENERATOR_SERVICE_KEY, generatorServiceVsc);
 app.provide(DATABASE_SERVICE_KEY, databaseServiceVsc);
+app.provide(REPOSITORY_SERVICE_KEY, repositoryServiceVsc);
+
 app.provide(CONFIG_SERVICE_KEY, configServiceVsc);
 app.provide(RECENT_SERVICE_KEY, recentServiceVsc);
 
