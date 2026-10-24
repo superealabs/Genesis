@@ -31,9 +31,8 @@ export const DurationInput: React.FC<Props> = ({
     const handle = (k: string, v: string) => {
         const num = parseFloat(v) || 0;
         const next = { ...obj, [k]: num };
-        // si tout est à 0 → null, sinon ISO
         const isEmpty = Object.values(next).every((v) => !v);
-        onChange(isEmpty ? null : toISO(next));
+        onChange(isEmpty ? '' : toISO(next));
     };
 
     return (

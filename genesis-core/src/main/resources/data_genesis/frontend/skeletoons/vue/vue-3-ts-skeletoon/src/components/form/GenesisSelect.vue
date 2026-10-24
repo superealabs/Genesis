@@ -31,7 +31,7 @@
             'opacity-50': loading, // Dim the select when loading
           }"
           :value="modelValue ?? ''"
-          :disabled="loading || $attrs.disabled"
+          :disabled="loading || $attrs.disabled === '' || $attrs.disabled === true || $attrs.disabled === 'true'"
           @change="onChange"
         >
           <option

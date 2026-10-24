@@ -494,7 +494,8 @@ public class ProjectGenerator {
             frontendGenerator.generateModel(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly);
         }
 
-        if (generateRelationFiles) {
+        if (generateRelationFiles && context.getFrontendGenerationOptions() != null
+                && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT)) {
             HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, webappFolder, projectName);
             if (tableMetadata.getIsParent()) {
                 renderFilesEdits(frontendFramework.getMereFiles(), tableHashMapData);

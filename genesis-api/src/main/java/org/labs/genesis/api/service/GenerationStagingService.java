@@ -35,7 +35,7 @@ public class GenerationStagingService {
         // Préparation avant toute écriture.
         List<FileEntry> entries = new ArrayList<>();
         List<String> collisions = new ArrayList<>();
-        java.util.Set<Path> occupied = new java.util.HashSet<>();
+        java.util.Map<Path, Path> occupied = new java.util.HashMap<>();
 
         for (Path directory : batchDirectories) {
             Path root = directory.toRealPath();
@@ -55,8 +55,12 @@ public class GenerationStagingService {
 
                     Path relative = root.relativize(source);
 
-                    if (!occupied.add(relative)) {
-                        collisions.add(relative.toString());
+                    Path previous = occupied.putIfAbsent(relative, source);
+                    if (previous != null) {
+                        if (Files.mismatch(previous, source) != -1) {
+                            collisions.add(relative.toString());
+                        }
+                        continue;
                     }
 
                     entries.add(new FileEntry(source, relative));
@@ -71,7 +75,7 @@ public class GenerationStagingService {
             throw new IOException("Aucun fichier généré à consolider");
         }
 
-        Set<Path> files = new java.util.HashSet<>(occupied);
+        Set<Path> files = new java.util.HashSet<>(occupied.keySet());
         for (Path relative : files) {
             Path parent = relative.getParent();
             while (parent != null) {

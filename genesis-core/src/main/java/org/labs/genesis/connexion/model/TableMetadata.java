@@ -208,7 +208,7 @@ public class TableMetadata {
                                         .transform(StringUtils::toCamelCase)
                                         .transform(name -> name + (StringUtils.majStart(StringUtils.toCamelCase(pkTableName.toLowerCase())))
                                         ));
-                        field.setReferencedTable(pkTableName.transform(StringUtils::toCamelCase));
+                        field.setReferencedTable(pkTableName);
 
                         // IMPORTANT : On réutilise le même schéma résolu pour la sous-requête getColumns
                         try (ResultSet pkColumn = metaData.getColumns(null, schema, pkTableName, pkColumnName)) {

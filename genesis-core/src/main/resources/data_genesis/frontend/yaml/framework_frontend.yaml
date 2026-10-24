@@ -3747,7 +3747,7 @@
             "@types/jsdom": "^21.1.7",
             "@types/node": "^22.16.5",
             "@vitejs/plugin-vue": "^6.0.1",
-            "@vitest/eslint-plugin": "^1.3.4",
+            "@vitest/eslint-plugin": "1.6.27",
             "@vue/eslint-config-prettier": "^10.2.0",
             "@vue/eslint-config-typescript": "^14.6.0",
             "@vue/test-utils": "^2.4.6",
@@ -5442,7 +5442,7 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
         import { useDateFormat } from '@/composables/useDateFormat'
-        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
+        import { getUrl } from '@/composables/useImage'
       selector: "${majStart(className)}Row"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -5548,7 +5548,7 @@
         import { ${majStart(className)} } from '@/models/${majStart(className)}Model'
         import EntityRowActions from '@/components/table/EntityRowActions.vue'
         import { useDateFormat } from '@/composables/useDateFormat'
-        {{#if containsFile=true}}import { getUrl } from '@/composables/useImage'{{/if}}
+        import { getUrl } from '@/composables/useImage'
       selector: "${majStart(className)}Card"
       standalone: true
       importComponent: "{{removeLine}}"
@@ -6024,7 +6024,7 @@
             {{/each}}
             {{/if}}
 
-            export const DEFAULT_LIST_VIEW_FIELDS = ['id']
+            export const DEFAULT_LIST_VIEW_FIELDS = [{{#each fields}}'${this.name}'{{#if !@last}}, {{/if}}{{/each}}]
 
             /**
              * Composable to manage ${majStart(className)} entities including CRUD operations,
@@ -6083,7 +6083,7 @@
 
               const loadColumnConfig = async () => {
                 try {
-                  const response = await columnConfigService.getVisibleFields('${minStart(className)}', 'list')
+                  const response = await columnConfigService.getVisibleFields('${tableName}', 'list')
                   if (response.returnCode === 1 && response.data && response.data.length > 0) {
                     visibleListFields.value = response.data
                   }
@@ -6095,7 +6095,7 @@
               /** Sauvegarde la nouvelle configuration vers le serveur */
               const saveColumnConfig = async (fields: string[]) => {
                 try {
-                  const response = await columnConfigService.updateVisibleFields('${minStart(className)}', 'list', fields)
+                  const response = await columnConfigService.updateVisibleFields('${tableName}', 'list', fields)
                   if (response.returnCode === 1) {
                     visibleListFields.value = fields
                     return { success: true, error: null }
@@ -7022,7 +7022,7 @@
           }
         }        
         {{else}}
-        const violations = ref<Record<string, object> | null>(null)
+        const violations = ref<Record<string, string> | null>(null)
         
         const updateHandler = async (formDTO: Partial<${majStart(className)}FormDTO>) => {        
           freezeStore.freeze('Updating ${minStart(className)} '+pathId+' ...')
@@ -7174,7 +7174,9 @@
           try {
             const { data, errors } = await create${majStart(className)}(formDTO)
             if (errors) {
-              violations.value = errors
+              violations.value = Object.fromEntries(
+                Object.entries(errors).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+              )
             }
             if (data) {
               view${majStart(className)}(data)
@@ -9337,6 +9339,7 @@
               return getById<${majStart(className)}>('/${lowerCase(classNameLink)}', id);
           },
 
+          {{#if !isView}}
           create(${toCamelCase(className)}: Omit<${majStart(className)}, 'id'>{{#each childrenWithForm}}, ${minStart(this.className)}s?: any[]{{/each}}) {
               {{#if isParentTable=true and hasChildrenForm=true}}
               const payload: any = { ${minStart(className)}: ${toCamelCase(className)}{{#each childrenWithForm}}, ${minStart(this.className)}s: ${minStart(this.className)}s ?? []{{/each}} };
@@ -9356,6 +9359,7 @@
           },
 
           delete: (id: string | number) => remove('/${lowerCase(classNameLink)}', id),
+          {{/if}}
       };
     destinationPath: "${destinationFolder}/src/models/${toKebabCase(className)}"
     name: "${toKebabCase(className)}.service"

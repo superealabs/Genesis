@@ -55,7 +55,7 @@ public class BackendBatchGenerationService {
                 context.applyTableRelations();
                 // 7. Générer les composants backend sans
                 // les fichiers relationnels complémentaires.
-                generator.generateBackendComponents(context, backendGenerator, table, true, false);
+                generator.generateBackendComponents(context, backendGenerator, table, false, true);
                 // 8. Vérifier que Core a créé le dossier attendu.
                 if (!Files.isDirectory(generatedRoot)) {
                     throw new IOException(

@@ -1,5 +1,6 @@
 package org.labs.genesis.frontend.generator.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -24,6 +25,7 @@ public class ProjectBranding {
         return logoFile != null || (useLogoLink());
     }
 
+    @JsonIgnore
     public String getLogoType(){
         if (logoExtension.equals("svg")){
             return "vector";
@@ -39,6 +41,7 @@ public class ProjectBranding {
         return faviconLink != null && !faviconLink.isEmpty();
     }
 
+    @JsonIgnore
     public String getLogoUrl(){
         if (useLogoLink()){
             return  this.getLogoLink();
@@ -49,10 +52,12 @@ public class ProjectBranding {
         return  null;
     }
 
+    @JsonIgnore
     public String getFileFullName(){
         return  this.getLogoFilename() + "." + this.getLogoExtension();
     }
 
+    @JsonIgnore
     public String getFaviconUrl(){
         if (useFaviconLink()){
             return  this.getFaviconLink();

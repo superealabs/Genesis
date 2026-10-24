@@ -12,6 +12,24 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GenesisTemplateEngineTest {
+    @Test
+    void rendersNestedBranchesWithoutConsumingTheOuterElse() throws Exception {
+        var renderer = new GenesisTemplateEngine();
+        String template = "{{#if outer}}A{{#if inner}}B{{else}}C{{/if}}D{{else}}E{{/if}}";
+        assertEquals("ABD", renderer.render(template, Map.of("outer", true, "inner", true)));
+        assertEquals("ACD", renderer.render(template, Map.of("outer", true, "inner", false)));
+        assertEquals("E", renderer.render(template, Map.of("outer", false, "inner", true)));
+    }
+
+    @Test
+    void handlesNestedConditionsInsideElseIfAndElse() throws Exception {
+        var renderer = new GenesisTemplateEngine();
+        String template = "{{#if first}}A{{elseIf second}}{{#if inner}}B{{else}}C{{/if}}{{else}}{{#if inner}}D{{else}}E{{/if}}{{/if}}";
+        assertEquals("B", renderer.render(template, Map.of("first", false, "second", true, "inner", true)));
+        assertEquals("C", renderer.render(template, Map.of("first", false, "second", true, "inner", false)));
+        assertEquals("E", renderer.render(template, Map.of("first", false, "second", false, "inner", false)));
+    }
+
     private GenesisTemplateEngine engine;
     private Map<String, Object> variables;
 

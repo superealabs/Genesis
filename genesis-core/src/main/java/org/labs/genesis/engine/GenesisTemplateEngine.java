@@ -288,7 +288,44 @@ public class GenesisTemplateEngine {
 
 
     private int findBlockEnd(StringBuilder template, int start) {
-        return template.indexOf(IF_END, start);
+        int depth = 0;
+        for (int index = start; index < template.length(); index++) {
+            if (tokenAt(template, IF_START, index)) {
+                depth++;
+            } else if (tokenAt(template, IF_END, index)) {
+                depth--;
+                if (depth == 0) {
+                    return index;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private int findBranchToken(StringBuilder template, String token, int start, int end) {
+        int depth = 0;
+        for (int index = start; index < end; index++) {
+            if (tokenAt(template, IF_START, index)) {
+                depth++;
+            } else if (tokenAt(template, IF_END, index)) {
+                depth--;
+            } else if (depth == 0 && tokenAt(template, token, index)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    private boolean tokenAt(StringBuilder template, String token, int index) {
+        if (index + token.length() > template.length()) {
+            return false;
+        }
+        for (int offset = 0; offset < token.length(); offset++) {
+            if (template.charAt(index + offset) != token.charAt(offset)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String extractCondition(StringBuilder template, int start) {
@@ -303,16 +340,16 @@ public class GenesisTemplateEngine {
     }
 
     private String extractIfContent(StringBuilder template, int contentStartIdx, int ifEndIdx) {
-        int elseIfIdx = template.indexOf(ELSE_IF_TOKEN, contentStartIdx);
-        int elseIdx = template.indexOf(ELSE_TOKEN, contentStartIdx);
+        int elseIfIdx = findBranchToken(template, ELSE_IF_TOKEN, contentStartIdx, ifEndIdx);
+        int elseIdx = findBranchToken(template, ELSE_TOKEN, contentStartIdx, ifEndIdx);
         int ifBlockEnd = determineBlockEnd(elseIfIdx, elseIdx, ifEndIdx);
         return template.substring(contentStartIdx, ifBlockEnd);
     }
 
     private void processElseIfBlocks(StringBuilder template, Map<String, Object> variables,
                                      int contentStartIdx, int ifEndIdx, StringBuilder resultContent) throws Exception {
-        int elseIfIdx = template.indexOf(ELSE_IF_TOKEN, contentStartIdx);
-        int elseIdx = template.indexOf(ELSE_TOKEN, contentStartIdx);
+        int elseIfIdx = findBranchToken(template, ELSE_IF_TOKEN, contentStartIdx, ifEndIdx);
+        int elseIdx = findBranchToken(template, ELSE_TOKEN, contentStartIdx, ifEndIdx);
         boolean conditionMatched = false;
 
         while (elseIfIdx != -1 && elseIfIdx < ifEndIdx && !conditionMatched) {
@@ -327,7 +364,7 @@ public class GenesisTemplateEngine {
                 conditionMatched = true;
             }
 
-            elseIfIdx = template.indexOf(ELSE_IF_TOKEN, contentStartIdx);
+            elseIfIdx = findBranchToken(template, ELSE_IF_TOKEN, contentStartIdx, ifEndIdx);
         }
 
         if (!conditionMatched) {
@@ -341,8 +378,8 @@ public class GenesisTemplateEngine {
     }
 
     private int determineNextBlockEnd(StringBuilder template, int contentStartIdx, int ifEndIdx) {
-        int nextElseIfIdx = template.indexOf(ELSE_IF_TOKEN, contentStartIdx);
-        int nextElseIdx = template.indexOf(ELSE_TOKEN, contentStartIdx);
+        int nextElseIfIdx = findBranchToken(template, ELSE_IF_TOKEN, contentStartIdx, ifEndIdx);
+        int nextElseIdx = findBranchToken(template, ELSE_TOKEN, contentStartIdx, ifEndIdx);
         return determineBlockEnd(nextElseIfIdx, nextElseIdx, ifEndIdx);
     }
 

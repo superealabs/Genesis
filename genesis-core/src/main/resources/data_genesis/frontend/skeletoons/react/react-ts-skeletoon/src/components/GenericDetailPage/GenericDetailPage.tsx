@@ -30,7 +30,7 @@ interface DetailConfig<T extends AnyRecord> {
     entityName: string;
     service: {
         getById: (id: number) => Promise<T>;
-        delete: (id: string | number) => Promise<ApiResponse<void>>;
+        delete?: (id: string | number) => Promise<ApiResponse<void>>;
     };
     columns: { header: string; accessor: keyof T | ((row: T) => React.ReactNode), type?: string }[];
     backRoute: string; // fallback si pas de state

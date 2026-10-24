@@ -126,8 +126,8 @@ public class ConsolidatedFrontendGenerationService {
                         context,
                         frontendGenerator,
                         entity,
-                        true,
-                        false
+                        false,
+                        true
                 );
 
                 if (task.completeDisplay()

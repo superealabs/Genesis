@@ -127,7 +127,6 @@ public class GenerationExecutionContextFactory {
 
             // 3. Les options seront fournies par chaque tâche.
             context.setGenerationOptions(new ArrayList<>());
-            context.setFrontendGenerationOptions(new ArrayList<>());
 
             // Si FrontendFrameworkIsolationService est intégré :
              frontendIsolationService.isolate(context);
@@ -166,7 +165,6 @@ public class GenerationExecutionContextFactory {
             ProjectGenerationContext context = consolidatedService.build(connection, snapshot);
 
             context.setGenerationOptions(new ArrayList<>());
-            context.setFrontendGenerationOptions(new ArrayList<>());
 
             // Activer après validation de l'isolation.
              frontendIsolationService.isolate(context);

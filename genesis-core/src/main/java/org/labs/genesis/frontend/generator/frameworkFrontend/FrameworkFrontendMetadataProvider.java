@@ -71,6 +71,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
         metadata.put("EntityName",tableMetadata.getClassName());
+        metadata.put("tableName", tableMetadata.getTableName());
         return metadata;
     }
 
