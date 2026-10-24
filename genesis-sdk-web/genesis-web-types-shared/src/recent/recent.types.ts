@@ -19,9 +19,10 @@ export interface RecencyData {
     frameworks: RecentItem[];
     databases: RecentItem[]; // L'ID sera la chaîne du moteur (ex: 'postgre', 'mysql')
     frontends: RecentItem[];
+    repositories: RecentItem[];
 }
 
 /**
  * Type utilitaire pour cibler une catégorie de récence.
  */
-export type RecencyCategory = 'frameworks' | 'databases' | 'frontends';
+export type RecencyCategory = 'frameworks' | 'databases' | 'frontends' | 'repositories';

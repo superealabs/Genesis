@@ -9,7 +9,8 @@ export const useRecentStore = defineStore('recent', () => {
     const recencyData = ref<RecencyData>({
         frameworks: [],
         databases: [],
-        frontends: []
+        frontends: [],
+        repositories: []
     });
     const isLoading = ref(false);
     const error = ref<string | null>(null);
@@ -44,7 +45,7 @@ export const useRecentStore = defineStore('recent', () => {
         if (category) {
             recencyData.value[category] = [];
         } else {
-            recencyData.value = { frameworks: [], databases: [], frontends: [] };
+            recencyData.value = { frameworks: [], databases: [], frontends: [], repositories: [] };
         }
     }
 
@@ -61,7 +62,7 @@ export const useRecentStore = defineStore('recent', () => {
     }
 
     function reset() {
-        recencyData.value = { frameworks: [], databases: [], frontends: [] };
+        recencyData.value = { frameworks: [], databases: [], frontends: [], repositories: [] };
         isLoading.value = false;
         error.value = null;
     }

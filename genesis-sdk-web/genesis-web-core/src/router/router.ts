@@ -11,6 +11,7 @@ import ProgressShowcase from '@genesis-labs/web-core/features/designSystem/compo
 import FrameworksView from '@genesis-labs/web-core/features/frameworks/views/FrameworksView.vue';
 import FrontendsView from '@genesis-labs/web-core/features/frontend/views/FrontendsView.vue';
 import DatabaseView from '@genesis-labs/web-core/features/database/views/DatabaseView.vue';
+import RepositoryView from '../features/repository/views/RepositoryView.vue';
 
 // Routes communes à toutes les plateformes
 export const commonRoutes: RouteRecordRaw[] = [
@@ -33,6 +34,11 @@ export const commonRoutes: RouteRecordRaw[] = [
         path: '/databases',
         name: 'database',
         component: DatabaseView
+    },
+    {
+        path: '/repositories',
+        name: 'repository',
+        component: RepositoryView
     }
 ];
 

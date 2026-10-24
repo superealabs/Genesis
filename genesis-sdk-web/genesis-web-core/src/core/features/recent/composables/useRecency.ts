@@ -54,6 +54,7 @@ export function useRecency() {
     const recentFrameworks = computed(() => recencyData.value.frameworks);
     const recentDatabases = computed(() => recencyData.value.databases);
     const recentFrontends = computed(() => recencyData.value.frontends);
+    const recentRepositories = computed(() => recencyData.value.repositories);
 
     return {
         // État réactif
@@ -61,6 +62,7 @@ export function useRecency() {
         recentFrameworks,
         recentDatabases,
         recentFrontends,
+        recentRepositories,
         isLoading,
         error,
         

@@ -20,6 +20,10 @@
         <GenesisButton variant="primary" @click="emit('navigate', 'database')">
             Database
         </GenesisButton>
+
+        <GenesisButton variant="primary" @click="emit('navigate', 'repository')">
+            Repository
+        </GenesisButton>        
     </div>
 </template>
 
