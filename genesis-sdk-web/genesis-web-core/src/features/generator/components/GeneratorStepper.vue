@@ -9,6 +9,9 @@
     :show-back-to-summary="props.hasReachedSummary && currentStepId !== 'summary'"
     :visited-steps="props.visitedSteps"
     :step-labels="props.stepLabels"
+
+    :disable-next="currentStepId === 'summary' && !isSummaryComplete"
+
     @close="handleClose"
     @previous="emit('previous')"
     @next="emit('next')"
@@ -133,6 +136,7 @@
       v-else-if="currentStepId === 'summary'" 
       :initial-index="props.targetSummaryIndex"
       @request-edit="(idx) => emit('request-edit', idx)"
+      @update-summary-complete="(val) => isSummaryComplete = val"
     />
 
   </StepperPopup>
@@ -229,6 +233,7 @@ const showError = ref(false);
 const errorMessage = ref('');
 const errorStackTrace = ref('');
 const isDevMode = import.meta.env.DEV;
+const isSummaryComplete = ref(false);
 
 // ============================================================================
 // 3. INJECTION DES COMPOSABLES (PONTS WIZARD)

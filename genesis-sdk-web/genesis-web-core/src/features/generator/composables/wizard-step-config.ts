@@ -270,16 +270,16 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   },
 
   script: {
-    beforeNext: async (store, { svc }) => {
-      const script = store.stepperData.script;
+    beforeNext: async (/* store, { svc } */) => {
+      // const script = store.stepperData.script;
       
-      if (script.path || script.content) {
-        try { 
-          await svc.saveScriptConfig(script); 
-        } catch (error) { 
-          console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error); 
-        }
-      }
+      // if (script.path || script.content) {
+      //   try { 
+      //     await svc.saveScriptConfig(script); 
+      //   } catch (error) { 
+      //     console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error); 
+      //   }
+      // }
       
       return true;
     },

@@ -38,12 +38,13 @@ const { show, play } = useSlideTransition(viewport);
 const { index, goTo, next, prev } = useStepSlider(SUMMARY_SLIDES.length, play);
 useStepInput(viewport, { next, prev });
 
-const props = defineProps<{
+/*const props = */defineProps<{
     initialIndex?: number; // ✅ Reçoit l'index cible depuis le parent
 }>();
 
 const emit = defineEmits<{
     requestEdit: [summaryIndex: number]; // ✅ Signale qu'on veut éditer cette section
+    'update-summary-complete': [isComplete: boolean];
 }>();
 
 function handleRailSelect(i: number) {
@@ -55,10 +56,10 @@ function handleRailSelect(i: number) {
 }
 
 
-watch(() => props.initialIndex, (newIndex) => {
-    if (newIndex !== undefined && newIndex !== index.value) {
-        goTo(newIndex);
-    }
+watch(index, (newIndex) => {
+    // Le dernier slide est à l'index SUMMARY_SLIDES.length - 1
+    const isLastSlide = newIndex === SUMMARY_SLIDES.length - 1;
+    emit('update-summary-complete', isLastSlide);
 }, { immediate: true });
 
 onMounted(() => show(index.value));

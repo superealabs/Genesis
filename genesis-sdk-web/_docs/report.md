@@ -32,7 +32,6 @@ UR
     - très urgent(hors de portée)
     - Urgence
         - mettre en place le set des étapes(nécessite l'intervention de Nomena)
-            - déterminer le comportement lors du setStep from Summary
             - corriger le comportement onSkip step aussi(quoi faire durant le onSkip quoi)
                 - Script Config View
             - Corriger l'interface de LLM Assistants

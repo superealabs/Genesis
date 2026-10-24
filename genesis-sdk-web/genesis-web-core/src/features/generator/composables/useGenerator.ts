@@ -164,6 +164,24 @@ export function useGenerator() {
     return null;
   }
 
+  async function saveScript(): Promise<boolean> {
+    const script = store.stepperData.script;
+    
+    if (script.path || script.content) {
+      try { 
+        await svc.saveScriptConfig(script); 
+        console.log("[Wizard: script] Script sauvegardé/exécuté avec succès.");
+        return true;
+      } catch (error) { 
+        console.warn("[Wizard: script] Échec sauvegarde script:", error);
+        store.setWizardError("Échec de la sauvegarde ou de l'exécution du script.");
+        return false;
+      }
+    }
+    return true; // Rien à sauvegarder
+  }
+
+
   function backToSummary() {
     const currentId = getStepIdByNumber(wizard.currentStep.value);
     const summaryIndex = STEP_TO_SUMMARY_MAP[currentId || 'summary'];
@@ -325,5 +343,6 @@ export function useGenerator() {
     fetchHibernateDdlAutoOptions,
     hasReachedSummary,
     visitedSteps: wizard.visitedSteps,
+    saveScript,
   };
 }

@@ -73,7 +73,11 @@
                         Passer
                     </GenesisButton>
                     
-                    <GenesisButton @click="$emit('next')" :variant="'accent'">
+                    <GenesisButton 
+                        @click="$emit('next')" 
+                        :variant="'accent'" 
+                        :disabled="disableNext"
+                    >
                         {{ currentStep === totalSteps ? 'Générer' : 'Suivant' }}
                     </GenesisButton>
                 </div>
@@ -99,7 +103,8 @@ withDefaults(defineProps<{
     isSkippable?: boolean;
     showBackToSummary?: boolean;
     visitedSteps?: Set<number>;
-    stepLabels?: string[];    
+    stepLabels?: string[];
+    disableNext?: boolean;
 }>(), {
     size: 'md',
     isClosable: true,
@@ -107,7 +112,8 @@ withDefaults(defineProps<{
     position: 'center',
     contentClass: 'overflow-hidden',
     isSkippable: false,
-    showBackToSummary: false
+    showBackToSummary: false,
+    disableNext: false
 });
 
 defineEmits<{
