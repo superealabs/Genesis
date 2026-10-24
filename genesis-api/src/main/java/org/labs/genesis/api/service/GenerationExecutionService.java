@@ -37,6 +37,7 @@ public class GenerationExecutionService {
     private final GenerationOutputPathService outputPathService;
     private final ConsolidatedFrontendGenerationService consolidatedFrontendService;
     private final GenerationPublicationService publicationService;
+    private final GitLocalService gitLocalService;
     private final ReentrantLock generationLock = new ReentrantLock();
 
     public GenerationExecutionService(
@@ -48,7 +49,8 @@ public class GenerationExecutionService {
             MvcSharedResourcesGenerationService mvcResources,
             GenerationOutputPathService outputPathService,
             ConsolidatedFrontendGenerationService consolidatedFrontendService,
-            GenerationPublicationService publicationService
+            GenerationPublicationService publicationService,
+            GitLocalService gitLocalService
     ) {
         this.snapshotService = snapshotService;
         this.preflightService = preflightService;
@@ -59,6 +61,7 @@ public class GenerationExecutionService {
         this.outputPathService = outputPathService;
         this.consolidatedFrontendService = consolidatedFrontendService;
         this.publicationService = publicationService;
+        this.gitLocalService = gitLocalService;
     }
 
     private PreparedGeneration prepareGeneration(GenerationConfigurationSnapshot snapshot) throws Exception {
@@ -70,12 +73,14 @@ public class GenerationExecutionService {
         }
 
         Path targetDirectory;
+        GitLocalService.GitPlan gitPlan;
         boolean mvc;
 
         // Lire les paramètres du projet avant la génération.
         try (var execution = contextFactory.openConsolidated(snapshot)) {
             ProjectGenerationContext context = execution.context();
             targetDirectory = outputPathService.resolveProjectTarget(context);
+            gitPlan = gitLocalService.plan(context, gitLocalService.configuration());
             mvc = context.getFramework() instanceof FrameworkMVC;
         }
 
@@ -214,6 +219,7 @@ public class GenerationExecutionService {
                 PreparedGeneration result = new PreparedGeneration(
                         workspace,
                         targetDirectory,
+                        gitPlan,
                         List.copyOf(generatedRoots),
                         backendBatches.size(),
                         frontendTasks.size()
@@ -272,6 +278,7 @@ public class GenerationExecutionService {
                 Exception primaryFailure = null;
                 try {
                     var publication = publishPreparedGeneration(prepared);
+                    gitLocalService.init(prepared.gitPlan());
                     return new LaunchResult(true, prepared.backendBatchCount(), prepared.frontendTaskCount(), publication);
                 } catch (Exception exception) {
                     primaryFailure = exception;
@@ -309,6 +316,7 @@ public class GenerationExecutionService {
     public record PreparedGeneration(
             Path workspace,
             Path targetDirectory,
+            GitLocalService.GitPlan gitPlan,
             List<Path> generatedRoots,
             int backendBatchCount,
             int frontendTaskCount

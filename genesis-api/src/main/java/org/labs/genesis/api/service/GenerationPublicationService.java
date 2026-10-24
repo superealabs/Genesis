@@ -14,6 +14,10 @@ public class GenerationPublicationService {
 
     private final GenerationStagingService stagingService;
     private final GeneratedFilesPublisher filesPublisher;
+    private volatile Path lastPublishedTarget;
+    public Path getLastPublishedTarget() {
+        return lastPublishedTarget;
+    }
 
     public GenerationPublicationService(GenerationStagingService stagingService, GeneratedFilesPublisher filesPublisher) {
         this.stagingService = stagingService;
@@ -72,6 +76,8 @@ public class GenerationPublicationService {
         }
 
         GeneratedFilesPublisher.PublicationResult publication = filesPublisher.publish(consolidated, target);
+
+        lastPublishedTarget = target.toRealPath();
 
         return new PublicationReport(result.consolidatedFiles().size(), publication.createdFiles(), publication.skippedExistingFiles()
         );
