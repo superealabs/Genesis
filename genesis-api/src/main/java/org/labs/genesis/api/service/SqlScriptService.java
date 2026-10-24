@@ -82,6 +82,15 @@ public class SqlScriptService {
                 }
                 throw exception;
             }
+        } catch (Exception exception) {
+            // SQLRunner conserve la SQLException comme cause de son exception formatée.
+            for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+                if (cause instanceof java.sql.SQLException) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                            "Erreur lors de l'exécution du script SQL", exception);
+                }
+            }
+            throw exception;
         }
 
         return new SqlExecutionResponse(true, "Script SQL exécuté");

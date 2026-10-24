@@ -304,7 +304,7 @@
            private readonly apiUrl = environment.apiUrl+'/auth';
            constructor(private http: HttpClient,private router:Router) {}
 
-           private loggedIn = new BehaviorSubject<boolean>(false);
+           private loggedIn = new BehaviorSubject<boolean>(!!localStorage.getItem('authToken'));
 
           isLoggedIn$ = this.loggedIn.asObservable();
 
@@ -318,6 +318,7 @@
                 .pipe(
                     tap(response => {
                     if (response.status === 200) {
+                        localStorage.setItem('authToken', response.data);
                         this.loggedIn.next(true);
                     } else {
                         this.loggedIn.next(false);
@@ -558,6 +559,51 @@
       destinationPath: "${destinationFolder}/"
 
   additionalFiles:
+    - fileType: "Package File"
+      fileName: "package"
+      extension: "json"
+      content: |
+        {
+          "name": "genesis-angular-app",
+          "version": "0.0.0",
+          "scripts": {
+            "ng": "ng",
+            "start": "ng serve --port ${frontendPort}",
+            "build": "ng build",
+            "watch": "ng build --watch --configuration development",
+            "test": "ng test"
+          },
+          "private": true,
+          "dependencies": {
+            "@angular/animations": "^17.3.0",
+            "@angular/common": "^17.3.0",
+            "@angular/compiler": "^17.3.0",
+            "@angular/core": "^17.3.0",
+            "@angular/forms": "^17.3.0",
+            "@angular/material": "^17.3.10",
+            "@angular/platform-browser": "^17.3.0",
+            "@angular/platform-browser-dynamic": "^17.3.0",
+            "@angular/router": "^17.3.0",
+            "rxjs": "~7.8.0",
+            "sweetalert2": "^11.22.5",
+            "tslib": "^2.3.0",
+            "zone.js": "~0.14.3"
+          },
+          "devDependencies": {
+            "@angular-devkit/build-angular": "^17.3.17",
+            "@angular/cli": "^17.3.17",
+            "@angular/compiler-cli": "^17.3.0",
+            "@types/jasmine": "~5.1.0",
+            "jasmine-core": "~5.1.0",
+            "karma": "~6.4.0",
+            "karma-chrome-launcher": "~3.2.0",
+            "karma-coverage": "~2.2.0",
+            "karma-jasmine": "~5.1.0",
+            "karma-jasmine-html-reporter": "~2.1.0",
+            "typescript": "~5.4.2"
+          }
+        }
+      destinationPath: "${destinationFolder}"
     - fileType: "Language file"
       fileName: "language.service"
       extension: "ts"
@@ -750,6 +796,56 @@
       fileName: "app.component"
       extension: "ts"
       content: |
+        {{#if useJWT}}
+        import { Component } from '@angular/core';
+        import { RouterOutlet,RouterModule } from '@angular/router';
+        import {HttpClientModule } from '@angular/common/http';
+
+        import { BannerComponent } from './shared/banner/banner.component';
+
+        import { SidebarComponent } from './shared/sidebar/sidebar.component';
+        import { CommonModule } from '@angular/common';
+        import { AuthService } from './features/authentication/services/authentication.service';
+
+
+        import { AuthInterceptor } from './features/authentication/interceptor.component';
+        import { Router } from '@angular/router';
+
+        @Component({
+          selector: 'app-root',
+          standalone: true,
+          imports: [RouterOutlet,RouterModule,SidebarComponent,CommonModule,HttpClientModule,BannerComponent],
+          templateUrl: './app.component.html',
+          styleUrls: ['./app.component.css']
+        })
+
+        export class AppComponent {
+          title = '${projectName}';
+          isLoggedIn: boolean = false;
+
+          constructor(private authService: AuthService, private router: Router ) {
+              this.authService.isLoggedIn$.subscribe(status => {
+              this.isLoggedIn = status;
+              if (!status) {
+              const currentUrl = this.router.url;
+              if (currentUrl !== '') {
+              this.router.navigate(['/login']);
+              }
+            }
+            });
+          }
+          entities={
+          {{tab}}{{#each entities}}{{removeLine}}
+          {{#if !this.isView}}'${formatReadable(this.className)}s': '/${toKebabCase(this.className)}s'{{/if}}
+          {{tab}}{{#if !@last  and !this.isView}},{{/if}}{{/each}}{{removeLine}}
+          }
+          views={
+          {{tab}}{{#each entities}}{{removeLine}}
+          {{#if this.isView}}'${formatReadable(this.className)}': '/${toKebabCase(this.className)}s',{{/if}}
+          {{tab}}{{#if @last}}'end':''{{/if}}{{/each}}{{removeLine}}
+          }
+        }
+        {{else}}
         import { Component } from '@angular/core';
         import { RouterOutlet,RouterModule } from '@angular/router';
         import { BannerComponent } from './shared/banner/banner.component';
@@ -778,12 +874,15 @@
           {{tab}}{{#if @last}}'end':''{{/if}}{{/each}}{{removeLine}}
           }
         }
+        {{/if}}
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.routes"
       extension: "ts"
       content: |
         import { Routes } from '@angular/router';
+        {{#if useJWT}}import { inject } from '@angular/core';
+        import { Router } from '@angular/router';{{/if}}
         import { WelcomeComponent } from './shared/welcome/welcome.component';
 
         {{#each entities}}{{removeLine}}
@@ -791,21 +890,41 @@
         {{/each}}{{removeLine}}
         {{#if useJWT}}import { loginRoutes } from './features/authentication/authentication.route'{{/if}}
 
+        {{#if useJWT}}
+        const requireAuthentication = () => localStorage.getItem('authToken')
+          ? true : inject(Router).createUrlTree(['/login']);
+        {{/if}}
         export const routes: Routes = [
+          {{#if useJWT}}...loginRoutes,
+          {
+            path: '',
+            canActivateChild: [requireAuthentication],
+            children: [
+              { path: 'welcome', component: WelcomeComponent },{{/if}}
           {
                 path: '',
                 component: WelcomeComponent,
           },
-          {{#if useJWT}}...loginRoutes{{/if}}
           {{#each entities}}{{removeLine}}
           ...${minStart(this.className)}Routes
           {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
+          {{#if useJWT}}],
+          },{{/if}}
         ];
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.component"
       extension: "html"
       content: |
+        {{#if useJWT}}
+        <app-banner *ngIf="isLoggedIn" title="${projectName}"></app-banner>
+        <div class="app-layout">
+          <app-sidebar *ngIf="isLoggedIn" [entities]="entities" [views]="views"></app-sidebar>
+            <div class="main-content">
+              <router-outlet></router-outlet>
+            </div>
+        </div>
+        {{else}}
         <app-banner title="${projectName}"></app-banner>
         <div class="app-layout">
           <app-sidebar [entities]="entities" [views]="views"></app-sidebar>
@@ -813,6 +932,7 @@
               <router-outlet></router-outlet>
             </div>
         </div>
+        {{/if}}
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
       fileName: "app.component"
@@ -2152,13 +2272,12 @@
       fileName: "useAuth"
       extension: "ts"
       content: |
-        import { useRouter } from 'vue-router'
+        import router from '@/router'
         import * as authService from '@/services/AuthService.ts'
         import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'
         import { computed } from 'vue'
 
         export function useAuth() {
-          const router = useRouter()
           const goToLoginView = () => {
             router.push({ path: '/auth/login' })
           }
@@ -2438,13 +2557,13 @@
 
         const handleRegister = async () => {
           let valid = true
-          usernameError.value = validators.checkRules(username.value, RegisterValidator.usernameRules)
+          usernameError.value = validators.checkRules(username.value, RegisterValidator.usernameRules) ?? null
           if (usernameError.value) valid = false
 
-          emailError.value = validators.checkRules(email.value, RegisterValidator.emailRules)
+          emailError.value = validators.checkRules(email.value, RegisterValidator.emailRules) ?? null
           if (emailError.value) valid = false
 
-          passwordError.value = validators.checkRules(password.value, RegisterValidator.passwordRules)
+          passwordError.value = validators.checkRules(password.value, RegisterValidator.passwordRules) ?? null
           if (passwordError.value) valid = false
 
           if (password.value !== confirmPassword.value) {
@@ -2457,7 +2576,7 @@
           if (!valid) return
           try {
             const registerData: DataResponse<string> = await authService.register(
-              new RegisterDTO(username.value, email.value, password.value, 1),
+              new RegisterDTO(username.value, email.value, password.value),
             )
             if (registerData.success) {
               router.push({ name: 'login' })
@@ -3592,26 +3711,29 @@
         import type { AxiosRequestConfig } from 'axios'
         import axios, { AxiosError } from 'axios'
         import RestResponse from '@/models/api/RestResponseModel.ts'{{#if useJWT}}
-        import { useAuth } from '@/composables/useAuth.ts'{{/if}}
+        import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'{{/if}}
         const instance = axios.create({
           baseURL: import.meta.env.VITE_APP_API_URL || 'http://localhost:8080',
           headers: {
             'Content-Type': 'application/json',
           },
-        }){{#if useJWT}}
-        const authentication = useAuth(){{/if}}
+        })
         export default function api<T>() {
           async function request(config: AxiosRequestConfig): Promise<RestResponse<T>> {
             try {{{#if useJWT}}
-              const authHeader = authentication.getAuthorizationHeader()
+              const token = useAuthenticationStore().getToken()
+              const authHeader = token ? { Authorization: 'Bearer ' + token } : {}
               config.headers = { ...config.headers, ...authHeader }{{/if}}
               const response = await instance.request(config)
               return RestResponse.fromJson<T>(response.data)
             } catch (error: unknown) {
               if ((error as AxiosError).response) { 
                 {{#if useJWT}}const badResponse = RestResponse.fromJson<T>((error as AxiosError).response?.data)
-                if (badResponse.status == 401) {
-                  authentication.logout()
+                if (badResponse.status === 401 && config.url !== '/auth/login') {
+                  useAuthenticationStore().clear()
+                  if (window.location.pathname !== '/auth/login') {
+                    window.location.assign('/auth/login')
+                  }
                 }
                 return badResponse{{else}}return RestResponse.fromJson<T>((error as AxiosError).response?.data){{/if}}
               }
@@ -3976,7 +4098,7 @@
         import { createRouter, createWebHistory } from 'vue-router'
         import routes from './routes'
         import { useFreezeScreenStore } from '@/stores/useFreezeScreenStore'
-        {{#if useJWT}}import { useAuth } from '@/composables/useAuth.ts'{{/if}}
+        {{#if useJWT}}import { useAuthenticationStore } from '@/stores/useAuthenticationStore.ts'{{/if}}
 
         const router = createRouter({
           history: createWebHistory(import.meta.env.BASE_URL),
@@ -3986,8 +4108,7 @@
         router.beforeEach((to, from, next) => {
           const loading = useFreezeScreenStore()
           loading.freeze('Loading')
-          {{#if useJWT}}const auth = useAuth()
-          const isAuthenticated = auth.isLoggedIn.value // or check auth.user/token
+          {{#if useJWT}}const isAuthenticated = !!useAuthenticationStore().getToken()
           if (to.meta.requiresAuth && !isAuthenticated) {
             next({ name: 'login' })
           } else {
@@ -4017,7 +4138,7 @@
         {{#each entities}}
         import ${minStart(this.className)}Routes from './entities/${minStart(this.className)}Routes'
         {{/each}}{{removeLine}}
-        
+
         const routes: Array<RouteRecordRaw> = [
           {
             path: '/',
@@ -4025,7 +4146,8 @@
           },
           {
             path: '/',
-            component: MainLayout,
+            component: MainLayout,{{#if useJWT}}
+            meta: { requiresAuth: true },{{/if}}
             children: [
               { path: 'home', name: 'home', component: HomeView{{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
               { path: 'settings', name: 'settings', component: SettingsView{{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },{{#if useJWT}}
@@ -7789,8 +7911,12 @@
             changePassword: (payload: ChangePasswordRequest) =>
                 axios.post<ApiResponse<string>>(`$[API_BASE]/auth/change-password`, payload).then(r => r.data),
 
-            logout: () =>
-                axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}).then(r => r.data),
+            logout: () => {
+                const token = localStorage.getItem('token');
+                return axios.post<ApiResponse<void>>(`$[API_BASE]/auth/logout`, {}, {
+                    headers: token ? { Authorization: `Bearer $[token]` } : {},
+                }).then(r => r.data);
+            },
 
             refresh: (token: string) =>
                 axios.post<ApiResponse<string>>(`$[API_BASE]/auth/refresh`, { refreshToken: token })
@@ -8292,62 +8418,6 @@
             );
         }
       destinationPath: "${destinationFolder}/src/pages/auth"
-    - fileType: "Router file"
-      fileName: "router"
-      extension: "tsx"
-      content: |
-        // src/router.tsx
-        import RootLayout from './layouts/RootLayout';
-        import { createBrowserRouter, Navigate } from 'react-router-dom';
-        import ProtectedRoute from '@/router/ProtectedRoute';
-        import Login from '@/pages/auth/Login';
-        import Register from '@/pages/auth/Register';
-        import Profile from '@/pages/auth/Profile';
-        import ChangePassword from '@/pages/auth/ChangePassword';
-        {{#each routes}}
-        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
-        {{/each}}
-
-        export const router = createBrowserRouter([
-            {
-                path: '/login',
-                element: <Login />,
-            },
-            { path: 'register', element: <Register /> },
-            {
-                path: '/',
-                element: (
-                    <ProtectedRoute /> // ← tout ce qui est en-dessous nécessite auth
-                ),
-                children: [
-                    {
-                        path: '/',
-                        element: <Navigate to="{{#each routes}}{{#if @first}}${this.routerLink}{{/if}}{{/each}}" replace />,
-                    },
-                    {
-                        path: '/',
-                        element: <RootLayout/>,
-                        children: [
-                            {
-                                path: '/profile',
-                                element: <Profile />,
-                            },
-                            {
-                                path: '/change-password',
-                                element: <ChangePassword />,
-                            },
-                            {{#each routes}}
-                            {
-                              path: '${this.routerLink}',
-                              element: <${this.componentSelector} />,
-                            },
-                            {{/each}}
-                        ],
-                    },
-                ],
-            },
-        ]);
-      destinationPath: "${destinationFolder}/src"
     - fileType: "index file"
       fileName: "index"
       extension: "tsx"
@@ -8706,6 +8776,25 @@
         }
       destinationPath: "${destinationFolder}/src/components/SettingsMenu"
   additionalFiles:
+    - fileType: "Vite config"
+      fileName: "vite.config"
+      extension: "ts"
+      content: |
+        // vite.config.ts
+        import { defineConfig } from 'vite';
+        import react from '@vitejs/plugin-react';
+
+        export default defineConfig({
+            plugins: [react()],
+            resolve: { alias: { '@': '/src' } },
+            server: {
+                port: ${frontendPort},
+                hmr: {
+                    overlay: true, // affiche une pop-up + stack dans le terminal
+                },
+            }
+        });
+      destinationPath: "${destinationFolder}"
     - fileType: "App name config"
       fileName: "app"
       extension: "ts"
@@ -8749,6 +8838,59 @@
       fileName: "router"
       extension: "tsx"
       content: |
+        {{#if useJWT}}
+        // src/router.tsx
+        import RootLayout from './layouts/RootLayout';
+        import { createBrowserRouter, Navigate } from 'react-router-dom';
+        import ProtectedRoute from '@/router/ProtectedRoute';
+        import Login from '@/pages/auth/Login';
+        import Register from '@/pages/auth/Register';
+        import Profile from '@/pages/auth/Profile';
+        import ChangePassword from '@/pages/auth/ChangePassword';
+        {{#each routes}}
+        import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
+        {{/each}}
+
+        export const router = createBrowserRouter([
+            {
+                path: '/login',
+                element: <Login />,
+            },
+            { path: 'register', element: <Register /> },
+            {
+                path: '/',
+                element: (
+                    <ProtectedRoute /> // ← tout ce qui est en-dessous nécessite auth
+                ),
+                children: [
+                    {
+                        path: '/',
+                        element: <Navigate to="{{#each routes}}{{#if @first}}${this.routerLink}{{/if}}{{/each}}" replace />,
+                    },
+                    {
+                        path: '/',
+                        element: <RootLayout/>,
+                        children: [
+                            {
+                                path: '/profile',
+                                element: <Profile />,
+                            },
+                            {
+                                path: '/change-password',
+                                element: <ChangePassword />,
+                            },
+                            {{#each routes}}
+                            {
+                              path: '${this.routerLink}',
+                              element: <${this.componentSelector} />,
+                            },
+                            {{/each}}
+                        ],
+                    },
+                ],
+            },
+        ]);
+        {{else}}
         // src/router.tsx
         import RootLayout from './layouts/RootLayout';
         import { createBrowserRouter } from 'react-router-dom';
@@ -8770,6 +8912,7 @@
                 ],
             },
         ]);
+        {{/if}}
       destinationPath: "${destinationFolder}/src/"
     - fileType: "App-files"
       fileName: "index"

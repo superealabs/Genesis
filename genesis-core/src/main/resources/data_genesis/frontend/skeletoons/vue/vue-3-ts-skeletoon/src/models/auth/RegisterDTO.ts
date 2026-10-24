@@ -1,17 +1,11 @@
-export class RegisterDTO{
-  username?: string
-  email?:string
-  password?:string
-  roleidRoleEntity: {
-    id?:string
-  }
+export class RegisterDTO {
+  name?: string
+  email?: string
+  password?: string
 
-  constructor(name?:string, email?:string, password?:string, roleId?:string) {
-    this.username = name
+  constructor(name?: string, email?: string, password?: string) {
+    this.name = name
     this.email = email
     this.password = password
-    this.roleidRoleEntity = {
-      id: roleId
-    }
   }
 }

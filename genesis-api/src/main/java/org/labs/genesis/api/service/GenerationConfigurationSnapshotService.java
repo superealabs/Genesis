@@ -28,7 +28,7 @@ public class GenerationConfigurationSnapshotService {
         ProjectGenerationContext source = contextStore.getContext();
         List<GenerationParameterRequest> profiles = profilesStore.getProfiles(source);
         if (profiles == null || profiles.isEmpty()) {
-            throw new IllegalStateException("Aucun profil de génération disponible");
+            throw new org.labs.genesis.api.exception.ProjectConfigException("Aucun profil de génération disponible");
         }
         return new GenerationConfigurationSnapshot(profiles, profileRelationService.snapshotRelations(profiles));
     }

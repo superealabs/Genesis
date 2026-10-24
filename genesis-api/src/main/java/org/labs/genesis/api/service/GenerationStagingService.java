@@ -87,6 +87,10 @@ public class GenerationStagingService {
             }
         }
 
+        if (!collisions.isEmpty()) {
+            return new ConsolidationResult(false, List.of(), List.copyOf(collisions));
+        }
+
         Files.createDirectory(target);
         List<String> consolidated = new ArrayList<>();
         for (FileEntry entry : entries) {

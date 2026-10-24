@@ -36,4 +36,17 @@ class GenerationStagingServiceTest {
         assertThat(result.collisions()).containsExactly("shared.java");
         assertThat(output).doesNotExist();
     }
+    @Test
+    void rejectsFileDirectoryCollisionBeforeCreatingOutput() throws Exception {
+        Path first = Files.createDirectory(directory.resolve("first"));
+        Path second = Files.createDirectory(directory.resolve("second"));
+        Files.writeString(first.resolve("assets"), "file");
+        Files.createDirectory(second.resolve("assets"));
+        Files.writeString(second.resolve("assets/logo.png"), "image");
+        Path output = directory.resolve("output");
+        var result = new GenerationStagingService().consolidate(List.of(first, second), output);
+        assertThat(result.success()).isFalse();
+        assertThat(result.collisions()).anyMatch(path -> path.contains("assets"));
+        assertThat(output).doesNotExist();
+    }
 }

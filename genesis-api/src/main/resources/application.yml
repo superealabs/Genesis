@@ -8,4 +8,4 @@ server:
 
 genesis:
   sql:
-    execution-enabled=${GENESIS_SQL_EXECUTION_ENABLED:false}:
+    execution-enabled: ${GENESIS_SQL_EXECUTION_ENABLED:false}

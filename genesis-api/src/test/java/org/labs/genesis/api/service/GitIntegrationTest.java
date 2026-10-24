@@ -27,12 +27,25 @@ class GitIntegrationTest {
     private GenerationContextStore store;
     private GenerationPublicationService publication;
     private GitLocalService service;
-    // /tmp peut contenir un marqueur .git : ne jamais le supprimer pour les tests.
+    // Les dossiers temporaires peuvent contenir un marqueur .git : ne jamais le supprimer.
     @TempDir(factory = RecipeTempDir.class) Path temporary;
     public static class RecipeTempDir implements org.junit.jupiter.api.io.TempDirFactory {
         @Override public Path createTempDirectory(org.junit.jupiter.api.extension.AnnotatedElementContext element,
                 org.junit.jupiter.api.extension.ExtensionContext context) throws java.io.IOException {
-            return Files.createTempDirectory(Path.of("/var/tmp"), "genesis-git-test-");
+            for (Path candidate : List.of(Path.of(System.getProperty("java.io.tmpdir")),
+                    Path.of("/var/tmp"), Path.of("/dev/shm"))) {
+                if (!Files.isDirectory(candidate) || !Files.isWritable(candidate)) continue;
+                Path real = candidate.toRealPath();
+                boolean hasRepositoryAncestor = false;
+                for (Path parent = real; parent != null; parent = parent.getParent()) {
+                    if (Files.exists(parent.resolve(".git"), LinkOption.NOFOLLOW_LINKS)) {
+                        hasRepositoryAncestor = true;
+                        break;
+                    }
+                }
+                if (!hasRepositoryAncestor) return Files.createTempDirectory(real, "genesis-git-test-");
+            }
+            throw new java.io.IOException("Aucun dossier temporaire inscriptible sans dépôt Git parent");
         }
     }
     private Path root;

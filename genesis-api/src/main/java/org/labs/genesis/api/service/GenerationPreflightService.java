@@ -45,7 +45,7 @@ public class GenerationPreflightService {
         ProjectGenerationContext source = contextStore.getContext();
         List<GenerationParameterRequest> profiles = snapshot.profiles();
         if (profiles == null || profiles.isEmpty()) {
-            throw new IllegalStateException("Aucun profil de génération disponible");
+            throw new org.labs.genesis.api.exception.ProjectConfigException("Aucun profil de génération disponible");
         }
 
         ExecutionPlanResponse executionPlan = executionPlanner.prepare(profiles);
