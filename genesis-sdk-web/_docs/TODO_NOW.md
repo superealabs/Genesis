@@ -1,8 +1,6 @@
 - le système de set des étapes(revenir à une étape précise du formulaire) (ok)
     - gestion des exceptions(framework & backend) (ok)
 
-- désactivation du bouton suivant tant qu'on est pas à la dernière étape du résumé (ok)
-
 - créer un component :
     GenesisTutorial
 
