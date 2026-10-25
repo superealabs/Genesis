@@ -3,6 +3,12 @@
   "displayName": "genesis",
   "description": "Genesis Extension",
   "version": "0.0.1",
+  "icon": "resources/genesis-icon.png",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/superealabs/Genesis"
+  },
   "workspaces": [
     "packages/webview"
   ],
@@ -17,6 +23,15 @@
   ],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "genesis-sidebar",
+          "title": "Genesis",
+          "icon": "resources/genesis-icon.png" 
+        }
+      ]
+    },
     "commands": [
       {
         "command": "genesis.helloWorld",
