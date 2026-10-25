@@ -209,6 +209,10 @@ export class WebviewMessageRouter {
                     await this.recentHandler.handleClearItems(message.payload);
                     break;
 
+                case 'OPEN_PROJECT':
+                    await this.generatorHandler.handleOpenProject(message.payload, this.panel);
+                    break;
+
                 default:
                     console.warn(`[WebviewMessageRouter] Message non géré : ${message.type}`);
             }

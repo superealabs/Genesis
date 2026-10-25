@@ -12,3 +12,5 @@
         et un slot avec un bouton ok dedans.
 
         Chaque vue possède un liste de cette dernière à parcourir dans l'ordre
+
+- amélioration ui summary

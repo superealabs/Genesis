@@ -130,6 +130,7 @@ export function useGenerator() {
     getAvailableFrameworkVersions,
     getAvailableBuildTools,
     getAvailableHibernateDdlAutoOptions,
+    isGenerating
   } = storeToRefs(store);
 
   const targetSummaryIndex = ref(0);
@@ -195,8 +196,15 @@ export function useGenerator() {
   }
 
   function resetWizard() {
+    // 1. Réinitialise le store (données, isGenerationComplete, etc.)
     store.reset();
+    
+    // 2. Réinitialise le compteur d'étapes du wizard
     wizard.resetWizard();
+    
+    // 3. Réinitialise les variables locales du composable
+    hasReachedSummary.value = false;
+    targetSummaryIndex.value = 0;
   }
 
   // --- Fetching de Données (Délégation aux services) ---
@@ -272,6 +280,7 @@ export function useGenerator() {
     isLastStep: wizard.isLastStep,
     skippedSteps: wizard.skippedSteps,
     isCurrentStepSkippable,
+    isGenerating,
 
     // Données du Store (Refs)
     stepperData,

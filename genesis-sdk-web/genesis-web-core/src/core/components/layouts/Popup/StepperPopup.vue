@@ -1,3 +1,4 @@
+<!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/Popup/StepperPopup.vue -->
 <template>
     <BaseFormPopup
         :title="title"
@@ -7,17 +8,27 @@
         @close="$emit('close')"
         :position="position"
     >
-        <!--  CORRECTION : Conteneur flex qui prend toute la hauteur disponible sans cacher le débordement -->
-        <div class="flex flex-col flex-1 min-h-0 h-full">
+        <!-- OVERLAY DE CHARGEMENT -->
+        <div 
+            v-if="isLoading" 
+            class="absolute inset-0 z-50 flex items-center justify-center bg-bg-dark/90 backdrop-blur-sm rounded-lg"
+        >
+            <GenesisLoading 
+                message="Génération du projet en cours..."
+                sub-message="Veuillez ne pas fermer cette fenêtre."
+            />
+        </div>
+
+        <!-- Conteneur principal -->
+        <div class="relative flex flex-col flex-1 min-h-0 h-full">
             
             <!-- Zone de contenu scrollable -->
             <div class="flex-1 min-h-0 bg-bg-dark" :class="contentClass">
                 <slot />
             </div>
 
-            <!--  CORRECTION : Footer fixé en bas, il ne doit JAMAIS rétrécir (flex-shrink-0) -->
-            <!-- Footer fixé en bas -->
-            <div class="flex-shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-secondary">
+            <!-- ✅ Footer conditionnel : masqué si hideFooter est true -->
+            <div v-if="!hideFooter" class="flex-shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-secondary">
                 <div class="flex items-center gap-2">
                     <GenesisButton
                         variant="secondary"
@@ -36,7 +47,6 @@
                     </GenesisButton>
                 </div>
 
-
                 <!-- Indicateur d'étapes -->
                 <div class="flex items-center gap-2">
                     <div
@@ -53,7 +63,6 @@
                             }"
                             @click="visitedSteps?.has(step) && step !== currentStep ? $emit('go-to-step', step) : null"
                         >
-                            <!-- Tooltip au survol -->
                             <span 
                                 v-if="stepLabels && stepLabels[index]"
                                 class="absolute bottom-full mb-2 hidden group-hover:block px-2 py-1 text-xs text-text bg-bg-dark border border-secondary rounded shadow-lg whitespace-nowrap z-50 pointer-events-none"
@@ -75,7 +84,7 @@
                     
                     <GenesisButton 
                         @click="$emit('next')" 
-                        :variant="'accent'" 
+                        :variant="'accent'"
                         :disabled="disableNext"
                     >
                         {{ currentStep === totalSteps ? 'Générer' : 'Suivant' }}
@@ -89,6 +98,7 @@
 <script setup lang="ts">
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisLoading from '@genesis-labs/web-core/core/components/ui/feedback/GenesisLoading.vue';
 import type { PopupSize, PopupPosition } from './popup.types';
 
 withDefaults(defineProps<{
@@ -104,7 +114,9 @@ withDefaults(defineProps<{
     showBackToSummary?: boolean;
     visitedSteps?: Set<number>;
     stepLabels?: string[];
+    isLoading?: boolean;
     disableNext?: boolean;
+    hideFooter?: boolean;
 }>(), {
     size: 'md',
     isClosable: true,
@@ -113,7 +125,9 @@ withDefaults(defineProps<{
     contentClass: 'overflow-hidden',
     isSkippable: false,
     showBackToSummary: false,
-    disableNext: false
+    isLoading: false,
+    disableNext: false,
+    hideFooter: false
 });
 
 defineEmits<{

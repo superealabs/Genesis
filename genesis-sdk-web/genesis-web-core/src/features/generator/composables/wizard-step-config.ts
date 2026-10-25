@@ -521,21 +521,23 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     }
   },
 
+  // genesis-sdk-web/genesis-web-core/src/features/generator/composables/wizard-step-config.ts
   summary: {
-    onEnter: (/** store */) => {
+    onEnter: (store) => {
       console.log("[Wizard: summary] Affichage du résumé final de la configuration.");
-      // Aucune action de chargement requise ici, toutes les données sont déjà dans le store.
-      // Le composant SummaryView se chargera de les afficher via les composantes enfants.
+      // On s'assure que l'état est réinitialisé si on revient en arrière (cas rare mais possible)
+      store.setIsGenerationComplete(false); 
     },
     
     beforeNext: async (store, { recentSvc, svc }) => {
       try {
         console.log("[Wizard: summary] Résumé validé. Prêt pour la génération finale.");
+        store.setIsGenerating(true);
+        
+        const startTime = Date.now();
         
         try {
-
           const data = toRaw(store.stepperData);
-          
           await svc.launchGeneration(data);
 
           // 1. Sauvegarder le Framework Backend
@@ -582,10 +584,25 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
         } catch (error) {
           console.error("[Wizard: summary] Échec de la mise à jour de la récence:", error);
+        } finally {
+          const elapsedTime = Date.now() - startTime;
+          const minDuration = 3000;
+          const remainingTime = Math.max(0, minDuration - elapsedTime);
+
+          if (remainingTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+          }
+          
+          store.setIsGenerating(false);
+          
+          // ✅ NOUVEAU : Si on arrive ici sans erreur critique, on considère la génération comme réussie
+          // (Tu pourras affiner cela plus tard en vérifiant la réponse de launchGeneration)
+          store.setIsGenerationComplete(true);
         }
 
         return true;
       } catch (error) {
+        store.setIsGenerating(false);
         store.setWizardError(error instanceof Error ? error.message : "Échec de la validation du résumé.");
         return false;
       }

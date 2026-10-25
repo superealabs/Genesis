@@ -31,6 +31,7 @@ export const useGeneratorStore = defineStore('generator', () => {
   
   // Domaine : Global & Utilitaire
   const isGenerating = ref(false);
+  const isGenerationComplete = ref(false);
   const wizardError = ref<string | null>(null);
   const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
 
@@ -102,6 +103,7 @@ export const useGeneratorStore = defineStore('generator', () => {
   function reset() {
     isGenerating.value = false;
     wizardError.value = null;
+    isGenerationComplete.value = false;
     stepperData.value = structuredClone(INITIAL_STATE);
     pendingFramework.value = null;
     pendingDatabaseEngine.value = null;
@@ -120,6 +122,10 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   function setFramework(framework: Framework) {
     stepperData.value.framework = framework;
+  }
+
+  function setIsGenerationComplete(value: boolean) { // ✅ NOUVEAU
+    isGenerationComplete.value = value;
   }
 
   // --- Étape 2 : Configuration Projet ---
@@ -350,6 +356,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     // Global
     wizardError, isGenerating, stepperData,
     setWizardError, clearWizardError, setIsGenerating, reset,
+    isGenerationComplete, setIsGenerationComplete,
 
     // Étape 1 : Framework
     pendingFramework, setPendingFramework, setFramework,

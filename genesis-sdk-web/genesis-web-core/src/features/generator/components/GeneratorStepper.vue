@@ -11,6 +11,8 @@
     :step-labels="props.stepLabels"
 
     :disable-next="currentStepId === 'summary' && !isSummaryComplete"
+    :is-loading="store.isGenerating"
+    :hide-footer="store.isGenerationComplete"
 
     @close="handleClose"
     @previous="emit('previous')"
@@ -132,6 +134,18 @@
       @test-connection-error="handleChildError" 
     />
 
+    <GenerationSuccessView 
+      v-else-if="currentStepId === 'summary' && store.isGenerationComplete"
+      @close="emit('close')"
+    >
+      <!-- ✅ On transmet le slot spécifique à l'environnement vers GenerationSuccessView -->
+      <template #actions>
+        <slot name="success-actions"></slot>
+      </template>
+    </GenerationSuccessView>
+
+
+
     <SummaryView 
       v-else-if="currentStepId === 'summary'" 
       :initial-index="props.targetSummaryIndex"
@@ -167,6 +181,7 @@ import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-co
 import DatabaseLayout, { type DatabaseLayoutProps } from '@genesis-labs/web-core/features/database/components/DatabaseLayout.vue';
 import FrontendLayout, { type FrontendLayoutProps } from '@genesis-labs/web-core/features/frontend/components/FrontendLayout.vue';
 import RepositoryLayout, { type RepositoryLayoutProps } from '@genesis-labs/web-core/features/repository/components/RepositoryLayout.vue';
+import GenerationSuccessView from './steps/GenerationSuccessView.vue';
 
 import SummaryView from './steps/SummaryView.vue';
 
@@ -198,6 +213,7 @@ const props = defineProps<{
   hasReachedSummary?: boolean;
   visitedSteps?: Set<number>;
   stepLabels?: string[];
+  isGenerating?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -208,6 +224,7 @@ const emit = defineEmits<{
   'back-to-summary': [];
   'request-edit': [index: number];
   'go-to-step': [step: number];
+  'open-project': [];
   'select-framework': [framework: Framework];
   'select-frontend': [framework: FrontendFramework];
   'select-database': [engine: DatabaseEngineDto];

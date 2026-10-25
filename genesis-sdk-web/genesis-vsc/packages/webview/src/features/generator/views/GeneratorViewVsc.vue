@@ -6,6 +6,13 @@ import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/mani
 import { FrontendFramework } from '@genesis-labs/shared-types';
 // ✅ Import des utilitaires de mapping pour la navigation
 import { SUMMARY_TO_STEP_MAP, getStepNumberById, STEP_LABELS } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+
+import { openProjectVsc } from '@/features/generator/services/vsc-generator.utils';
+
+const emit = defineEmits<{
+    close: [];
+}>();
 
 const {
     currentStep,
@@ -31,6 +38,7 @@ const {
 
 function handleClose() {
     reset();
+    emit('close'); 
 }
 
 async function handleNextStep() {
@@ -69,6 +77,15 @@ function handleSummaryRequestEdit(summaryIndex: number) {
         goToStep(stepNumber);
     }
 }
+
+function handleOpenProject() {
+    const location = stepperData.value.config.projectLocation;
+    const name = stepperData.value.config.projectName;
+    // Construction simple du chemin (fonctionne pour la plupart des OS)
+    const projectPath = `${location}/${name}`; 
+    
+    openProjectVsc(projectPath);
+}
 </script>
 
 <template>
@@ -93,5 +110,17 @@ function handleSummaryRequestEdit(summaryIndex: number) {
         @select-repository="onSelectRepository" 
         @request-folder-path="handleSelectFolderPath"
         @request-file-path="handleFileRequest"
-    />
+    >
+        <template #success-actions>
+            <div class="flex gap-3 justify-center w-full max-w-sm">
+                <GenesisButton variant="primary" size="lg" @click="handleOpenProject">
+                    Ouvrir le projet
+                </GenesisButton>
+                
+                <GenesisButton :variant="'neutral'" size="lg" @click="handleClose">
+                    Fermer
+                </GenesisButton>
+            </div>
+        </template>
+    </GeneratorStepper>
 </template>
