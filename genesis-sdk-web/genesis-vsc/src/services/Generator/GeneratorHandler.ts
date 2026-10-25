@@ -180,8 +180,35 @@ export class GeneratorHandler {
     async handleLaunchGeneration(payload: GeneratorData, panel: vscode.WebviewPanel): Promise<void> {
         try {
             logger.log(LOG_CHANNEL, `🚀 [launchGeneration] Lancement de la génération pour: ${payload.config.projectName}`);
+            
+            // 1. Appel au service pour la génération réelle
             const result = await this.service.launchGeneration(payload);
+            
+            // 2. ✅ NOUVELLE FONCTIONNALITÉ : Popup d'ouverture de projet VS Code
+            if (result.success && result.projectPath) {
+                const action = await vscode.window.showInformationMessage(
+                    `Le projet "${payload.config.projectName}" a été généré avec succès dans :\n${result.projectPath}`,
+                    { modal: true }, // Rend la popup bloquante (l'utilisateur doit choisir)
+                    'Ouvrir dans cette fenêtre',
+                    'Ouvrir dans une nouvelle fenêtre'
+                );
+
+                if (action === 'Ouvrir dans cette fenêtre') {
+                    const uri = vscode.Uri.file(result.projectPath);
+                    // forceReuseWindow: true empêche VS Code d'ouvrir un nouvel onglet/fenêtre inutilement
+                    await vscode.commands.executeCommand('vscode.openFolder', uri, { forceReuseWindow: true });
+                } 
+                else if (action === 'Ouvrir dans une nouvelle fenêtre') {
+                    const uri = vscode.Uri.file(result.projectPath);
+                    // forceNewWindow: true garantit l'ouverture dans une instance VS Code distincte
+                    await vscode.commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: true });
+                }
+                // Si action est undefined, l'utilisateur a fermé la popup ou cliqué en dehors : on ne fait rien.
+            }
+
+            // 3. Notifier la webview du résultat (pour mettre à jour l'UI du stepper)
             panel.webview.postMessage({ type: 'GENERATION_RESULT', payload: result });
+            
         } catch (error) {
             this.sendApiError(panel, 'LAUNCH_GENERATION', error);
         }

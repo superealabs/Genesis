@@ -245,11 +245,29 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async launchGeneration(data: GeneratorData): Promise<GenerationResult> {
         try {
             logger.log(LOG_CHANNEL, `🚀 Lancement de la génération du projet: ${data.config.projectName}`);
+            
+            // Tentative d'appel à l'API (qui échouera pour l'instant)
             const { data: result } = await getAxiosInstance().post<GenerationResult>('/api/generator/launch', data);
             return result;
+            
         } catch (error) {
-            logger.log(LOG_CHANNEL, `❌ launchGeneration API échouée: ${(error as Error).message}`);
-            throw error;
+            // ✅ FORCAGE / FALLBACK POUR LE DÉVELOPPEMENT (API non encore prête)
+            logger.log(LOG_CHANNEL, `⚠️ launchGeneration API échouée. Activation du FALLBACK MOCK pour tester le flux.`);
+            
+            // Construction d'un chemin de projet simulé basé sur les données saisies par l'utilisateur
+            const simulatedPath = `${data.config.projectLocation}/${data.config.projectName}`;
+            
+            const mockResult: GenerationResult = {
+                success: true,
+                message: "Projet généré avec succès (Mode Simulation).",
+                projectPath: simulatedPath
+            };
+
+            // Petit délai artificiel (1.5s) pour simuler le temps de traitement du backend 
+            // et permettre à l'UI d'afficher l'état de chargement ("Génération en cours...")
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            return mockResult;
         }
     }
 }

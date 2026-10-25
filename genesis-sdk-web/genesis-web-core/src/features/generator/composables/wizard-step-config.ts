@@ -17,7 +17,7 @@ import { useRecentStore } from '@genesis-labs/web-core/core/features/recent/stor
 import { RecentItem } from '@genesis-labs/shared-types';
 import type { IRecentService } from '@genesis-labs/web-core/core/features/recent/types/recent.service.interface';
 
-
+import { toRaw } from 'vue';
 
 
 // ============================================================================
@@ -528,12 +528,15 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       // Le composant SummaryView se chargera de les afficher via les composantes enfants.
     },
     
-    beforeNext: async (store, { recentSvc }) => {
+    beforeNext: async (store, { recentSvc, svc }) => {
       try {
         console.log("[Wizard: summary] Résumé validé. Prêt pour la génération finale.");
         
         try {
-          const data = store.stepperData;
+
+          const data = toRaw(store.stepperData);
+          
+          await svc.launchGeneration(data);
 
           // 1. Sauvegarder le Framework Backend
           if (data.framework) {
