@@ -144,7 +144,7 @@ const initials = computed(() => {
 
 const containerClasses = computed(() => {
     if (props.selected) {
-        return 'bg-bg-light/5 border border-primary';
+        return 'bg-bg-light/5 border-2 border-primary';
         // return 'bg-bg-light border-b-8 border-bg';
 
     }

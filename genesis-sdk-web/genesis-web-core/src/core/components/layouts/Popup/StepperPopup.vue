@@ -28,7 +28,7 @@
             </div>
 
             <!-- ✅ Footer conditionnel : masqué si hideFooter est true -->
-            <div v-if="!hideFooter" class="flex-shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-secondary">
+            <div v-if="!hideFooter" class="flex-shrink-0 flex justify-between items-center pt-4 mt-4 border-t border-bg-neutral-genesis">
                 <div class="flex items-center gap-2">
                     <GenesisButton
                         variant="secondary"

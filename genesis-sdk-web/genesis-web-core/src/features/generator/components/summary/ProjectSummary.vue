@@ -15,23 +15,31 @@
           <span class="text-xs text-muted break-all">{{ config.projectLocation || 'Localisation non définie' }}</span>
         </header>
 
-        <!-- 2. Fonctionnalités : trois niveaux de taille (stack → build → avancé) -->
-        <section class="flex flex-col gap-8">
-          <dl
-            v-for="group in featureGroups"
-            :key="group.id"
-            class="grid gap-x-10 gap-y-5"
-            :class="group.gridClass"
-          >
-            <div v-for="field in group.fields" :key="field.label" class="flex flex-col gap-1 min-w-0">
-              <dt class="text-xs font-semibold uppercase tracking-wider text-muted">{{ field.label }}</dt>
-              <dd class="text-text break-words" :class="group.valueClass">{{ field.value }}</dd>
+        <!-- 2. Fonctionnalités : regroupées avec des entêtes clairs -->
+        <section class="flex flex-col gap-12">
+          
+          <div v-for="group in featureGroups" :key="group.id" class="flex flex-col gap-4">
+            
+            <!-- ✅ NOUVEAU : Entête de section (s'affiche uniquement si un titre est défini) -->
+            <div v-if="group.title" class="flex items-center gap-3 pb-2 border-b border-bg-neutral-genesis">
+              <h3 class="text-md font-bold uppercase tracking-widest">
+                {{ group.title }}
+              </h3>
             </div>
-          </dl>
+
+            <dl class="grid gap-x-10 gap-y-5" :class="group.gridClass">
+              <div v-for="field in group.fields" :key="field.label" class="flex flex-col gap-1 min-w-0">
+                <dt class="text-xs font-semibold uppercase tracking-wider text-muted">{{ field.label }}</dt>
+                <dd class="text-text break-words" :class="group.valueClass">{{ field.value }}</dd>
+                <!-- Petite ligne de séparation verticale optionnelle pour la grille 'build' si désiré, mais le gap suffit souvent -->
+              </div>
+            </dl>
+          </div>
+
         </section>
 
         <!-- 3. Description : en dernier, rétractable (fermée par défaut) -->
-        <details class="group">
+        <details class="group mt-2">
           <summary
             class="flex items-center gap-2 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden text-xs font-semibold uppercase tracking-wider text-muted hover:text-text transition-colors"
           >
@@ -77,7 +85,7 @@
 import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
-import projectIllustration from '../../assets/project-illustration.png';
+import projectIllustration from '../../assets/project-illustration.png'; // Assure-toi que le chemin est bon
 
 const { stepperData } = useGenerator();
 const frameworkStore = useFrameworkStore();
@@ -94,13 +102,18 @@ const languageName = computed(() => {
 const or = (value: string | undefined | null, fallback = 'Non défini') => value || fallback;
 
 interface FeatureField { label: string; value: string }
-interface FeatureGroup { id: string; gridClass: string; valueClass: string; fields: FeatureField[] }
+interface FeatureGroup { 
+  id: string; 
+  title?: string; // ✅ NOUVEAU : Titre optionnel pour la section
+  gridClass: string; 
+  valueClass: string; 
+  fields: FeatureField[] 
+}
 
-// Une seule source de données : le template ne fait que boucler.
-// La hiérarchie vient de `valueClass` (taille de police) et de `gridClass` (colonnes).
 const featureGroups = computed<FeatureGroup[]>(() => [
   {
     id: 'stack',
+    // Pas de titre pour la stack, car c'est l'information principale qui suit directement le nom du projet
     gridClass: 'grid-cols-2',
     valueClass: 'text-2xl font-semibold',
     fields: [
@@ -110,6 +123,7 @@ const featureGroups = computed<FeatureGroup[]>(() => [
   },
   {
     id: 'build',
+    title: 'Configuration de Build', // ✅ AJOUTÉ
     gridClass: 'grid-cols-3',
     valueClass: 'text-base font-medium',
     fields: [
@@ -120,13 +134,13 @@ const featureGroups = computed<FeatureGroup[]>(() => [
   },
   {
     id: 'advanced',
+    title: 'Options Avancées', // ✅ AJOUTÉ
     gridClass: 'grid-cols-2 lg:grid-cols-4',
     valueClass: 'text-sm',
     fields: [
       { label: 'Logging',  value: or(config.value.loggingLevel) },
       { label: 'Sécurité', value: or(config.value.securityType) },
       { label: 'Cache',    value: or(config.value.cacheProvider) },
-      // Champ optionnel : n'apparaît que s'il existe
       ...(config.value.hibernateDdlAuto
         ? [{ label: 'Hibernate DDL', value: config.value.hibernateDdlAuto }]
         : []),

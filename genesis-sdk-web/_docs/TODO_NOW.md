@@ -13,4 +13,6 @@
 
         Chaque vue possède un liste de cette dernière à parcourir dans l'ordre
 
-- amélioration ui summary
+- ajustement ui summary
+
+- Correction des commandes pour effectuer des trucs
