@@ -17,6 +17,7 @@ public class StringUtils {
 
 
     public static String minStart(String string) {
+        if (string == null || string.isEmpty()) return string;
         return string.transform(s -> s.replaceFirst(String.valueOf(s.charAt(0)), String.valueOf(s.charAt(0)).toLowerCase()));
     }
 
@@ -58,6 +59,7 @@ public class StringUtils {
     }
 
     public static String toPascalCase(String string) {
+        if (string == null || string.isEmpty()) return string;
         return string.transform(s -> {
             // step 1 : normalizing by inserting separators where there is case change
             s = s.replaceAll("([a-z])([A-Z])", "$1_$2")         // factSales → fact_Sales
