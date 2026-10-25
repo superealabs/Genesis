@@ -1,0 +1,175 @@
+{
+  "info": {
+    "name": "Genesis API",
+    "description": "Collection complète pour l'API Genesis - Générateur de projets",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "genesis-api-collection-final"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8081",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Frameworks",
+      "item": [
+        { "name": "Récupérer tous les frameworks", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/frameworks", "host": ["{{base_url}}"], "path": ["api", "frameworks"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les langages", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/frameworks/languages", "host": ["{{base_url}}"], "path": ["api", "frameworks", "languages"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les frameworks core", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/frameworks/cores", "host": ["{{base_url}}"], "path": ["api", "frameworks", "cores"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les templates de vues", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/frameworks/templates", "host": ["{{base_url}}"], "path": ["api", "frameworks", "templates"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Sélectionner un framework", "request": { "method": "POST", "header": [], "url": { "raw": "{{base_url}}/api/frameworks/:id/select", "host": ["{{base_url}}"], "path": ["api", "frameworks", ":id", "select"] }, "variable": [{ "key": "id", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Sélectionner un framework (Generator SDK)", "request": { "method": "POST", "header": [], "url": { "raw": "{{base_url}}/api/generator/frameworks/:id/select", "host": ["{{base_url}}"], "path": ["api", "generator", "frameworks", ":id", "select"] }, "variable": [{ "key": "id", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] }
+      ]
+    },
+    {
+      "name": "Database",
+      "item": [
+        { "name": "Récupérer la liste des bases de données", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/databases", "host": ["{{base_url}}"], "path": ["api", "databases"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer le catalogue des moteurs", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/database/engines", "host": ["{{base_url}}"], "path": ["api", "database", "engines"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Tester une connexion JDBC", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"engine\": \"PostgreSQL\",\n  \"host\": \"localhost\",\n  \"port\": \"5432\",\n  \"databaseName\": \"genesis_db\",\n  \"schema\": \"public\",\n  \"username\": \"admin\",\n  \"password\": \"secret\"\n}" }, "url": { "raw": "{{base_url}}/api/database/test-connection", "host": ["{{base_url}}"], "path": ["api", "database", "test-connection"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Configurer la base de données (Standard)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"databaseId\": 1,\n  \"engine\": \"PostgreSQL\",\n  \"host\": \"localhost\",\n  \"port\": \"5432\",\n  \"databaseName\": \"genesis_db\",\n  \"username\": \"admin\",\n  \"password\": \"secret\"\n}" }, "url": { "raw": "{{base_url}}/api/databases/config", "host": ["{{base_url}}"], "path": ["api", "databases", "config"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Configurer la base de données (Generator SDK)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"databaseId\": 1,\n  \"engine\": \"PostgreSQL\",\n  \"host\": \"localhost\",\n  \"port\": \"5432\",\n  \"databaseName\": \"genesis_db\",\n  \"username\": \"admin\",\n  \"password\": \"secret\"\n}" }, "url": { "raw": "{{base_url}}/api/generator/database-config", "host": ["{{base_url}}"], "path": ["api", "generator", "database-config"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] }
+      ]
+    },
+    {
+      "name": "Frontend",
+      "item": [
+        { "name": "Récupérer les options de frameworks frontend", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/frontend/frameworks", "host": ["{{base_url}}"], "path": ["api", "frontend", "frameworks"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Configurer le frontend", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"frameworkId\": 1,\n  \"languageId\": 2,\n  \"port\": \"3000\"\n}" }, "url": { "raw": "{{base_url}}/api/generator/frontend-config", "host": ["{{base_url}}"], "path": ["api", "generator", "frontend-config"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les langages de programmation", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/frontend/programming-languages", "host": ["{{base_url}}"], "path": ["api", "frontend", "programming-languages"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les langues d'interface", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/frontend/interface-languages", "host": ["{{base_url}}"], "path": ["api", "frontend", "interface-languages"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les types de navbar", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/frontend/navbar-types", "host": ["{{base_url}}"], "path": ["api", "frontend", "navbar-types"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Configurer le layout frontend", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"selectedInterfaceLanguages\": [\"fr\", \"en\"],\n  \"navbarType\": \"side\",\n  \"primaryColor\": \"#1976D2\",\n  \"secondaryColor\": \"#FFC107\",\n  \"logoAssetId\": \"asset-123\",\n  \"faviconAssetId\": \"asset-456\"\n}" }, "url": { "raw": "{{base_url}}/api/generator/frontend-layout-config", "host": ["{{base_url}}"], "path": ["api", "generator", "frontend-layout-config"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Uploader un asset frontend", "request": { "method": "POST", "header": [], "url": { "raw": "{{base_url}}/api/generator/frontend/assets/:kind", "host": ["{{base_url}}"], "path": ["api", "generator", "frontend", "assets", ":kind"] }, "variable": [{ "key": "kind", "value": "logo" }], "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": [] }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] }
+      ]
+    },
+    {
+      "name": "Generation",
+      "item": [
+        { "name": "Récupérer les modes de génération", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generation/modes", "host": ["{{base_url}}"], "path": ["api", "generation", "modes"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Sélectionner un mode de génération", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"mode\": \"FULL\"\n}" }, "url": { "raw": "{{base_url}}/api/generation/modes/select", "host": ["{{base_url}}"], "path": ["api", "generation", "modes", "select"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer le plan de génération", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/plan", "host": ["{{base_url}}"], "path": ["api", "generator", "plan"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer le plan d'exécution (Batches)", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/execution-plan", "host": ["{{base_url}}"], "path": ["api", "generator", "execution-plan"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Valider les relations entre profils", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/validate-relations", "host": ["{{base_url}}"], "path": ["api", "generator", "validate-relations"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Sauvegarder les paramètres de génération", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "[\n  {\n    \"profileName\": \"default\",\n    \"selectedTables\": [\"users\", \"roles\"],\n    \"selectedViews\": [],\n    \"selectedComponents\": [\"Entity\", \"Repository\", \"Service\", \"RestController\"]\n  }\n]" }, "url": { "raw": "{{base_url}}/api/generator/generation-parameters", "host": ["{{base_url}}"], "path": ["api", "generator", "generation-parameters"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les paramètres de génération", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/generation-parameters", "host": ["{{base_url}}"], "path": ["api", "generator", "generation-parameters"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Réinitialiser les paramètres de génération", "request": { "method": "DELETE", "header": [], "url": { "raw": "{{base_url}}/api/generator/generation-parameters", "host": ["{{base_url}}"], "path": ["api", "generator", "generation-parameters"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Lancer la génération", "request": { "method": "POST", "header": [], "url": { "raw": "{{base_url}}/api/generator/launch", "host": ["{{base_url}}"], "path": ["api", "generator", "launch"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] }
+      ]
+    },
+    {
+      "name": "Git",
+      "item": [
+        { "name": "Configurer Git", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"useGit\": true,\n  \"separateRepositories\": false,\n  \"repositoryName\": \"genesis-project\",\n  \"backendRepositoryName\": \"\",\n  \"frontendRepositoryName\": \"\",\n  \"createRemoteRepository\": true,\n  \"githubUsername\": \"mon-compte-github\",\n  \"githubToken\": \"ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"\n}" }, "url": { "raw": "{{base_url}}/api/generator/git/config", "host": ["{{base_url}}"], "path": ["api", "generator", "git", "config"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Initialiser le dépôt Git", "request": { "method": "POST", "header": [], "url": { "raw": "{{base_url}}/api/generator/git/init", "host": ["{{base_url}}"], "path": ["api", "generator", "git", "init"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] }
+      ]
+    },
+    {
+      "name": "Metadata & Relations",
+      "item": [
+        { "name": "Charger les métadonnées des tables (Structuré)", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/tables_metadata_loaded", "host": ["{{base_url}}"], "path": ["api", "tables_metadata_loaded"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Charger toutes les métadonnées (Liste plate)", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/tables_metadata_all", "host": ["{{base_url}}"], "path": ["api", "tables_metadata_all"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les tables parentes", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/tables_metadata/parents", "host": ["{{base_url}}"], "path": ["api", "tables_metadata", "parents"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les tables enfants", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/tables_metadata/childs", "host": ["{{base_url}}"], "path": ["api", "tables_metadata", "childs"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les relations existantes", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/relations", "host": ["{{base_url}}"], "path": ["api", "relations"] }, "response": [{ "name": "Exemple", "status": "OK", "code": 200, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "[\n  {\n    \"parentTable\": \"roles\",\n    \"childTable\": \"users\",\n    \"mandatory\": true,\n    \"hasForm\": true\n  }\n]" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Détecter automatiquement les relations", "request": { "method": "POST", "header": [], "url": { "raw": "{{base_url}}/api/relations/detect", "host": ["{{base_url}}"], "path": ["api", "relations", "detect"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Mettre à jour les relations", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "[\n  {\n    \"parentTable\": \"roles\",\n    \"childTable\": \"users\",\n    \"mandatory\": true,\n    \"hasForm\": true\n  }\n]" }, "url": { "raw": "{{base_url}}/api/relations", "host": ["{{base_url}}"], "path": ["api", "relations"] }, "response": [{ "name": "Exemple", "status": "OK", "code": 200, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "{\n  \"success\": true,\n  \"relations\": [\n    {\n      \"parentTable\": \"roles\",\n      \"childTable\": \"users\",\n      \"mandatory\": true,\n      \"hasForm\": true\n    }\n  ]\n}" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Sauvegarder les paramètres de relations (Global)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"relations\": [\n    {\n      \"parentTable\": \"roles\",\n      \"childTable\": \"users\",\n      \"mandatory\": true,\n      \"hasForm\": true\n    }\n  ]\n}" }, "url": { "raw": "{{base_url}}/api/generator/relation-parameters", "host": ["{{base_url}}"], "path": ["api", "generator", "relation-parameters"] }, "response": [{ "name": "Exemple", "status": "OK", "code": 200, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "{\n  \"success\": true,\n  \"message\": \"Paramètres de relations sauvegardés\"\n}" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les relations d'un profil spécifique", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/profiles/:profileName/relations", "host": ["{{base_url}}"], "path": ["api", "generator", "profiles", ":profileName", "relations"] }, "variable": [{ "key": "profileName", "value": "default" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Sauvegarder les relations d'un profil spécifique", "request": { "method": "PUT", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"relations\": [\n    {\n      \"parentTable\": \"roles\",\n      \"childTable\": \"users\",\n      \"mandatory\": true,\n      \"hasForm\": true\n    }\n  ]\n}" }, "url": { "raw": "{{base_url}}/api/generator/profiles/:profileName/relations", "host": ["{{base_url}}"], "path": ["api", "generator", "profiles", ":profileName", "relations"] }, "variable": [{ "key": "profileName", "value": "default" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Sélectionner les tables/vues pour la génération", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"selectedTables\": [\"users\", \"roles\"],\n  \"selectedViews\": [\"active_users_view\"],\n  \"selectedComponents\": [\"Entity\", \"Repository\", \"Service\", \"RestController\"]\n}" }, "url": { "raw": "{{base_url}}/api/tables_metadata/select", "host": ["{{base_url}}"], "path": ["api", "tables_metadata", "select"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] }
+      ]
+    },
+    {
+      "name": "Project",
+      "item": [
+        { "name": "Récupérer les options de configuration du projet", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/project-config/options", "host": ["{{base_url}}"], "path": ["api", "generator", "project-config", "options"] }, "response": [{ "name": "Exemple", "status": "OK", "code": 200, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "{\n  \"languageVersions\": [\"17\", \"21\"],\n  \"buildTools\": [\"Maven\", \"Gradle\"],\n  \"frameworkVersions\": [\"3.2.0\", \"3.3.0\"],\n  \"withGroupId\": true\n}" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Configurer le projet", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"projectName\": \"genesis-app\",\n  \"projectLocation\": \"/tmp/genesis\",\n  \"languageVersion\": \"21\",\n  \"buildTool\": \"Maven\",\n  \"groupId\": \"org.labs.genesis\",\n  \"frameworkVersion\": \"3.2.0\",\n  \"projectDescription\": \"Application générée par Genesis\",\n  \"projectPort\": \"8080\",\n  \"loggingLevel\": \"INFO\",\n  \"securityType\": \"JWT\",\n  \"cacheProvider\": \"Ehcache\",\n  \"hibernateDdlAuto\": \"update\"\n}" }, "url": { "raw": "{{base_url}}/api/generator/project-config", "host": ["{{base_url}}"], "path": ["api", "generator", "project-config"] }, "response": [{ "name": "Exemple", "status": "OK", "code": 200, "header": [{ "key": "Content-Type", "value": "application/json" }], "body": "{\n  \"success\": true,\n  \"message\": \"Configuration du projet enregistrée avec succès\",\n  \"projectName\": \"genesis-app\",\n  \"projectLocation\": \"/tmp/genesis\",\n  \"languageVersion\": \"21\",\n  \"buildTool\": \"Maven\",\n  \"groupId\": \"org.labs.genesis\",\n  \"frameworkVersion\": \"3.2.0\",\n  \"projectDescription\": \"Application générée par Genesis\",\n  \"projectPort\": \"8080\",\n  \"loggingLevel\": \"INFO\",\n  \"securityType\": \"JWT\",\n  \"cacheProvider\": \"Ehcache\",\n  \"hibernateDdlAuto\": \"update\"\n}" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les niveaux de logging", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/logging_levels/:frameworkId", "host": ["{{base_url}}"], "path": ["api", "logging_levels", ":frameworkId"] }, "variable": [{ "key": "frameworkId", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les types de sécurité", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/security_types/:frameworkId", "host": ["{{base_url}}"], "path": ["api", "security_types", ":frameworkId"] }, "variable": [{ "key": "frameworkId", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les providers de cache", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/cache_providers/:frameworkId", "host": ["{{base_url}}"], "path": ["api", "cache_providers", ":frameworkId"] }, "variable": [{ "key": "frameworkId", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les options Hibernate DDL Auto", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/hibernate_ddl_auto_options/:frameworkId", "host": ["{{base_url}}"], "path": ["api", "hibernate_ddl_auto_options", ":frameworkId"] }, "variable": [{ "key": "frameworkId", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les versions de langage", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/language-versions/:languageId", "host": ["{{base_url}}"], "path": ["api", "generator", "language-versions", ":languageId"] }, "variable": [{ "key": "languageId", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les versions de framework", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/framework-versions/:frameworkId", "host": ["{{base_url}}"], "path": ["api", "generator", "framework-versions", ":frameworkId"] }, "variable": [{ "key": "frameworkId", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] },
+        { "name": "Récupérer les outils de build", "request": { "method": "GET", "header": [], "url": { "raw": "{{base_url}}/api/generator/build-tools/:frameworkId", "host": ["{{base_url}}"], "path": ["api", "generator", "build-tools", ":frameworkId"] }, "variable": [{ "key": "frameworkId", "value": "1" }] }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }] }
+      ]
+    },
+    {
+      "name": "SQL Scripts",
+      "item": [
+        {
+          "name": "Valider un script SQL",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"script\": \"CREATE TABLE test (id INT PRIMARY KEY);\",\n  \"confirmExecution\": false\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/generator/sql/validate", "host": ["{{base_url}}"], "path": ["api", "generator", "sql", "validate"] },
+            "description": "Valide la syntaxe d'un script SQL sans l'exécuter."
+          },
+          "response": [
+            {
+              "name": "Exemple de réponse",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"valid\": true,\n  \"message\": \"Le script SQL est syntaxiquement valide.\"\n}"
+            }
+          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }]
+        },
+        {
+          "name": "Exécuter un script SQL",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"script\": \"CREATE TABLE test (id INT PRIMARY KEY);\",\n  \"confirmExecution\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/generator/sql/execute", "host": ["{{base_url}}"], "path": ["api", "generator", "sql", "execute"] },
+            "description": "Exécute le script SQL sur la base de données configurée."
+          },
+          "response": [
+            {
+              "name": "Exemple de réponse",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Script SQL exécuté avec succès.\"\n}"
+            }
+          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }]
+        },
+        {
+          "name": "Sauvegarder la configuration d'un script",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"/scripts/init.sql\",\n  \"content\": \"INSERT INTO roles (name) VALUES ('ADMIN');\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/generator/script-config", "host": ["{{base_url}}"], "path": ["api", "generator", "script-config"] },
+            "description": "Sauvegarde un script SQL dans un fichier ou une configuration persistante."
+          },
+          "response": [
+            {
+              "name": "Exemple de réponse",
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Configuration du script sauvegardée avec succès.\"\n}"
+            }
+          ],
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["// TODO: Ajouter les tests ici"] } }]
+        }
+      ]
+    }
+  ]
+}
