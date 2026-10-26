@@ -55,7 +55,7 @@ export interface TutorialContext {
 // ÉTAT GLOBAL (partagé par tous les écrans)
 // ============================================================================
 
-const enabled = ref(true);
+const enabled = ref(false);
 const completed = reactive(new Set<string>());
 
 const keyOf = (screenId: string, stepId: string) => `${screenId}:${stepId}`;
@@ -70,7 +70,10 @@ export function configureTutorialPersistence(adapter: TutorialPersistence) {
     persistence = adapter;
     const saved = adapter.load();
     if (!saved) return;
-    enabled.value = saved.enabled;
+    
+    // ✅ MODIFICATION 2 : On ne restaure PAS enabled.value. 
+    // On garde uniquement la progression (les étapes déjà complétées).
+    // Ainsi, le tutoriel reste éteint jusqu'à ce que l'utilisateur clique sur le trigger.
     completed.clear();
     saved.completed.forEach(key => completed.add(key));
 }
@@ -121,7 +124,10 @@ export function useGenesisTutorial(screenId: string, steps: MaybeRefOrGetter<Tut
     return {
         ...context,
         /** Rejoue le tutoriel de CET écran uniquement */
-        restart: () => list.value.forEach(step => completed.delete(keyOf(screenId, step.id)))
+        restart: () => {
+            enabled.value = true;
+            list.value.forEach(step => completed.delete(keyOf(screenId, step.id)))
+        }
     };
 }
 

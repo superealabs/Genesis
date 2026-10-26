@@ -14,6 +14,9 @@
     :is-loading="store.isGenerating"
     :hide-footer="store.isGenerationComplete"
 
+    :show-tutorial-trigger="true" 
+    @request-tutorial="emit('request-tutorial')"
+
     @close="handleClose"
     @previous="emit('previous')"
     @next="emit('next')"
@@ -223,6 +226,7 @@ const emit = defineEmits<{
   skip: [];
   'back-to-summary': [];
   'request-edit': [index: number];
+  'request-tutorial': [];
   'go-to-step': [step: number];
   'open-project': [];
   'select-framework': [framework: Framework];

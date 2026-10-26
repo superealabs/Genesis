@@ -1,79 +1,79 @@
 <!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue -->
 <template>
-    <div class="flex flex-col w-full min-w-[200px] max-w-[400px] gap-4 relative">
-        <div class="relative">
-            <GenesisInput
-                :modelValue="searchQuery"
-                @update:modelValue="handleSearchUpdate"
-                type="text"
-                placeholder="Configuration name....."
-                size="md"
-                fill-width
-            >
-                <template #left>
-                    <IconSearch :size="18" class="text-text-muted" />
-                </template>
-            </GenesisInput>
-        </div>
+    <!-- ✅ On l'utilise TOUJOURS. Si tutorialId est undefined, il agit comme un simple <slot /> -->
+    <GenesisTutorialItem :id="tutorialId">
+        <div class="flex flex-col w-full min-w-[200px] max-w-[400px] gap-4 relative">
+            <div class="relative">
+                <GenesisInput
+                    :modelValue="searchQuery"
+                    @update:modelValue="handleSearchUpdate"
+                    type="text"
+                    placeholder="Configuration name....."
+                    size="md"
+                    fill-width
+                >
+                    <template #left>
+                        <IconSearch :size="18" class="text-text-muted" />
+                    </template>
+                </GenesisInput>
+            </div>
 
-        <div class="flex flex-1 min-h-0 gap-4 overflow-hidden">
-            <!-- MODIFIÉ : minHeight et height liés à la variable réactive rightColumnHeight -->
-            <GenesisContainer
-                :min-height="rightColumnHeight"
-                :height="rightColumnHeight"
-                :max-height="maxSize()"
-                :is-empty="filteredConfigs.length === 0"
-            >
-                <!-- 1. CONTENU PRINCIPAL -->
-                <div class="p-3 space-y-2">
-                    <GenesisItemConfig
-                        v-for="config in filteredConfigs"
-                        :key="config.id"
-                        :name="config.name"
-                        :is-hidden="config.isHidden"
-                        :is-selected="selectedConfigId === config.id"
-                        :show-delete="false" 
-                        :readonly="readonly"
-                        @select="handleSelect(config.id)"
-                        @rename="(newName) => $emit('rename', config.id, newName)" 
-                        @edit="$emit('edit', config.id)"
-                        @toggleVisibility="handleToggleVisibility(config.id)"
-                    />
-                </div>
-
-                <!-- 2. ÉTAT VIDE PERSONNALISÉ -->
-                <template #empty>
-                    <div class="flex flex-col items-center justify-center h-32 text-text-muted text-sm">
-                        <IconSearch :size="24" class="mb-2 opacity-50" />
-                        <span>Aucune configuration trouvée.</span>
+            <div class="flex flex-1 min-h-0 gap-4 overflow-hidden">
+                <GenesisContainer
+                    :min-height="rightColumnHeight"
+                    :height="rightColumnHeight"
+                    :max-height="maxSize()"
+                    :is-empty="filteredConfigs.length === 0"
+                >
+                    <div class="p-3 space-y-2">
+                        <GenesisItemConfig
+                            v-for="config in filteredConfigs"
+                            :key="config.id"
+                            :name="config.name"
+                            :is-hidden="config.isHidden"
+                            :is-selected="selectedConfigId === config.id"
+                            :show-delete="false" 
+                            :readonly="readonly"
+                            @select="handleSelect(config.id)"
+                            @rename="(newName) => $emit('rename', config.id, newName)" 
+                            @edit="$emit('edit', config.id)"
+                            @toggleVisibility="handleToggleVisibility(config.id)"
+                        />
                     </div>
-                </template>
-            </GenesisContainer>
 
-            <div 
-                v-if="!readonly" 
-                ref="rightColumnRef" 
-                class="flex flex-col gap-2 flex-shrink-0 justify-between pt-1"
-            >
-                <div class="flex flex-col gap-2">
-                    <GenesisButtonIcon size="lg" title="Ajouter une configuration" variant="secondary" @click="handleAdd">
-                        <IconPlus />
-                    </GenesisButtonIcon>
-                    <GenesisButtonIcon size="lg" title="Supprimer la configuration sélectionnée" :disabled="!selectedConfigId" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleDelete">
-                        <IconTrashAlt />
-                    </GenesisButtonIcon>
-                </div>
-                <div class="flex flex-col gap-2">
-                    <GenesisButtonIcon size="lg" title="Monter la configuration" :disabled="!canMoveUp" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleMoveUp">
-                        <IconChevronUp />
-                    </GenesisButtonIcon>
-                    <GenesisButtonIcon size="lg" title="Descendre la configuration" :disabled="!canMoveDown" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleMoveDown">
-                        <IconChevronDown />
-                    </GenesisButtonIcon>
+                    <template #empty>
+                        <div class="flex flex-col items-center justify-center h-32 text-text-muted text-sm">
+                            <IconSearch :size="24" class="mb-2 opacity-50" />
+                            <span>Aucune configuration trouvée.</span>
+                        </div>
+                    </template>
+                </GenesisContainer>
+
+                <div 
+                    v-if="!readonly" 
+                    ref="rightColumnRef" 
+                    class="flex flex-col gap-2 flex-shrink-0 justify-between pt-1"
+                >
+                    <div class="flex flex-col gap-2">
+                        <GenesisButtonIcon size="lg" title="Ajouter une configuration" variant="secondary" @click="handleAdd">
+                            <IconPlus />
+                        </GenesisButtonIcon>
+                        <GenesisButtonIcon size="lg" title="Supprimer la configuration sélectionnée" :disabled="!selectedConfigId" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleDelete">
+                            <IconTrashAlt />
+                        </GenesisButtonIcon>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <GenesisButtonIcon size="lg" title="Monter la configuration" :disabled="!canMoveUp" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleMoveUp">
+                            <IconChevronUp />
+                        </GenesisButtonIcon>
+                        <GenesisButtonIcon size="lg" title="Descendre la configuration" :disabled="!canMoveDown" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleMoveDown">
+                            <IconChevronDown />
+                        </GenesisButtonIcon>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </GenesisTutorialItem>
 </template>
 
 <script setup lang="ts">
@@ -96,6 +96,7 @@ const props = defineProps<{
     canMoveUp: boolean;
     canMoveDown: boolean;
     readonly?: boolean;
+    tutorialId?: string;
 }>();
 
 const emit = defineEmits<{

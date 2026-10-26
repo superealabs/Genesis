@@ -98,7 +98,7 @@
         </h3>
         
         <div class="flex flex-col lg:flex-row gap-6">
-          <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex-1 flex flex-col gap-4">
             
             <GenesisInput 
               :model-value="config.languageVersion" 
@@ -148,6 +148,7 @@
 
           <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
             <GenesisConfigurationPanel
+              tutorial-id="tutorial-tech-stack-config"
               :configurations="techStackConfigManager.configurations.value"
               :selected-config-id="techStackConfigManager.selectedConfigId.value"
               :filtered-configs="techStackConfigManager.filteredConfigs.value"
@@ -230,6 +231,7 @@
 
             <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
               <GenesisConfigurationPanel
+                tutorial-id="tutorial-advanced-config"
                 :configurations="configManager.configurations.value"
                 :selected-config-id="configManager.selectedConfigId.value"
                 :filtered-configs="configManager.filteredConfigs.value"
@@ -283,10 +285,13 @@ import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.v
 import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
+
 
 // ============================================================================
 // 1. EMITS & CONSTANTES
 // ============================================================================
+
 const emit = defineEmits<{ 'request-folder-path': [] }>();
 
 const DEFAULT_VALUES_ADVANCED = ['INFO', 'NONE', 'Aucun', 'none'];
@@ -299,6 +304,13 @@ const panelSlides: CarouselSlide[] = [
   { color: '#EF4444', label: 'Slide 2' },
   { color: '#10B981', label: 'Slide 3' },
 ];
+
+const tutorial = useGenesisTutorial('project-config', [
+  { id: 'tutorial-tech-stack-config', text: 'Tutoriel 1' },
+  { id: 'tutorial-advanced-config', text: 'Tutoriel 2' }
+]);
+
+console.log("✅ [ProjectConfigView] useGenesisTutorial initialisé. ScreenId: 'project-config'");
 
 // ============================================================================
 // 2. COMPOSABLES & STORES

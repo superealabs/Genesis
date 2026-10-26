@@ -1,5 +1,6 @@
 <!-- packages/webview/src/features/generator/views/GeneratorViewVsc.vue -->
 <script setup lang="ts">
+import { ref, toRaw } from 'vue';
 import { useGeneratorVsc } from '@/features/generator/composables/useGeneratorVsc';
 import type { DatabaseEngineDto, RepositoryProviderMetadata } from '@genesis-labs/shared-types';
 import { GeneratorStepper } from '@genesis-labs/web-core/features/generator/manifest';
@@ -54,7 +55,7 @@ function onSelectFramework(framework: any) {
 
 function onSelectDatabase(engine: DatabaseEngineDto) {
     setPendingDatabaseEngine(engine);
-}
+}   
 
 function onSelectFrontend(framework: FrontendFramework) {
     setPendingFrontendFramework(framework);
@@ -67,6 +68,11 @@ function onSelectRepository(repoProvider: RepositoryProviderMetadata) {
 // GESTION DU RETOUR AU RÉSUMÉ
 function handleBackToSummary() {
     backToSummary();
+}
+
+function handleTutorialRequest() {
+    // Incrémenter le compteur signale à l'enfant actif de relancer son tutoriel
+    console.log("handleTutorial");
 }
 
 // GESTION DE LA DEMANDE D'ÉDITION DEPUIS LE RÉSUMÉ (Double-clic sur le rail)
@@ -97,12 +103,14 @@ function handleOpenProject() {
         :has-reached-summary="hasReachedSummary"
         :visited-steps="visitedSteps"
         :step-labels="STEP_LABELS"
+
         @close="handleClose"
         @previous="goToPreviousStep"
         @next="handleNextStep"
         @skip="skipCurrentStep"
         @back-to-summary="handleBackToSummary"
         @request-edit="handleSummaryRequestEdit"
+        @request-tutorial="handleTutorialRequest"
         @go-to-step="goToStep"
         @select-framework="onSelectFramework"
         @select-database="onSelectDatabase"
