@@ -4,9 +4,15 @@
       
       <!-- 1. CONFIGURATION DE BASE -->
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-text border-b border-neutral-light pb-2">
-          Configuration du Projet
-        </h3>
+        <!-- ✅ AJOUT : En-tête avec le déclencheur du tutoriel -->
+        <div class="flex items-center justify-between border-b border-neutral-light-genesis pb-2">
+          <h3 class="text-xl font-semibold text-text">
+            Configuration du Projet
+          </h3>
+          <GenesisButtonIcon variant="neutral" size="sm" @click="tutorial.restart">
+              <IconHelp />
+          </GenesisButtonIcon>
+        </div>
         
         <div ref="frameworkSelectorRef" class="flex items-end gap-3">
           <div class="flex-1">
@@ -89,11 +95,9 @@
         </div>
       </div>
 
-      <div class="border-t border-secondary"></div>
-
       <!-- 2. CONFIGURATION DU FRAMEWORK (STACK TECHNIQUE) -->
-      <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
+      <div class="space-y-6">
+        <h3 class="text-xl font-semibold text-text border-b border-neutral-light-genesis pb-2">
           Stack Technique ({{ framework?.name || 'Non sélectionné' }})
         </h3>
         
@@ -108,7 +112,6 @@
               size="lg" 
               label="Version du Language" 
               placeholder="Sélectionner..." 
-              fill-width 
             />
 
             <GenesisInput 
@@ -119,7 +122,6 @@
               size="lg" 
               label="Build Tool" 
               placeholder="Sélectionner..." 
-              fill-width 
             />
 
             <div v-if="showGroupId" class="space-y-1">
@@ -129,7 +131,6 @@
                 size="lg" 
                 label="Group ID" 
                 placeholder="com.example" 
-                fill-width 
               />
             </div>
 
@@ -141,29 +142,31 @@
               size="lg" 
               label="Version du Framework" 
               placeholder="Sélectionner..." 
-              fill-width 
             />
 
           </div>
 
           <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-            <GenesisConfigurationPanel
-              tutorial-id="tutorial-tech-stack-config"
-              :configurations="techStackConfigManager.configurations.value"
-              :selected-config-id="techStackConfigManager.selectedConfigId.value"
-              :filtered-configs="techStackConfigManager.filteredConfigs.value"
-              :search-query="techStackConfigManager.searchQuery.value"
-              :can-move-up="techStackConfigManager.canMoveUp.value"
-              :can-move-down="techStackConfigManager.canMoveDown.value"
-              @update:search-query="(val) => techStackConfigManager.searchQuery.value = val"
-              @add="techStackLogic.handleAdd"
-              @delete="techStackLogic.handleDelete"
-              @rename="techStackLogic.handleRename"
-              @toggle-visibility="techStackConfigManager.toggleVisibility"
-              @move-up="techStackConfigManager.moveUp"
-              @move-down="techStackConfigManager.moveDown"
-              @select-configuration="techStackLogic.handleSelect"
-            />
+            <GenesisTutorialItem id="tutorial-tech-stack-config">
+              <GenesisConfigurationPanel
+                :tutorial-id="'tutorial-tech-stack-config'"
+                :include-sub-tutorial="true"
+                :configurations="techStackConfigManager.configurations.value"
+                :selected-config-id="techStackConfigManager.selectedConfigId.value"
+                :filtered-configs="techStackConfigManager.filteredConfigs.value"
+                :search-query="techStackConfigManager.searchQuery.value"
+                :can-move-up="techStackConfigManager.canMoveUp.value"
+                :can-move-down="techStackConfigManager.canMoveDown.value"
+                @update:search-query="(val) => techStackConfigManager.searchQuery.value = val"
+                @add="techStackLogic.handleAdd"
+                @delete="techStackLogic.handleDelete"
+                @rename="techStackLogic.handleRename"
+                @toggle-visibility="techStackConfigManager.toggleVisibility"
+                @move-up="techStackConfigManager.moveUp"
+                @move-down="techStackConfigManager.moveDown"
+                @select-configuration="techStackLogic.handleSelect"
+              />
+            </GenesisTutorialItem>
             <div class="flex gap-2 justify-end">
               <GenesisButtonIcon title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
                 <IconUpload />
@@ -173,11 +176,14 @@
         </div>
       </div>
 
-      <div class="border-t border-secondary"></div>
-
       <!-- 3. CONFIGURATION AVANCÉE -->
       <div class="space-y-4">
-        <GenesisDisclosure title="Configuration Avancée du Backend" :default-open="false">
+        <GenesisDisclosure title="Configuration Avancée du Backend" :variant="'secondary'" :padding="'lg'" :default-open="false">
+
+          <template #title>
+            <span class="text-xl font-semibold">Configuration Avancée du Backend</span>
+          </template>
+
           <div class="flex flex-col lg:flex-row gap-6">
             
             <div class="flex-1 flex flex-col gap-4">
@@ -230,23 +236,26 @@
             </div>
 
             <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-              <GenesisConfigurationPanel
-                tutorial-id="tutorial-advanced-config"
-                :configurations="configManager.configurations.value"
-                :selected-config-id="configManager.selectedConfigId.value"
-                :filtered-configs="configManager.filteredConfigs.value"
-                :search-query="configManager.searchQuery.value"
-                :can-move-up="configManager.canMoveUp.value"
-                :can-move-down="configManager.canMoveDown.value"
-                @update:search-query="(val) => configManager.searchQuery.value = val"
-                @add="advancedLogic.handleAdd"
-                @delete="advancedLogic.handleDelete"
-                @rename="advancedLogic.handleRename"
-                @toggle-visibility="configManager.toggleVisibility"
-                @move-up="configManager.moveUp"
-                @move-down="configManager.moveDown"
-                @select-configuration="advancedLogic.handleSelect"
-              />
+              <GenesisTutorialItem id="tutorial-advanced-config">
+                <GenesisConfigurationPanel
+                  :tutorial-id="'tutorial-advanced-config'"
+                  :include-sub-tutorial="true"
+                  :configurations="configManager.configurations.value"
+                  :selected-config-id="configManager.selectedConfigId.value"
+                  :filtered-configs="configManager.filteredConfigs.value"
+                  :search-query="configManager.searchQuery.value"
+                  :can-move-up="configManager.canMoveUp.value"
+                  :can-move-down="configManager.canMoveDown.value"
+                  @update:search-query="(val) => configManager.searchQuery.value = val"
+                  @add="advancedLogic.handleAdd"
+                  @delete="advancedLogic.handleDelete"
+                  @rename="advancedLogic.handleRename"
+                  @toggle-visibility="configManager.toggleVisibility"
+                  @move-up="configManager.moveUp"
+                  @move-down="configManager.moveDown"
+                  @select-configuration="advancedLogic.handleSelect"
+                />
+              </GenesisTutorialItem>
 
               <div class="flex gap-2 justify-end">
                 <GenesisButtonIcon title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
@@ -286,7 +295,9 @@ import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUplo
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 
+import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 
 // ============================================================================
 // 1. EMITS & CONSTANTES
@@ -304,6 +315,9 @@ const panelSlides: CarouselSlide[] = [
   { color: '#EF4444', label: 'Slide 2' },
   { color: '#10B981', label: 'Slide 3' },
 ];
+
+// deux choix, soit je l'associe à une variable boolean
+// soit c'est la lecture qui ne le lis pas si il est caché
 
 const tutorial = useGenesisTutorial('project-config', [
   { id: 'tutorial-tech-stack-config', text: 'Tutoriel 1' },

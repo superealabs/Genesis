@@ -22,11 +22,11 @@
             v-model="searchQuery"
             type="text"
             :placeholder="searchPlaceholder"
-            size="md"
+            size="lg"
             fill-width
           >
             <template #left>
-              <IconSearch :size="16" class="text-text-muted" />
+              <IconSearch :size="12" class="text-text-muted" />
             </template>
           </GenesisInput>
         </div>
@@ -36,7 +36,7 @@
     <!-- 2. Tableau des Relations -->
     <section class="flex-1 min-h-0">
       <GenesisContainer
-        :min-height="300"
+        :min-height="250"
         :max-height="maxHeight"
         :is-empty="filteredRelations.length === 0"
         empty-text="Aucune relation ne correspond à ces critères."

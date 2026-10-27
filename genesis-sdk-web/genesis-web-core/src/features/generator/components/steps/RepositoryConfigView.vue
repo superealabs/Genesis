@@ -4,46 +4,53 @@
     <!-- PARTIE GAUCHE : FORMULAIRE DE CONFIGURATION -->
     <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
       
-      <!-- 1. SÉLECTION DU FOURNISSEUR (Pattern DatabaseConfigView) -->
-      <div ref="providerSelectorRef" class="flex items-end gap-3 pb-4 border-b border-neutral-light">
-        <div class="flex-1">
-          <template v-if="isEditingProvider">
-            <GenesisInput
-              type="combobox"
-              :options="availableProvidersOptions"
-              :model-value="tempProviderName"
-              @update:model-value="handleProviderSelect"
-              label="Fournisseur de Dépôt"
-              placeholder="Rechercher un fournisseur..."
-              size="lg"
-              fill-width
-            />
-          </template>
-          <template v-else>
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium text-muted">
-                Fournisseur Sélectionné <span class="text-accent ml-0.5">*</span>
-              </label>
-              <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
-                <span class="truncate font-medium capitalize">{{ selectedProviderName }}</span>
-              </div>
+      <div class="space-y-4">
+        <h3 class="text-lg font-semibold text-text border-b border-neutral-light pb-2">
+          Configuration Repository
+        </h3>
+
+        <div>
+          <!-- 1. SÉLECTION DU FOURNISSEUR (Pattern DatabaseConfigView) -->
+          <div ref="providerSelectorRef" class="flex items-end gap-3 pb-4">
+            <div class="flex-1">
+              <template v-if="isEditingProvider">
+                <GenesisInput
+                  type="combobox"
+                  :options="availableProvidersOptions"
+                  :model-value="tempProviderName"
+                  @update:model-value="handleProviderSelect"
+                  label="Fournisseur de Dépôt"
+                  placeholder="Rechercher un fournisseur..."
+                  size="lg"
+                  fill-width
+                />
+              </template>
+              <template v-else>
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium text-muted">
+                    Fournisseur Sélectionné <span class="text-accent ml-0.5">*</span>
+                  </label>
+                  <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
+                    <span class="truncate font-medium capitalize">{{ selectedProviderName }}</span>
+                  </div>
+                </div>
+              </template>
             </div>
-          </template>
-        </div>
-        
-        <div class="pb-0.5">
-          <GenesisButton v-if="!isEditingProvider" variant="secondary" size="lg" @click="startEditingProvider">
-            Modifier
-          </GenesisButton>
-          <GenesisButton v-else variant="tertiary" size="lg" @click="cancelEditingProvider">
-            Annuler
-          </GenesisButton>
+            <div class="pb-0.5">
+              <GenesisButton v-if="!isEditingProvider" variant="secondary" size="lg" @click="startEditingProvider">
+                Modifier
+              </GenesisButton>
+              <GenesisButton v-else variant="tertiary" size="lg" @click="cancelEditingProvider">
+                Annuler
+              </GenesisButton>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- 2. INITIALISATION GIT (Pattern GitConfigView) -->
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-text border-b border-neutral-light pb-2">
+        <h3 class="text-lg font-semibold text-text border-b border-bg-neutral-genesis pb-2">
           Initialisation Git
         </h3>
         <p class="text-sm text-text-muted">
@@ -62,15 +69,13 @@
         </div>
       </div>
 
-      <div class="border-t border-secondary"></div>
-
       <!-- 3. CONFIGURATION DU DÉPÔT DISTANT -->
       <!-- Ce bloc reste dans le DOM mais est désactivé visuellement et fonctionnellement si useRemote est faux -->
       <div 
         class="space-y-4 transition-all duration-200"
         :class="{ 'opacity-50 pointer-events-none': !repoConfig?.useRemote }"
       >
-        <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
+        <h3 class="text-lg font-semibold text-text border-b border-bg-neutral-genesis pb-2">
           Configuration du Dépôt Distant
         </h3>
 
@@ -115,8 +120,6 @@
             <span>Le token doit impérativement posséder les permissions <code class="bg-secondary px-1 rounded text-text font-mono">repo</code>.</span>
           </p>
         </div>
-
-        <div class="border-t border-secondary my-2"></div>
 
         <div class="w-full">
           <GenesisInput

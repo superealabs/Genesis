@@ -15,7 +15,7 @@
     :hide-footer="store.isGenerationComplete"
 
     :show-tutorial-trigger="true" 
-    @request-tutorial="emit('request-tutorial')"
+    @request-tutorial="tutorialSwitch.restartActive()"
 
     @close="handleClose"
     @previous="emit('previous')"
@@ -204,6 +204,10 @@ import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/sto
 import { getStepIdByNumber } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
 import { RepositoryProviderMetadata } from '@genesis-labs/shared-types';
 import { useWizardRepository } from '@genesis-labs/web-core/features/repository/composables/useWizardRepository';
+
+import { useTutorialSwitch } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial.ts';
+const tutorialSwitch = useTutorialSwitch();
+
 
 // ============================================================================
 // 1. PROPS & EMITS

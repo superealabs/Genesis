@@ -1,8 +1,8 @@
-<!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue -->
 <template>
-    <!-- ✅ On l'utilise TOUJOURS. Si tutorialId est undefined, il agit comme un simple <slot /> -->
-    <GenesisTutorialItem :id="tutorialId">
-        <div class="flex flex-col w-full min-w-[200px] max-w-[400px] gap-4 relative">
+    <!-- ✅ Enveloppe globale retirée. On garde uniquement les sous-étapes ciblées -->
+    <div class="flex flex-col w-full min-w-[200px] max-w-[400px] gap-4 relative">
+        
+        <GenesisTutorialItem :id="sub('search')">
             <div class="relative">
                 <GenesisInput
                     :modelValue="searchQuery"
@@ -17,8 +17,10 @@
                     </template>
                 </GenesisInput>
             </div>
+        </GenesisTutorialItem>
 
-            <div class="flex flex-1 min-h-0 gap-4 overflow-hidden">
+        <div class="flex flex-1 min-h-0 gap-4 overflow-hidden">
+            <GenesisTutorialItem :id="sub('list')">
                 <GenesisContainer
                     :min-height="rightColumnHeight"
                     :height="rightColumnHeight"
@@ -48,9 +50,10 @@
                         </div>
                     </template>
                 </GenesisContainer>
+            </GenesisTutorialItem>
 
+            <GenesisTutorialItem v-if="!readonly" :id="sub('actions')">
                 <div 
-                    v-if="!readonly" 
                     ref="rightColumnRef" 
                     class="flex flex-col gap-2 flex-shrink-0 justify-between pt-1"
                 >
@@ -71,13 +74,13 @@
                         </GenesisButtonIcon>
                     </div>
                 </div>
-            </div>
+            </GenesisTutorialItem>
         </div>
-    </GenesisTutorialItem>
+    </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'; // ✅ AJOUTÉ : ref, onMounted, nextTick
+import { ref, onMounted, nextTick } from 'vue';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
@@ -87,8 +90,10 @@ import IconChevronUp from '@genesis-labs/web-core/core/components/ui/icons/IconC
 import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
 import GenesisItemConfig from './GenesisItemConfig.vue';
 import GenesisContainer from '../../GenesisContainer.vue';
+import { useTutorialGroup } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     configurations: { id: string | number; name: string; isHidden?: boolean }[];
     selectedConfigId: string | number | null;
     filteredConfigs: { id: string | number; name: string; isHidden?: boolean }[];
@@ -97,7 +102,10 @@ const props = defineProps<{
     canMoveDown: boolean;
     readonly?: boolean;
     tutorialId?: string;
-}>();
+    includeSubTutorial?: boolean;
+}>(), {
+    includeSubTutorial: false
+});
 
 const emit = defineEmits<{
     'update:searchQuery': [value: string];
@@ -119,24 +127,33 @@ function handleMoveUp() { if (props.selectedConfigId !== null) emit('moveUp', pr
 function handleMoveDown() { if (props.selectedConfigId !== null) emit('moveDown', props.selectedConfigId); }
 function handleSearchUpdate(value: string | number | boolean) { emit('update:searchQuery', String(value)); }
 
-// AJOUTÉ : Références pour le calcul dynamique de la hauteur
 const rightColumnRef = ref<HTMLElement | null>(null);
-const rightColumnHeight = ref(150); // Valeur de repli par défaut
+const rightColumnHeight = ref(150);
 
 const updateRightColumnHeight = () => {
     if (rightColumnRef.value) {
-        // offsetHeight inclut le contenu, le padding et les bordures, ce qui correspond parfaitement à l'empreinte visuelle
         rightColumnHeight.value = rightColumnRef.value.offsetHeight;
     }
 };
 
-// On calcule la hauteur une fois que le DOM est entièrement rendu
 onMounted(async () => {
     await nextTick();
     updateRightColumnHeight();
 });
 
 const maxSize = () => window.innerHeight * 0.85; 
+
+const PANEL_STEPS = [
+    { key: 'search',  text: 'Filtrez vos configurations par nom.' },
+    { key: 'list',    text: 'Sélectionnez, renommez ou masquez une configuration.' },
+    { key: 'actions', text: 'Ajoutez, supprimez ou réordonnez vos configurations.' },
+];
+
+const { sub } = useTutorialGroup({
+    anchorId: () => props.tutorialId,
+    include: () => props.includeSubTutorial,
+    steps: PANEL_STEPS
+});
 </script>
 
 <style scoped>

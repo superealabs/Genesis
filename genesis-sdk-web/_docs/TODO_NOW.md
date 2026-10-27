@@ -14,3 +14,8 @@
 - ajustement ui summary
 
 - Correction des commandes pour effectuer des trucs
+
+
+- Bug Général avec GenesisItemTutorial
+    - il y a un problème quand on a deux composant exacts qui se répètent dans une vue
+    - un conflit avec GenesisDisclosure

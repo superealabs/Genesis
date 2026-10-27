@@ -1,208 +1,215 @@
 <template>
-  <main class="flex gap-6 h-full p-6 overflow-hidden">
+  <!-- ✅ Passage en flex-col pour placer l'en-tête au-dessus des colonnes -->
+  <main class="flex flex-col h-full p-6 overflow-hidden">
     
-    <!-- ═══ COLONNE 1 : TABLES ET VUES NON ASSIGNÉES (Disponibles) ═══ -->
-    <div class="flex-1 min-h-0 flex flex-col space-y-3">
-      <div class="flex items-center justify-between flex-shrink-0">
-        <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-          Disponibles (Non assignées)
-          <span class="text-primary text-sm font-normal">*</span>
-        </h3>
-        <button 
-          v-if="unassignedItems.length > 0"
-          type="button"
-          class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-          @click="toggleAllUnassigned"
-        >
-          {{ areAllUnassignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
-        </button>
-      </div>
-      
-      <p class="text-sm text-text-muted flex-shrink-0">
-        Choisissez les entités à inclure dans vos profils.
-      </p>
-
-      <div class="flex flex-row gap-2 flex-shrink-0">
-        <GenesisInput
-          v-model="searchQueryUnassigned"
-          type="text"
-          placeholder="Rechercher une table ou une vue..."
-          size="md"
-          fill-width
-        >
-          <template #left>
-            <IconSearch :size="16" class="text-text-muted" />
-          </template>
-        </GenesisInput>
-        <GenesisSegmentedControl v-model="activeFilterLeft" :options="filterOptions" size="md" />
-      </div>
-
-      <GenesisContainer
-        :is-loading="isLoading"
-        loading-text="Chargement des métadonnées..."
-        :is-empty="unassignedItems.length === 0"
-        empty-text="Aucune table disponible."
-        :min-height="200"
-        :max-height="500"
-        :height="400" 
-      >
-        <div 
-          v-for="item in unassignedItems" 
-          :key="item.tableName"
-          class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
-          @click="toggleItem(item)"
-        >
-          <div class="flex items-center gap-3 flex-1 min-w-0">
-            <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
-            <div class="flex flex-col min-w-0">
-              <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
-              <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
-            </div>
-          </div>
-        </div>
-      </GenesisContainer>
+    <!-- ✅ AJOUT : En-tête avec le déclencheur du tutoriel -->
+    <div class="flex items-center justify-between pb-3 mb-4 flex-shrink-0">
+      <h3 class="text-xl font-semibold text-text">
+        Configuration de la Génération
+      </h3>
+      <GenesisButtonIcon variant="neutral" size="sm">
+        <IconHelp />
+      </GenesisButtonIcon>
     </div>
 
-    <!-- ═══ COLONNE 2 : GESTION DES CONFIGURATIONS (Centrale) ═══ -->
-    <section class="w-80 flex-shrink-0 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
-      <div>
-        <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
-          Profils de Génération
-          <span class="text-primary text-sm font-normal">*</span>
-
-          <GenesisButtonIcon @click="isTutorialOpen = true" :variant="'neutral'">
-            <IconHelpCircle :size="16" />
-          </GenesisButtonIcon>
-        </h3>
+    <!-- Conteneur des 3 colonnes -->
+    <div class="flex gap-6 flex-1 min-h-0 overflow-hidden">
+      
+      <!-- ═══ COLONNE 1 : TABLES ET VUES NON ASSIGNÉES (Disponibles) ═══ -->
+      <div class="flex-1 min-h-0 flex flex-col space-y-3">
+        <div class="flex items-center justify-between flex-shrink-0">
+          <h3 class="text-lg font-semibold text-text flex items-center gap-2">
+            Disponibles (Non assignées)
+            <span class="text-primary text-sm font-normal">*</span>
+          </h3>
+          <button 
+            v-if="unassignedItems.length > 0"
+            type="button"
+            class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+            @click="toggleAllUnassigned"
+          >
+            {{ areAllUnassignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+          </button>
+        </div>
         
-        <GenesisConfigurationSelector
-          :configurations="configManager.configurations.value"
-          :selected-config-id="configManager.selectedConfigId.value"
-          :filtered-configs="configManager.filteredConfigs.value"
-          :search-query="configManager.searchQuery.value"
-          :can-move-up="configManager.canMoveUp.value"
-          :can-move-down="configManager.canMoveDown.value"
-          :selected-items="selectedItemsInListRef" 
-          @update:search-query="(val) => configManager.searchQuery.value = val"
-          @add="handleAddConfig" 
-          @delete="handleDeleteConfig" 
-          @rename="handleRename"
-          @toggle-visibility="configManager.toggleVisibility"
-          @move-up="configManager.moveUp"
-          @move-down="configManager.moveDown"
-          @select-configuration="configManager.selectConfiguration"
-          @assign="handleAssign"
-          @remove="handleRemove"
-        />
+        <p class="text-sm text-text-muted flex-shrink-0">
+          Choisissez les entités à inclure dans vos profils.
+        </p>
+
+        <div class="flex flex-row gap-2 flex-shrink-0">
+          <GenesisInput
+            v-model="searchQueryUnassigned"
+            type="text"
+            placeholder="Rechercher une table ou une vue..."
+            size="md"
+            fill-width
+          >
+            <template #left>
+              <IconSearch :size="16" class="text-text-muted" />
+            </template>
+          </GenesisInput>
+          <GenesisSegmentedControl v-model="activeFilterLeft" :options="filterOptions" size="md" />
+        </div>
+
+        <GenesisContainer
+          :is-loading="isLoading"
+          loading-text="Chargement des métadonnées..."
+          :is-empty="unassignedItems.length === 0"
+          empty-text="Aucune table disponible."
+          :min-height="200"
+          :max-height="500"
+          :height="400" 
+        >
+          <div 
+            v-for="item in unassignedItems" 
+            :key="item.tableName"
+            class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
+            @click="toggleItem(item)"
+          >
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
+              <div class="flex flex-col min-w-0">
+                <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
+                <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
+              </div>
+            </div>
+          </div>
+        </GenesisContainer>
       </div>
 
-      <div v-if="activeConfig" class="p-4 rounded-lg border border-bg-neutral-genesis space-y-3">
-        <div class="flex items-center justify-between">
-          <h4 class="text-sm font-semibold text-text">
-            Composants : <span class="text-primary">{{ activeConfig.name }}</span>
-          </h4>
-        </div>
-        
-        <div class="flex items-center justify-between py-2 border-b border-secondary/50 mb-2">
-          <span class="text-xs font-medium text-text-muted">
-            Dépendances hiérarchiques
-          </span>
-          <GenesisSwitch v-model="enforceDependencies" size="sm" />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <GenesisCheckboxSimple
-            v-for="comp in AVAILABLE_COMPONENTS"
-            :key="comp.value"
-            :model-value="activeConfig.components.includes(comp.value)"
-            :label="comp.label"
-            :disabled="isComponentDisabled(comp.value)"
-            size="md"
-            @update:model-value="(isChecked) => handleComponentToggle(comp.value, isChecked)"
+      <!-- ═══ COLONNE 2 : GESTION DES CONFIGURATIONS (Centrale) ═══ -->
+      <section class="w-80 flex-shrink-0 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
+        <div>
+          <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
+            Profils de Génération
+            <span class="text-primary text-sm font-normal">*</span>
+          </h3>
+          
+          <GenesisConfigurationSelector
+            :configurations="configManager.configurations.value"
+            :selected-config-id="configManager.selectedConfigId.value"
+            :filtered-configs="configManager.filteredConfigs.value"
+            :search-query="configManager.searchQuery.value"
+            :can-move-up="configManager.canMoveUp.value"
+            :can-move-down="configManager.canMoveDown.value"
+            :selected-items="selectedItemsInListRef" 
+            @update:search-query="(val) => configManager.searchQuery.value = val"
+            @add="handleAddConfig" 
+            @delete="handleDeleteConfig" 
+            @rename="handleRename"
+            @toggle-visibility="configManager.toggleVisibility"
+            @move-up="configManager.moveUp"
+            @move-down="configManager.moveDown"
+            @select-configuration="configManager.selectConfiguration"
+            @assign="handleAssign"
+            @remove="handleRemove"
           />
         </div>
-      </div>
-    </section>
 
-    <!-- ═══ COLONNE 3 : TABLES ET VUES ASSIGNÉES ═══ -->
-    <div class="flex-1 min-h-0 flex flex-col space-y-3">
-      <div class="flex items-center justify-between flex-shrink-0">
-        <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-          Déjà assignées
-        </h3>
-        <button 
-          v-if="assignedItems.length > 0"
-          type="button"
-          class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-          @click="toggleAllAssigned"
-        >
-          {{ areAllAssignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
-        </button>
-      </div>
-      
-      <p class="text-sm text-text-muted flex-shrink-0">
-        Entités liées à un profil de génération.
-      </p>
-
-      <div class="flex flex-row gap-2 flex-shrink-0">
-        <GenesisInput
-          v-model="searchQueryAssigned"
-          type="text"
-          placeholder="Rechercher une table ou une vue..."
-          size="md"
-          fill-width
-        >
-          <template #left>
-            <IconSearch :size="16" class="text-text-muted" />
-          </template>
-        </GenesisInput>
-        <GenesisSegmentedControl v-model="activeFilterRight" :options="filterOptions" size="md" />
-      </div>
-
-      <GenesisContainer
-        :is-loading="false"
-        :is-empty="assignedItems.length === 0"
-        empty-text="Aucune table assignée."
-        :min-height="200"
-        :max-height="500"
-        :height="400" 
-      >
-        <div 
-          v-for="item in assignedItems" 
-          :key="item.tableName"
-          class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
-          @click="toggleItem(item)"
-        >
-          <div class="flex items-center gap-3 flex-1 min-w-0">
-            <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
-            <div class="flex flex-col min-w-0">
-              <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
-              <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
-            </div>
+        <div v-if="activeConfig" class="p-4 rounded-lg border border-bg-neutral-genesis space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-sm font-semibold text-text">
+              Composants : <span class="text-primary">{{ activeConfig.name }}</span>
+            </h4>
           </div>
           
-          <div class="flex-shrink-0 text-xs text-primary ml-4 text-right min-w-[120px] truncate font-medium" :title="getAssignedConfig(item)">
-            {{ getAssignedConfig(item) }}
+          <div class="flex items-center justify-between py-2 border-b border-secondary/50 mb-2">
+            <span class="text-xs font-medium text-text-muted">
+              Dépendances hiérarchiques
+            </span>
+            <GenesisSwitch v-model="enforceDependencies" size="sm" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <GenesisCheckboxSimple
+              v-for="comp in AVAILABLE_COMPONENTS"
+              :key="comp.value"
+              :model-value="activeConfig.components.includes(comp.value)"
+              :label="comp.label"
+              :disabled="isComponentDisabled(comp.value)"
+              size="md"
+              @update:model-value="(isChecked) => handleComponentToggle(comp.value, isChecked)"
+            />
           </div>
         </div>
-      </GenesisContainer>
+      </section>
+
+      <!-- ═══ COLONNE 3 : TABLES ET VUES ASSIGNÉES ═══ -->
+      <div class="flex-1 min-h-0 flex flex-col space-y-3">
+        <div class="flex items-center justify-between flex-shrink-0">
+          <h3 class="text-lg font-semibold text-text flex items-center gap-2">
+            Déjà assignées
+          </h3>
+          <button 
+            v-if="assignedItems.length > 0"
+            type="button"
+            class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
+            @click="toggleAllAssigned"
+          >
+            {{ areAllAssignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+          </button>
+        </div>
+        
+        <p class="text-sm text-text-muted flex-shrink-0">
+          Entités liées à un profil de génération.
+        </p>
+
+        <div class="flex flex-row gap-2 flex-shrink-0">
+          <GenesisInput
+            v-model="searchQueryAssigned"
+            type="text"
+            placeholder="Rechercher une table ou une vue..."
+            size="md"
+            fill-width
+          >
+            <template #left>
+              <IconSearch :size="16" class="text-text-muted" />
+            </template>
+          </GenesisInput>
+          <GenesisSegmentedControl v-model="activeFilterRight" :options="filterOptions" size="md" />
+        </div>
+
+        <GenesisContainer
+          :is-loading="false"
+          :is-empty="assignedItems.length === 0"
+          empty-text="Aucune table assignée."
+          :min-height="200"
+          :max-height="500"
+          :height="400" 
+        >
+          <div 
+            v-for="item in assignedItems" 
+            :key="item.tableName"
+            class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
+            @click="toggleItem(item)"
+          >
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
+              <div class="flex flex-col min-w-0">
+                <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
+                <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
+              </div>
+            </div>
+            
+            <div class="flex-shrink-0 text-xs text-primary ml-4 text-right min-w-[120px] truncate font-medium" :title="getAssignedConfig(item)">
+              {{ getAssignedConfig(item) }}
+            </div>
+          </div>
+        </GenesisContainer>
+      </div>
     </div>
+
+    <!-- Popup d'astuce (conservé tel quel) -->
     <BaseFormPopup
       v-if="isTutorialOpen"
       title="Comment configurer la génération ?"
       size="md"
       @close="isTutorialOpen = false"
     >
-      <!-- 1. Conteneur flexible qui prend toute la hauteur disponible du popup -->
       <div class="flex flex-col h-full gap-6 p-2">
-        
-        <!-- 2. Le carrousel prend tout l'espace restant (flex-1) -->
-        <!-- min-h-0 est crucial ici pour éviter les bugs de débordement flexbox dans les modales -->
         <div class="flex-1 min-h-0">
           <CarrouselPanel :slides="tutorialSlides" />
         </div>
-        
-        <!-- 3. L'astuce reste en bas avec sa taille naturelle (shrink-0 l'empêche de s'écraser) -->
         <div class="shrink-0 bg-bg-neutral-genesis p-4 rounded-lg">
           <h4 class="text-sm font-semibold text-text mb-2 flex items-center gap-2">
             Astuce rapide
@@ -234,7 +241,7 @@ import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSear
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 import { useGeneratorStore } from '../../manifest';
 import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
-import IconHelpCircle from '@genesis-labs/web-core/core/components/ui/icons/IconHelpCircle.vue';
+import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';

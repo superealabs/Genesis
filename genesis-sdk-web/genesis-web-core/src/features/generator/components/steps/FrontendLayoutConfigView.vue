@@ -10,7 +10,7 @@
           Configuration Frontend
         </h3>
         
-        <div ref="frontendSelectorRef" class="flex items-end gap-3 pb-4 border-b border-neutral-light">
+        <div ref="frontendSelectorRef" class="flex items-end gap-3 pb-4">
           <div class="flex-1">
             <template v-if="isEditingFrontend">
               <GenesisInput
@@ -59,11 +59,9 @@
         </div>
       </div>
 
-      <div class="border-t border-secondary"></div>
-
       <!-- 2. LANGUES SUPPORTÉES (Avec Panneau de Configuration) -->
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
+        <h3 class="text-lg font-semibold text-text border-b border-bg-neutral-genesis pb-2">
           Langues Supportées
         </h3>
         
@@ -122,11 +120,9 @@
         </div>
       </div>
 
-      <div class="border-t border-secondary"></div>
-
       <!-- 3. CHARTE GRAPHIQUE & LAYOUT -->
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
+        <h3 class="text-lg font-semibold text-text border-b border-bg-neutral-genesis pb-2">
           Charte Graphique & Layout
         </h3>
         

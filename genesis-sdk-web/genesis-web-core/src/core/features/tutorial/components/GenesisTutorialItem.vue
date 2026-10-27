@@ -15,7 +15,8 @@
                 @enter="onEnter"
                 @leave="onLeave"
             >
-                <div v-if="step && frame" class="tutorial-transition-root fixed inset-0 pointer-events-none">
+                <!-- ✅ AJOUT CRUCIAL : style="z-index: 99999;" pour briser le contexte d'empilement du popup parent -->
+                <div v-if="step && frame" class="tutorial-transition-root fixed inset-0 pointer-events-none" style="z-index: 99999;">
                     
                     <!-- Quatre coins autour de la cible -->
                     <div
@@ -76,8 +77,11 @@ defineOptions({ inheritAttrs: false });
 const PAD = 4;
 const GAP = 8;
 const POPUP_WIDTH = 288;
-const Z_FRAME = 999;
-const Z_POPUP = 1000;
+
+// ✅ AUGMENTATION MASSIVE des z-index pour garantir le passage au-dessus de TOUS les modals
+const Z_FRAME = 100000;
+const Z_POPUP = 100001;
+
 const CORNERS = [
     'top-0 left-0 border-t-2 border-l-2 rounded-tl',
     'top-0 right-0 border-t-2 border-r-2 rounded-tr',
@@ -89,21 +93,15 @@ const CORNERS = [
 const context = useTutorialContext();
 const tutorialSwitch = useTutorialSwitch();
 
-
-// ✅ AJOUTE CE LOG ICI (avant le computed)
-console.log(`👁️ [GenesisTutorialItem] Évaluation pour ID: "${props.id}" | Contexte injecté:`, context ? `screenId='${context.screenId}'` : "NULL");
-
 const step = computed(() => {
-    if (!props.id || !context?.current.value) {
-        console.log(`  ↳ [${props.id}] Rejeté: pas d'ID ou current est null`);
-        return null;
-    }
-    
-    const isMatch = context.current.value.id === props.id;
-    console.log(`  ↳ [${props.id}] Match? ${isMatch} | Current ID du contexte: "${context.current.value.id}"`);
-    
-    return isMatch ? context.current.value : null;
+    const cur = context?.current.value;
+    return props.id && cur?.id === props.id ? cur : null;
 });
+
+// Signale au contexte que cet item existe dans le DOM
+watch(() => props.id, (id, _old, onCleanup) => {
+    if (id && context) onCleanup(context.attach(id));
+}, { immediate: true });
 
 // ── Position de la cible ──
 const wrapper = ref<HTMLElement | null>(null);
@@ -162,10 +160,17 @@ const anchor = {
     }
 } as unknown as HTMLElement;
 
+// ✅ Amélioration du scrollIntoView pour s'assurer qu'il cible le bon conteneur scrollable
 watch(() => !!props.id && !!step.value && !!rect.value, (visible) => {
-    if (visible) target()?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (visible) {
+        const el = target();
+        if (el) {
+            el.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'nearest' });
+        }
+    }
 });
 </script>
+
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar {

@@ -44,7 +44,7 @@
 
     --color-neutral-light-genesis: rgb(216, 216, 216);
     --color-bg-neutral-genesis: rgb(240, 240, 240);
-    --color-hover-ghost: rgb(250, 250, 250);
+    --color-bg-ghost: rgb(250, 250, 250);
 
     /* ═══ FONTS ═══ */
     --font-display: 'Chillax', system-ui, sans-serif;    /* H1 */
@@ -83,7 +83,7 @@ body.theme-genesis.genesis-dark {
     --color-neutral-light-genesis: hsl(200, 10, 80);
     --color-bg-neutral-genesis: hsl(200, 10, 12);
     
-    --color-hover-ghost: rgb(250, 250, 250);
+    --color-bg-ghost: hsl(180, 100%, 4%);
 }
 
 /* Genesis CLAIR (auto ET forcé) */
@@ -108,7 +108,7 @@ body.theme-genesis.genesis-light {
 
     --color-neutral-light-genesis: hsl(200, 10, 40);
     --color-bg-neutral-genesis: hsl(200, 10, 88);
-    --color-hover-ghost: rgb(250, 250, 250);
+    --color-bg-ghost: rgb(250, 250, 250);
 }
 
 

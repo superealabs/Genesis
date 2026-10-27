@@ -9,7 +9,6 @@
     v-if="recentFrameworks.length > 0"
     title="Récents"
     :default-open="true"
-    variant="secondary"
     class="mb-6"
   >
     <template #title>

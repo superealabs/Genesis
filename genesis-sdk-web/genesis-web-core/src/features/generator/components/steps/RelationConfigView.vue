@@ -1,63 +1,78 @@
 <template>
-  <main class="flex gap-4 h-full overflow-hidden">
+  <!-- ✅ Passage en flex-col pour placer l'en-tête au-dessus du contenu -->
+  <main class="flex flex-col h-full overflow-hidden">
     
-    <!-- PARTIE GAUCHE : CONTENU PRINCIPAL (Scrollable) -->
-    <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+    <!-- ✅ AJOUT : En-tête avec le déclencheur du tutoriel -->
+    <div class="flex items-center justify-between pb-3 mb-4 px-6 pt-6 flex-shrink-0">
+      <h3 class="text-xl font-semibold text-text">
+        Configuration des Relations
+      </h3>
+      <GenesisButtonIcon variant="neutral" size="sm">
+        <IconHelp />
+      </GenesisButtonIcon>
+    </div>
+
+    <!-- Conteneur des colonnes (Contenu + Carrousel) -->
+    <div class="flex gap-4 flex-1 min-h-0 overflow-hidden px-6 pb-6">
       
-      <!-- 1. ZONE D'AJOUT DE RELATION -->
-      <div class="flex flex-col gap-3">
-        <h3 class="text-sm font-semibold text-text">Ajouter une relation</h3>
-        <div class="flex flex-wrap items-end gap-3">
-          <GenesisInput
-            v-model="newRelation.parentTable"
-            type="select"
-            :options="parentTableOptions"
-            label="Table Parent (Mère)"
-            placeholder="Sélectionner une table..."
-            size="lg"
-            fill-width
-            class="flex-1 min-w-[200px]"
-          />
-          <GenesisInput
-            v-model="newRelation.childTable"
-            type="select"
-            :options="childTableOptions"
-            label="Table Child (Fille)"
-            placeholder="Sélectionner une table..."
-            size="lg"
-            fill-width
-            class="flex-1 min-w-[200px]"
-          />
-          <GenesisButton 
-            variant="primary" 
-            size="lg" 
-            :disabled="!canAddRelation" 
-            @click="handleAddRelation"
-          >
-            <template #leftIcon><IconPlus /></template>
-            Ajouter
-          </GenesisButton>
+      <!-- PARTIE GAUCHE : CONTENU PRINCIPAL (Scrollable) -->
+      <div class="flex-1 min-h-0 overflow-y-auto space-y-6 custom-scrollbar pr-2">
+        
+        <!-- 1. ZONE D'AJOUT DE RELATION -->
+        <div class="flex flex-col gap-3">
+          <h3 class="text-sm font-semibold text-text">Ajouter une relation</h3>
+          <div class="flex flex-wrap items-end gap-3">
+            <GenesisInput
+              v-model="newRelation.parentTable"
+              type="select"
+              :options="parentTableOptions"
+              label="Table Parent (Mère)"
+              placeholder="Sélectionner une table..."
+              size="lg"
+              fill-width
+              class="flex-1 min-w-[200px]"
+            />
+            <GenesisInput
+              v-model="newRelation.childTable"
+              type="select"
+              :options="childTableOptions"
+              label="Table Child (Fille)"
+              placeholder="Sélectionner une table..."
+              size="lg"
+              fill-width
+              class="flex-1 min-w-[200px]"
+            />
+            <GenesisButton 
+              variant="primary" 
+              size="lg"
+              :disabled="!canAddRelation" 
+              @click="handleAddRelation"
+            >
+              <template #leftIcon><IconPlus /></template>
+              Ajouter
+            </GenesisButton>
+          </div>
         </div>
+
+        <!-- 2. LISTE DES RELATIONS CONFIGURÉES -->
+        <div class="flex flex-col gap-2">
+          <RelationTableView 
+            :relations="getRelations" 
+            :is-editable="true"
+            :max-height="size"
+            @remove="handleRemoveRelation"
+            @update-relation="handleUpdateRelation"
+          />
+        </div>
+
       </div>
 
-      <!-- 2. LISTE DES RELATIONS CONFIGURÉES (Nouveau composant) -->
-      <div class="flex flex-col gap-2">
-        <RelationTableView 
-          :relations="getRelations" 
-          :is-editable="true"
-          :max-height="size"
-          @remove="handleRemoveRelation"
-          @update-relation="handleUpdateRelation"
-        />
+      <!-- PARTIE DROITE : CARROUSEL TUTORIEL (2/5 de la largeur) -->
+      <div class="w-2/5 h-full shrink-0">
+        <CarrouselPanel :slides="panelSlides" />
       </div>
 
     </div>
-
-    <!-- PARTIE DROITE : CARROUSEL TUTORIEL (2/5 de la largeur) -->
-    <div class="w-2/5 h-full shrink-0">
-      <CarrouselPanel :slides="panelSlides" />
-    </div>
-
   </main>
 </template>
 
@@ -74,6 +89,7 @@ import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/Gen
 import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 
 // ✅ NOUVEAU COMPOSANT
 import RelationTableView from '../relation/RelationTableView.vue';

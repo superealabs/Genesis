@@ -5,7 +5,7 @@
         :style="resizeStyle"
     >
         <textarea
-            class="flex-1 w-full min-h-0 bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed p-4 custom-scrollbar resize-none"
+            class="flex-1 w-full min-h-0 bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed p-4 custom-scrollbar resize-none pt-1"
             :disabled="disabled"
             :placeholder="placeholder"
             :value="String(modelValue ?? '')"
