@@ -27,9 +27,10 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                                                           @NotNull ModulesProvider modulesProvider) {
 
         GenerationContextManager generationContextManager = new GenerationContextManager(projectGenerationContext);
+        DataSourceChoiceWizardStep dataSourceChoiceWizardStep = new DataSourceChoiceWizardStep(generationContextManager);
         SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(generationContextManager, listProjectGenerationContexts);
-        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(generationContextManager, listProjectGenerationContexts);
-        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(generationContextManager);
+        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(generationContextManager, listProjectGenerationContexts, dataSourceChoiceWizardStep);
+        ScriptDatabaseConfigurationWizardStep scriptDatabaseConfigurationWizardStep = new ScriptDatabaseConfigurationWizardStep(generationContextManager, dataSourceChoiceWizardStep);
         RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(generationContextManager);
         GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(generationContextManager, listProjectGenerationContexts, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
         GitConfigurationWizardStep gitConfigurationWizardStep = new GitConfigurationWizardStep(generationContextManager);
@@ -48,12 +49,13 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
 
         return new ModuleWizardStep[]{
                 firstWizardStep,
+                dataSourceChoiceWizardStep,
                 ruleToCodeWizardStep,
                 ruleToCodeWizardAIStep,
                 syncProjectLoaderWizardStep,
                 initializationWizardStep,
                 databaseConfigurationWizardStep,
-                sqlRunnerWizardStep,
+                scriptDatabaseConfigurationWizardStep,
                 generationOptionWizardStep,
                 relationshipConfigurationWizardStep,
                 frontendConfigurationWizardStep,

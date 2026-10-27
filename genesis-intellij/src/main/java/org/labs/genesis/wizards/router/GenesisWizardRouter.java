@@ -56,7 +56,9 @@ public class GenesisWizardRouter {
                     && !(step instanceof SyncProjectLoaderWizardStep)
                     && !(step instanceof SynchGenerationWizardStep);
             case RULE_TO_CODE -> !(step instanceof SyncProjectLoaderWizardStep)
-                    && !(step instanceof SynchGenerationWizardStep);
+                    && !(step instanceof SynchGenerationWizardStep)
+                    && !(step instanceof DataSourceChoiceWizardStep)
+                    && !(step instanceof ScriptDatabaseConfigurationWizardStep);
             case SYNC_PROJECT -> (step instanceof SyncProjectLoaderWizardStep)
                     || (step instanceof RelationshipConfigurationWizardStep)
                     || (step instanceof SynchGenerationWizardStep);

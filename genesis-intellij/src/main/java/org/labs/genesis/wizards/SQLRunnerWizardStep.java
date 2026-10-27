@@ -28,6 +28,6 @@ public class SQLRunnerWizardStep extends ModuleWizardStep {
 
     @Override
     public boolean isStepVisible() {
-        return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess();
+        return false;
     }
 }
