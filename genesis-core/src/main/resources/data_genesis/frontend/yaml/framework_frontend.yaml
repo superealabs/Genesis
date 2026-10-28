@@ -6700,32 +6700,42 @@
               </GenesisButton>
             </div>
             <!-- Entity details -->
-            <${majStart(className)}Details v-if="entity" :${minStart(className)}="entity" />
+            <${majStart(className)}Details
+              v-if="entity"
+              :${minStart(className)}="entity"
+            />
+
             {{#if isParentTable}}
-            {{#each children}}
-            <div class="tabs tabs-border">
-              <input type="radio" name="details_tab" class="tab" :aria-label="$t('entities.${minStart(this.className)}.nav.title')" checked />
-              <div class="tab-content card bg-base-100 border border-base-300">
-                <div class="card-body">
-                  <div class="mt-4">
-                    <EntityTable
-                      :entity-model="${minStart(this.className)}Entity"
-                      :entity-search-fields="${minStart(this.className)}SearchFields"
-                      :default-active-filters="['${minStart(this.parentName)}']"
-                      :searchFn="get${majStart(this.className)}sData"
-                      :getPaginationData="${minStart(this.className)}GetPaginationData"
-                      :listComponent="${majStart(this.className)}List"
-                      :entities="${minStart(this.className)}s"
-                      :message="${minStart(this.className)}Message"
-                      :show-filters="false"
-                      :edit-action="false"
-                      :remove-action="false"
-                    />
-                  </div>
-                </div>
-              </div>            
+            <!-- Child tables tabs -->
+            <div class="tabs tabs-border mt-6 w-full">
+              {{#each children}}
+              <input
+                type="radio"
+                name="${minStart(className)}_details_tab"
+                class="tab"
+                :aria-label="$t('entities.${minStart(this.className)}.nav.title')"
+                {{#if @first}}checked{{/if}}
+              />
+
+              <div class="tab-content border-base-300 bg-base-100 p-4">
+                <EntityTable
+                  :entity-model="${minStart(this.className)}Entity"
+                  :entity-search-fields="${minStart(this.className)}SearchFields"
+                  :default-active-filters="['${minStart(this.parentName)}']"
+                  :searchFn="get${majStart(this.className)}sData"
+                  :getPaginationData="${minStart(this.className)}GetPaginationData"
+                  :listComponent="${majStart(this.className)}List"
+                  :entities="${minStart(this.className)}s"
+                  :message="${minStart(this.className)}Message"
+                  :visible-fields="${minStart(this.className)}VisibleListFields"
+                  :show-filters="false"
+                  :edit-action="false"
+                  :remove-action="false"
+                  @update:visible-fields="handleUpdate${majStart(this.className)}VisibleFields"
+                />
+              </div>
+              {{/each}}
             </div>
-            {{/each}}
             {{/if}}
           </div>
         </template>
@@ -6734,8 +6744,10 @@
       export: |
         const route = useRoute()
         const pathId = Number(route.params.id)
+
         const { get${majStart(className)}ById, goToListView } = use${majPluralize(className)}()
         const entity = ref<${majStart(className)} | null>(null)
+
         {{#if isParentTable}}
         {{#each children}}
         const {
@@ -6743,22 +6755,61 @@
           getAll${majStart(this.className)}sBy${majStart(className)}Id,
           message: ${minStart(this.className)}Message,
           getPaginationData: ${minStart(this.className)}GetPaginationData,
+          visibleListFields: ${minStart(this.className)}VisibleListFields,
+          loadColumnConfig: load${majStart(this.className)}ColumnConfig,
+          saveColumnConfig: save${majStart(this.className)}ColumnConfig,
         } = use${majStart(this.className)}s()
+
         const get${majStart(this.className)}sData = async (
           unpagined: boolean,
           filters: Record<string, unknown>,
           pagination: PaginationRequestParameter,
           sortFields: SortFieldParameter[],
         ) => {
-          return await getAll${majStart(this.className)}sBy${majStart(className)}Id(pathId, unpagined, pagination, sortFields)
+          return await getAll${majStart(this.className)}sBy${majStart(className)}Id(
+            pathId,
+            unpagined,
+            pagination,
+            sortFields
+          )
         }
-        const ${minStart(this.className)}SearchFields = ref<EntitySearchField[]>(${majStart(this.className)}.getAllSearchFieldsMetadata())
-        const ${minStart(this.className)}Entity = ref<Record<string, unknown>>({ ${minStart(this.parentName)}: pathId })
-        {{/each}}{{/if}}
+
+        const ${minStart(this.className)}SearchFields = ref<EntitySearchField[]>(
+          ${majStart(this.className)}.getAllSearchFieldsMetadata()
+        )
+
+        const ${minStart(this.className)}Entity = ref<Record<string, unknown>>({
+          ${minStart(this.parentName)}: pathId
+        })
+
+        const handleUpdate${majStart(this.className)}VisibleFields = async (
+          newFields: string[]
+        ) => {
+          const result = await save${majStart(this.className)}ColumnConfig(newFields)
+
+          if (!result.success) {
+            console.error(
+              'Échec de la sauvegarde de la configuration des colonnes ${majStart(this.className)}:',
+              result.error
+            )
+          }
+        }
+        {{/each}}
+        {{/if}}
+
         onMounted(async () => {
           const result = await get${majStart(className)}ById(pathId)
           entity.value = result.data || null
-        });
+
+          {{#if isParentTable}}
+          await Promise.all([
+            {{#each children}}
+            load${majStart(this.className)}ColumnConfig(),
+            {{/each}}
+          ])
+          {{/if}}
+        })
+
       destinationPath: "${destinationFolder}/src/views/${minStart(className)}"
       componentAdditionalFiles: [ ]
 
@@ -6916,6 +6967,7 @@
                   :initial-data="${minStart(this.className)}sData"
                   :get-table-data-callback="set${majStart(this.className)}s"
                   :violations="${minStart(this.className)}Violations"
+                  parentClassName="${majStart(className)}"
                   class="w-full"
                 />
                 {{/each}}{{/if}}
@@ -7669,6 +7721,7 @@
           internalId: number
           ${minStart(className)}: ${majStart(className)}
           violations?: Record<string, string> | null
+          parentClassName?: string
         }>()
 
         const emit = defineEmits<{
@@ -7678,12 +7731,16 @@
 
         const formModel = ref<${majStart(className)}FormDTO>(${majStart(className)}FormDTO.parse(props.${minStart(className)}))
         {{#if containsFile=true}}const { previewSource, previewAlt, downloadedFile, openImagePreview, closeImagePreview, downloadAsset } = useImagePreview(){{/if}}
+        
+        // Masque la FK correspondant au parent courant (résolu à l'exécution via parentClassName)
+        const isParentFK = (fkType: string) => !!props.parentClassName && fkType === props.parentClassName
+        
         {{#each fieldsFK}}
-        {{#if this.isParentForeignKey}}{{removeLine}}
-        {{else}}const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
+        const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
+        // getKeyValue() = identifiant de la FK (attendu par le select), et non getReferenceValue() = libellé
         const ${minStart(this.name)}DefaultValue = props.${minStart(className)}
-        ? (props.${minStart(className)}?.${this.name}?.getReferenceValue?.() ?? undefined)
-        : undefined{{/if}}      
+          ? (props.${minStart(className)}?.${this.name}?.getKeyValue?.() ?? undefined)
+          : undefined
         {{/each}}
 
         function removeRow() {
@@ -7715,9 +7772,8 @@
             </td>
             {{#each fields}}
             {{#if this.isPrimaryKey}}{{removeLine}}
-            {{elseIf this.isParentForeignKey}}{{removeLine}}
             {{elseIf this.isForeignKey}}
-            <td>
+            <td v-if="!isParentFK('${majStart(this.type)}')">
               <GenesisSelectSearchCriteria
                 v-if="${minStart(this.name)}SearchField?.multicriteriaSelect"
                 :violation="violations ? violations['${minStart(this.name)}'] : undefined"
@@ -7800,7 +7856,8 @@
                   <tr class="text-primary-focus">
                     <th class="">#</th>
                     {{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
-                    {{elseIf this.isParentForeignKey}}{{removeLine}}
+                    {{elseIf this.isForeignKey}}
+                    <th v-if="!isParentFK('${majStart(this.type)}')" class="">${formatReadable(this.name)}</th>
                     {{else}}
                     <th class="">${formatReadable(this.name)}</th>
                     {{/if}}{{/each}}{{removeLine}}  
@@ -7813,6 +7870,7 @@
                       :internalId="index + 1"
                       :${minStart(className)}="row.data"
                       :violations="violations ? violations[index] : undefined"
+                      :parent-class-name="parentClassName"
                       @request:remove="removeRowHandler(row._internalId)"
                       @udpate:model-value="(rowData) => (row.rowValue = rowData)"
                     />
@@ -7846,8 +7904,12 @@
           getTableDataCallback: (data: ${majStart(className)}FormDTO[]) => void
           initialData?: ${majStart(className)}[]
           violations?: Record<string, string>[]
+          parentClassName?: string
         }>()
 
+        // Masque la FK correspondant au parent courant (résolu à l'exécution via parentClassName)
+        const isParentFK = (fkType: string) => !!props.parentClassName && fkType === props.parentClassName
+        
         const { rows, addRow, removeRow, getTableData } = useTableForm<${majStart(className)}, ${majStart(className)}FormDTO>(
           props.initialData,
         )
