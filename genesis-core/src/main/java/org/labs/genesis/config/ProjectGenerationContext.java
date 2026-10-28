@@ -13,6 +13,7 @@ import org.labs.genesis.config.langage.generator.sync.report.FrontendChangeRepor
 import org.labs.genesis.config.langage.generator.sync.report.WebApiChangeReport;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.SQLRunner;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
@@ -24,6 +25,7 @@ import org.labs.utils.StringUtils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -57,6 +59,7 @@ public class ProjectGenerationContext {
     private List<TableMetadata> viewTables;
     private List<RelationParameter> relationParameters;
     private Connection connection;
+    private String sqlScript;
     private List<String> generationOptions;
     private List<String> frontendGenerationOptions;
     private boolean generateProjectStructure = true;
@@ -168,13 +171,88 @@ public class ProjectGenerationContext {
     public void setViewTables(Connection connection) throws SQLException, ClassNotFoundException {
         this.viewTables = database.getViewsByNames(this.getViewNames(), connection, credentials, language, framework);
     }
-    public  void setTables(){
-        try {
-            setEntityTables(connection);
-            setViewTables(connection);
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+    public void setTables() {
+        if (connection != null) {
+            try {
+                setEntityTables(connection);
+                setViewTables(connection);
+            } catch (SQLException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        } else if (sqlScript != null && !sqlScript.isBlank()) {
+            this.entityTables = buildTablesFromScript(sqlScript, entityNames);
+            this.viewTables = buildViewsFromScript(sqlScript, viewNames);
         }
+    }
+
+    private List<TableMetadata> buildTablesFromScript(String sql, List<String> selectedNames) {
+        List<TableMetadata> tables = new ArrayList<>();
+        if (sql == null || sql.isBlank()) return tables;
+
+        String clean = SQLRunner.removeComments(sql);
+
+        for (String query : clean.split(";")) {
+            String trimmed = query.trim();
+            String upper = trimmed.toUpperCase();
+            if (!upper.contains("CREATE TABLE")) continue;
+
+            int idx = upper.indexOf("TABLE");
+            String afterTable = trimmed.substring(idx + 5).trim();
+            if (afterTable.toUpperCase().startsWith("IF NOT EXISTS")) afterTable = afterTable.substring(13).trim();
+
+            int openParen = afterTable.indexOf('(');
+            int closeParen = afterTable.lastIndexOf(')');
+            if (openParen == -1 || closeParen <= openParen) continue;
+
+            String tableName = afterTable.substring(0, openParen).replaceAll("[\"``\\[\\]]", "").trim();
+            if (tableName.contains(".")) tableName = tableName.substring(tableName.lastIndexOf('.') + 1);
+            if (tableName.isBlank()) continue;
+            if (selectedNames != null && !selectedNames.isEmpty() && !selectedNames.contains(tableName)) continue;
+
+            String body = afterTable.substring(openParen + 1, closeParen);
+
+            TableMetadata tm = new TableMetadata();
+            tm.setTableName(tableName);
+            tm.initializeFromScript(body, database, language);
+            tables.add(tm);
+        }
+
+        for (TableMetadata tm : tables) {
+            if (tm.getColumns() == null) continue;
+            for (ColumnMetadata col : tm.getColumns()) {
+                if (col.isForeign() && col.getReferencedTable() != null) {
+                    String refTable = col.getReferencedTable();
+                    col.setType(Stream.of(refTable).map(String::toLowerCase).map(StringUtils::toCamelCase).map(StringUtils::removeLastS).map(StringUtils::majStart).findFirst().orElse(refTable));
+                    col.setName(StringUtils.toCamelCase(col.getReferencedColumn().toLowerCase()) + StringUtils.majStart(StringUtils.toCamelCase(refTable.toLowerCase())));
+                    col.setReferencedTable(StringUtils.toCamelCase(refTable));
+                }
+            }
+        }
+
+        return tables;
+    }
+
+    private List<TableMetadata> buildViewsFromScript(String sql, List<String> selectedNames) {
+        List<TableMetadata> views = new ArrayList<>();
+        List<String> viewNames = SQLRunner.extractViewNames(sql);
+        for (String viewName : viewNames) {
+            if (selectedNames != null && !selectedNames.isEmpty() && !selectedNames.contains(viewName)) continue;
+            TableMetadata vm = new TableMetadata();
+            vm.setTableName(viewName);
+            vm.setDatabase(database);
+            vm.setIsView(true);
+            vm.setClassName(Stream.of(viewName).map(String::toLowerCase).map(StringUtils::toCamelCase).map(StringUtils::majStart).map(StringUtils::removeLastS).findFirst().orElse(viewName));
+            ColumnMetadata idCol = new ColumnMetadata();
+            idCol.setReferencedColumn("id");
+            idCol.setName("id");
+            idCol.setType("String");
+            idCol.setColumnType("VARCHAR");
+            idCol.setDatabaseColumnType("VARCHAR");
+            vm.setColumns(new ColumnMetadata[]{idCol});
+            vm.setPKForView();
+            views.add(vm);
+        }
+        return views;
     }
 
     public void setEntityNamesFromTables(List<TableMetadata> entityTables) {

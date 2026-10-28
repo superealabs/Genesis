@@ -13,6 +13,8 @@ import org.labs.utils.FileUtils;
 import java.io.IOException;
 import java.sql.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.labs.utils.StringUtils.toCamelCase;
 
@@ -58,24 +60,29 @@ public abstract class Database {
 
     public abstract String getJdbcUrl(Credentials credentials);
 
-    public TableMetadata getEntity(Connection connection, Credentials credentials, String entityName, Language language, Framework framework) throws SQLException, ClassNotFoundException {
+    public TableMetadata getEntity(Connection connection, Credentials credentials, String entityName, Language language,
+            Framework framework) throws SQLException, ClassNotFoundException {
         TableMetadata tableMetadata = new TableMetadata();
         tableMetadata.setTableName(entityName);
-        tableMetadata.initialize(connection, credentials, this, language,framework);
+        tableMetadata.initialize(connection, credentials, this, language, framework);
         return tableMetadata;
     }
 
-    public List<TableMetadata> getEntities(Connection connection, Credentials credentials, Language language,Framework framework) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> getEntities(Connection connection, Credentials credentials, Language language,
+            Framework framework) throws SQLException, ClassNotFoundException {
         TableMetadata tableMetadata = new TableMetadata();
-        return tableMetadata.initializeTables(null, connection, credentials, this, language,framework);
+        return tableMetadata.initializeTables(null, connection, credentials, this, language, framework);
     }
 
-    public List<TableMetadata> getViews(Connection connection, Credentials credentials, Language language,Framework framework) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> getViews(Connection connection, Credentials credentials, Language language,
+            Framework framework) throws SQLException, ClassNotFoundException {
         TableMetadata tableMetadata = new TableMetadata();
-        return tableMetadata.initializeViews(null, connection, credentials, this, language,framework);
+        return tableMetadata.initializeViews(null, connection, credentials, this, language, framework);
     }
 
-    public List<TableMetadata> getEntitiesByNames(List<String> entityNames, Connection connection, Credentials credentials, Language language, Framework framework) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> getEntitiesByNames(List<String> entityNames, Connection connection,
+            Credentials credentials, Language language, Framework framework)
+            throws SQLException, ClassNotFoundException {
         if (entityNames == null)
             return new ArrayList<>();
 
@@ -90,12 +97,13 @@ public abstract class Database {
         return tableMetadataList;
     }
 
-    public List<TableMetadata> getViewsByNames(List<String> viewNames, Connection connection, Credentials credentials, Language language, Framework framework) throws SQLException, ClassNotFoundException {
+    public List<TableMetadata> getViewsByNames(List<String> viewNames, Connection connection, Credentials credentials,
+            Language language, Framework framework) throws SQLException, ClassNotFoundException {
         if (viewNames == null)
             return new ArrayList<>();
 
-//        if (viewNames.isEmpty())
-//            return getViews(connection, credentials, language, framework);
+        // if (viewNames.isEmpty())
+        // return getViews(connection, credentials, language, framework);
 
         List<TableMetadata> tableMetadataList = new ArrayList<>();
         for (String viewName : viewNames) {
@@ -119,7 +127,7 @@ public abstract class Database {
         DatabaseMetaData metaData = connection.getMetaData();
         String schema = resolveSchema(connection);
 
-        try (ResultSet tables = metaData.getTables(null, schema, "%", new String[]{tableType})) {
+        try (ResultSet tables = metaData.getTables(null, schema, "%", new String[] { tableType })) {
             while (tables.next()) {
                 String tableName = tables.getString("TABLE_NAME");
                 tableNames.add(tableName);
@@ -138,7 +146,6 @@ public abstract class Database {
         return getAllTableTypeNames(connection, "VIEW");
     }
 
-
     public Map<String, Object> getDatabaseMetadataHashMap(Credentials credentials) {
         Map<String, Object> databaseMetadata = new HashMap<>();
 
@@ -155,21 +162,58 @@ public abstract class Database {
         return databaseMetadata;
     }
 
+    public Map<String, Object> getDatabaseMetadataHashMapFromScript(String databaseName) {
+        Map<String, Object> databaseMetadata = new HashMap<>();
+
+        String dbName = (databaseName != null && !databaseName.isBlank()) ? databaseName : "app_db";
+        String effectivePort = (this.port != null && !this.port.isBlank()) ? this.port : "3306";
+        String effectiveDriverType = (this.driverType != null) ? this.driverType : "";
+        String effectiveSid = (this.sid != null) ? this.sid : "";
+
+        String defaultUser;
+        String defaultSchema;
+        if ("PostgreSQL".equalsIgnoreCase(this.name)) {
+            defaultUser = "postgres";
+            defaultSchema = "public";
+        } else if ("Oracle".equalsIgnoreCase(this.name)) {
+            defaultUser = "SYSTEM";
+            defaultSchema = "SYSTEM";
+            if (effectiveDriverType.isBlank()) effectiveDriverType = "thin";
+            if (effectiveSid.isBlank()) effectiveSid = "ORCLCDB";
+        } else if ("SQL Server".equalsIgnoreCase(this.name)) {
+            defaultUser = "sa";
+            defaultSchema = "dbo";
+        } else {
+            defaultUser = "root";
+            defaultSchema = dbName;
+        }
+
+        databaseMetadata.put("host", "localhost");
+        databaseMetadata.put("port", effectivePort);
+        databaseMetadata.put("database", defaultSchema);
+        databaseMetadata.put("username", defaultUser);
+        databaseMetadata.put("password", "");
+        databaseMetadata.put("useSSL", "false");
+        databaseMetadata.put("allowPublicKeyRetrieval", "true");
+        databaseMetadata.put("driverType", effectiveDriverType);
+        databaseMetadata.put("sid", effectiveSid);
+
+        return databaseMetadata;
+    }
+
     @Override
     public String toString() {
         return name;
     }
 
-
     public List<String> getPaginatedTableNames(Connection connection, int index, int size) throws SQLException {
         List<String> tableNames = new ArrayList<>();
 
-        
         DatabaseMetaData metaData = connection.getMetaData();
         String schema = resolveSchema(connection);
 
         int tempIndex = 0;
-        try (ResultSet tables = metaData.getTables(null, schema, "%", new String[]{"TABLE"})) {
+        try (ResultSet tables = metaData.getTables(null, schema, "%", new String[] { "TABLE" })) {
             while (tables.next() && size > tableNames.size()) {
                 if (tempIndex < (index * size)) {
                     tempIndex++;
@@ -190,7 +234,7 @@ public abstract class Database {
         String schema = resolveSchema(connection);
 
         int tempIndex = 0;
-        try (ResultSet views = metaData.getTables(null, schema, "%", new String[]{"VIEW"})) {
+        try (ResultSet views = metaData.getTables(null, schema, "%", new String[] { "VIEW" })) {
             while (views.next() && size > viewNames.size()) {
                 if (tempIndex < (index * size)) {
                     tempIndex++;
@@ -206,13 +250,116 @@ public abstract class Database {
     }
 
     public void setConstraintQueries() throws IOException {
-        this.constraintQueries = Arrays.stream(FileUtils.fromYaml(ConstraintQueries[].class, Constantes.CONSTRAINT_QUERIES_YAML))
+        this.constraintQueries = Arrays
+                .stream(FileUtils.fromYaml(ConstraintQueries[].class, Constantes.CONSTRAINT_QUERIES_YAML))
                 .filter(q -> q.getDatabaseId() == this.id)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No ConstraintQueries found for id : " + this.id));
     }
 
-    public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language, Connection connex, Framework framework) throws SQLException {
+    /**
+     * Construit les ColumnMetadata depuis le body d'un CREATE TABLE (texte DDL).
+     * Symétrique de fetchColumns() qui lit depuis JDBC — utilise la même chaîne de
+     * types JSON
+     * (databases.json -> languages.json).
+     */
+    public List<ColumnMetadata> fetchColumnsFromScript(String body, Language language) {
+        List<String> clauses = SQLRunner.splitClauses(body);
+
+        Set<String> pkCols = new HashSet<>();
+        Map<String, String[]> fkCols = new HashMap<>();
+
+        for (String clause : clauses) {
+            String lineTrim = clause.trim();
+            String lineUpper = lineTrim.toUpperCase();
+            if (lineUpper.startsWith("PRIMARY KEY") || lineUpper.contains("PRIMARY KEY")) {
+                int p1 = lineTrim.indexOf('(');
+                int p2 = lineTrim.indexOf(')');
+                if (p1 != -1 && p2 > p1) {
+                    for (String c : lineTrim.substring(p1 + 1, p2).split(",")) {
+                        pkCols.add(c.replaceAll("[\"``\\[\\]]", "").trim().toUpperCase());
+                    }
+                }
+            }
+            if (lineUpper.contains("FOREIGN KEY") && lineUpper.contains("REFERENCES")) {
+                Pattern fkPat = Pattern.compile(
+                        "FOREIGN\\s+KEY\\s*\\(([^)]+)\\)\\s*REFERENCES\\s+([\\w.`\"\\[\\]]+)\\s*\\(([^)]+)\\)",
+                        Pattern.CASE_INSENSITIVE);
+                Matcher m = fkPat.matcher(lineTrim);
+                if (m.find()) {
+                    String fkCol = m.group(1).replaceAll("[\"``\\[\\]]", "").trim();
+                    String refTable = m.group(2).replaceAll("[\"``\\[\\]]", "").trim();
+                    if (refTable.contains("."))
+                        refTable = refTable.substring(refTable.lastIndexOf('.') + 1);
+                    String refCol = m.group(3).replaceAll("[\"``\\[\\]]", "").trim();
+                    fkCols.put(fkCol.toUpperCase(), new String[] { refTable, refCol });
+                }
+            }
+        }
+
+        List<ColumnMetadata> colList = new ArrayList<>();
+        for (String clause : clauses) {
+            String lineTrim = clause.trim();
+            String lineUpper = lineTrim.toUpperCase();
+            if (lineUpper.startsWith("PRIMARY KEY") || lineUpper.startsWith("FOREIGN KEY")
+                    || lineUpper.startsWith("CONSTRAINT") || lineUpper.startsWith("UNIQUE")
+                    || lineUpper.startsWith("CHECK") || lineUpper.startsWith("KEY"))
+                continue;
+
+            String[] tokens = lineTrim.split("\\s+");
+            if (tokens.length < 2)
+                continue;
+
+            String colName = tokens[0].replaceAll("[\"``\\[\\]]", "").trim();
+            String rawType = tokens[1].replaceAll("[\"``\\[\\]]", "").trim();
+            if (rawType.contains("("))
+                rawType = rawType.substring(0, rawType.indexOf('('));
+
+            // Résolution via les JSON : databases.json (SQL -> intermédiaire) +
+            // languages.json (intermédiaire -> langage cible)
+            String normalized = normalizeColumnType(rawType);
+            String intermediate = getTypes().get(normalized);
+            String javaType = (intermediate != null && language.getTypes() != null)
+                    ? language.getTypes().getOrDefault(intermediate, "String")
+                    : "String";
+
+            ColumnMetadata col = new ColumnMetadata();
+            col.setReferencedColumn(colName);
+            col.setName(toCamelCase(colName.toLowerCase()));
+            col.setNullable(!lineUpper.contains("NOT NULL"));
+            col.setColumnType(normalized.toUpperCase());
+            col.setDatabaseColumnType(normalized.toUpperCase());
+            col.setType(javaType);
+
+            if (lineUpper.contains("PRIMARY KEY") || pkCols.contains(colName.toUpperCase())) {
+                col.setPrimary(true);
+            }
+            if (lineUpper.contains("REFERENCES")) {
+                Pattern inlineFk = Pattern.compile("REFERENCES\\s+([\\w.`\"\\[\\]]+)\\s*\\(([^)]+)\\)",
+                        Pattern.CASE_INSENSITIVE);
+                Matcher im = inlineFk.matcher(lineTrim);
+                if (im.find()) {
+                    String refTable = im.group(1).replaceAll("[\"``\\[\\]]", "").trim();
+                    if (refTable.contains("."))
+                        refTable = refTable.substring(refTable.lastIndexOf('.') + 1);
+                    String refCol = im.group(2).replaceAll("[\"``\\[\\]]", "").trim();
+                    col.setForeign(true);
+                    col.setReferencedTable(refTable);
+                    col.setReferencedPrimaryKeyColumn(toCamelCase(refCol.toLowerCase()));
+                }
+            } else if (fkCols.containsKey(colName.toUpperCase())) {
+                String[] fkInfo = fkCols.get(colName.toUpperCase());
+                col.setForeign(true);
+                col.setReferencedTable(fkInfo[0]);
+                col.setReferencedPrimaryKeyColumn(toCamelCase(fkInfo[1].toLowerCase()));
+            }
+            colList.add(col);
+        }
+        return colList;
+    }
+
+    public List<ColumnMetadata> fetchColumns(DatabaseMetaData metaData, String tableName, Language language,
+            Connection connex, Framework framework) throws SQLException {
         List<ColumnMetadata> listeCols = new ArrayList<>();
         String schema = resolveSchema(connex);
         try (ResultSet columns = metaData.getColumns(null, schema, tableName, null)) {
@@ -251,13 +398,14 @@ public abstract class Database {
                 column.setUseTimeZone(useTimeZone);
                 column.setInterval(isColumnInterval);
 
-                column.setNullable(isNullable,frameworkValidationAnnotations,engine);
-                column.setDefaultValue(defaultValue,frameworkValidationAnnotations,engine);
-                column.setColumnSize(columnSize,frameworkValidationAnnotations,engine);
-                column.setDecimalDigits(decimalDigits,frameworkValidationAnnotations,engine);
+                column.setNullable(isNullable, frameworkValidationAnnotations, engine);
+                column.setDefaultValue(defaultValue, frameworkValidationAnnotations, engine);
+                column.setColumnSize(columnSize, frameworkValidationAnnotations, engine);
+                column.setDecimalDigits(decimalDigits, frameworkValidationAnnotations, engine);
 
                 if (language.getTypes().get(getDatabaseType(columns)) == null)
-                    throw new RuntimeException("Database type not supported yet : " + columnType +" ["+tableName+"("+columnName+")]");
+                    throw new RuntimeException("Database type not supported yet : " + columnType + " [" + tableName
+                            + "(" + columnName + ")]");
                 else
                     column.setType(language.getTypes().get(getDatabaseType(columns)));
 
@@ -269,18 +417,18 @@ public abstract class Database {
         }
 
         try {
-            checkUnique(metaData, tableName, listeCols,framework, connex);
-            checkStrictMinConstraint(connex, tableName, listeCols,framework);
-            checkMinConstraint(connex, tableName, listeCols,framework);
-            checkStrictMaxConstraint(connex, tableName, listeCols,framework);
-            checkMaxConstraint(connex, tableName, listeCols,framework);
-            checkStrictPastDateConstraint(connex, tableName, listeCols,framework);
-            checkPastDateConstraint(connex, tableName, listeCols,framework);
-            checkStrictFutureDateConstraint(connex, tableName, listeCols,framework);
-            checkFutureDateConstraint(connex, tableName, listeCols,framework);
-            checkNotBlankConstraint(connex, tableName, listeCols,framework);
-            checkMinLengthConstraint(connex, tableName, listeCols,framework);
-            checkRegexConstraint(connex, tableName, listeCols,framework);
+            checkUnique(metaData, tableName, listeCols, framework, connex);
+            checkStrictMinConstraint(connex, tableName, listeCols, framework);
+            checkMinConstraint(connex, tableName, listeCols, framework);
+            checkStrictMaxConstraint(connex, tableName, listeCols, framework);
+            checkMaxConstraint(connex, tableName, listeCols, framework);
+            checkStrictPastDateConstraint(connex, tableName, listeCols, framework);
+            checkPastDateConstraint(connex, tableName, listeCols, framework);
+            checkStrictFutureDateConstraint(connex, tableName, listeCols, framework);
+            checkFutureDateConstraint(connex, tableName, listeCols, framework);
+            checkNotBlankConstraint(connex, tableName, listeCols, framework);
+            checkMinLengthConstraint(connex, tableName, listeCols, framework);
+            checkRegexConstraint(connex, tableName, listeCols, framework);
             removeUnusedData(listeCols);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -291,8 +439,7 @@ public abstract class Database {
     protected boolean isAutoGenerated(ResultSet columns) {
         try {
             return "YES".equalsIgnoreCase(
-                    columns.getString("IS_AUTOINCREMENT")
-            );
+                    columns.getString("IS_AUTOINCREMENT"));
         } catch (SQLException exception) {
             return false;
         }
@@ -330,7 +477,7 @@ public abstract class Database {
         if (columns.getInt("DATA_TYPE") == Types.TIMESTAMP && this.getId() == Constantes.Oracle_ID) {
             columnType = getBeforeBracketsSimple(columnType);
         }
-        if(columnType.equalsIgnoreCase("float") && columns.getInt("COLUMN_SIZE") > 24) {
+        if (columnType.equalsIgnoreCase("float") && columns.getInt("COLUMN_SIZE") > 24) {
             columnType = "double";
         }
         return this.getTypes().get(normalizeColumnType(columnType));
@@ -343,7 +490,6 @@ public abstract class Database {
         }
         return columnType.trim();
     }
-
 
     protected boolean isColumnNumeric(ResultSet column) throws Exception {
         int dataType = column.getInt("DATA_TYPE");
@@ -386,30 +532,34 @@ public abstract class Database {
     /* ---------- DATE pure ---------- */
     protected boolean isColumnDate(ResultSet column) throws SQLException {
         int jdbcType = column.getInt("DATA_TYPE");
-        if (jdbcType == Types.DATE) return true;
+        if (jdbcType == Types.DATE)
+            return true;
 
         String typeName = column.getString("TYPE_NAME");
-        if (typeName == null) return false;
+        if (typeName == null)
+            return false;
         String upper = typeName.toUpperCase(Locale.ROOT);
 
-        return "DATE".equals(upper)              // Oracle DATE
-                || "DATE32".equals(upper)            // ClickHouse
-                || "DATEV2".equals(upper);           // StarRocks
+        return "DATE".equals(upper) // Oracle DATE
+                || "DATE32".equals(upper) // ClickHouse
+                || "DATEV2".equals(upper); // StarRocks
     }
 
     /* ---------- TIME seule ---------- */
     protected boolean isColumnTime(ResultSet column) throws SQLException {
         int jdbcType = column.getInt("DATA_TYPE");
-        if (jdbcType == Types.TIME || jdbcType == Types.TIME_WITH_TIMEZONE) return true;
+        if (jdbcType == Types.TIME || jdbcType == Types.TIME_WITH_TIMEZONE)
+            return true;
 
         String typeName = column.getString("TYPE_NAME");
-        if (typeName == null) return false;
+        if (typeName == null)
+            return false;
         String upper = typeName.toUpperCase(Locale.ROOT);
 
-        return upper.startsWith("TIME")          // TIME, TIME(6), TIME WITH TIME ZONE, etc.
-                || "TIMETZ".equals(upper)            // PostgreSQL alias
-                || "TIME32".equals(upper)            // ClickHouse
-                || "TIME64".equals(upper);           // ClickHouse
+        return upper.startsWith("TIME") // TIME, TIME(6), TIME WITH TIME ZONE, etc.
+                || "TIMETZ".equals(upper) // PostgreSQL alias
+                || "TIME32".equals(upper) // ClickHouse
+                || "TIME64".equals(upper); // ClickHouse
     }
 
     protected boolean isColumnTimeTz(ResultSet column) throws SQLException {
@@ -419,34 +569,37 @@ public abstract class Database {
         }
 
         String typeName = column.getString("TYPE_NAME");
-        if (typeName == null) return false;
+        if (typeName == null)
+            return false;
 
         String upper = typeName.toUpperCase(Locale.ROOT);
 
-        return "TIMETZ".equals(upper)        // PostgreSQL alias
-                || "TIME32".equals(upper)        // ClickHouse
-                || "TIME64".equals(upper);       // ClickHouse
+        return "TIMETZ".equals(upper) // PostgreSQL alias
+                || "TIME32".equals(upper) // ClickHouse
+                || "TIME64".equals(upper); // ClickHouse
     }
 
     /* ---------- DATETIME / TIMESTAMP (date + heure) ---------- */
     protected boolean isColumnDateTime(ResultSet column) throws SQLException {
         int jdbcType = column.getInt("DATA_TYPE");
-        if (jdbcType == Types.TIMESTAMP || jdbcType == Types.TIMESTAMP_WITH_TIMEZONE) return true;
+        if (jdbcType == Types.TIMESTAMP || jdbcType == Types.TIMESTAMP_WITH_TIMEZONE)
+            return true;
 
         String typeName = column.getString("TYPE_NAME");
-        if (typeName == null) return false;
+        if (typeName == null)
+            return false;
         String upper = typeName.toUpperCase(Locale.ROOT);
 
-        return upper.startsWith("DATETIME")        // MySQL, MariaDB, SQL Server, H2
-                || upper.startsWith("SMALLDATETIME")     // SQL Server / Sybase
-                || upper.startsWith("TIMESTAMP")         // Oracle, PostgreSQL, DB2, Snowflake, Redshift, etc.
-                || "TIMESTAMPTZ".equals(upper)           // PostgreSQL short
-                || "TIMESTAMPLTZ".equals(upper)          // Oracle WITH LOCAL TIME ZONE
-                || "DATETIME2".equals(upper)             // SQL Server ≥ 2008
-                || "DATETIMEOFFSET".equals(upper)        // SQL Server WITH TZ
-                || "DATETIME64".equals(upper)            // ClickHouse
-                || "DATETIME32".equals(upper)            // ClickHouse
-                || "DATETIMEV2".equals(upper);           // StarRocks
+        return upper.startsWith("DATETIME") // MySQL, MariaDB, SQL Server, H2
+                || upper.startsWith("SMALLDATETIME") // SQL Server / Sybase
+                || upper.startsWith("TIMESTAMP") // Oracle, PostgreSQL, DB2, Snowflake, Redshift, etc.
+                || "TIMESTAMPTZ".equals(upper) // PostgreSQL short
+                || "TIMESTAMPLTZ".equals(upper) // Oracle WITH LOCAL TIME ZONE
+                || "DATETIME2".equals(upper) // SQL Server ≥ 2008
+                || "DATETIMEOFFSET".equals(upper) // SQL Server WITH TZ
+                || "DATETIME64".equals(upper) // ClickHouse
+                || "DATETIME32".equals(upper) // ClickHouse
+                || "DATETIMEV2".equals(upper); // StarRocks
     }
 
     protected boolean isColumnDateTimeTz(ResultSet column) throws SQLException {
@@ -456,14 +609,15 @@ public abstract class Database {
         }
 
         String typeName = column.getString("TYPE_NAME");
-        if (typeName == null) return false;
+        if (typeName == null)
+            return false;
 
         String upper = typeName.toUpperCase(Locale.ROOT);
 
         return upper.startsWith("TIMESTAMP") && (upper.contains("TZ") || upper.contains("WITH TIME ZONE"))
-                || "TIMESTAMPTZ".equals(upper)            // PostgreSQL
-                || "TIMESTAMPLTZ".equals(upper)           // Oracle WITH LOCAL TIME ZONE
-                || "DATETIMEOFFSET".equals(upper);        // SQL Server WITH TZ
+                || "TIMESTAMPTZ".equals(upper) // PostgreSQL
+                || "TIMESTAMPLTZ".equals(upper) // Oracle WITH LOCAL TIME ZONE
+                || "DATETIMEOFFSET".equals(upper); // SQL Server WITH TZ
     }
 
     protected boolean useTimeZone(ResultSet column) throws SQLException {
@@ -476,7 +630,8 @@ public abstract class Database {
 
         // Vérification via le TYPE_NAME pour les cas spécifiques aux bases de données
         String typeName = column.getString("TYPE_NAME");
-        if (typeName == null) return false;
+        if (typeName == null)
+            return false;
 
         String upperTypeName = typeName.toUpperCase(Locale.ROOT);
 
@@ -492,23 +647,25 @@ public abstract class Database {
     /* ---------- INTERVAL ---------- */
     protected boolean isColumnInterval(ResultSet column) throws SQLException {
         String typeName = column.getString("TYPE_NAME");
-        if (typeName == null) return false;
+        if (typeName == null)
+            return false;
         String upper = typeName.toUpperCase(Locale.ROOT);
 
         return upper.startsWith("INTERVAL")
-                || upper.equals("PG_INTERVAL")          // PostgreSQL driver internal
-                || upper.equals("INTERVALYM")           // Oracle INTERVAL YEAR TO MONTH
-                || upper.equals("INTERVALDS");          // Oracle INTERVAL DAY TO SECOND
+                || upper.equals("PG_INTERVAL") // PostgreSQL driver internal
+                || upper.equals("INTERVALYM") // Oracle INTERVAL YEAR TO MONTH
+                || upper.equals("INTERVALDS"); // Oracle INTERVAL DAY TO SECOND
     }
 
-    protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols, Framework framework, Connection connection) throws SQLException {
+    protected void checkUnique(DatabaseMetaData metaData, String tableName, List<ColumnMetadata> listeCols,
+            Framework framework, Connection connection) throws SQLException {
         String schema = resolveSchema(connection);
         try (ResultSet indexes = metaData.getIndexInfo(null, schema, tableName, false, true)) {
             while (indexes.next()) {
                 String columnNameInIndex = indexes.getString("COLUMN_NAME");
                 boolean isUnique = !indexes.getBoolean("NON_UNIQUE");
 
-                for(ColumnMetadata col : listeCols){
+                for (ColumnMetadata col : listeCols) {
                     if (col.getName().equals(columnNameInIndex)) {
                         col.setUnique(isUnique);
                         break;
@@ -519,22 +676,52 @@ public abstract class Database {
         }
     }
 
-    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
-    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
-    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
-    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkStrictMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
 
-    protected void checkStrictPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
-    protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
-    protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
-    protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkMinConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
 
-    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
-    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
-    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,Framework framework) throws Exception {}
+    protected void checkStrictMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
 
-    protected void removeUnusedData(List<ColumnMetadata> listeCols){
-        for(ColumnMetadata col : listeCols){
+    protected void checkMaxConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
+
+    protected void checkStrictPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
+
+    protected void checkPastDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
+
+    protected void checkStrictFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
+
+    protected void checkFutureDateConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
+
+    protected void checkNotBlankConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
+
+    protected void checkMinLengthConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
+
+    protected void checkRegexConstraint(Connection connex, String tableName, List<ColumnMetadata> columns,
+            Framework framework) throws Exception {
+    }
+
+    protected void removeUnusedData(List<ColumnMetadata> listeCols) {
+        for (ColumnMetadata col : listeCols) {
             Map<String, Object> map = col.getValidationAnnotations(); // ton map initial
 
             map.keySet().removeIf(key -> key.toLowerCase().contains("data"));

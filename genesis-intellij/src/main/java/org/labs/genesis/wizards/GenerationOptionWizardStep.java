@@ -47,6 +47,7 @@ public class GenerationOptionWizardStep extends ModuleWizardStep {
         SwingUtilities.invokeLater(() -> {
             boolean isMultiProject = !listProjectGenerationContexts.isEmpty();
             generationOptionForm.refreshUI(isMultiProject);
+            generationOptionForm.refreshTablesAndViews();
         });
     }
     @Override
