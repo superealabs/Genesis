@@ -781,8 +781,15 @@ public class ProjectGenerator {
         Connection connection = context.getConnection();
 
         if (framework.getUseDB()) {
-            try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> allEntities = generateFullProjectComponents(context, connex, false, indicator);
+            // Mode script SQL : connection=null mais tables déjà construites dans le contexte.
+            // Les gardes isEmpty() dans generateFullProjectComponents évitent tout appel DB.
+            boolean isScriptMode = connection == null
+                    && context.getSqlScript() != null
+                    && !context.getSqlScript().isBlank();
+
+            Connection connex = isScriptMode ? null : database.getConnection(credentials);
+            try (Connection c = (connection != null) ? connection : connex) {
+                List<TableMetadata> allEntities = generateFullProjectComponents(context, c, false, indicator);
                 generateFullProjectStrucutres(context, allEntities, indicator);
             } catch (Exception e) {
                 e.printStackTrace();
