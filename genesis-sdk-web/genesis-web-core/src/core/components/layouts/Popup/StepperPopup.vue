@@ -74,16 +74,6 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <GenesisButtonIcon
-                        v-if="showTutorialTrigger"
-                        variant="neutral"
-                        size="md"
-                        @click="$emit('request-tutorial')"
-                        title="Lancer le tutoriel"
-                    >
-                        <IconHelp />
-                    </GenesisButtonIcon>
-
                     <GenesisButton
                         v-if="isSkippable"
                         variant="tertiary"
@@ -110,8 +100,7 @@ import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisLoading from '@genesis-labs/web-core/core/components/ui/feedback/GenesisLoading.vue';
 import type { PopupSize, PopupPosition } from './popup.types';
-import GenesisButtonIcon from '../../ui/actions/GenesisButtonIcon.vue';
-import IconHelp from '../../ui/icons/IconHelp.vue';
+
 
 withDefaults(defineProps<{
     title?: string;
@@ -129,7 +118,6 @@ withDefaults(defineProps<{
     isLoading?: boolean;
     disableNext?: boolean;
     hideFooter?: boolean;
-    showTutorialTrigger?: boolean;
 }>(), {
     size: 'md',
     isClosable: true,
@@ -141,7 +129,6 @@ withDefaults(defineProps<{
     isLoading: false,
     disableNext: false,
     hideFooter: false,
-    showTutorialTrigger: false
 });
 
 defineEmits<{

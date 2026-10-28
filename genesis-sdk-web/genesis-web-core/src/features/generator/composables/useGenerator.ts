@@ -220,8 +220,10 @@ export function useGenerator() {
     store.setTablesChilds(await svc.fetchTablesMetadataChilds()); 
   }
   
-  async function fetchRelations() { 
-    store.setRelations(await svc.fetchRelations()); 
+  // Chargement initial uniquement : ne jamais écraser les relations déjà éditées par l'utilisateur
+  async function fetchRelations() {
+    if (store.relationsLoaded) return;
+    store.setRelations(await svc.fetchRelations());
   }
   
   async function fetchAvailableLanguages() { 

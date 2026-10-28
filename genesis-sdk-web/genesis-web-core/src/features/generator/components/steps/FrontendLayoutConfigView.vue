@@ -104,36 +104,36 @@
           </div>
 
           <!-- Panneau de gestion des configurations de Langues -->
-          <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-            <!-- ✅ ÉTAPE 2 : Genesis Configuration Panel -->
-            <GenesisTutorialItem id="lang-config-panel">
-              <GenesisConfigurationPanel
-                :configurations="languagesConfigManager.configurations.value"
-                :selected-config-id="languagesConfigManager.selectedConfigId.value"
-                :filtered-configs="languagesConfigManager.filteredConfigs.value"
-                :search-query="languagesConfigManager.searchQuery.value"
-                :can-move-up="languagesConfigManager.canMoveUp.value"
-                :can-move-down="languagesConfigManager.canMoveDown.value"
-                @update:search-query="(val) => languagesConfigManager.searchQuery.value = val"
-                @add="languagesLogic.handleAdd"
-                @delete="languagesLogic.handleDelete"
-                @rename="languagesLogic.handleRename"
-                @toggle-visibility="languagesConfigManager.toggleVisibility"
-                @move-up="languagesConfigManager.moveUp"
-                @move-down="languagesConfigManager.moveDown"
-                @select-configuration="languagesLogic.handleSelect"
-              />
-            </GenesisTutorialItem>
-            
-            <div class="flex gap-2 justify-end">
-              <GenesisButtonIcon title="Exporter la configuration de langues sélectionnée" :disabled="!languagesConfigManager.selectedConfigId.value" @click="languagesLogic.handleExport">
-                <IconUpload />
-              </GenesisButtonIcon>
-              <GenesisButtonIcon title="Exporter toutes les configurations de langues" @click="languagesLogic.handleExportAll">
-                <IconSave />
-              </GenesisButtonIcon>
+           <GenesisTutorialItem id="lang-config-panel">
+            <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+              <!-- ✅ ÉTAPE 2 : Genesis Configuration Panel -->
+              
+                <GenesisConfigurationPanel
+                  :configurations="languagesConfigManager.configurations.value"
+                  :selected-config-id="languagesConfigManager.selectedConfigId.value"
+                  :filtered-configs="languagesConfigManager.filteredConfigs.value"
+                  :search-query="languagesConfigManager.searchQuery.value"
+                  :can-move-up="languagesConfigManager.canMoveUp.value"
+                  :can-move-down="languagesConfigManager.canMoveDown.value"
+                  @update:search-query="(val) => languagesConfigManager.searchQuery.value = val"
+                  @add="languagesLogic.handleAdd"
+                  @delete="languagesLogic.handleDelete"
+                  @rename="languagesLogic.handleRename"
+                  @toggle-visibility="languagesConfigManager.toggleVisibility"
+                  @move-up="languagesConfigManager.moveUp"
+                  @move-down="languagesConfigManager.moveDown"
+                  @select-configuration="languagesLogic.handleSelect"
+                />
+              <div class="flex gap-2 justify-end">
+                <GenesisButtonIcon title="Exporter la configuration de langues sélectionnée" :disabled="!languagesConfigManager.selectedConfigId.value" @click="languagesLogic.handleExport">
+                  <IconUpload />
+                </GenesisButtonIcon>
+                <GenesisButtonIcon title="Exporter toutes les configurations de langues" @click="languagesLogic.handleExportAll">
+                  <IconSave />
+                </GenesisButtonIcon>
+              </div>
             </div>
-          </div>
+          </GenesisTutorialItem>
         </div>
       </div>
 
@@ -419,20 +419,21 @@ function getLanguageName(code: string): string {
 }
 
 async function loadLanguagesConfigurations() {
-  const languagesData = await loadFrontendLanguagesConfigurations(); 
-  
+  const languagesData = await loadFrontendLanguagesConfigurations();
+
   languagesConfigManager.configurations.value = languagesData.map(c => {
     const p = c.payload as any;
-    return { 
-      id: c.id, 
-      name: c.name, 
-      isHidden: false, 
-      components: p.languages || [] 
-    };
+    return { id: c.id, name: c.name, isHidden: false, components: p.languages || [] };
   });
-  
-  languagesConfigManager.selectConfiguration(null);
-  languagesLogic.handleSelect(null);
+
+  // Ne rien réappliquer : on garde les langues du store et on resélectionne
+  // la configuration correspondante (comparaison indépendante de l'ordre)
+  const signature = (codes: string[]) => [...codes].sort().join('|');
+  const current = layoutConfig.value.selectedInterfaceLanguages;
+  const match = current.length > 0
+    ? languagesConfigManager.configurations.value.find(c => signature(c.components) === signature(current))
+    : undefined;
+  languagesConfigManager.selectConfiguration(match?.id ?? null);
 }
 
 onMounted(async () => {

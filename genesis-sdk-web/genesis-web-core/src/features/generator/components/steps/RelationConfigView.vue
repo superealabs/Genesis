@@ -2,26 +2,25 @@
   <!-- ✅ Passage en flex-col pour placer l'en-tête au-dessus du contenu -->
   <main class="flex flex-col h-full overflow-hidden">
     
-    <!-- ✅ AJOUT : En-tête avec le déclencheur du tutoriel -->
-    <div class="flex items-center justify-between pb-3 mb-4 px-6 pt-6 flex-shrink-0">
-      <h3 class="text-xl font-semibold text-text">
-        Configuration des Relations
-      </h3>
-      <GenesisButtonIcon 
-        variant="neutral" 
-        size="sm" 
-        @click="tutorial.restart('main')"
-        title="Lancer le tutoriel"
-      >
-        <IconHelp />
-      </GenesisButtonIcon>
-    </div>
-
     <!-- Conteneur des colonnes (Contenu + Carrousel) -->
-    <div class="flex gap-4 flex-1 min-h-0 overflow-hidden px-6 pb-6">
+    <div class="flex gap-8 flex-1 min-h-0 overflow-hidden px-6 pb-6">
       
       <!-- PARTIE GAUCHE : CONTENU PRINCIPAL (Scrollable) -->
-      <div class="flex-1 min-h-0 overflow-y-auto space-y-6 custom-scrollbar pr-2">
+      <div class="flex-1 min-h-0 overflow-y-auto space-y-6 custom-scrollbar pr-3">
+
+        <div class="flex items-center justify-between pb-3 mb-4 flex-shrink-0">
+          <h3 class="text-xl font-semibold text-text">
+            Configuration des Relations
+          </h3>
+          <GenesisButtonIcon 
+            variant="neutral" 
+            size="sm" 
+            @click="tutorial.restart('main')"
+            title="Lancer le tutoriel"
+          >
+            <IconHelp />
+          </GenesisButtonIcon>
+        </div>
         
         <!-- 1. ZONE D'AJOUT DE RELATION -->
         <div class="flex flex-col gap-3">

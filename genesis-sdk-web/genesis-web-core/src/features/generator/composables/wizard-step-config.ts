@@ -186,6 +186,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
           fsvc.fetchLanguageVersions(framework.languageId).then(data => store.setAvailableLanguageVersions(data)),
           fsvc.fetchFrameworkVersions(framework.id).then(data => store.setAvailableFrameworkVersions(data)),
           fsvc.fetchBuildTools(framework.id).then(data => store.setAvailableBuildTools(data)),
+          fsvc.fetchHibernateDdlAutoOptions(framework.id).then(data => store.setAvailableHibernateDdlAutoOptions(data))
         ]);
         console.log("[Wizard: project_config] Options de configuration chargées");
       } catch (error) {

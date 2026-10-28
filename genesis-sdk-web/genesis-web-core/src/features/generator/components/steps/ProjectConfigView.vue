@@ -299,6 +299,7 @@
 </template>
 
 <script setup lang="ts">
+import { Ref } from 'vue';
 import { computed, watch, ref, onMounted, nextTick } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useConfigurationManager } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
@@ -497,7 +498,30 @@ const techStackLogic = useConfigManagerLogic({
 // ============================================================================
 // 5. LIFECYCLE & WATCHERS GLOBAUX
 // ============================================================================
-async function syncConfigsToCurrentFramework() {
+
+/**
+ * Reset  → on repart des valeurs par défaut (nouveau framework)
+ * Sinon  → on garde les valeurs du store et on resélectionne la config qui y correspond
+ */
+function syncSelection(
+  manager: ReturnType<typeof useConfigurationManager>,
+  logic: { handleSelect: (id: any) => void },
+  currentValues: () => unknown[],
+  resetValues: boolean
+) {
+  if (resetValues) {
+    manager.selectConfiguration(null);
+    logic.handleSelect(null);
+    return;
+  }
+  const current = currentValues();
+  const match = manager.configurations.value.find(c =>
+    c.components.length === current.length && c.components.every((v, i) => v === current[i])
+  );
+  manager.selectConfiguration(match?.id ?? null); // sélection visuelle seulement, n'écrase rien
+}
+
+async function syncConfigsToCurrentFramework(resetValues: boolean) {
   if (!framework.value) return;
   const { id: fwId, name: fwName } = framework.value;
 
@@ -506,23 +530,31 @@ async function syncConfigsToCurrentFramework() {
     const p = c.payload as any;
     return { id: c.id, name: c.name, isHidden: false, components: [p.loggingLevel, p.securityType, p.cacheProvider, p.hibernateDdlAuto] };
   });
-  configManager.selectConfiguration(null);
-  advancedLogic.handleSelect(null);
+  syncSelection(configManager, advancedLogic,
+    () => [config.value.loggingLevel, config.value.securityType, config.value.cacheProvider, config.value.hibernateDdlAuto],
+    resetValues);
 
   const techStackData = await loadTechnicalStackConfigurations(fwId, fwName);
   techStackConfigManager.configurations.value = techStackData.map(c => {
     const p = c.payload as any;
     return { id: c.id, name: c.name, isHidden: false, components: [p.languageVersion, p.buildTool, p.groupId, p.frameworkVersion] };
   });
-  techStackConfigManager.selectConfiguration(null);
-  techStackLogic.handleSelect(null);
+  syncSelection(techStackConfigManager, techStackLogic,
+    () => [config.value.languageVersion, config.value.buildTool, config.value.groupId, config.value.frameworkVersion],
+    resetValues);
 }
 
-onMounted(async () => { await syncConfigsToCurrentFramework(); });
+// Au montage : reset uniquement si le framework choisi n'est pas encore celui validé
+onMounted(async () => {
+  const frameworkChanged = !!pendingFramework.value
+    && pendingFramework.value.id !== stepperData.value.framework?.id;
+  await syncConfigsToCurrentFramework(frameworkChanged);
+});
 
+// En cours d'édition : changement de framework → reset + rechargement des options
 watch(() => framework.value?.id, async (newId, oldId) => {
   if (newId && newId !== oldId && framework.value) {
-    await syncConfigsToCurrentFramework();
+    await syncConfigsToCurrentFramework(true);
     await Promise.all([
       fetchBuildTools(newId), fetchLanguageVersions(framework.value.languageId),
       fetchFrameworkVersions(newId), fetchLoggingLevels(newId),

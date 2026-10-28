@@ -1,21 +1,19 @@
 - le système de set des étapes(revenir à une étape précise du formulaire) (ok)
     - gestion des exceptions(framework & backend) (ok)
-
-- créer un component :
-    GenesisTutorial
-
-        s'attache à l'élément si possible, sinon on fait en fixed
-        utilise GenesisPopup 
-        et un text, 
-        et un slot avec un bouton ok dedans.
-
-        Chaque vue possède un liste de cette dernière à parcourir dans l'ordre
-
-- ajustement ui summary
-
-- Correction des commandes pour effectuer des trucs
+    - gestion de la modification de MVC
+- gestion des exceptions à la fin du summary
 
 
-- Bug Général avec GenesisItemTutorial
-    - il y a un problème quand on a deux composant exacts qui se répètent dans une vue
-    - un conflit avec GenesisDisclosure
+- optimiser le summary
+
+- afficher le language en hover
+- amélioration de la vue détails
+- correction logo de genesisList
+
+
+- bug avec la fonctionnalité de hide dans generationOption
+    - quand on clique sur le bouton une configuration, les tables et vue associés avec retourne dans le tableau de table non assignée
+
+- Correction des commandes possibles avec Genesis
+- correction de buttonIcon(ok)
+- vérification de l'envoie des données

@@ -58,30 +58,18 @@
             <GenesisSegmentedControl v-model="activeFilterLeft" :options="filterOptions" size="md" />
           </div>
 
-          <GenesisContainer
-            :is-loading="isLoading"
-            loading-text="Chargement des métadonnées..."
-            :is-empty="unassignedItems.length === 0"
-            empty-text="Aucune table disponible."
-            :min-height="200"
-            :max-height="500"
-            :height="400" 
-          >
-            <div 
-              v-for="item in unassignedItems" 
-              :key="item.tableName"
-              class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
-              @click="toggleItem(item)"
-            >
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
-                <div class="flex flex-col min-w-0">
-                  <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
-                  <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
-                </div>
-              </div>
-            </div>
-          </GenesisContainer>
+          <GenesisEntityTable
+              is-editable
+              :items="unassignedItems"
+              :selected-items="store.selectedItemsInList"
+              :is-loading="isLoading"
+              loading-text="Chargement des métadonnées..."
+              empty-text="Aucune table disponible."
+              :min-height="200"
+              :max-height="500"
+              :height="400"
+              @toggle="toggleItem"
+          />
         </div>
       </GenesisTutorialItem>
 
@@ -109,7 +97,7 @@
                 @add="handleAddConfig" 
                 @delete="handleDeleteConfig" 
                 @rename="handleRename"
-                @toggle-visibility="configManager.toggleVisibility"
+                @toggle-visibility="handleToggleVisibility"
                 @move-up="configManager.moveUp"
                 @move-down="configManager.moveDown"
                 @select-configuration="configManager.selectConfiguration"
@@ -186,33 +174,17 @@
             <GenesisSegmentedControl v-model="activeFilterRight" :options="filterOptions" size="md" />
           </div>
 
-          <GenesisContainer
-            :is-loading="false"
-            :is-empty="assignedItems.length === 0"
-            empty-text="Aucune table assignée."
-            :min-height="200"
-            :max-height="500"
-            :height="400" 
-          >
-            <div 
-              v-for="item in assignedItems" 
-              :key="item.tableName"
-              class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary hover:text-secondary transition-colors cursor-pointer"
-              @click="toggleItem(item)"
-            >
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <GenesisCheckboxSimple :model-value="isItemSelected(item)" />
-                <div class="flex flex-col min-w-0">
-                  <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
-                  <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
-                </div>
-              </div>
-              
-              <div class="flex-shrink-0 text-xs text-primary ml-4 text-right min-w-[120px] truncate font-medium" :title="getAssignedConfig(item)">
-                {{ getAssignedConfig(item) }}
-              </div>
-            </div>
-          </GenesisContainer>
+          <GenesisEntityTable
+              is-editable
+              :items="assignedItems"
+              :selected-items="store.selectedItemsInList"
+              :right-text="getAssignedConfig"
+              empty-text="Aucune table assignée."
+              :min-height="200"
+              :max-height="500"
+              :height="400"
+              @toggle="toggleItem"
+          />
         </div>
       </GenesisTutorialItem>
 
@@ -240,10 +212,10 @@ import GenesisConfigurationSelector from '@genesis-labs/web-core/core/components
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 import { useGeneratorStore } from '../../manifest';
-import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue'; // ✅ AJOUT
+import GenesisEntityTable from '@genesis-labs/web-core/core/components/layouts/display/table/GenesisEntityTable.vue';
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
@@ -333,12 +305,12 @@ const applyFilters = (items: typeof combinedItems.value, searchQuery: string, fi
 };
 
 const unassignedItems = computed(() => {
-  const items = combinedItems.value.filter(item => getAssignedConfig(item) === 'Non assigné');
+  const items = combinedItems.value.filter(item => getAssignmentState(item).status === 'unassigned');
   return applyFilters(items, searchQueryUnassigned.value, activeFilterLeft.value);
 });
 
 const assignedItems = computed(() => {
-  const items = combinedItems.value.filter(item => getAssignedConfig(item) !== 'Non assigné');
+  const items = combinedItems.value.filter(item => getAssignmentState(item).status === 'assigned');
   return applyFilters(items, searchQueryAssigned.value, activeFilterRight.value);
 });
 
@@ -409,6 +381,16 @@ function handleRemove(configId: string | number, items: string[]) {
   persistConfig(configId);
 }
 
+function handleToggleVisibility(id: string | number) {
+  configManager.toggleVisibility(id);
+  const cfg = configManager.configurations.value.find(c => c.id === id);
+  if (cfg?.isHidden) {
+    const assoc = store.generationAssociations.find(a => a.configId === id);
+    const hiddenNames = new Set([...(assoc?.associatedTables ?? []), ...(assoc?.associatedViews ?? [])]);
+    store.selectedItemsInList = store.selectedItemsInList.filter(n => !hiddenNames.has(n));
+  }
+}
+
 async function handleDeleteConfig(id: string | number) {
   configManager.deleteConfiguration(id);
   await deleteConfiguration(String(id));
@@ -456,11 +438,8 @@ function isComponentDisabled(comp: ComponentType): boolean {
   return false;
 }
 
-const isItemSelected = (item: TableMetadataDto): boolean => {
-  return store.selectedItemsInList.includes(item.tableName);
-};
 
-const toggleItem = (item: TableMetadataDto): void => {
+const toggleItem = (item: any): void => {
   store.toggleItemInList(item.tableName);
 };
 
@@ -490,18 +469,28 @@ const toggleAllAssigned = (): void => {
   });
 };
 
-function getAssignedConfig(item: TableMetadataDto): string {
-  const assocs = store.generationAssociations.filter((a: GenerationAssociatedToConfig) => 
+type AssignmentState =
+  | { status: 'unassigned' }
+  | { status: 'assigned'; name: string }
+  | { status: 'hidden' };
+
+function getAssignmentState(item: { tableName: string; isView: boolean }): AssignmentState {
+  const assoc = store.generationAssociations.find((a: GenerationAssociatedToConfig) =>
     item.isView ? a.associatedViews.includes(item.tableName) : a.associatedTables.includes(item.tableName)
   );
-  
-  for (const assoc of assocs) {
-    const config = configManager.configurations.value.find(c => c.id === assoc.configId);
-    if (config && !config.isHidden) {
-      return config.name;
-    }
-  }
-  return 'Non assigné';
+  if (!assoc) return { status: 'unassigned' };
+
+  const config = configManager.configurations.value.find(c => c.id === assoc.configId);
+  if (!config) return { status: 'unassigned' };   // configuration supprimée
+  if (config.isHidden) return { status: 'hidden' };
+
+  return { status: 'assigned', name: config.name };
+}
+
+// Texte affiché à droite des lignes assignées
+function getAssignedConfig(item: { tableName: string; isView: boolean }): string {
+  const state = getAssignmentState(item);
+  return state.status === 'assigned' ? state.name : '';
 }
 
 // ============================================================================

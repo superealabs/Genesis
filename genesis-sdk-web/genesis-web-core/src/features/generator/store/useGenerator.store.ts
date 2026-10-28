@@ -64,6 +64,7 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   // Domaine : Étape 7 - Relations
   const relations = ref<RelationParameter[]>([]);
+  const relationsLoaded = ref(false);
 
 
   // ==========================================================================
@@ -109,6 +110,8 @@ export const useGeneratorStore = defineStore('generator', () => {
     pendingDatabaseEngine.value = null;
     pendingFrontendFramework.value = null;
     generationAssociations.value = [];
+    relations.value = [];
+    relationsLoaded.value = false;
   }
 
   // --- Étape 1 : Framework ---
@@ -258,7 +261,10 @@ export const useGeneratorStore = defineStore('generator', () => {
   }
 
   // --- Étape 7 : Relations ---
-  function setRelations(data: RelationParameter[]) { relations.value = data; }
+  function setRelations(data: RelationParameter[]) {
+    relations.value = data;
+    relationsLoaded.value = true;
+  }
   
   /**
    * Ajoute une relation après avoir vérifié qu'elle n'existe pas déjà.
@@ -268,8 +274,15 @@ export const useGeneratorStore = defineStore('generator', () => {
     const exists = relations.value.some(
       r => r.parentTable === relation.parentTable && r.childTable === relation.childTable
     );
-    if (exists) return false;
     
+    if (exists) {
+      // Définit l'erreur globale qui sera affichée par le ErrorPopup du parent
+      setWizardError(`La relation entre la table "${relation.parentTable}" et la table "${relation.childTable}" existe déjà.`);
+      return false;
+    }
+    
+    // Nettoie toute erreur précédente en cas de succès
+    clearWizardError();
     relations.value.push(relation);
     return true;
   }
@@ -280,14 +293,17 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   // --- Étape 8 & 9 : Frontend ---
   function setPendingFrontendFramework(frontendFramework: FrontendFramework | null) {
+    // Port par défaut appliqué uniquement quand le framework sélectionné change réellement
+    const changed = pendingFrontendFramework.value?.id !== frontendFramework?.id;
     pendingFrontendFramework.value = frontendFramework;
+    if (frontendFramework && changed) {
+      stepperData.value.frontendLayout.port = frontendFramework.defaultPort;
+    }
   }
 
   function setSelectedFrontendFramework(framework: FrontendFramework | null) {
+    // Simple commit : ne touche plus au port saisi par l'utilisateur
     stepperData.value.frontend = framework;
-    if (framework) {
-      stepperData.value.frontendLayout.port = framework.defaultPort;
-    }
   }
   
   function updateFrontendLayout<K extends keyof FrontendLayoutConfig>(key: K, value: FrontendLayoutConfig[K]) { 
@@ -391,7 +407,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     generationAssociations,
 
     // Étape 7 : Relations
-    relations, getRelations, setRelations, addRelation, removeRelation,
+    relations, relationsLoaded, getRelations, setRelations, addRelation, removeRelation,
 
     // Étape 8 & 9 : Frontend
     pendingFrontendFramework, setPendingFrontendFramework, setSelectedFrontendFramework, 

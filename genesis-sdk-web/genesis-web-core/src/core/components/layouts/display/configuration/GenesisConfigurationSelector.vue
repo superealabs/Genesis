@@ -31,6 +31,7 @@
                 :size="viewMode === 'two-view' ? 'lg' : 'sm'"
                 :disabled="!selectedConfigId || selectedItems.length === 0"
                 @click="handleAssign"
+                :justify-between="true"
                 title="Assigner les éléments sélectionnés à cette configuration"
             >
                 <template v-if="viewMode === 'two-view'" #rightIcon>
@@ -44,6 +45,7 @@
                 :disabled="!selectedConfigId || selectedItems.length === 0"
                 @click="handleRemove"
                 title="Retirer les éléments sélectionnés de cette configuration"
+                :justify-between="true"
             >
                 <template v-if="viewMode === 'two-view'" #leftIcon>
                     <IconChevronLeft />
