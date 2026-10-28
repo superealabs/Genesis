@@ -97,9 +97,19 @@
 
       <!-- 2. CONFIGURATION DU FRAMEWORK (STACK TECHNIQUE) -->
       <div class="space-y-6">
-        <h3 class="text-xl font-semibold text-text border-b border-neutral-light-genesis pb-2">
-          Stack Technique ({{ framework?.name || 'Non sélectionné' }})
-        </h3>
+        <div class="flex items-center justify-between border-b border-neutral-light-genesis pb-2">
+          <h3 class="text-xl font-semibold text-text">
+            Stack Technique ({{ framework?.name || 'Non sélectionné' }})
+          </h3>
+          <GenesisButtonIcon 
+            variant="neutral" 
+            size="sm" 
+            @click="tutorial.restart('tech-stack')"
+            title="Aide sur la configuration de la stack technique"
+          >
+            <IconHelp />
+          </GenesisButtonIcon>
+        </div>
         
         <div class="flex flex-col lg:flex-row gap-6">
           <div class="flex-1 flex flex-col gap-4">
@@ -181,7 +191,7 @@
         <GenesisDisclosure title="Configuration Avancée du Backend" :variant="'secondary'" :padding="'lg'" :default-open="false">
 
           <template #title>
-            <span class="text-xl font-semibold">Configuration Avancée du Backend</span>
+              <span class="text-xl font-semibold">Configuration Avancée du Backend</span>
           </template>
 
           <div class="flex flex-col lg:flex-row gap-6">
@@ -236,10 +246,21 @@
             </div>
 
             <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+              <div class="flex items-center justify-end gap-1.5">
+                <span class="text-sm text-text-muted">How to use</span>
+                <GenesisButtonIcon 
+                  variant="neutral" 
+                  size="sm" 
+                  @click="tutorial.restart('advanced')"
+                  title="Aide sur la configuration avancée"
+                >
+                  <IconHelp :size="16" />
+                </GenesisButtonIcon>
+              </div>
+
               <GenesisTutorialItem id="tutorial-advanced-config">
                 <GenesisConfigurationPanel
                   :tutorial-id="'tutorial-advanced-config'"
-                  :include-sub-tutorial="true"
                   :configurations="configManager.configurations.value"
                   :selected-config-id="configManager.selectedConfigId.value"
                   :filtered-configs="configManager.filteredConfigs.value"
@@ -319,10 +340,14 @@ const panelSlides: CarouselSlide[] = [
 // deux choix, soit je l'associe à une variable boolean
 // soit c'est la lecture qui ne le lis pas si il est caché
 
-const tutorial = useGenesisTutorial('project-config', [
-  { id: 'tutorial-tech-stack-config', text: 'Tutoriel 1' },
-  { id: 'tutorial-advanced-config', text: 'Tutoriel 2' }
-]);
+const tutorial = useGenesisTutorial('project-config', {
+  'tech-stack': [
+    { id: 'tutorial-tech-stack-config', text: 'Enregistrez ici vos stacks techniques favorites pour les réutiliser.' }
+  ],
+  'advanced': [
+    { id: 'tutorial-advanced-config', text: 'Même principe pour la configuration avancée du backend.' }
+  ]
+});
 
 console.log("✅ [ProjectConfigView] useGenesisTutorial initialisé. ScreenId: 'project-config'");
 

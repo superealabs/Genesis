@@ -9,6 +9,15 @@
         </div>
 
         <Teleport to="body">
+            <Transition name="tutorial-dim">
+                <div
+                    v-if="step && frame"
+                    class="tutorial-dim fixed inset-0"
+                    :style="dimStyle"
+                    aria-hidden="true"
+                />
+            </Transition>
+
             <Transition 
                 name="tutorial-motion" 
                 mode="out-in"
@@ -74,7 +83,7 @@ const props = defineProps<{
 defineOptions({ inheritAttrs: false });
 
 // ── Constantes d'affichage ──
-const PAD = 4;
+const PAD = 12;
 const GAP = 8;
 const POPUP_WIDTH = 288;
 
@@ -169,6 +178,19 @@ watch(() => !!props.id && !!step.value && !!rect.value, (visible) => {
         }
     }
 });
+
+// Couche de flou : plein écran, avec un « trou » (evenodd) à l'emplacement du cadre
+const dimStyle = computed(() => {
+    const f = frame.value;
+    if (!f) return {};
+    const x1 = f.left, y1 = f.top;
+    const x2 = f.left + f.width, y2 = f.top + f.height;
+    return {
+        clipPath:
+            `polygon(evenodd, 0 0, 100% 0, 100% 100%, 0 100%, 0 0, ` +
+            `${x1}px ${y1}px, ${x2}px ${y1}px, ${x2}px ${y2}px, ${x1}px ${y2}px, ${x1}px ${y1}px)`
+    };
+});
 </script>
 
 
@@ -186,4 +208,15 @@ watch(() => !!props.id && !!step.value && !!rect.value, (visible) => {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: var(--color-neutral);
 }
+
+.tutorial-dim {
+    z-index: 99998;                       /* sous le root (99999), au-dessus du stepper */
+    backdrop-filter: blur(4px);
+    background: rgb(0 0 0 / 0.25);        /* optionnel : assombrit en plus du flou */
+    pointer-events: auto;                 /* bloque les clics hors de la cible */
+}
+.tutorial-dim-enter-active,
+.tutorial-dim-leave-active { transition: opacity 0.3s ease; }
+.tutorial-dim-enter-from,
+.tutorial-dim-leave-to { opacity: 0; }
 </style>

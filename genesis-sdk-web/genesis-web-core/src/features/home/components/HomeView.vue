@@ -2,12 +2,12 @@
     <div class="p-4 flex flex-col gap-3">
         <div class="flex items-center justify-between mb-2">
             <h2 class="text-sm font-semibold uppercase tracking-wider text-muted">Menu Principal</h2>
-            <GenesisButtonIcon 
-                variant="secondary" 
-                size="md" 
-                @click="tutorial.restart"
-                title="Lancer le tutoriel"
-            >
+                <GenesisButtonIcon 
+                    variant="secondary" 
+                    size="md" 
+                    @click="tutorial.restart('main-menu')"
+                    title="Lancer le tutoriel"
+                >
                 <IconHelp /> <!-- Remplace par IconHelpCircle si ton icône s'appelle ainsi -->
             </GenesisButtonIcon>
         </div>
@@ -59,9 +59,11 @@ const emit = defineEmits<{
 }>();
 
 // L'ordre de cette liste est l'ordre d'affichage des étapes
-const tutorial = useGenesisTutorial('home', [
-    { id: 'create-project', text: 'Commencez ici : le générateur vous guide pas à pas pour créer un nouveau projet.' },
-    { id: 'frameworks',     text: 'Parcourez les frameworks disponibles et comparez-les avant de choisir.' },
-    { id: 'database',       text: 'Consultez les moteurs de base de données pris en charge.' },
-]);
+const tutorial = useGenesisTutorial('home', {
+    'main-menu': [
+        { id: 'create-project', text: 'Commencez ici : le générateur vous guide pas à pas pour créer un nouveau projet.' },
+        { id: 'frameworks',     text: 'Parcourez les frameworks disponibles et comparez-les avant de choisir.' },
+        { id: 'database',       text: 'Consultez les moteurs de base de données pris en charge.' }
+    ]
+});
 </script>
