@@ -7,7 +7,12 @@
       <h3 class="text-xl font-semibold text-text">
         Configuration des Relations
       </h3>
-      <GenesisButtonIcon variant="neutral" size="sm">
+      <GenesisButtonIcon 
+        variant="neutral" 
+        size="sm" 
+        @click="tutorial.restart('main')"
+        title="Lancer le tutoriel"
+      >
         <IconHelp />
       </GenesisButtonIcon>
     </div>
@@ -22,26 +27,35 @@
         <div class="flex flex-col gap-3">
           <h3 class="text-sm font-semibold text-text">Ajouter une relation</h3>
           <div class="flex flex-wrap items-end gap-3">
-            <GenesisInput
-              v-model="newRelation.parentTable"
-              type="select"
-              :options="parentTableOptions"
-              label="Table Parent (Mère)"
-              placeholder="Sélectionner une table..."
-              size="lg"
-              fill-width
-              class="flex-1 min-w-[200px]"
-            />
-            <GenesisInput
-              v-model="newRelation.childTable"
-              type="select"
-              :options="childTableOptions"
-              label="Table Child (Fille)"
-              placeholder="Sélectionner une table..."
-              size="lg"
-              fill-width
-              class="flex-1 min-w-[200px]"
-            />
+            
+            <!-- ✅ ÉTAPE 1 : Table Parent -->
+            <GenesisTutorialItem id="relation-parent-input">
+              <GenesisInput
+                v-model="newRelation.parentTable"
+                type="select"
+                :options="parentTableOptions"
+                label="Table Parent (Mère)"
+                placeholder="Sélectionner une table..."
+                size="lg"
+                fill-width
+                class="flex-1 min-w-[200px]"
+              />
+            </GenesisTutorialItem>
+
+            <!-- ✅ ÉTAPE 2 : Table Enfant -->
+            <GenesisTutorialItem id="relation-child-input">
+              <GenesisInput
+                v-model="newRelation.childTable"
+                type="select"
+                :options="childTableOptions"
+                label="Table Child (Fille)"
+                placeholder="Sélectionner une table..."
+                size="lg"
+                fill-width
+                class="flex-1 min-w-[200px]"
+              />
+            </GenesisTutorialItem>
+
             <GenesisButton 
               variant="primary" 
               size="lg"
@@ -56,13 +70,18 @@
 
         <!-- 2. LISTE DES RELATIONS CONFIGURÉES -->
         <div class="flex flex-col gap-2">
-          <RelationTableView 
-            :relations="getRelations" 
-            :is-editable="true"
-            :max-height="size"
-            @remove="handleRemoveRelation"
-            @update-relation="handleUpdateRelation"
-          />
+          <h3 class="text-sm font-semibold text-text">Relations configurées</h3>
+          
+          <!-- ✅ ÉTAPE 3 : Tableau des relations -->
+          <GenesisTutorialItem id="relation-table-view">
+            <RelationTableView 
+              :relations="getRelations" 
+              :is-editable="true"
+              :max-height="size"
+              @remove="handleRemoveRelation"
+              @update-relation="handleUpdateRelation"
+            />
+          </GenesisTutorialItem>
         </div>
 
       </div>
@@ -82,22 +101,25 @@ import type { RelationParameter } from '@genesis-labs/shared-types';
 
 // Composables
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial'; // ✅ AJOUT
 
 // UI Components
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue'; // ✅ AJOUT
 import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
+import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue'; // ✅ AJOUT
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
-import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 
 // ✅ NOUVEAU COMPOSANT
 import RelationTableView from '../relation/RelationTableView.vue';
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue'; // ✅ AJOUT
 
 const size = window.innerHeight * 0.4;
 
 // ============================================================================
-// 1. COMPOSABLES
+// 1. COMPOSABLES & TUTORIEL
 // ============================================================================
 const { 
   getTablesParents, 
@@ -109,6 +131,24 @@ const {
   fetchTablesMetadataChilds, 
   fetchRelations 
 } = useGenerator();
+
+// ✅ DÉCLARATION DU TUTORIEL POUR CETTE VUE
+const tutorial = useGenesisTutorial('relation-config', {
+  'main': [
+    { 
+      id: 'relation-parent-input', 
+      text: 'Sélectionnez la table parente (mère) qui contiendra la clé primaire de la relation.' 
+    },
+    { 
+      id: 'relation-child-input', 
+      text: 'Sélectionnez la table enfant (fille) qui contiendra la clé étrangère.' 
+    },
+    { 
+      id: 'relation-table-view', 
+      text: 'Visualisez, modifiez ou supprimez les relations que vous avez configurées dans ce tableau.' 
+    }
+  ]
+});
 
 // ============================================================================
 // 2. ÉTAT LOCAL & CONSTANTES
@@ -165,7 +205,6 @@ function handleAddRelation() {
   }
 }
 
-// ✅ Gère la suppression depuis le tableau
 function handleRemoveRelation(relationToRemove: RelationParameter) {
   const index = getRelations.value.findIndex(r => 
     r.parentTable === relationToRemove.parentTable && 
@@ -176,11 +215,7 @@ function handleRemoveRelation(relationToRemove: RelationParameter) {
   }
 }
 
-// ✅ Gère la mise à jour des switches depuis le tableau
 function handleUpdateRelation(relation: RelationParameter, field: 'hasForm' | 'mandatory', value: boolean) {
-  // Note: Si ton store Pinia est en mode strict, tu devras peut-être appeler une action 
-  // 'updateRelation' dédiée. Sinon, la mutation réactive directe fonctionne.
-  // Exemple avec une action hypothétique : updateRelation(index, field, value);
   console.log(`Mise à jour de ${field} pour ${relation.parentTable} -> ${relation.childTable} : ${value}`);
 }
 
