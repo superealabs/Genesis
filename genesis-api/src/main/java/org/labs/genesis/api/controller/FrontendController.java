@@ -23,8 +23,14 @@ public class FrontendController {
         this.frontendAssetService = frontendAssetService;
     }
 
-    @GetMapping("/api/frontend/frameworks/{idFramework}")
-    public List<FrontendDtos.FrontendFrameworkOption> frameworks(@PathVariable int idFramework) {
+    @GetMapping({
+            "/api/frontend/frameworks",
+            "/api/frontend/frameworks/{idFramework}"
+    })
+    public List<FrontendDtos.FrontendFrameworkOption> frameworks(@PathVariable(required = false) Integer idFramework) {
+        if (idFramework == null) {
+            return frontendConfigService.frameworks();
+        }
         return frontendConfigService.frameworks(idFramework);
     }
 

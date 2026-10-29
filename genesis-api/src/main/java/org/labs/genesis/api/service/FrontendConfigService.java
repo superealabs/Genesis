@@ -1,11 +1,7 @@
 package org.labs.genesis.api.service;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 import org.labs.genesis.api.context.GenerationContextStore;
 import org.labs.genesis.api.dto.FrontendDtos.*;
@@ -65,6 +61,51 @@ public class FrontendConfigService {
                 .map(frontend -> new FrontendFrameworkOption(frontend.getId(), frontend.getName(), frontend.getCoreFramework(), frontend.getLanguageId(), frontend.getDefaultPort(), "spa", frontend.getComponentExtension()
                 ))
                 .toList();
+    }
+
+
+    public List<FrontendFrameworkOption> frameworks() {
+        Map<Integer, FrontendFrameworkOption> all = new LinkedHashMap<>();
+
+        // Frontends autonomes : Angular, Vue, React...
+        for (FrontendFramework frontend : ProjectGenerator.frontendFrameworks.values()) {
+            FrontendFrameworkOption option = new FrontendFrameworkOption(
+                    frontend.getId(),
+                    frontend.getName(),
+                    frontend.getCoreFramework(),
+                    frontend.getLanguageId(),
+                    frontend.getDefaultPort(),
+                    "spa",
+                    frontend.getComponentExtension()
+            );
+
+            all.put(frontend.getId(), option);
+        }
+
+        // Frontends intégrés aux frameworks MVC
+        for (Framework backend : ProjectGenerator.frameworks.values()) {
+
+            if (!(backend instanceof FrameworkMVC mvc)) {
+                continue;
+            }
+
+            if (mvc.getView() == null || mvc.getView().getViewTemplateEngine() == null || mvc.getView().getViewTemplateEngine().isBlank()) {
+                continue;
+            }
+
+            FrontendFrameworkOption option = new FrontendFrameworkOption(
+                    mvc.getId(),
+                    mvc.getView().getViewTemplateEngine(),
+                    mvc.getCoreFramework(),
+                    null,
+                    null,
+                    "mvc",
+                    mvc.getView().getViewExtension()
+            );
+            
+            all.put(-mvc.getId(), option);
+        }
+        return List.copyOf(all.values());
     }
 
     public FrontendConfigResponse configure(FrontendConfigRequest request) {
