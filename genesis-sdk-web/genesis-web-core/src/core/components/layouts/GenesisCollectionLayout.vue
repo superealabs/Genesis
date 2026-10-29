@@ -4,35 +4,36 @@
                 v-if="showCarousel"
                 :slides="carouselSlides"
                 slide-height="300px"
+                slot-height="var(--collection-slot-h)"
                 :auto-play="true"
-                class="rounded-t-lg flex-shrink-0"
+                class="collection-carousel rounded-t-lg flex-shrink-0"
             >
                 <template #bottom="{ isStuck}">
                     <div 
-                        class="flex gap-4 rounded-b-lg" 
+                        class="flex gap-4 rounded-b-lg max-md:flex-col max-md:gap-2 max-md:bg-bg-dark" 
                         id="background-header"
                         :class="isStuck ? 'bg-bg-dark border-b-2 border-bg-neutral-genesis shadow-sm shadow-hover-ghost/10' : 'bg-transparent'"
                         >
-                        <div class="flex items-center gap-4 px-8 pb-4 pt-2">
+                        <div class="flex items-center gap-4 px-8 pb-4 pt-2 max-md:px-6 max-md:pb-0 max-md:justify-center">
                             <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
                             <h2 
-                                class="font-semibold font-heading text-4xl truncate transition-colors duration-300"
+                                class="font-semibold font-heading text-4xl truncate transition-colors duration-300 max-md:text-text"
                                 :class="isStuck ? 'text-text' : 'text-white'"
                             >
                                 <slot name="title">{{ title }}</slot>
                             </h2>
                         </div>
 
-                        <div 
-                            class="relative flex items-stretch w-full"                        
+                        <div
+                            class="relative flex items-stretch w-full max-md:flex-col max-md:gap-3 max-md:pb-4"
                         >
 
                             <div 
-                                class="bar-shape absolute inset-0 pointer-events-none" aria-hidden="true"
+                                class="bar-shape absolute inset-0 pointer-events-none max-md:hidden" aria-hidden="true"
                                 :class="isStuck ? 'bg-bg-dark' : 'bg-bg-dark'"
                                 />
 
-                            <div class="relative flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6">
+                            <div class="relative flex items-center gap-2 flex-1 min-w-0 pl-24 pr-6 max-md:px-6">
                                 <GenesisInput
                                     :modelValue="searchValue"
                                     @update:modelValue="$emit('update:searchValue', $event as string)"
@@ -49,7 +50,7 @@
                                 </GenesisInput>
                             </div>
 
-                            <div class="relative flex gap-2 items-center shrink-0 pr-6">
+                            <div class="relative flex gap-2 items-center shrink-0 pr-6 max-md:flex-wrap max-md:px-6">
                                 <!-- ═══ BOUTON FILTRE (Émet un événement) ═══ -->
                                 <GenesisButtonIcon
                                     v-if="showFilter"
@@ -132,7 +133,7 @@
         <!-- <Teleport to="body"> -->
         <div
             v-if="comparing"
-            class="absolute inset-0 z-[200] bg-black/80 flex flex-col p-2"
+            class="absolute inset-0 z-[200] bg-bg-dark/80 flex flex-col p-2"
             @click.self="$emit('close-compare')"
         >
             <!-- 
@@ -244,6 +245,12 @@ const internalMode = computed({
 });
 </script>
 <style scoped>
+/* Hauteur de la zone « slot » du carrousel : fixe en desktop, automatique en mobile (lecture verticale) */
+.collection-carousel { --collection-slot-h: 80px; }
+@media (max-width: 767.98px) {
+    .collection-carousel { --collection-slot-h: auto; }
+}
+
 .bar-shape {
     /* Largeur du capuchon (la partie incurvée à gauche) */
     --cap: 96px;

@@ -25,10 +25,12 @@
         @info="$emit('info')"
         @close="$emit('close')"
     >
-        <slot name="logo">
-            <!-- ✅ PASSAGE DE LA PROP SIZE -->
-            <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" :size="size" />
-        </slot>
+        <template #logo>
+            <slot name="logo">
+                <!-- ✅ PASSAGE DE LA PROP SIZE -->
+                <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" :size="'sm'" />
+            </slot>
+        </template>
         <template #header><slot name="header" /></template>
         <template #complementary><slot name="complementary" /></template>
     </GenesisLine>
@@ -73,6 +75,8 @@
         :mascot-src="mascotSrc"
         :mascot-size="mascotSize"
         :selected="selected"
+        :feature="feature"
+        :has-hover-slot="hasHoverSlot"
         @click="$emit('click', $event)"
         @info="$emit('info')"
         @close="$emit('close')"
@@ -83,6 +87,8 @@
                 <GenesisLogo v-if="logoSrc" :src="logoSrc" :alt="label" :size="size" />
             </slot>
         </template>
+
+        <template #hover><slot name="hover" /></template>
         <template #header><slot name="header" /></template>
         <template #complementary><slot name="complementary" /></template>
     </GenesisCard>
@@ -110,6 +116,8 @@ const props = withDefaults(defineProps<{
     logoSrc?: string | null;
     /** ✅ NOUVEAU : Taille sémantique du composant (impacte le logo et les espacements) */
     size?: 'sm' | 'md' | 'lg';
+        /** Texte affiché au survol (haut gauche) quand le slot #hover n'est pas utilisé */
+    feature?: string;
 }>(), {
     selected: false,
     badge: null,
@@ -134,6 +142,7 @@ const deletable = computed(() => context?.deletable.value ?? false);
 const slots = useSlots();
 const hasComplementary = computed(() => !!slots.complementary);
 const hasHeaderSlot = computed(() => !!slots.header);
+const hasHoverSlot = computed(() => !!slots.hover);
 
 const mascotSrc = genieUrl;
 

@@ -77,7 +77,7 @@ body.theme-genesis.genesis-dark {
     --color-primary-shadow: hsl(138, 100%, 30%);
     --color-primary-text: hsl(180, 100%, 8%);
 
-    --color-bg-secondary: hsl(197, 100%, 16%);
+    --color-bg-secondary: hsl(197, 100%, 12%);
     --color-secondary:   hsl(200, 100%, 58%);
 
     --color-neutral-light-genesis: hsl(200, 10, 80);

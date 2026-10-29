@@ -28,6 +28,7 @@
           :badge="frameworkSlots?.get(framework.id) ?? null"
           @click="$emit('select', framework, $event)"
           @info="$emit('info', framework)"
+          feature="test"
           :size="'sm'"
         >
           <template #default>
@@ -61,6 +62,7 @@
           :show-info-button="true"
           @click="$emit('select', framework, $event)"
           @info="$emit('info', framework)"
+          :feature="groupLabels ? groupLabels[framework.id] : 'unknow'"
         >
           <template #default>
             <td class="p-3 text-center">{{ framework.name }}</td>

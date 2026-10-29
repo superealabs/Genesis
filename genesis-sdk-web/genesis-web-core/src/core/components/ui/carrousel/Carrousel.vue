@@ -2,7 +2,7 @@
     <div
         ref="rootRef"
         class="sticky z-30 w-full flex-shrink-0 bg-bg rounded-t-lg rounded-bl-lg"
-        :style="{ height: totalHeight, top: `calc(-1 * ${slideHeight})` }"
+        :style="{ height: totalHeight, paddingTop: slideHeight, top: `calc(-1 * ${slideHeight})` }"
     >
         <!-- Sentinelle : détecte le moment où le carrousel se colle -->
         <div
@@ -41,9 +41,10 @@
             />
         </div>
 
-        <!-- ═══ PARTIE SLOT — ancrée en bas, sur le même background ═══ -->
+        <!-- ═══ PARTIE SLOT — sous la zone slide (padding-top du root), même background ═══
+             Dans le flux (et non plus absolute) : `slotHeight` peut valoir `auto` (ex. mobile). -->
         <div
-            class="absolute bottom-0 left-0 right-0 z-10 flex flex-col [&>*]:flex-1 [&>*]:min-h-0"
+            class="relative z-10 flex flex-col [&>*]:flex-1 [&>*]:min-h-0"
             :style="{ height: slotHeight }"
         >
             <slot name="bottom" :is-stuck="isStuck" />

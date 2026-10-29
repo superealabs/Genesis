@@ -5,6 +5,7 @@
 
 
 - optimiser le summary
+    Generation Ok
 
 - afficher le language en hover
 - amélioration de la vue détails

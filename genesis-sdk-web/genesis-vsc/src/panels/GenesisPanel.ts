@@ -9,6 +9,7 @@ export class GenesisPanel {
     
 
     private static readonly WEBVIEW_DIST_PATH = ['packages', 'webview', 'dist'];
+    private static readonly ICON_PATH = ['resources', 'genesis-icon.png'];
 
     private panel: vscode.WebviewPanel;
     private shutdownTimer: NodeJS.Timeout | null = null;
@@ -57,6 +58,10 @@ export class GenesisPanel {
                 retainContextWhenHidden: true
             }
         );
+
+        // Icône du panel
+        panel.iconPath = vscode.Uri.joinPath(context.extensionUri, ...GenesisPanel.ICON_PATH);
+
 
         GenesisPanel.instance = new GenesisPanel(panel, context, genesisApi);
     }

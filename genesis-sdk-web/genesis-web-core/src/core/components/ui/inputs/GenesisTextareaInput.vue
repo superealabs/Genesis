@@ -1,6 +1,6 @@
 <template>
     <div
-        class="flex flex-col min-h-0 overflow-hidden rounded-lg relative transition-all duration-200"
+        class="flex flex-col min-h-0 pt-4 overflow-hidden rounded-lg relative transition-all duration-200"
         :class="[containerVariantClasses, { 'opacity-50': disabled }]"
         :style="resizeStyle"
     >

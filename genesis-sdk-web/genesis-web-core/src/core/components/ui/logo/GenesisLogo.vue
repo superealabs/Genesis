@@ -14,9 +14,11 @@ import { computed, ref, watch } from 'vue';
 // 1. Dictionnaire des tailles prédéfinies (Surface en px² et côté max)
 // md (48x48 = 2304), sm (~32x32 = 1024), lg (~64x64 = 4096)
 const SIZE_PRESETS = {
+  xs: { area: 768, maxSide: 48 },
   sm: { area: 1024, maxSide: 64 },
   md: { area: 2304, maxSide: 96 },
   lg: { area: 4096, maxSide: 128 },
+  xl: { area: 9216, maxSide: 192 }, // ✅ NOUVEAU : Extra Large
 } as const;
 
 type LogoSize = keyof typeof SIZE_PRESETS;

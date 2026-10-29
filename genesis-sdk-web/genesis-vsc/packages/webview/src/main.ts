@@ -47,6 +47,8 @@ app.provide(RECENT_SERVICE_KEY, recentServiceVsc);
 
 // Rajouter le provide ici plus tard
 
+
+
 app
     .use(pinia)
     .use(router)
