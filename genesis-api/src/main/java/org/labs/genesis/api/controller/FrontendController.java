@@ -23,9 +23,9 @@ public class FrontendController {
         this.frontendAssetService = frontendAssetService;
     }
 
-    @GetMapping("/api/frontend/frameworks")
-    public List<FrontendDtos.FrameworkOption> frameworks() {
-        return frontendConfigService.frameworks();
+    @GetMapping("/api/frontend/frameworks/{idFramework}")
+    public List<FrontendDtos.FrontendFrameworkOption> frameworks(@PathVariable int idFramework) {
+        return frontendConfigService.frameworks(idFramework);
     }
 
     @PostMapping("/api/generator/frontend-config")

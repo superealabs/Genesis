@@ -34,4 +34,15 @@ public final class FrontendDtos {
             String logoAssetId,
             String faviconAssetId
     ) {}
+
+    public record FrontendFrameworkOption(
+            int id,
+            String name,
+            String coreFramework,
+            Integer languageId,
+            String defaultPort,
+            String type,
+            String viewExtension
+    ) {}
+
 }

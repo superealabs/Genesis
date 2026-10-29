@@ -10,6 +10,8 @@ import java.util.regex.Pattern;
 import org.labs.genesis.api.context.GenerationContextStore;
 import org.labs.genesis.api.dto.FrontendDtos.*;
 import org.labs.genesis.api.exception.ProjectConfigException;
+import org.labs.genesis.api.exception.FrameworkNotFoundException;
+import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
@@ -32,11 +34,36 @@ public class FrontendConfigService {
         this.assetService = assetService;
     }
 
-    public List<FrameworkOption> frameworks() {
-        return ProjectGenerator.frontendFrameworks.values().stream()
+    public List<FrontendFrameworkOption> frameworks(int idFramework) {
+
+        Framework backend = ProjectGenerator.frameworks.get(idFramework);
+
+        if (backend == null) {
+            throw new FrameworkNotFoundException(idFramework);
+        }
+
+        // Cas 1 : backend MVC
+        if (backend instanceof FrameworkMVC mvc) {
+
+            if (mvc.getView() == null || mvc.getView().getViewTemplateEngine() == null || mvc.getView().getViewTemplateEngine().isBlank()) {
+                return List.of();
+            }
+
+            String engine = mvc.getView().getViewTemplateEngine();
+
+            return List.of(new FrontendFrameworkOption(mvc.getId(), engine, mvc.getCoreFramework(), null, null, "mvc", mvc.getView().getViewExtension()));
+        }
+
+        // Cas 2 : backend API avec frontend séparé
+        if (!Boolean.TRUE.equals(backend.getUseFrontendApp())) {
+            return List.of();
+        }
+
+        return ProjectGenerator.frontendFrameworks.values()
+                .stream()
                 .sorted(Comparator.comparingInt(FrontendFramework::getId))
-                .map(framework -> new FrameworkOption(framework.getId(), framework.getName(),
-                        framework.getCoreFramework(), framework.getLanguageId(), framework.getDefaultPort()))
+                .map(frontend -> new FrontendFrameworkOption(frontend.getId(), frontend.getName(), frontend.getCoreFramework(), frontend.getLanguageId(), frontend.getDefaultPort(), "spa", frontend.getComponentExtension()
+                ))
                 .toList();
     }
 
