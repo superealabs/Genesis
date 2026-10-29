@@ -16,12 +16,12 @@ public class TableMetadataTestPostgres {
 
     public TableMetadataTestPostgres() {
         this.credentials = new Credentials()
-                .setHost("localhost")
-                .setPort("5432")
-                .setSchemaName("public")
-                .setDatabaseName("postgres")
-                .setUser("postgres")
-                .setPwd("root");
+                .setHost(System.getenv().getOrDefault("GENESIS_PG_HOST", "localhost"))
+                .setPort(System.getenv().getOrDefault("GENESIS_PG_PORT", "5432"))
+                .setSchemaName(System.getenv().getOrDefault("GENESIS_PG_SCHEMA", "public"))
+                .setDatabaseName(System.getenv().getOrDefault("GENESIS_PG_DATABASE", "postgres"))
+                .setUser(System.getenv().getOrDefault("GENESIS_PG_USER", "postgres"))
+                .setPwd(System.getenv().getOrDefault("GENESIS_PG_PASSWORD", "root"));
     }
 
 

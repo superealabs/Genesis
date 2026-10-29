@@ -605,6 +605,12 @@ public class FrameworkMetadataProvider {
             connectionStringMetadata.put("database",database.getSid().toLowerCase());
         }
         connectionString = engine.render(connectionString, connectionStringMetadata);
+        if (database.getId() == Constantes.PostgreSQL_ID && framework.getLanguageId() == Constantes.Java_ID) {
+            String schema = database.getCredentials().getSchemaName();
+            if (schema != null && !schema.isBlank()) {
+                connectionString += "?currentSchema=" + java.net.URLEncoder.encode(schema, java.nio.charset.StandardCharsets.UTF_8);
+            }
+        }
         System.out.println("Renderedeee");
 
         Map<String, Object> metadata = new HashMap<>(Map.of(

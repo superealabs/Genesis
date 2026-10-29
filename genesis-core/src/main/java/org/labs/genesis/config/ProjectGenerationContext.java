@@ -93,9 +93,9 @@ public class ProjectGenerationContext {
         copy.setLanguageConfiguration(this.languageConfiguration);
         copy.setEntityNames(new ArrayList<>());
         copy.setViewNames(new ArrayList<>());
-        copy.setRelationParameters(new ArrayList<>(this.getRelationParameters()));
-        copy.setGenerationOptions(new ArrayList<>(this.getGenerationOptions()));
-        copy.setFrontendGenerationOptions(new ArrayList<>(this.getFrontendGenerationOptions()));
+        copy.setRelationParameters(this.relationParameters == null ? new ArrayList<>() : new ArrayList<>(this.relationParameters));
+        copy.setGenerationOptions(this.generationOptions == null ? new ArrayList<>() : new ArrayList<>(this.generationOptions));
+        copy.setFrontendGenerationOptions(this.frontendGenerationOptions == null ? new ArrayList<>() : new ArrayList<>(this.frontendGenerationOptions));
         copy.setGenerationProcess(this.generationProcess);
         copy.setGenerateProjectStructure(this.generateProjectStructure);
         copy.setGenerateFrontendApp(this.generateFrontendApp);

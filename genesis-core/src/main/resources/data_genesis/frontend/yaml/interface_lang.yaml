@@ -302,7 +302,7 @@
               useGrouping: true,
             },
           },
-        }
+        } as const
         export default english
 
 - id: 2
@@ -613,5 +613,5 @@
           useGrouping: true, // 88 %
         },
       },
-    }
+    } as const
       export default french

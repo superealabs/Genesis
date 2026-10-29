@@ -6,7 +6,6 @@ import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 @Getter
@@ -21,7 +20,7 @@ public class FrontendLayout {
     public  FrontendLayout(){
         this.navbar = "Sidebar";
         this.primaryColor = "#537cc2";
-        this.secondaryColor = new Color(0x53,0x7c,0xc2,0x26).toString();
+        this.secondaryColor = "#537cc2";
         this.additionalCss = "";
         this.langs = new ArrayList<>();
         langs.add(ProjectGenerator.langs.get(1));

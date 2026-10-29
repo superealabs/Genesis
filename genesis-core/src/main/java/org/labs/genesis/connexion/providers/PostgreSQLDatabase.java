@@ -26,12 +26,20 @@ public class PostgreSQLDatabase extends Database {
         if (credentials.getPort() != null)
             port = credentials.getPort();
         else port = getPort();
-        return String.format("jdbc:postgresql://%s:%s/%s?user=%s&password=%s",
+        String url = String.format("jdbc:postgresql://%s:%s/%s?user=%s&password=%s",
                 credentials.getHost(),
                 port,
                 credentials.getDatabaseName(),
-                credentials.getUser(),
-                credentials.getPwd());
+                encodeParameter(credentials.getUser()),
+                encodeParameter(credentials.getPwd()));
+        if (credentials.getSchemaName() != null && !credentials.getSchemaName().isBlank()) {
+            url += "&currentSchema=" + encodeParameter(credentials.getSchemaName());
+        }
+        return url;
+    }
+
+    private String encodeParameter(String value) {
+        return java.net.URLEncoder.encode(value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);
     }
 
     @Override
@@ -39,7 +47,7 @@ public class PostgreSQLDatabase extends Database {
         List<String> tableNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
 
-        try (ResultSet tables = metaData.getTables(null, null, "%", new String[]{"TABLE"})) {
+        try (ResultSet tables = metaData.getTables(null, resolveSchema(connection), "%", new String[]{"TABLE"})) {
             while (tables.next()) {
                 String tableName = tables.getString("TABLE_NAME");
                 tableNames.add(tableName);
@@ -54,7 +62,7 @@ public class PostgreSQLDatabase extends Database {
         List<String> tableNames = new ArrayList<>();
         DatabaseMetaData metaData = connection.getMetaData();
 
-        try (ResultSet tables = metaData.getTables(null, null, "%", new String[]{"VIEW"})) {
+        try (ResultSet tables = metaData.getTables(null, resolveSchema(connection), "%", new String[]{"VIEW"})) {
             while (tables.next()) {
                 String tableName = tables.getString("TABLE_NAME");
                 tableNames.add(tableName);

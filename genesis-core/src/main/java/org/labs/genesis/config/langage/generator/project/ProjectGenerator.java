@@ -244,35 +244,9 @@ public class ProjectGenerator {
         if (!context.isGenerateFrontendApp() || !context.isGenerateFrontendStructure()) {
             return;
         }
-        FrontendFramework frontendFramework = context.getFrontendFramework();
-        if (frontendFramework == null) {
-            return;
-        }
-        HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
-        String securityType = (String) context.getFrameworkConfiguration().get("securityType");
-        Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
-        indicator.setFraction(0.73);
-        selectedSecurityOption.ifPresent(security -> {
-            try {
-                HashMap<String, Object> securityMap=FrameworkFrontendMetadataProvider. getHashMapForSecurity(securityType,context);
-                finalRenderData.putAll(securityMap);
-                if (frontendFramework.getAuthenticationFiles() != null) {
-                    indicator.setText2("generating frontend authentication files");
-                    renderFilesEdits(frontendFramework.getAuthenticationFiles(),finalRenderData);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-        indicator.setFraction(0.76);
-        if (frontendFramework.getAdditionalFiles() != null) {
-            indicator.setText2("generating frontend additional files");
-            renderFilesEdits(frontendFramework.getAdditionalFiles(),finalRenderData);
-        }
+        indicator.setText2("Generating frontend shared resources");
+        generateFrontendSharedFiles(context, entities);
         indicator.setFraction(0.85);
-        indicator.setText2("generating frontend ressources");
-        IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
-        frontendGenerator.generateRessources(context, entities);
     }
 
     private void generateViewsFiles (ProjectGenerationContext context, ViewsTemplate viewsTemplate) throws Exception {
@@ -489,11 +463,12 @@ public class ProjectGenerator {
         }
     }
 
-    public void generateFrontendComponents(ProjectGenerationContext context,
-                                           IFrontendGenerator frontendGenerator,
-                                           TableMetadata tableMetadata,
-                                           boolean generateComponentOnly) throws Exception {
-         // Create missing Webapp folder
+    public void generateFrontendComponents(ProjectGenerationContext context, IFrontendGenerator frontendGenerator, TableMetadata tableMetadata, boolean generateComponentOnly) throws Exception {
+        generateFrontendComponents(context, frontendGenerator, tableMetadata, generateComponentOnly, true);
+    }
+
+    public void generateFrontendComponents(ProjectGenerationContext context, IFrontendGenerator frontendGenerator, TableMetadata tableMetadata, boolean generateComponentOnly, boolean generateRelationFiles) throws Exception {
+        // Create missing Webapp folder
         String webappFolder = FrameworkFrontendMetadataProvider.getWebappFolder(context);
         FileUtils.createDirectory(webappFolder);
 
@@ -519,12 +494,15 @@ public class ProjectGenerator {
             frontendGenerator.generateModel(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly);
         }
 
-        HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, webappFolder, projectName);
-        if (tableMetadata.getIsParent()){
-            renderFilesEdits(frontendFramework.getMereFiles(),tableHashMapData);
-        }
-        if (tableMetadata.getIsChild()){
-            renderFilesEdits(frontendFramework.getFilleFiles(),tableHashMapData);
+        if (generateRelationFiles && context.getFrontendGenerationOptions() != null
+                && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT)) {
+            HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, webappFolder, projectName);
+            if (tableMetadata.getIsParent()) {
+                renderFilesEdits(frontendFramework.getMereFiles(), tableHashMapData);
+            }
+            if (tableMetadata.getIsChild()) {
+                renderFilesEdits(frontendFramework.getFilleFiles(), tableHashMapData);
+            }
         }
     }
 
@@ -575,19 +553,21 @@ public class ProjectGenerator {
         System.out.println("Views components generation completed for project: " + projectName);
     }
 
-    public void generateBackendComponents(ProjectGenerationContext context,
-                                          GenesisGenerator genesisGenerator,
-                                          TableMetadata tableMetadata,
-                                          boolean generateComponentOnly) throws Exception {
+    public void generateBackendComponents(ProjectGenerationContext context, GenesisGenerator genesisGenerator, TableMetadata tableMetadata, boolean generateComponentOnly) throws Exception {
+        generateBackendComponents(context, genesisGenerator, tableMetadata, generateComponentOnly, true);
+    }
+
+    public void generateBackendComponents(ProjectGenerationContext context, GenesisGenerator genesisGenerator, TableMetadata tableMetadata, boolean generateComponentOnly, boolean generateRelationFiles
+    ) throws Exception {
 
         // Liste des tables Django par défaut à exclure
         Set<String> djangoDefaultTables = Set.of(
-            "auth_group", "auth_group_permissions", "auth_permission",
-            "auth_user", "auth_user_groups", "auth_user_user_permissions",
-            "django_admin_log", "django_content_type", "django_migrations",
-            "django_session", "authgroup", "authgrouppermission", "authpermission",
-            "authuser", "authusergroup", "authuseruserpermission",
-            "djangoadminlog", "djangocontenttype", "djangomigration", "djangosession"
+                "auth_group", "auth_group_permissions", "auth_permission",
+                "auth_user", "auth_user_groups", "auth_user_user_permissions",
+                "django_admin_log", "django_content_type", "django_migrations",
+                "django_session", "authgroup", "authgrouppermission", "authpermission",
+                "authuser", "authusergroup", "authuseruserpermission",
+                "djangoadminlog", "djangocontenttype", "djangomigration", "djangosession"
         );
 
         // Exclure les tables Django par défaut
@@ -630,13 +610,19 @@ public class ProjectGenerator {
             genesisGenerator.generateController(framework, frameworkOptions, language, tableMetadata, renderedDestinationFolder, projectName, groupLink, generateComponentOnly);
         }
 
-        HashMap<String, Object> tableHashMapData = FrameworkMetadataProvider.getHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink);
-        if (tableMetadata.getIsParent()){
-            renderFilesEdits(framework.getMereFiles(),tableHashMapData);
+        if (generateRelationFiles) {
+            HashMap<String, Object> tableHashMapData =
+                    FrameworkMetadataProvider.getHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink);
+
+            if (tableMetadata.getIsParent()) {
+                renderFilesEdits(framework.getMereFiles(), tableHashMapData);
+            }
+
+            if (tableMetadata.getIsChild()) {
+                renderFilesEdits(framework.getFilleFiles(), tableHashMapData);
+            }
         }
-        if (tableMetadata.getIsChild()){
-            renderFilesEdits(framework.getFilleFiles(),tableHashMapData);
-        }
+
 
         System.out.println("Backend component generation completed for project: " + projectName);
     }
@@ -833,6 +819,34 @@ public class ProjectGenerator {
             generateFrontendProjectFiles(context, allEntities, indicator);
         }
     }
+
+    public void generateBackendProjectStructure(ProjectGenerationContext context) throws Exception {
+        if (!context.isGenerateProjectStructure()) {
+            return;
+        }
+
+        List<TableMetadata> entities = context.getAllTables();
+
+        generateProjectFiles(context, entities, new NoOpProgressReporter());
+    }
+
+    public void generateMvcViewStructure(ProjectGenerationContext context) throws Exception {
+
+        if (!(context.getFramework() instanceof FrameworkMVC)) {
+            return;
+        }
+
+        if (!context.isGenerateProjectStructure() || !context.isGenerateViewsTemplates()) {
+            return;
+        }
+
+        if (context.getViewsTemplate() == null) {
+            throw new IllegalStateException( "Template MVC non configuré");
+        }
+
+        generateViewsFiles(context, context.getViewsTemplate());
+    }
+
     protected void useRealSidAndDriverType(Database database,Credentials credentials)
     {
         if (credentials == null) {
@@ -928,4 +942,35 @@ public class ProjectGenerator {
         GenesisContextBuilder contextBuilder = new GenesisContextBuilder();
         return contextBuilder.generateGenesisfile(context);
     }
+
+    public void generateFrontendSharedFiles(ProjectGenerationContext context, List<TableMetadata> entities) throws Exception {
+        if (!context.isGenerateFrontendApp() || !context.isGenerateFrontendStructure()) {
+            return;
+        }
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        if (frontendFramework == null) {
+            throw new IllegalStateException("Framework frontend non configuré");
+        }
+        HashMap<String, Object> data = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
+        String securityType = context.getFrameworkConfiguration() == null
+                ? null
+                : (String) context.getFrameworkConfiguration()
+                .get("securityType");
+        if (securityType != null) {
+            Optional<FrameworkSecurity> selectedSecurity = context.getFramework().getSelectedSecurityByName(securityType);
+            if (selectedSecurity.isPresent()) {
+                data.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType, context));
+                if (frontendFramework.getAuthenticationFiles() != null) {
+                    renderFilesEdits(frontendFramework.getAuthenticationFiles(), data);
+                }
+            }
+        }
+        if (frontendFramework.getAdditionalFiles() != null) {
+            renderFilesEdits(frontendFramework.getAdditionalFiles(), data);
+        }
+        IFrontendGenerator frontendGenerator = new FontendGenerator(engine);
+        frontendGenerator.generateRessources(context, entities
+        );
+    }
+
 }

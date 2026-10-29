@@ -71,6 +71,7 @@ public class FrameworkFrontendMetadataProvider {
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName",projectName);
         metadata.put("EntityName",tableMetadata.getClassName());
+        metadata.put("tableName", tableMetadata.getTableName());
         return metadata;
     }
 
@@ -293,7 +294,9 @@ public class FrameworkFrontendMetadataProvider {
         data.put("routes",getRoutesHashMap(frontendFramework));
         data.put("entities",getTableMetaDataHashSimpleList(tableMetadatas));
         data.put("port",projectPort);
-        data.put("frontendPort",context.getFrontendPort());
+        String frontendPort = context.getFrontendPort();
+        data.put("frontendPort", frontendPort == null || frontendPort.isBlank()
+                ? frontendFramework.getDefaultPort() : frontendPort);
         data.put("apiUrl", "localhost");
         data.putAll(getRessourceHashMap(frontendFramework));
         HashMap<String,Object> folder=FrameworkFrontendMetadataProvider.getWebappHashMap(context);

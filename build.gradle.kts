@@ -18,7 +18,9 @@ extra["versions"] = mapOf(
 
 subprojects {
     apply(plugin = "java")
-    apply(plugin = "org.jetbrains.kotlin.jvm")
+    if (name != "genesis-api") {
+        apply(plugin = "org.jetbrains.kotlin.jvm")
+    }
 
     repositories {
         mavenCentral()

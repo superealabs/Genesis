@@ -2334,7 +2334,7 @@
       {{tab}}})
       {{tab}}@PostMapping
       {{tab}}public ResponseEntity<?> createFull${majStart(className)}(
-      {{tab}}    @Parameter(description = "${majStart(className)} object to be created with {{#each childrenWithForm}}${minStart(this.className)}s{{#unless @last}}, {{/unless}}{{/each}}", required = true)
+      {{tab}}    @Parameter(description = "${majStart(className)} object to be created with {{#each childrenWithForm}}${minStart(this.className)}s{{#if !@last}}, {{/if}}{{/each}}", required = true)
       {{tab}}    @RequestBody @Valid ${majStart(className)}FullDto dto,
       {{tab}}    BindingResult bindingResult
       {{tab}}) {
@@ -2446,7 +2446,7 @@
           public ResponseEntity<?> updateFull${majStart(className)}(
             @Parameter(description = "ID of the ${minStart(className)} to update", required = true)
             @PathVariable ${pkColumnType} ${pkColumn},
-            @Parameter(description = "Updated ${minStart(className)} object with {{#each childrenWithForm}}${minStart(this.className)}s{{#unless @last}}, {{/unless}}{{/each}}", required = true)
+            @Parameter(description = "Updated ${minStart(className)} object with {{#each childrenWithForm}}${minStart(this.className)}s{{#if !@last}}, {{/if}}{{/each}}", required = true)
             @RequestBody @Valid ${majStart(className)}FullDto dto,
             BindingResult bindingResult
           ) {
