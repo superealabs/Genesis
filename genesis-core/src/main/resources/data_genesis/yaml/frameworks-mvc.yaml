@@ -4912,7 +4912,9 @@
             Chart.register(ChartDataLabels);
         }
         
-        document.addEventListener("DOMContentLoaded", function () {       
+        document.addEventListener("DOMContentLoaded", function () {   
+            initializeDashboardLayouts();
+            observeDashboardLayouts();
             initializeDashboardPagination();       
         });
         
@@ -5819,6 +5821,55 @@
             decimalsY:
                 Number.isFinite(decimalsY) ? decimalsY : 0
           };
+        }
+        
+        function updateDashboardGridLayout(grid) {
+            if (!grid) {
+                return;
+            }
+            const width = grid.clientWidth;
+            if (!width || width <= 0) {
+                return;
+            }
+            const cellSize = width / 24;
+
+            grid.style.setProperty("--dashboard-cell-size", cellSize + "px");
+        }
+        
+        function initializeDashboardLayouts() {
+            const grids = document.querySelectorAll(".dashboard-grid");
+
+            grids.forEach(
+                function (grid) {
+                    updateDashboardGridLayout(grid);
+                }
+            );
+        }
+        
+        function observeDashboardLayouts() {
+            const grids = document.querySelectorAll(".dashboard-grid");
+
+            if (typeof ResizeObserver === "undefined") {
+                grids.forEach(updateDashboardGridLayout);
+                return;
+            }
+
+            const observer =
+                new ResizeObserver(
+                    function (entries) {
+                        entries.forEach(
+                            function (entry) {
+                                updateDashboardGridLayout(entry.target);
+                            }
+                        );
+                    }
+                );
+
+            grids.forEach(
+                function (grid) {
+                    observer.observe(grid);
+                }
+            );
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/js"
 

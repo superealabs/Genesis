@@ -29,6 +29,11 @@ public class DashboardConfigurationWizardStep
         this.generationContextManager = generationContextManager;
 
         ProjectGenerationContext context = generationContextManager.getContext();
+        try {
+            context.refreshTables();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to refresh dashboard metadata", e);
+        }
         this.form = new DashboardConfigurationForm(context);
     }
 

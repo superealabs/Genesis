@@ -8,7 +8,6 @@ import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.utils.StringUtils;
 
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,36 +31,6 @@ public class PostgreSQLDatabase extends Database {
                 credentials.getDatabaseName(),
                 credentials.getUser(),
                 credentials.getPwd());
-    }
-
-    @Override
-    public List<String> getAllTableNames(Connection connection) throws SQLException {
-        List<String> tableNames = new ArrayList<>();
-        DatabaseMetaData metaData = connection.getMetaData();
-
-        try (ResultSet tables = metaData.getTables(null, null, "%", new String[]{"TABLE"})) {
-            while (tables.next()) {
-                String tableName = tables.getString("TABLE_NAME");
-                tableNames.add(tableName);
-            }
-        }
-
-        return tableNames;
-    }
-
-    @Override
-    public List<String> getAllViewNames(Connection connection) throws SQLException {
-        List<String> tableNames = new ArrayList<>();
-        DatabaseMetaData metaData = connection.getMetaData();
-
-        try (ResultSet tables = metaData.getTables(null, null, "%", new String[]{"VIEW"})) {
-            while (tables.next()) {
-                String tableName = tables.getString("TABLE_NAME");
-                tableNames.add(tableName);
-            }
-        }
-
-        return tableNames;
     }
 
     @Override

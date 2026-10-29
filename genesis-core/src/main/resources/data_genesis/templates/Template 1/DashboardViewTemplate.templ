@@ -22,6 +22,10 @@ ${viewAnnotations}
             <article class="dashboard-widget"
                     data-dashboard-id="${this.id}"
                     data-dashboard-type="${this.typeLowerCase}"
+                    data-layout-x="${this.layoutX}"
+                    data-layout-y="${this.layoutY}"
+                    data-layout-width="${this.layoutWidth}"
+                    data-layout-height="${this.layoutHeight}"
                     data-marker-type="${this.markerType}"
                      data-legend-x="${this.legendX}"
                      data-legend-y="${this.legendY}"
@@ -34,7 +38,14 @@ ${viewAnnotations}
                      data-decimals-x="${this.decimalsX}"
                      data-value-prefix-y="${this.valuePrefixY}"
                      data-value-suffix-y="${this.valueSuffixY}"
-                     data-decimals-y="${this.decimalsY}">
+                     data-decimals-y="${this.decimalsY}"
+
+                     style="
+                         --dashboard-x: ${this.layoutX};
+                         --dashboard-y: ${this.layoutY};
+                         --dashboard-width: ${this.layoutWidth};
+                         --dashboard-height: ${this.layoutHeight};
+                         ">
 
                 <div class="dashboard-widget-header">
                     <h3>${this.title}</h3>

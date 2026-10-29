@@ -308,24 +308,8 @@ public class DataPanelTree extends JPanel {
         return new ArrayList<>();
     }
 
-    public void loadMetadata() throws Exception {
-        if((context.getEntityTables() == null || context.getEntityTables().isEmpty())
-                && (context.getViewTables() == null || context.getViewTables().isEmpty())) {
-            Database database = context.getDatabase();
-
-            if(database != null) {
-                Connection connection = database.getConnection(context.getCredentials());
-                if(connection != null) {
-                    if(context.getEntityNames() == null || context.getEntityNames().isEmpty()
-                            || context.getViewNames() == null || context.getViewNames().isEmpty()) {
-                        context.setEntityNames(database.getAllTableNames(connection));
-                        context.setViewNames(database.getAllViewNames(connection));
-                    }
-                    context.setEntityTables(connection);
-                    context.setViewTables(database.getConnection(context.getCredentials()));
-                }
-            }
-        }
+    public void loadMetadata()throws Exception {
+        context.refreshTables();
     }
 
     // ============================================================

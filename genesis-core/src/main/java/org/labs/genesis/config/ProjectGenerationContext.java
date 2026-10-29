@@ -342,4 +342,22 @@ public class ProjectGenerationContext {
             this.getRelationParameters().remove(relationParameter);
         }
     }
+
+    @JsonIgnore
+    public void refreshTables() throws SQLException,ClassNotFoundException {
+
+        if (database == null) {
+            return;
+        }
+
+        try (Connection connection = database.getConnection(credentials)) {
+            List<String> tables = database.getAllTableNames(connection);
+            List<String> views = database.getAllViewNames(connection);
+
+            setEntityNames(tables);
+            setViewNames(views);
+            setEntityTables(connection);
+            setViewTables(connection);
+        }
+    }
 }
