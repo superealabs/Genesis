@@ -12,11 +12,11 @@
             </section>
         </div>
 
-        <!-- ✅ CONTENEUR GLOBAL DE LA FRISE + DÉCLENCHEUR -->
+        <!-- CONTENEUR GLOBAL DE LA FRISE + DÉCLENCHEUR -->
         <GenesisTutorialItem id="summary-rail-global">
             <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-3">
                 
-                <!-- ✅ TRIGGER AU-DESSUS DE TOUTES LES ÉTAPES -->
+                <!-- TRIGGER AU-DESSUS DE TOUTES LES ÉTAPES -->
                 <GenesisButtonIcon 
                     variant="neutral" 
                     size="sm" 
@@ -45,7 +45,7 @@ import { useSlideTransition } from '@genesis-labs/web-core/core/composables/ux/u
 import { useStepSlider } from '@genesis-labs/web-core/core/composables/ux/useStepSlider';
 import { useStepInput } from '@genesis-labs/web-core/core/composables/ux/useStepInput';
 
-// ✅ IMPORTS POUR LE TUTORIEL
+// IMPORTS POUR LE TUTORIEL
 import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
@@ -60,12 +60,12 @@ const { show, play } = useSlideTransition(viewport);
 const { index, goTo, next, prev } = useStepSlider(SUMMARY_SLIDES.length, play);
 useStepInput(viewport, { next, prev });
 
-defineProps<{
-    initialIndex?: number; // ✅ Reçoit l'index cible depuis le parent
+const props = defineProps<{
+    initialIndex?: number; // Reçoit l'index cible depuis le parent
 }>();
 
 const emit = defineEmits<{
-    requestEdit: [summaryIndex: number]; // ✅ Signale qu'on veut éditer cette section
+    requestEdit: [summaryIndex: number]; // Signale qu'on veut éditer cette section
     'update-summary-complete': [isComplete: boolean];
 }>();
 
@@ -83,9 +83,21 @@ watch(index, (newIndex) => {
     emit('update-summary-complete', isLastSlide);
 }, { immediate: true });
 
-onMounted(() => show(index.value));
+// CORRECTION : Utiliser initialIndex pour initialiser le slider
+onMounted(() => {
+    const startIndex = props.initialIndex ?? 0;
+    goTo(startIndex);
+    show(startIndex);
+});
 
-// ✅ CONFIGURATION DU TUTORIEL (Ordre respecté : Global puis Actif)
+// CORRECTION : Réagir si initialIndex change après le montage (ex: navigation rapide)
+watch(() => props.initialIndex, (newIndex) => {
+    if (newIndex !== undefined) {
+        goTo(newIndex);
+        show(newIndex);
+    }
+});
+// CONFIGURATION DU TUTORIEL (Ordre respecté : Global puis Actif)
 const tutorial = useGenesisTutorial('summary-view', {
     'main': [
         { 

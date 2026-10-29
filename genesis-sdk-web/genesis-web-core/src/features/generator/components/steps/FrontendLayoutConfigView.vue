@@ -199,28 +199,43 @@
           <!-- ✅ ÉTAPE 3 : Brand assets -->
           <GenesisTutorialItem id="charte-assets">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <GenesisInput
-                :model-value="layoutConfig.logoPath"
-                @update:model-value="(val) => updateFrontendLayout('logoPath', val)"
-                type="file"
-                label="Fichier Logo"
-                placeholder="Aucun fichier sélectionné"
-                accept=".png,.jpg,.jpeg,.svg"
-                size="lg"
-                fill-width
-                @browse="() => emit('request-file-path', { field: 'logoPath', extensions: ['png', 'jpg', 'jpeg', 'svg'] })"
-              />
-              <GenesisInput
-                :model-value="layoutConfig.faviconPath"
-                @update:model-value="(val) => updateFrontendLayout('faviconPath', val)"
-                type="file"
-                label="Fichier Favicon"
-                placeholder="Aucun fichier sélectionné"
-                accept=".ico,.png,.svg"
-                size="lg"
-                fill-width
-                @browse="() => emit('request-file-path', { field: 'faviconPath', extensions: ['ico', 'png', 'svg'] })"
-              />
+              <!-- Colonne Logo -->
+              <div class="flex flex-col gap-2">
+                <!-- ✅ Prévisualisation Logo -->
+                <div v-if="layoutConfig.logoPath" class="bg-bg-secondary/30 rounded-lg border border-bg-neutral-genesis flex items-center justify-center h-24">
+                  <GenesisLogo :src="layoutConfig.logoPath" size="lg" />
+                </div>
+                <GenesisInput
+                  :model-value="layoutConfig.logoPath"
+                  @update:model-value="(val) => updateFrontendLayout('logoPath', val)"
+                  type="file"
+                  label="Fichier Logo"
+                  placeholder="Aucun fichier sélectionné"
+                  accept=".png,.jpg,.jpeg,.svg"
+                  size="lg"
+                  fill-width
+                  @browse="() => emit('request-file-path', { field: 'logoPath', extensions: ['png', 'jpg', 'jpeg', 'svg'] })"
+                />
+              </div>
+
+              <!-- Colonne Favicon -->
+              <div class="flex flex-col gap-2">
+                <!-- ✅ Prévisualisation Favicon -->
+                <div v-if="layoutConfig.faviconPath" class="bg-bg-secondary/30 rounded-lg border border-bg-neutral-genesis flex items-center justify-center h-24">
+                  <GenesisLogo :src="layoutConfig.faviconPath" size="md" />
+                </div>
+                <GenesisInput
+                  :model-value="layoutConfig.faviconPath"
+                  @update:model-value="(val) => updateFrontendLayout('faviconPath', val)"
+                  type="file"
+                  label="Fichier Favicon"
+                  placeholder="Aucun fichier sélectionné"
+                  accept=".ico,.png,.svg"
+                  size="lg"
+                  fill-width
+                  @browse="() => emit('request-file-path', { field: 'faviconPath', extensions: ['ico', 'png', 'svg'] })"
+                />
+              </div>
             </div>
           </GenesisTutorialItem>
         </div>
@@ -256,6 +271,7 @@ import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUplo
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue'; // ✅ AJOUT
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+import GenesisLogo from '@genesis-labs/web-core/core/components/ui/logo/GenesisLogo.vue';
 
 // ============================================================================
 // 1. EMITS
@@ -409,6 +425,7 @@ const languagesLogic = useConfigManagerLogic({
   deleteConfiguration,
   persistedConfigs
 });
+
 
 // ============================================================================
 // 7. UTILITAIRES & LIFECYCLE

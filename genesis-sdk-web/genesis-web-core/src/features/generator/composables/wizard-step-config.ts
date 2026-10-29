@@ -333,6 +333,8 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       return true;
     },
     skipCascade: [] // Peut être sauté sans conséquence sur les autres
+
+
   },
 
   generation: {
@@ -437,6 +439,12 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       console.log(`[Wizard: frontend_select] Framework Frontend en attente de validation :`, store.pendingFrontendFramework.name);
       return true;
     },
+
+    onSkip: async (store) => {
+      const invalidated: StepId[] = ['frontend_select', 'frontend_config'];
+      store.resetFrontendDependentConfig();
+      store.invalidateSteps(invalidated);
+    },
     // CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
     skipCascade: [
       'frontend_config'
@@ -490,6 +498,8 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     onSkip: (store) => {
       // L'utilisateur a cliqué sur "Passer" : on désactive Git et on nettoie
       store.skipGitConfig();
+      const invalidated :StepId[] = ['repository_select', 'repository_config'];
+      store.invalidateSteps(invalidated);
     },
     
     skipCascade: [

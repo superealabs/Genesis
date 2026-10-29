@@ -28,7 +28,7 @@ const props = withDefaults(defineProps<{
     alt?: string;
     size?: LogoSize;  
     area?: number;            
-    maxSide?: number;       
+    maxSide?: number;
 }>(), {
     alt: '',
     size: 'md',               // ✅ Valeur par défaut

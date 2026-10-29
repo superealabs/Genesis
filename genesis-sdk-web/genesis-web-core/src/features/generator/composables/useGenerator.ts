@@ -1,5 +1,5 @@
 // genesis-sdk-web/genesis-web-core/src/features/generator/composables/useGenerator.ts
-import { inject, computed, ref } from 'vue';
+import { inject, computed, ref, toRaw } from 'vue';
 import { storeToRefs } from 'pinia';
 
 // Types & Interfaces
@@ -194,8 +194,9 @@ export function useGenerator() {
   function backToSummary() {
     const currentId = getStepIdByNumber(wizard.currentStep.value);
     const summaryIndex = STEP_TO_SUMMARY_MAP[currentId || 'summary'];
-    
+
     if (summaryIndex !== null) {
+      console.log("SUMMARY INDEX != Null " + toRaw(summaryIndex))
       targetSummaryIndex.value = summaryIndex;
       // On trouve le numéro d'étape du 'summary' dans l'ordre
       const summaryStepNumber = WIZARD_STEP_ORDER.indexOf('summary') + 1;
