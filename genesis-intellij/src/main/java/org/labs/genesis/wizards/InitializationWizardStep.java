@@ -204,6 +204,9 @@ public class InitializationWizardStep extends ModuleWizardStep {
 
                 specificConfigurationWizardStep.onFrameworkSelected(framework);
                 newProjectGenerationContext.setGenerateFrontendApp(framework.getUseFrontendApp());
+
+
+                // Trigger si la liste des frontends à afficher est pour mvc ou non
                 if (framework instanceof FrameworkMVC) {
                     frontendConfigurationWizardStep.onFrameworkMVCSelected((FrameworkMVC) framework);
                 } else {

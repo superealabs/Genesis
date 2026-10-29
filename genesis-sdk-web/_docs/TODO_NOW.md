@@ -4,17 +4,28 @@
 - gestion des exceptions à la fin du summary
 
 
-- optimiser le summary
-    Generation Ok
-
-- afficher le language en hover
-- amélioration de la vue détails
-- correction logo de genesisList
-
-
-- bug avec la fonctionnalité de hide dans generationOption
-    - quand on clique sur le bouton une configuration, les tables et vue associés avec retourne dans le tableau de table non assignée
-
 - Correction des commandes possibles avec Genesis
-- correction de buttonIcon(ok)
 - vérification de l'envoie des données
+
+
+
+- envoyer tout à la fin
+
+
+- découvrir le paramètre qui récupère la liste des frontends
+
+
+- corriger la fonction qu récupère la liste des frameworkFrontEnd
+    - gestion des cohérences avec MVC
+
+
+- Scénario :
+    l'utilisateur choisit un frontend qui n'est pas un MVC
+    il a terminé la configuration frontend, soudain il revient à framework et choisit un FrameworkMVC
+
+    (la liste des frontends MVC diffère entre chaque FrameworkMVC qui sont eux même différents des frontends des frameworks headless)
+
+    Exemple :
+        - Spring MVC : Thymleaf
+        - .NetMVC : Razor
+        - Tous les framework Normal : Vue, React, Angular, etc

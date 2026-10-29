@@ -10,7 +10,7 @@
     :visited-steps="props.visitedSteps"
     :step-labels="props.stepLabels"
 
-    :disable-next="currentStepId === 'summary' && !isSummaryComplete"
+    :disable-next="hasWarning || (currentStepId === 'summary' && !isSummaryComplete)"
     :is-loading="store.isGenerating"
     :hide-footer="store.isGenerationComplete"
 
@@ -168,6 +168,14 @@
     size="md"
     @close="clearError"
   />
+
+  <!-- POPUP D'AVERTISSEMENT GÉNÉRIQUE (alimenté par useGenesisWarning) -->
+  <WarningPopup
+    v-if="warning"
+    v-bind="warning"
+    @confirm="acceptWarning"
+    @cancel="cancelWarning"
+  />
 </template>
 
 <script setup lang="ts">
@@ -178,6 +186,7 @@ import type { Framework, FrontendFramework, DatabaseEngineDto, FileRequestPayloa
 // Core Components
 import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
 import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
+import WarningPopup from '@genesis-labs/web-core/core/components/layouts/Popup/WarningPopup.vue';
 
 // Feature Components & Types
 import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-core/features/frameworks/components/FrameworkLayout.vue';
@@ -201,6 +210,7 @@ import { useWizardFrontend } from '@genesis-labs/web-core/features/frontend/comp
 // Store
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 
+import { useGenesisWarning } from '@genesis-labs/web-core/core/composables/ux/feedback/useGenesisWarning';
 import { getStepIdByNumber } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
 import { RepositoryProviderMetadata } from '@genesis-labs/shared-types';
 import { useWizardRepository } from '@genesis-labs/web-core/features/repository/composables/useWizardRepository';
@@ -256,6 +266,9 @@ const errorMessage = ref('');
 const errorStackTrace = ref('');
 const isDevMode = import.meta.env.DEV;
 const isSummaryComplete = ref(false);
+
+// Avertissement générique : la file d'attente est globale, ce composant ne fait que l'afficher
+const { warning, hasWarning, accept: acceptWarning, cancel: cancelWarning } = useGenesisWarning();
 
 // ============================================================================
 // 3. INJECTION DES COMPOSABLES (PONTS WIZARD)

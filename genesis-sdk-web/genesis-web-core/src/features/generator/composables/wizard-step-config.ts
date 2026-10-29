@@ -16,8 +16,10 @@ import { useRepositoryStore } from '../../repository/manifest';
 import { useRecentStore } from '@genesis-labs/web-core/core/features/recent/store/useRecent.store';
 import { RecentItem } from '@genesis-labs/shared-types';
 import type { IRecentService } from '@genesis-labs/web-core/core/features/recent/types/recent.service.interface';
+import { useGenesisWarning } from '@genesis-labs/web-core/core/composables/ux/feedback/useGenesisWarning';
 
 import { toRaw } from 'vue';
+import { Framework } from '@genesis-labs/shared-types';
 
 
 // ============================================================================
@@ -32,6 +34,8 @@ export interface WizardServices {
   repoSvc: IRepositoryService;
   recentSvc: IRecentService;
 }
+
+type GeneratorStore = ReturnType<typeof useGeneratorStore>;
 
 export interface StepConfig {
   onEnter?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<void> | void;
@@ -126,6 +130,47 @@ export const SUMMARY_TO_STEP_MAP: Record<number, StepId> = {
   5: 'repository_config'
 };
 
+// ==========================================
+// HELPER
+// =========================================
+
+
+const isRest = (fw: Framework) => fw.type === 'REST API';
+const frontendImpacted = (from: Framework, to: Framework) => !(isRest(from) && isRest(to));
+
+export async function confirmFrameworkChange(store: GeneratorStore, next: Framework): Promise<boolean> {
+  const owner = store.configFramework;
+  if (!owner || owner.id === next.id) return true;
+
+  const resetFrontend = frontendImpacted(owner, next) && store.hasFrontendData;
+
+  const details = [
+    'Versions du langage et du framework, build tool',
+    'Configuration avancée (logging, sécurité, cache, Hibernate)'
+  ];
+  if (resetFrontend) {
+    details.push('Frontend sélectionné et sa configuration (chaque framework MVC a sa propre liste de frontends)');
+  }
+
+  const confirmed = await useGenesisWarning().confirm({
+    title: 'Changer de framework ?',
+    message: `Vous passez de ${owner.name} à ${next.name}. Certaines données de la configuration seront réinitialisées.`,
+    details,
+    confirmLabel: 'Changer de framework',
+    variant: 'danger'
+  });
+  if (!confirmed) return false;
+
+  store.resetFrameworkDependentConfig(next);
+  if (frontendImpacted(owner, next)) store.resetFrontendDependentConfig();
+
+  const invalidated: StepId[] = ['project_config'];
+  if (resetFrontend) invalidated.push('frontend_select', 'frontend_config');
+  store.invalidateSteps(invalidated);
+
+  return true;
+}
+
 // ============================================================================
 // CONFIGURATION MÉTIER PAR ÉTAPE
 // ============================================================================
@@ -165,6 +210,8 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
+      if (!(await confirmFrameworkChange(store, framework))) return false;
+
       console.log(`[Wizard: framework] Framework en attente de validation :`, framework.name);
       return true;
     }
@@ -175,6 +222,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       // On lit le pending en priorité pour charger les bonnes options
       const framework = store.pendingFramework || store.stepperData.framework;
       if (!framework) return;
+      if (!store.configFramework) store.setConfigFramework(framework);
       
       console.log("[Wizard: project_config] Chargement des options de configuration...");
       
@@ -365,8 +413,11 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       const frontendStore = useFrontendStore();
       
       try {
+
+        const frameworkId = _store.pendingFramework?.id ?? _store.stepperData.framework?.id ?? 0;
+      
         await Promise.all([
-          fdsvc.fetchFrontendFrameworks().then(data => frontendStore.setAvailableFrontendFrameworks(data)),
+          fdsvc.fetchFrontendFrameworks(frameworkId).then(data => frontendStore.setAvailableFrontendFrameworks(data)),
           fdsvc.fetchInterfaceLanguages().then(data => frontendStore.setAvailableInterfaceLanguages(data)),
         ]);
         console.log("[Wizard: frontend_select] Options Frontend chargées");

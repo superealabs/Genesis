@@ -1,6 +1,7 @@
 // genesis-sdk-web/genesis-web-core/src/features/generator/store/useGenerator.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import type { StepId } from '../composables/wizard-step-config'
 
 // Types partagés
 import type { 
@@ -91,6 +92,11 @@ export const useGeneratorStore = defineStore('generator', () => {
   const getAvailableFrameworkVersions = computed(() => availableFrameworkVersions.value);
   const getAvailableBuildTools = computed(() => availableBuildTools.value);
 
+  const configFramework = ref<Framework | null>(null);
+
+
+  const lastInvalidation = ref<{ id: number; steps: StepId[] } | null>(null);
+  let invalidationCounter = 0;
 
   // ==========================================================================
   // 3. ACTIONS - Groupées par domaine
@@ -100,6 +106,7 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setWizardError(message: string) { wizardError.value = message; }
   function clearWizardError() { wizardError.value = null; }
   function setIsGenerating(value: boolean) { isGenerating.value = value; }
+  function setConfigFramework(fw: Framework | null) { configFramework.value = fw; }
   
   function reset() {
     isGenerating.value = false;
@@ -113,6 +120,29 @@ export const useGeneratorStore = defineStore('generator', () => {
     relations.value = [];
     relationsLoaded.value = false;
   }
+
+  
+  function resetFrameworkDependentConfig(next: Framework) {
+    const initial = INITIAL_STATE.config;
+    const keys = [
+      'languageVersion', 'buildTool', 'groupId', 'frameworkVersion',
+      'loggingLevel', 'securityType', 'cacheProvider', 'hibernateDdlAuto'
+    ] as const;
+    keys.forEach(k => updateConfig(k, initial[k]));
+    configFramework.value = next;
+  }
+
+  /** Remet à zéro le choix du frontend et sa configuration */
+  function resetFrontendDependentConfig() {
+    pendingFrontendFramework.value = null;
+    stepperData.value.frontend = null;
+    stepperData.value.frontendLayout = structuredClone(INITIAL_STATE.frontendLayout);
+  }
+
+  /** Y a-t-il quelque chose à perdre côté frontend ? */
+  const hasFrontendData = computed(() =>
+    !!pendingFrontendFramework.value || !!stepperData.value.frontend
+  );
 
   // --- Étape 1 : Framework ---
   function setPendingFramework(framework: Framework | null) {
@@ -364,6 +394,10 @@ export const useGeneratorStore = defineStore('generator', () => {
     };
   }
 
+  function invalidateSteps(steps: StepId[]) {
+    lastInvalidation.value = { id: ++invalidationCounter, steps };
+  }
+
 
   // ==========================================================================
   // 4. RETURN - Ordre identique à la déclaration
@@ -418,5 +452,13 @@ export const useGeneratorStore = defineStore('generator', () => {
     skipGitConfig,
     
     updateRepositoryConfig,
+
+    setConfigFramework,
+    resetFrameworkDependentConfig,
+    configFramework,
+    resetFrontendDependentConfig,
+    hasFrontendData,
+    invalidateSteps,
+    lastInvalidation
   };
 });

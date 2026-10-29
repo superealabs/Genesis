@@ -36,6 +36,10 @@ import {
   getSkippableStepsConfig
 } from './wizard-step-config';
 
+import { watch } from 'vue';
+import { getStepNumberById } from './wizard-step-config';
+
+
 export function useGenerator() {
   // ==========================================================================
   // 1. INJECTION DES DÉPENDANCES
@@ -61,6 +65,10 @@ export function useGenerator() {
   const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc, recentSvc, repoSvc };
 
   const hasReachedSummary = ref(false);
+
+  watch(() => store.lastInvalidation, (inv) => {
+    if (inv) wizard.invalidateSteps(inv.steps.map(getStepNumberById));
+  });
 
   const wizard = useGenesisWizard({
     totalSteps: getTotalSteps(),

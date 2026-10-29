@@ -12,8 +12,10 @@ export class FrontendHandler {
 
     // ═══ ROUTAGE VERS LE SERVICE (Lecture) ═══
 
-    async handleGetFrontendFrameworks(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchFrontendFrameworks();
+    async handleGetFrontendFrameworks(payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        // Extraction de l'ID du framework depuis le payload (avec fallback à 0 par sécurité)
+        const frameworkID = payload?.frameworkID ?? 0;
+        const data = await this.service.fetchFrontendFrameworks(frameworkID);
         panel.webview.postMessage({ type: 'FRONTEND_FRAMEWORKS_LOADED', payload: data });
     }
 

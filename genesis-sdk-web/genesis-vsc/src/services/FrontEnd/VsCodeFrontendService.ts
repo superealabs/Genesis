@@ -35,9 +35,12 @@ export const MOCK_NAVBAR_TYPES: string[] = ['side', 'top'];
 
 export class VsCodeFrontendService implements IFrontendService {
     
-    async fetchFrontendFrameworks(): Promise<FrontendFramework[]> {
+    async fetchFrontendFrameworks(frameworkID: number): Promise<FrontendFramework[]> {
         try {
-            const { data } = await getAxiosInstance().get<FrontendFramework[]>('/api/frontend/frameworks');
+            // Envoi de l'ID du framework backend en paramètre de requête pour filtrer les résultats
+            const { data } = await getAxiosInstance().get<FrontendFramework[]>('/api/frontend/frameworks', {
+                params: { frameworkID }
+            });
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchFrontendFrameworks API échouée. Fallback mock.`);

@@ -321,6 +321,10 @@ import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/c
 
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 
+import { confirmFrameworkChange } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
+import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
+
+
 // ============================================================================
 // 1. EMITS & CONSTANTES
 // ============================================================================
@@ -368,6 +372,7 @@ const {
 
 const { saveConfiguration, deleteConfiguration, configurations: persistedConfigs, loadAdvancedConfigurations, loadTechnicalStackConfigurations } = useConfig();
 const frameworkStore = useFrameworkStore();
+const generatorStore = useGeneratorStore();
 
 const configManager = useConfigurationManager([], { singleConfiguration: false });
 const techStackConfigManager = useConfigurationManager([], { singleConfiguration: false });
@@ -388,12 +393,13 @@ const showHibernateDdl = computed(() => framework.value?.withHibernateDdlAuto ==
 function startEditingFramework() { tempFrameworkName.value = ''; isEditingFramework.value = true; }
 function cancelEditingFramework() { isEditingFramework.value = false; tempFrameworkName.value = ''; }
 
-function handleFrameworkSelect(value: any) {
-  if (typeof value === 'string') return; 
-  if (value && value.id) { 
-    setPendingFramework(value); 
-    isEditingFramework.value = false; 
-  }
+async function handleFrameworkSelect(value: any) {
+  if (typeof value === 'string' || !value?.id) return;
+  isEditingFramework.value = false;
+  if (value.id === framework.value?.id) return;
+
+  if (!(await confirmFrameworkChange(generatorStore, value))) return; // annulé : rien ne bouge
+  setPendingFramework(value);
 }
 
 function handleClickOutside(event: MouseEvent) {

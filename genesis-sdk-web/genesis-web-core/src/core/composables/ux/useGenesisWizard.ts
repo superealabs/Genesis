@@ -174,6 +174,13 @@ export function useGenesisWizard(config: WizardConfig) {
   // --- 5. Initialisation ---
   triggerStepEnter(currentStep.value);
 
+  /** Retire des steps de la liste des steps visités (leurs données ont été réinitialisées) */
+  function invalidateSteps(steps: number[]) {
+    steps.forEach(step => {
+      if (step !== currentStep.value) visitedSteps.value.delete(step); // l'étape courante reste visitée
+    });
+  }
+
   // --- 6. Retour ---
   return {
     currentStep,
@@ -186,6 +193,7 @@ export function useGenesisWizard(config: WizardConfig) {
     goToNextStep,
     goToPreviousStep,
     skipCurrentStep,
-    resetWizard
+    resetWizard,
+    invalidateSteps
   };
 }
