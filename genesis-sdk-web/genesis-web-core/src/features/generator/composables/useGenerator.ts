@@ -8,7 +8,8 @@ import type {
   IDatabaseService, 
   IFrameworkService, 
   IFrontendService, 
-  IRepositoryService
+  IRepositoryService,
+  DatabaseConfig
 } from '@genesis-labs/shared-types';
 
 // Stores
@@ -138,7 +139,7 @@ export function useGenerator() {
     getAvailableFrameworkVersions,
     getAvailableBuildTools,
     getAvailableHibernateDdlAutoOptions,
-    isGenerating
+    isGenerating,
   } = storeToRefs(store);
 
   const targetSummaryIndex = ref(0);
@@ -240,13 +241,37 @@ export function useGenerator() {
     frontendStore.setAvailableInterfaceLanguages(data); 
   }
 
-  async function testDatabaseConnection(): Promise<{ success: boolean; message: string }> {
+
+
+  async function testDatabaseConnection(
+    config?: DatabaseConfig
+  ): Promise<{ success: boolean; message: string }> {
     try {
-      return await dbsvc.testDatabaseConnection(stepperData.value.database);
+      // Priorité à la config passée par le composant (état affiché).
+      // Fallback sur le stepper pour les appels legacy (autres steps, tests, etc.).
+      const rawDatabaseConfig = config
+        ? toRaw(config)
+        : toRaw(stepperData.value.database);
+
+      return await dbsvc.testDatabaseConnection(rawDatabaseConfig);
     } catch (error) {
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Erreur inconnue' 
+      console.error("[testDatabaseConnection] Erreur brute capturée :", error);
+
+      let errorMessage = 'Erreur inconnue lors du test de connexion.';
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (typeof error === 'object' && error !== null && 'message' in error) {
+        errorMessage = String((error as any).message);
+      } else {
+        errorMessage = `Erreur inattendue : ${String(error)}`;
+      }
+
+      return {
+        success: false,
+        message: errorMessage
       };
     }
   }
@@ -364,5 +389,6 @@ export function useGenerator() {
     hasReachedSummary,
     visitedSteps: wizard.visitedSteps,
     saveScript,
+
   };
 }

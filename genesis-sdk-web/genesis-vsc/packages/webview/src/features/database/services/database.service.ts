@@ -42,19 +42,30 @@ export class DatabaseServiceVsc implements IDatabaseService {
      */
     testDatabaseConnection(config: DatabaseConfig): Promise<DatabaseConnectionTestResult> {
         return new Promise((resolve, reject) => {
-            // On envoie la commande et la configuration (déjà "déréalisée" par le composable si besoin)
-            this.vscode.sendMessage('TEST_DATABASE_CONNECTION', config);
-            
-            const cleanup = this.vscode.onMessage<DatabaseConnectionTestResult>('DATABASE_CONNECTION_TESTED', (result) => {
-                cleanup();
-                resolve(result);
-            });
+            let timer: ReturnType<typeof setTimeout>;
+            const cleanups: Array<() => void> = [];
+            const done = () => { clearTimeout(timer); cleanups.forEach(c => c()); };
 
-            // Optionnel : timeout pour le test de connexion
-            setTimeout(() => {
-                cleanup();
+            cleanups.push(this.vscode.onMessage<DatabaseConnectionTestResult>(
+                'DATABASE_CONNECTION_TESTED',
+                (result) => { done(); resolve(result); }
+            ));
+
+            cleanups.push(this.vscode.onMessage<{ command: string; message: string }>(
+                'API_ERROR',
+                (err) => {
+                    if (err.command !== 'TEST_DATABASE_CONNECTION') return;
+                    done();
+                    reject(new Error(err.message));
+                }
+            ));
+
+            timer = setTimeout(() => {
+                done();
                 reject(new Error('Délai d\'attente dépassé pour le test de connexion.'));
-            }, 15000); // 15 secondes
+            }, 45000); // > timeout axios / JDBC
+
+            this.vscode.sendMessage('TEST_DATABASE_CONNECTION', config);
         });
     }
 

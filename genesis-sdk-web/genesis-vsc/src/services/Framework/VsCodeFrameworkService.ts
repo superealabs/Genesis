@@ -101,7 +101,7 @@ export class VsCodeFrameworkService implements IFrameworkService {
 
     async fetchLoggingLevels(frameworkId: number): Promise<string[]> {
         try {
-            const { data } = await getAxiosInstance().get<string[]>(`/api/logging_levels/${frameworkId}`);
+            const { data } = await getAxiosInstance().get<string[]>(`/logging_levels/${frameworkId}`);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchLoggingLevels API échouée. Fallback mock.`);
@@ -111,7 +111,7 @@ export class VsCodeFrameworkService implements IFrameworkService {
 
     async fetchSecurityTypes(frameworkId: number): Promise<string[]> {
         try {
-            const { data } = await getAxiosInstance().get<string[]>(`/api/security_types/${frameworkId}`);
+            const { data } = await getAxiosInstance().get<string[]>(`/security_types/${frameworkId}`);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchSecurityTypes API échouée. Fallback mock.`);
@@ -121,7 +121,7 @@ export class VsCodeFrameworkService implements IFrameworkService {
 
     async fetchCacheProviders(frameworkId: number): Promise<string[]> {
         try {
-            const { data } = await getAxiosInstance().get<string[]>(`/api/cache_providers/${frameworkId}`);
+            const { data } = await getAxiosInstance().get<string[]>(`/cache_providers/${frameworkId}`);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchCacheProviders API échouée. Fallback mock.`);
@@ -131,7 +131,7 @@ export class VsCodeFrameworkService implements IFrameworkService {
 
     async fetchLanguageVersions(languageId: number): Promise<string[]> {
         try {
-            const { data } = await getAxiosInstance().get<string[]>(`/api/generator/language-versions/${languageId}`);
+            const { data } = await getAxiosInstance().get<string[]>(`/generator/language-versions/${languageId}`);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchLanguageVersions échouée. Fallback mock.`);
@@ -141,7 +141,7 @@ export class VsCodeFrameworkService implements IFrameworkService {
 
     async fetchFrameworkVersions(frameworkId: number): Promise<string[]> {
         try {
-            const { data } = await getAxiosInstance().get<string[]>(`/api/generator/framework-versions/${frameworkId}`);
+            const { data } = await getAxiosInstance().get<string[]>(`/generator/framework-versions/${frameworkId}`);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchFrameworkVersions échouée. Fallback mock.`);
@@ -151,7 +151,7 @@ export class VsCodeFrameworkService implements IFrameworkService {
 
     async fetchBuildTools(frameworkId: number): Promise<string[]> {
         try {
-            const { data } = await getAxiosInstance().get<string[]>(`/api/generator/build-tools/${frameworkId}`);
+            const { data } = await getAxiosInstance().get<string[]>(`/generator/build-tools/${frameworkId}`);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchBuildTools échouée. Fallback mock.`);
@@ -161,7 +161,7 @@ export class VsCodeFrameworkService implements IFrameworkService {
 
     async fetchHibernateDdlAutoOptions(frameworkId: number): Promise<string[]> {
         try {
-            const { data } = await getAxiosInstance().get<string[]>(`/api/hibernate_ddl_auto_options/${frameworkId}`);
+            const { data } = await getAxiosInstance().get<string[]>(`/hibernate_ddl_auto_options/${frameworkId}`);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchHibernateDdlAutoOptions API échouée. Fallback mock.`);

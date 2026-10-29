@@ -82,7 +82,7 @@ function handleSummaryRequestEdit(summaryIndex: number) {
         const stepNumber = getStepNumberById(targetStepId);
         goToStep(stepNumber);
     }
-}
+}   
 
 function handleOpenProject() {
     const location = stepperData.value.config.projectLocation;

@@ -45,38 +45,45 @@ export class FrameworkHandler {
     // ═══ 2. ACTION MÉTIER (Écriture) ═══
 
     async handleGetLoggingLevels(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchLoggingLevels(payload.frameworkId);
+        let data = await this.service.fetchLoggingLevels(payload.frameworkId);
+        if (!data || data.length === 0) data = ["None"];
         panel.webview.postMessage({ type: 'LOGGING_LEVELS_LOADED', payload: data });
     }
 
     async handleGetSecurityTypes(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchSecurityTypes(payload.frameworkId);
+        let data = await this.service.fetchSecurityTypes(payload.frameworkId);
+        if (!data || data.length === 0) data = ["None"];
         panel.webview.postMessage({ type: 'SECURITY_TYPES_LOADED', payload: data });
     }
 
     async handleGetCacheProviders(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchCacheProviders(payload.frameworkId);
+        let data = await this.service.fetchCacheProviders(payload.frameworkId);
+        if (!data || data.length === 0) data = ["None"];
         panel.webview.postMessage({ type: 'CACHE_PROVIDERS_LOADED', payload: data });
     }
 
     async handleGetLanguageVersions(payload: { languageId: number }, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchLanguageVersions(payload.languageId);
+        let data = await this.service.fetchLanguageVersions(payload.languageId);
+        if (!data || data.length === 0) data = ["None"];
         panel.webview.postMessage({ type: 'LANGUAGE_VERSIONS_LOADED', payload: data });
     }
 
     async handleGetFrameworkVersions(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchFrameworkVersions(payload.frameworkId);
+        let data = await this.service.fetchFrameworkVersions(payload.frameworkId);
+        if (!data || data.length === 0) data = ["None"];
         panel.webview.postMessage({ type: 'FRAMEWORK_VERSIONS_LOADED', payload: data });
     }
 
     async handleGetBuildTools(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
         logger.log(LOG_CHANNEL, `➡️ [getBuildTools] Récupération pour le framework ID: ${payload.frameworkId}`);
-        const data = await this.service.fetchBuildTools(payload.frameworkId);
+        let data = await this.service.fetchBuildTools(payload.frameworkId);
+        if (!data || data.length === 0) data = ["None"];
         panel.webview.postMessage({ type: 'BUILD_TOOLS_LOADED', payload: data });
     }
 
     async handleGetHibernateDdlAutoOptions(payload: { frameworkId: number }, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchHibernateDdlAutoOptions(payload.frameworkId);
+        let data = await this.service.fetchHibernateDdlAutoOptions(payload.frameworkId);
+        if (!data || data.length === 0) data = ["None"];
         panel.webview.postMessage({ type: 'HIBERNATE_DDL_AUTO_LOADED', payload: data });
     }
 }

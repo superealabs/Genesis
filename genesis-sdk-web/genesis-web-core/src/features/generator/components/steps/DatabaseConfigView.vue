@@ -132,14 +132,15 @@
           class="flex-1"
         />
         <GenesisButton
-          variant="secondary" 
+          :variant="testSuccess ? 'primary' : 'secondary'"
           content-align="center"
-          :disabled="isTesting"
+          :disabled="isTesting || testSuccess"
           size="lg"
           @click="handleTestConnection"
           class="w-full md:w-auto"
         >
-          <span v-if="isTesting">Test en cours...</span>
+          <span v-if="testSuccess">Success</span>
+          <span v-else-if="isTesting">Test en cours...</span>
           <span v-else>Test Connexion</span>
         </GenesisButton>
       </div>
@@ -197,7 +198,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, toRaw, watch } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store';
 
@@ -205,6 +206,8 @@ import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/Genes
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+
+import { DatabaseConfig } from '@genesis-labs/shared-types';
 
 // ============================================================================
 // 1. EMITS
@@ -226,6 +229,8 @@ const databaseStore = useDatabaseStore();
 
 const database = computed(() => stepperData.value.database);
 const isTesting = ref(false);
+const testSuccess = ref(false);          // 👈 nouveau
+let successTimer: ReturnType<typeof setTimeout> | null = null;  // 👈 nouveau
 const selectedEngineName = computed(() => 
   pendingDatabaseEngine.value?.name || stepperData.value.database.engine || 'Aucun SGBD sélectionné'
 );
@@ -302,6 +307,28 @@ const computedUrl = computed(() => {
   }
 });
 
+const buildDisplayedDatabaseConfig = (): DatabaseConfig => {
+  const current = dbConfig.value;
+  return {
+    // engine : on privilégie pendingDatabaseEngine (ce que l'utilisateur voit),
+    // avec fallback sur le stepper si rien n'est sélectionné en pending.
+    engine: pendingDatabaseEngine.value?.name?.toString()
+      ?? current.engine,
+    host: current.host,
+    port: current.port,
+    databaseName: current.databaseName,
+    schema: current.schema,
+    username: current.username,
+    password: current.password,
+    driverType: current.driverType,
+    driverName: current.driverName,
+    sid: current.sid,
+    trustCertificate: current.trustCertificate,
+    allowPublicKeyRetrieval: current.allowPublicKeyRetrieval,
+  };
+};
+
+
 watch(
   () => [database.value.host, database.value.port, database.value.databaseName, database.value.sid],
   () => {
@@ -313,15 +340,40 @@ watch(
 // ============================================================================
 // 6. ACTIONS
 // ============================================================================
+
+function resetSuccessState() {
+  if (successTimer) {
+    clearTimeout(successTimer);
+    successTimer = null;
+  }
+  testSuccess.value = false;
+}
+
 async function handleTestConnection() {
+  // Si un succès est affiché, on le nettoie avant de relancer un test
+  resetSuccessState();
+
   isTesting.value = true;
   try {
-    const result = await testDatabaseConnection();
+    const displayedConfig = buildDisplayedDatabaseConfig();
+
+    console.log("Donnée envoyée à l'api : ", toRaw(displayedConfig));
+    const result = await testDatabaseConnection(displayedConfig);
+
     if (!result.success) {
       emit('test-connection-error', result.message);
+    } else {
+      // ✅ Succès : affiche "Success" pendant 3s puis reset
+      testSuccess.value = true;
+      successTimer = setTimeout(() => {
+        testSuccess.value = false;
+        successTimer = null;
+      }, 3000);
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Une erreur inconnue est survenue lors du test.';
+    const errorMessage = error instanceof Error
+      ? error.message
+      : 'Une erreur inconnue est survenue lors du test.';
     emit('test-connection-error', errorMessage);
   } finally {
     isTesting.value = false;

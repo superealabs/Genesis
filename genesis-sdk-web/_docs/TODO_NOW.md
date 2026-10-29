@@ -1,3 +1,8 @@
+- Problème, l'utilisateur est obligé de faire suivant pour valider la modification, est ce que c'est une bonne idée ?
+
+
+
+
 - Extension Host
     - vérification si le chemin existe vraiment(sinon, renvoyer une exception)
     - Correction des commandes possibles avec Genesis
@@ -41,4 +46,3 @@
 
 
 
-s

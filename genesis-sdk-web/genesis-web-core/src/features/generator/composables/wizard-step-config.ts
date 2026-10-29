@@ -212,6 +212,14 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
       if (!(await confirmFrameworkChange(store, framework))) return false;
 
+      // COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
+      if (store.pendingFramework) {
+        store.setFramework(store.pendingFramework);
+        console.log(`[Wizard: project_config] Framework validé et commit :`, store.pendingFramework.name);
+      }
+
+
+
       console.log(`[Wizard: framework] Framework en attente de validation :`, framework.name);
       return true;
     }
@@ -251,11 +259,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       }
 
       try {
-        // COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
-        if (store.pendingFramework) {
-          store.setFramework(store.pendingFramework);
-          console.log(`[Wizard: project_config] Framework validé et commit :`, store.pendingFramework.name);
-        }
+
 
         console.log("[Wizard: project_config] Configuration du projet validée");
         return true;
@@ -279,42 +283,47 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         console.error("[Wizard: database_select] Échec du chargement des moteurs DB:", error);
         _store.setWizardError("Impossible de charger la liste des bases de données.");
       }
-    },
-    
+    },    
     beforeNext: async (store) => {
       if (!store.pendingDatabaseEngine) {
         store.setWizardError("Veuillez sélectionner un moteur de base de données.");
         return false;
       }
 
-      console.log(`[Wizard: database_select] Moteur BDD en attente de validation :`, store.pendingDatabaseEngine.name);
+      // 👇 Commit du moteur dans stepperData.database
+      //    (synchronise engine, port, driverName, driverType, sid)
+      store.setDatabaseEngine(store.pendingDatabaseEngine);
+      console.log(`[Wizard: database_select] Moteur BDD commit :`, store.pendingDatabaseEngine.name);
+
       return true;
     }
   },
 
   database_config: {
-    beforeNext: async (store) => {
+    beforeNext: async (store, { dbsvc }) => {
       const db = store.stepperData.database;
-      
-      // 1. Validation basique des champs obligatoires du formulaire
+
       if (!db.host || !db.port || !db.databaseName || !db.username) {
         store.setWizardError("L'hôte, le port, le nom de la base de données et l'utilisateur sont obligatoires.");
         return false;
       }
 
+      // 👇 Test de connexion obligatoire
       try {
-        // 2. COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
-        if (store.pendingDatabaseEngine) {
-          store.setDatabaseEngine(store.pendingDatabaseEngine);
-          console.log(`[Wizard: database_config] Moteur BDD validé et commit :`, store.pendingDatabaseEngine.name);
+        const result = await dbsvc.testDatabaseConnection(db);
+        if (!result.success) {
+          store.setWizardError(result.message);
+          return false;
         }
-
-        console.log("[Wizard: database_config] Configuration BDD validée");
-        return true;
       } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des credentials.");
+        store.setWizardError(
+          error instanceof Error ? error.message : "Échec du test de connexion."
+        );
         return false;
       }
+
+      console.log("[Wizard: database_config] Configuration BDD validée (test OK).");
+      return true;
     }
   },
 
@@ -436,6 +445,11 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return true;
       }
 
+      if (store.pendingFrontendFramework) {
+        store.setSelectedFrontendFramework(store.pendingFrontendFramework);
+        console.log(`[Wizard: frontend_layout] Framework Frontend validé et commit :`, store.pendingFrontendFramework.name);
+      }
+
       console.log(`[Wizard: frontend_select] Framework Frontend en attente de validation :`, store.pendingFrontendFramework.name);
       return true;
     },
@@ -454,10 +468,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   frontend_config: {
     beforeNext: async (store) => {
       try {
-        if (store.pendingFrontendFramework) {
-          store.setSelectedFrontendFramework(store.pendingFrontendFramework);
-          console.log(`[Wizard: frontend_layout] Framework Frontend validé et commit :`, store.pendingFrontendFramework.name);
-        }
+
 
         console.log("[Wizard: frontend_layout] Configuration layout Frontend validée");
         return true;

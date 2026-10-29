@@ -43,6 +43,7 @@ export const useGeneratorStore = defineStore('generator', () => {
   const pendingRepositoryProvider = ref<RepositoryProviderMetadata | null>(null);
 
 
+
   // Domaine : Étape 2 - Options de configuration projet (Listes dynamiques)
   const availableLoggingLevels = ref<string[]>([]);
   const availableSecurityTypes = ref<string[]>([]);
@@ -119,6 +120,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     generationAssociations.value = [];
     relations.value = [];
     relationsLoaded.value = false;
+
   }
 
   
@@ -205,6 +207,9 @@ export const useGeneratorStore = defineStore('generator', () => {
     (stepperData.value.database as any)[key] = value; 
   }
 
+
+  // --- Étape 3 & 4 : Base de Données ---
+ 
   // --- Étape 5 : Script / IA ---
   function updateScript<K extends keyof ScriptConfig>(key: K, value: ScriptConfig[K]) { 
     (stepperData.value.script as any)[key] = value; 
@@ -423,6 +428,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     // Étape 3 & 4 : Base de Données
     pendingDatabaseEngine, setPendingDatabaseEngine, setDatabaseEngine, updateDatabase,
 
+
     // Étape 5 : Script / IA
     updateScript,
 
@@ -459,6 +465,8 @@ export const useGeneratorStore = defineStore('generator', () => {
     resetFrontendDependentConfig,
     hasFrontendData,
     invalidateSteps,
-    lastInvalidation
+    lastInvalidation,
+
+
   };
 });
