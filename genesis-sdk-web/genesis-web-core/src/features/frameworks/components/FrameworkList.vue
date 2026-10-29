@@ -28,7 +28,7 @@
           :badge="frameworkSlots?.get(framework.id) ?? null"
           @click="$emit('select', framework, $event)"
           @info="$emit('info', framework)"
-          feature="test"
+          :feature="getLanguageName(framework.languageId)" 
           :size="'sm'"
         >
           <template #default>
@@ -40,7 +40,6 @@
   </GenesisDisclosure>
 
   <!-- ═══ LISTE GROUPÉE GÉNÉRIQUE (TOUS LES FRAMEWORKS) ═══ -->
-  <!-- ✅ CORRECTION : Retrait du v-else. On veut toujours afficher la liste complète en dessous des récents -->
   <GenesisGroupedList
     v-if="frameworks.length > 0"
     :items="frameworks"
@@ -62,7 +61,7 @@
           :show-info-button="true"
           @click="$emit('select', framework, $event)"
           @info="$emit('info', framework)"
-          :feature="groupLabels ? groupLabels[framework.id] : 'unknow'"
+          :feature="getLanguageName(framework.languageId)" 
         >
           <template #default>
             <td class="p-3 text-center">{{ framework.name }}</td>
@@ -78,12 +77,10 @@ import type { Framework } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 import GenesisGroupedList from '@genesis-labs/web-core/core/components/layouts/display/GenesisGroupedList.vue';
-import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue'; // ✅ Ajouté car utilisé dans le template
+import GenesisList from '@genesis-labs/web-core/core/components/layouts/display/GenesisList.vue';
 import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
 import { resolveFrameworkLogo } from '../assets/frameworkLogos';
-
-// ✅ Import du composable de récence
 import { useRecency } from '@genesis-labs/web-core/core/features/recent/composables/useRecency';
 
 // ============================================================================
@@ -91,6 +88,7 @@ import { useRecency } from '@genesis-labs/web-core/core/features/recent/composab
 // ============================================================================
 const props = defineProps<{
   frameworks: Framework[];
+  languages?: { id: number; name: string }[]; // ✅ AJOUT : On reçoit la liste des langages
   selectedId?: number;
   display: DisplayMode;
   frameworkSlots?: Map<number, string>;
@@ -110,20 +108,21 @@ defineEmits<{
 }>();
 
 // ============================================================================
-// 3. LOGIQUE DE RÉCENCE
+// 3. LOGIQUE DE RÉCENCE & UTILITAIRES
 // ============================================================================
-// On récupère les items récents bruts (id, name, lastUsed) via le composable
 const { recentFrameworks: recentFrameworkItems } = useRecency();
 
-/**
- * Mappe les IDs des frameworks récents vers les objets Framework complets 
- * présents dans la prop `frameworks`, en conservant l'ordre de récence.
- */
 const recentFrameworks = computed<Framework[]>(() => {
   return recentFrameworkItems.value
     .map(recent => props.frameworks.find(f => f.id === recent.id))
-    .filter((f): f is Framework => f !== undefined); // Sécurité : filtre les frameworks qui auraient été supprimés du catalogue
+    .filter((f): f is Framework => f !== undefined);
 });
+
+// ✅ NOUVEAU : Fonction fiable pour récupérer le nom du langage
+const getLanguageName = (languageId: number): string => {
+  const lang = props.languages?.find(l => l.id === languageId);
+  return lang ? lang.name : 'Inconnu';
+};
 </script>
 
 <style scoped>

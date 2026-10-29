@@ -24,7 +24,7 @@ export class VsCodeDatabaseService implements IDatabaseService {
     // ✅ LECTURE : Le service garantit un retour (API ou Mock)
     async fetchDatabaseEngines(): Promise<DatabaseEngineDto[]> {
         try {
-            const { data } = await getAxiosInstance().get<DatabaseEngineDto[]>('/api/database/engines');
+            const { data } = await getAxiosInstance().get<DatabaseEngineDto[]>('/api/database');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchDatabaseEngines API échouée. Activation du FALLBACK MOCK.`);

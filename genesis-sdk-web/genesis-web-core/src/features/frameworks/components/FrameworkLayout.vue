@@ -55,6 +55,7 @@
 
     <FrameworkList
       :frameworks="frameworks"
+      :languages="languages"
       :selectedId="selectedId"
       :display="displayMode"
       :frameworkSlots="frameworkSlots"

@@ -262,7 +262,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
                 message: "Projet généré avec succès (Mode Simulation).",
                 projectPath: simulatedPath
             };
-
+            
             // Petit délai artificiel (1.5s) pour simuler le temps de traitement du backend 
             // et permettre à l'UI d'afficher l'état de chargement ("Génération en cours...")
             await new Promise(resolve => setTimeout(resolve, 1500));
