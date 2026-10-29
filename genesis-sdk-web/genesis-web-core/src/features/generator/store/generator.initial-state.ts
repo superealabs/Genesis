@@ -21,10 +21,10 @@ export const INITIAL_STATE: GeneratorData = {
         engine: 'postgre',
         host: 'localhost',
         port: 5432,
-        databaseName: '',
+        databaseName: 'database_test',
         schema: 'public',
-        username: '',
-        password: '',
+        username: 'root',
+        password: 'default',
         driverType: 'jdbc',
         driverName: '',
         sid: '',
@@ -59,5 +59,6 @@ export const INITIAL_STATE: GeneratorData = {
         frontendRepositoryName: '',
         githubUsername: '',
         githubToken: ''
-    }
+    },
+    repositoryConfig : null
 };

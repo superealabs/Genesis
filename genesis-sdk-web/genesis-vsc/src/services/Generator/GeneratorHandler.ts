@@ -177,13 +177,44 @@ export class GeneratorHandler {
         }
     }
 
+// src/services/Generator/GeneratorHandler.ts
+
     async handleLaunchGeneration(payload: GeneratorData, panel: vscode.WebviewPanel): Promise<void> {
         try {
             logger.log(LOG_CHANNEL, `🚀 [launchGeneration] Lancement de la génération pour: ${payload.config.projectName}`);
+            
+            // 1. Appel au service pour la génération réelle
             const result = await this.service.launchGeneration(payload);
+            
+            // 2. ✅ CORRECTION : Notifier la webview IMMÉDIATEMENT que la génération est finie.
+            // Cela permet au frontend de résoudre sa Promise et d'arrêter l'écran de chargement.
             panel.webview.postMessage({ type: 'GENERATION_RESULT', payload: result });
+                        
         } catch (error) {
             this.sendApiError(panel, 'LAUNCH_GENERATION', error);
+        }
+    }
+
+    async handleOpenProject(payload: { projectPath: string }, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const action = await vscode.window.showInformationMessage(
+                `Le projet a été généré avec succès dans :\n${payload.projectPath}`,
+                { modal: true },
+                'Ouvrir dans cette fenêtre',
+                'Ouvrir dans une nouvelle fenêtre'
+            );
+
+            if (action === 'Ouvrir dans cette fenêtre') {
+                const uri = vscode.Uri.file(payload.projectPath);
+                await vscode.commands.executeCommand('vscode.openFolder', uri, { forceReuseWindow: true });
+            } 
+            else if (action === 'Ouvrir dans une nouvelle fenêtre') {
+                const uri = vscode.Uri.file(payload.projectPath);
+                await vscode.commands.executeCommand('vscode.openFolder', uri, { forceNewWindow: true });
+            }
+            // Si 'action' est undefined, l'utilisateur a cliqué sur Annuler ou fermé la popup : on ne fait rien.
+        } catch (error) {
+            this.sendApiError(panel, 'OPEN_PROJECT', error);
         }
     }
 

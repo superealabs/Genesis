@@ -22,11 +22,11 @@
             v-model="searchQuery"
             type="text"
             :placeholder="searchPlaceholder"
-            size="md"
+            size="lg"
             fill-width
           >
             <template #left>
-              <IconSearch :size="16" class="text-text-muted" />
+              <IconSearch :size="12" class="text-text-muted" />
             </template>
           </GenesisInput>
         </div>
@@ -36,7 +36,7 @@
     <!-- 2. Tableau des Relations -->
     <section class="flex-1 min-h-0">
       <GenesisContainer
-        :min-height="300"
+        :min-height="250"
         :max-height="maxHeight"
         :is-empty="filteredRelations.length === 0"
         empty-text="Aucune relation ne correspond à ces critères."
@@ -129,8 +129,8 @@
                     <GenesisSwitch v-model="rel.hasForm" size="sm" @update:modelValue="emitUpdate(rel, 'hasForm', $event)" />
                   </template>
                   <template v-else>
-                    <IconCheck v-if="rel.hasForm" class="w-5 h-5 text-primary" />
-                    <IconX v-else class="w-5 h-5 text-red-500" />
+                    <IconCheck v-if="rel.hasForm" class="w-6 h-6 text-primary" />
+                    <IconX v-else class="w-6 h-6 text-red-500" />
                   </template>
                 </div>
               </td>
@@ -142,8 +142,8 @@
                     <GenesisSwitch v-model="rel.mandatory" size="sm" @update:modelValue="emitUpdate(rel, 'mandatory', $event)" />
                   </template>
                   <template v-else>
-                    <IconCheck v-if="rel.mandatory" class="w-5 h-5 text-primary" />
-                    <IconX v-else class="w-5 h-5 text-red-500" />
+                    <IconCheck v-if="rel.mandatory" class="w-6 h-6 text-primary" />
+                    <IconX v-else class="w-6 h-6 text-red-500" />
                   </template>
                 </div>
               </td>

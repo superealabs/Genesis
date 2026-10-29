@@ -1,11 +1,11 @@
 <template>
     <div
-        class="flex flex-col min-h-0 overflow-hidden rounded-lg relative transition-all duration-200"
+        class="flex flex-col min-h-0 pt-4 overflow-hidden rounded-lg relative transition-all duration-200"
         :class="[containerVariantClasses, { 'opacity-50': disabled }]"
         :style="resizeStyle"
     >
         <textarea
-            class="flex-1 w-full min-h-0 bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed p-4 custom-scrollbar resize-none"
+            class="flex-1 w-full min-h-0 bg-transparent outline-none text-text placeholder:text-muted disabled:cursor-not-allowed p-4 custom-scrollbar resize-none pt-1"
             :disabled="disabled"
             :placeholder="placeholder"
             :value="String(modelValue ?? '')"

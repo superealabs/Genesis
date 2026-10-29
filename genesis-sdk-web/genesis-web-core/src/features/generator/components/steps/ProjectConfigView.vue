@@ -4,9 +4,15 @@
       
       <!-- 1. CONFIGURATION DE BASE -->
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-text border-b border-neutral-light pb-2">
-          Configuration du Projet
-        </h3>
+        <!-- ✅ AJOUT : En-tête avec le déclencheur du tutoriel -->
+        <div class="flex items-center justify-between border-b border-neutral-light-genesis pb-2">
+          <h3 class="text-xl font-semibold text-text">
+            Configuration du Projet
+          </h3>
+          <GenesisButtonIcon variant="neutral" size="sm" @click="tutorial.restart">
+              <IconHelp />
+          </GenesisButtonIcon>
+        </div>
         
         <div ref="frameworkSelectorRef" class="flex items-end gap-3">
           <div class="flex-1">
@@ -89,16 +95,24 @@
         </div>
       </div>
 
-      <div class="border-t border-secondary"></div>
-
       <!-- 2. CONFIGURATION DU FRAMEWORK (STACK TECHNIQUE) -->
-      <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-text border-b border-secondary pb-2">
-          Stack Technique ({{ framework?.name || 'Non sélectionné' }})
-        </h3>
+      <div class="space-y-6">
+        <div class="flex items-center justify-between border-b border-neutral-light-genesis pb-2">
+          <h3 class="text-xl font-semibold text-text">
+            Stack Technique ({{ framework?.name || 'Non sélectionné' }})
+          </h3>
+          <GenesisButtonIcon 
+            variant="neutral" 
+            size="sm" 
+            @click="tutorial.restart('tech-stack')"
+            title="Aide sur la configuration de la stack technique"
+          >
+            <IconHelp />
+          </GenesisButtonIcon>
+        </div>
         
         <div class="flex flex-col lg:flex-row gap-6">
-          <div class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex-1 flex flex-col gap-4">
             
             <GenesisInput 
               :model-value="config.languageVersion" 
@@ -108,7 +122,6 @@
               size="lg" 
               label="Version du Language" 
               placeholder="Sélectionner..." 
-              fill-width 
             />
 
             <GenesisInput 
@@ -119,7 +132,6 @@
               size="lg" 
               label="Build Tool" 
               placeholder="Sélectionner..." 
-              fill-width 
             />
 
             <div v-if="showGroupId" class="space-y-1">
@@ -129,7 +141,6 @@
                 size="lg" 
                 label="Group ID" 
                 placeholder="com.example" 
-                fill-width 
               />
             </div>
 
@@ -141,28 +152,31 @@
               size="lg" 
               label="Version du Framework" 
               placeholder="Sélectionner..." 
-              fill-width 
             />
 
           </div>
 
           <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-            <GenesisConfigurationPanel
-              :configurations="techStackConfigManager.configurations.value"
-              :selected-config-id="techStackConfigManager.selectedConfigId.value"
-              :filtered-configs="techStackConfigManager.filteredConfigs.value"
-              :search-query="techStackConfigManager.searchQuery.value"
-              :can-move-up="techStackConfigManager.canMoveUp.value"
-              :can-move-down="techStackConfigManager.canMoveDown.value"
-              @update:search-query="(val) => techStackConfigManager.searchQuery.value = val"
-              @add="techStackLogic.handleAdd"
-              @delete="techStackLogic.handleDelete"
-              @rename="techStackLogic.handleRename"
-              @toggle-visibility="techStackConfigManager.toggleVisibility"
-              @move-up="techStackConfigManager.moveUp"
-              @move-down="techStackConfigManager.moveDown"
-              @select-configuration="techStackLogic.handleSelect"
-            />
+            <GenesisTutorialItem id="tutorial-tech-stack-config">
+              <GenesisConfigurationPanel
+                :tutorial-id="'tutorial-tech-stack-config'"
+                :include-sub-tutorial="true"
+                :configurations="techStackConfigManager.configurations.value"
+                :selected-config-id="techStackConfigManager.selectedConfigId.value"
+                :filtered-configs="techStackConfigManager.filteredConfigs.value"
+                :search-query="techStackConfigManager.searchQuery.value"
+                :can-move-up="techStackConfigManager.canMoveUp.value"
+                :can-move-down="techStackConfigManager.canMoveDown.value"
+                @update:search-query="(val) => techStackConfigManager.searchQuery.value = val"
+                @add="techStackLogic.handleAdd"
+                @delete="techStackLogic.handleDelete"
+                @rename="techStackLogic.handleRename"
+                @toggle-visibility="techStackConfigManager.toggleVisibility"
+                @move-up="techStackConfigManager.moveUp"
+                @move-down="techStackConfigManager.moveDown"
+                @select-configuration="techStackLogic.handleSelect"
+              />
+            </GenesisTutorialItem>
             <div class="flex gap-2 justify-end">
               <GenesisButtonIcon title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
                 <IconUpload />
@@ -172,11 +186,14 @@
         </div>
       </div>
 
-      <div class="border-t border-secondary"></div>
-
       <!-- 3. CONFIGURATION AVANCÉE -->
       <div class="space-y-4">
-        <GenesisDisclosure title="Configuration Avancée du Backend" :default-open="false">
+        <GenesisDisclosure title="Configuration Avancée du Backend" :variant="'secondary'" :padding="'lg'" :default-open="false">
+
+          <template #title>
+              <span class="text-xl font-semibold">Configuration Avancée du Backend</span>
+          </template>
+
           <div class="flex flex-col lg:flex-row gap-6">
             
             <div class="flex-1 flex flex-col gap-4">
@@ -229,22 +246,37 @@
             </div>
 
             <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-              <GenesisConfigurationPanel
-                :configurations="configManager.configurations.value"
-                :selected-config-id="configManager.selectedConfigId.value"
-                :filtered-configs="configManager.filteredConfigs.value"
-                :search-query="configManager.searchQuery.value"
-                :can-move-up="configManager.canMoveUp.value"
-                :can-move-down="configManager.canMoveDown.value"
-                @update:search-query="(val) => configManager.searchQuery.value = val"
-                @add="advancedLogic.handleAdd"
-                @delete="advancedLogic.handleDelete"
-                @rename="advancedLogic.handleRename"
-                @toggle-visibility="configManager.toggleVisibility"
-                @move-up="configManager.moveUp"
-                @move-down="configManager.moveDown"
-                @select-configuration="advancedLogic.handleSelect"
-              />
+              <div class="flex items-center justify-end gap-1.5">
+                <span class="text-sm text-text-muted">How to use</span>
+                <GenesisButtonIcon 
+                  variant="neutral" 
+                  size="sm" 
+                  @click="tutorial.restart('advanced')"
+                  title="Aide sur la configuration avancée"
+                >
+                  <IconHelp :size="16" />
+                </GenesisButtonIcon>
+              </div>
+
+              <GenesisTutorialItem id="tutorial-advanced-config">
+                <GenesisConfigurationPanel
+                  :tutorial-id="'tutorial-advanced-config'"
+                  :configurations="configManager.configurations.value"
+                  :selected-config-id="configManager.selectedConfigId.value"
+                  :filtered-configs="configManager.filteredConfigs.value"
+                  :search-query="configManager.searchQuery.value"
+                  :can-move-up="configManager.canMoveUp.value"
+                  :can-move-down="configManager.canMoveDown.value"
+                  @update:search-query="(val) => configManager.searchQuery.value = val"
+                  @add="advancedLogic.handleAdd"
+                  @delete="advancedLogic.handleDelete"
+                  @rename="advancedLogic.handleRename"
+                  @toggle-visibility="configManager.toggleVisibility"
+                  @move-up="configManager.moveUp"
+                  @move-down="configManager.moveDown"
+                  @select-configuration="advancedLogic.handleSelect"
+                />
+              </GenesisTutorialItem>
 
               <div class="flex gap-2 justify-end">
                 <GenesisButtonIcon title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
@@ -267,6 +299,7 @@
 </template>
 
 <script setup lang="ts">
+import { Ref } from 'vue';
 import { computed, watch, ref, onMounted, nextTick } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useConfigurationManager } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
@@ -283,10 +316,19 @@ import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.v
 import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
+
+import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
+
+import { confirmFrameworkChange } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
+import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
+
 
 // ============================================================================
 // 1. EMITS & CONSTANTES
 // ============================================================================
+
 const emit = defineEmits<{ 'request-folder-path': [] }>();
 
 const DEFAULT_VALUES_ADVANCED = ['INFO', 'NONE', 'Aucun', 'none'];
@@ -300,11 +342,28 @@ const panelSlides: CarouselSlide[] = [
   { color: '#10B981', label: 'Slide 3' },
 ];
 
+// deux choix, soit je l'associe à une variable boolean
+// soit c'est la lecture qui ne le lis pas si il est caché
+
+const tutorial = useGenesisTutorial('project-config', {
+  'tech-stack': [
+    { id: 'tutorial-tech-stack-config', text: 'Enregistrez ici vos stacks techniques favorites pour les réutiliser.' }
+  ],
+  'advanced': [
+    { id: 'tutorial-advanced-config', text: 'Même principe pour la configuration avancée du backend.' }
+  ]
+});
+
+console.log("✅ [ProjectConfigView] useGenesisTutorial initialisé. ScreenId: 'project-config'");
+
 // ============================================================================
 // 2. COMPOSABLES & STORES
 // ============================================================================
 const { 
-  stepperData, setFramework, updateConfig,
+  stepperData,
+  setPendingFramework,
+  pendingFramework, 
+  updateConfig,
   availableLoggingLevels, availableSecurityTypes, availableCacheProviders,
   availableLanguageVersions, availableFrameworkVersions, availableBuildTools, availableHibernateDdlAutoOptions,
   fetchLoggingLevels, fetchSecurityTypes, fetchCacheProviders, fetchLanguageVersions,
@@ -313,6 +372,7 @@ const {
 
 const { saveConfiguration, deleteConfiguration, configurations: persistedConfigs, loadAdvancedConfigurations, loadTechnicalStackConfigurations } = useConfig();
 const frameworkStore = useFrameworkStore();
+const generatorStore = useGeneratorStore();
 
 const configManager = useConfigurationManager([], { singleConfiguration: false });
 const techStackConfigManager = useConfigurationManager([], { singleConfiguration: false });
@@ -326,16 +386,20 @@ const tempFrameworkName = ref('');
 
 const availableFrameworksOptions = computed(() => frameworkStore.frameworks.map(f => ({ label: f.name, value: f })));
 const config = computed(() => stepperData.value.config);
-const framework = computed(() => stepperData.value.framework);
+const framework = computed(() => pendingFramework.value || stepperData.value.framework);
 const showGroupId = computed(() => framework.value?.withGroupId === true);
 const showHibernateDdl = computed(() => framework.value?.withHibernateDdlAuto === true);
 
 function startEditingFramework() { tempFrameworkName.value = ''; isEditingFramework.value = true; }
 function cancelEditingFramework() { isEditingFramework.value = false; tempFrameworkName.value = ''; }
 
-function handleFrameworkSelect(value: any) {
-  if (typeof value === 'string') return; 
-  if (value && value.id) { setFramework(value); isEditingFramework.value = false; }
+async function handleFrameworkSelect(value: any) {
+  if (typeof value === 'string' || !value?.id) return;
+  isEditingFramework.value = false;
+  if (value.id === framework.value?.id) return;
+
+  if (!(await confirmFrameworkChange(generatorStore, value))) return; // annulé : rien ne bouge
+  setPendingFramework(value);
 }
 
 function handleClickOutside(event: MouseEvent) {
@@ -440,7 +504,30 @@ const techStackLogic = useConfigManagerLogic({
 // ============================================================================
 // 5. LIFECYCLE & WATCHERS GLOBAUX
 // ============================================================================
-async function syncConfigsToCurrentFramework() {
+
+/**
+ * Reset  → on repart des valeurs par défaut (nouveau framework)
+ * Sinon  → on garde les valeurs du store et on resélectionne la config qui y correspond
+ */
+function syncSelection(
+  manager: ReturnType<typeof useConfigurationManager>,
+  logic: { handleSelect: (id: any) => void },
+  currentValues: () => unknown[],
+  resetValues: boolean
+) {
+  if (resetValues) {
+    manager.selectConfiguration(null);
+    logic.handleSelect(null);
+    return;
+  }
+  const current = currentValues();
+  const match = manager.configurations.value.find(c =>
+    c.components.length === current.length && c.components.every((v, i) => v === current[i])
+  );
+  manager.selectConfiguration(match?.id ?? null); // sélection visuelle seulement, n'écrase rien
+}
+
+async function syncConfigsToCurrentFramework(resetValues: boolean) {
   if (!framework.value) return;
   const { id: fwId, name: fwName } = framework.value;
 
@@ -449,23 +536,31 @@ async function syncConfigsToCurrentFramework() {
     const p = c.payload as any;
     return { id: c.id, name: c.name, isHidden: false, components: [p.loggingLevel, p.securityType, p.cacheProvider, p.hibernateDdlAuto] };
   });
-  configManager.selectConfiguration(null);
-  advancedLogic.handleSelect(null);
+  syncSelection(configManager, advancedLogic,
+    () => [config.value.loggingLevel, config.value.securityType, config.value.cacheProvider, config.value.hibernateDdlAuto],
+    resetValues);
 
   const techStackData = await loadTechnicalStackConfigurations(fwId, fwName);
   techStackConfigManager.configurations.value = techStackData.map(c => {
     const p = c.payload as any;
     return { id: c.id, name: c.name, isHidden: false, components: [p.languageVersion, p.buildTool, p.groupId, p.frameworkVersion] };
   });
-  techStackConfigManager.selectConfiguration(null);
-  techStackLogic.handleSelect(null);
+  syncSelection(techStackConfigManager, techStackLogic,
+    () => [config.value.languageVersion, config.value.buildTool, config.value.groupId, config.value.frameworkVersion],
+    resetValues);
 }
 
-onMounted(async () => { await syncConfigsToCurrentFramework(); });
+// Au montage : reset uniquement si le framework choisi n'est pas encore celui validé
+onMounted(async () => {
+  const frameworkChanged = !!pendingFramework.value
+    && pendingFramework.value.id !== stepperData.value.framework?.id;
+  await syncConfigsToCurrentFramework(frameworkChanged);
+});
 
+// En cours d'édition : changement de framework → reset + rechargement des options
 watch(() => framework.value?.id, async (newId, oldId) => {
   if (newId && newId !== oldId && framework.value) {
-    await syncConfigsToCurrentFramework();
+    await syncConfigsToCurrentFramework(true);
     await Promise.all([
       fetchBuildTools(newId), fetchLanguageVersions(framework.value.languageId),
       fetchFrameworkVersions(newId), fetchLoggingLevels(newId),

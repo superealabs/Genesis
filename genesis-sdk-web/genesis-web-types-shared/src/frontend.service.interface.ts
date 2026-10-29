@@ -10,7 +10,9 @@ export interface IFrontendService {
      * (Le backend peut les filtrer si un framework backend est déjà choisi, 
      * ou renvoyer la liste complète).
      */
-    fetchFrontendFrameworks(): Promise<FrontendFramework[]>;
+
+    // Modification pour envoyer le FrameworkID aussi
+    fetchFrontendFrameworks(FrameworkID? :number): Promise<FrontendFramework[]>;
 
     /**
      * Récupère la liste de TOUS les langages de programmation frontend disponibles 

@@ -41,43 +41,13 @@
               <GenesisSegmentedControl v-model="activeFilter" :options="filterOptions" size="md" />
             </div>
             
-            <GenesisContainer
-              :min-height="300"
-              :max-height="maxHeight()"
-              :is-empty="filteredCombinedItems.length === 0"
-              empty-text="Aucune table ou vue ne correspond à cette recherche."
-            >
-              <div 
-                v-for="item in filteredCombinedItems" 
-                :key="item.tableName"
-                class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 hover:bg-bg-secondary/50 transition-colors cursor-default"
-              >
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                  <!-- Icône Table / Vue -->
-                  <div class="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
-                      :class="item.isView ? 'bg-purple-500/10 text-purple-500' : 'bg-blue-500/10 text-blue-500'">
-                    <svg v-if="item.isView" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
-                    </svg>
-                  </div>
-                  <div class="flex flex-col min-w-0">
-                    <span class="text-sm font-medium text-text truncate">{{ item.tableName }}</span>
-                    <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
-                  </div>
-                </div>
-                
-                <!-- Badge du profil assigné -->
-                <div class="flex-shrink-0 ml-4 text-right min-w-[120px]">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                    {{ getAssignedProfile(item.tableName, item.isView) }}
-                  </span>
-                </div>
-              </div>
-            </GenesisContainer>
+            <GenesisEntityTable
+                :items="filteredCombinedItems"
+                :right-text="(item) => getAssignedProfile(item.tableName, item.isView)"
+                :min-height="300"
+                :max-height="maxHeight()"
+                empty-text="Aucune table ou vue ne correspond à cette recherche."
+            />
           </div>
 
           <!-- Colonne droite : Récapitulatif des Profils et leurs composants -->
@@ -166,8 +136,8 @@ import { useGenerator } from '@genesis-labs/web-core/features/generator/composab
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
-import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
+import GenesisEntityTable from '@genesis-labs/web-core/core/components/layouts/display/table/GenesisEntityTable.vue';
 
 import generationIllustration from '../../assets/generation-illustration.png';
 

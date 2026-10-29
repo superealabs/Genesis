@@ -31,15 +31,9 @@ UR
 - Présentation
     - très urgent(hors de portée)
     - Urgence
-        - Gestion de Génération :
-            - retirer le tuto(mettre en popup avec le petit point d'interrogration dessus)
-            - rajouter un tableau à droite pour les éléments assignés
-
         - mettre en place le set des étapes(nécessite l'intervention de Nomena)
-            - déterminer le comportement lors du setStep from Summary
             - corriger le comportement onSkip step aussi(quoi faire durant le onSkip quoi)
                 - Script Config View
-                    - rajouter une variable already sended
             - Corriger l'interface de LLM Assistants
             - Gestion des exceptions
 

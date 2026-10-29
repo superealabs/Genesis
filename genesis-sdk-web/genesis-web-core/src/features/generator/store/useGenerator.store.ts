@@ -1,6 +1,7 @@
 // genesis-sdk-web/genesis-web-core/src/features/generator/store/useGenerator.store.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import type { StepId } from '../composables/wizard-step-config'
 
 // Types partagés
 import type { 
@@ -16,7 +17,9 @@ import type {
   GitConfiguration,
   DatabaseEngineDto,
   GenerationAssociatedToConfig,
-  ComponentType
+  ComponentType,
+  RepositoryProviderMetadata,
+  RepositoryConfig
 } from '@genesis-labs/shared-types';
 
 import { INITIAL_STATE } from './generator.initial-state';
@@ -29,6 +32,7 @@ export const useGeneratorStore = defineStore('generator', () => {
   
   // Domaine : Global & Utilitaire
   const isGenerating = ref(false);
+  const isGenerationComplete = ref(false);
   const wizardError = ref<string | null>(null);
   const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
 
@@ -36,6 +40,8 @@ export const useGeneratorStore = defineStore('generator', () => {
   const pendingFramework = ref<Framework | null>(null);
   const pendingDatabaseEngine = ref<DatabaseEngineDto | null>(null);
   const pendingFrontendFramework = ref<FrontendFramework | null>(null);
+  const pendingRepositoryProvider = ref<RepositoryProviderMetadata | null>(null);
+
 
   // Domaine : Étape 2 - Options de configuration projet (Listes dynamiques)
   const availableLoggingLevels = ref<string[]>([]);
@@ -59,6 +65,7 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   // Domaine : Étape 7 - Relations
   const relations = ref<RelationParameter[]>([]);
+  const relationsLoaded = ref(false);
 
 
   // ==========================================================================
@@ -85,6 +92,11 @@ export const useGeneratorStore = defineStore('generator', () => {
   const getAvailableFrameworkVersions = computed(() => availableFrameworkVersions.value);
   const getAvailableBuildTools = computed(() => availableBuildTools.value);
 
+  const configFramework = ref<Framework | null>(null);
+
+
+  const lastInvalidation = ref<{ id: number; steps: StepId[] } | null>(null);
+  let invalidationCounter = 0;
 
   // ==========================================================================
   // 3. ACTIONS - Groupées par domaine
@@ -94,24 +106,59 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setWizardError(message: string) { wizardError.value = message; }
   function clearWizardError() { wizardError.value = null; }
   function setIsGenerating(value: boolean) { isGenerating.value = value; }
+  function setConfigFramework(fw: Framework | null) { configFramework.value = fw; }
   
   function reset() {
     isGenerating.value = false;
     wizardError.value = null;
+    isGenerationComplete.value = false;
     stepperData.value = structuredClone(INITIAL_STATE);
     pendingFramework.value = null;
     pendingDatabaseEngine.value = null;
     pendingFrontendFramework.value = null;
     generationAssociations.value = [];
+    relations.value = [];
+    relationsLoaded.value = false;
   }
+
+  
+  function resetFrameworkDependentConfig(next: Framework) {
+    const initial = INITIAL_STATE.config;
+    const keys = [
+      'languageVersion', 'buildTool', 'groupId', 'frameworkVersion',
+      'loggingLevel', 'securityType', 'cacheProvider', 'hibernateDdlAuto'
+    ] as const;
+    keys.forEach(k => updateConfig(k, initial[k]));
+    configFramework.value = next;
+  }
+
+  /** Remet à zéro le choix du frontend et sa configuration */
+  function resetFrontendDependentConfig() {
+    pendingFrontendFramework.value = null;
+    stepperData.value.frontend = null;
+    stepperData.value.frontendLayout = structuredClone(INITIAL_STATE.frontendLayout);
+  }
+
+  /** Y a-t-il quelque chose à perdre côté frontend ? */
+  const hasFrontendData = computed(() =>
+    !!pendingFrontendFramework.value || !!stepperData.value.frontend
+  );
 
   // --- Étape 1 : Framework ---
   function setPendingFramework(framework: Framework | null) {
     pendingFramework.value = framework;
   }
 
+  function setPendingRepositoryProvider(provider: RepositoryProviderMetadata | null) { // ✅ AJOUT
+    pendingRepositoryProvider.value = provider;
+  }
+
   function setFramework(framework: Framework) {
     stepperData.value.framework = framework;
+  }
+
+  function setIsGenerationComplete(value: boolean) { // ✅ NOUVEAU
+    isGenerationComplete.value = value;
   }
 
   // --- Étape 2 : Configuration Projet ---
@@ -244,7 +291,10 @@ export const useGeneratorStore = defineStore('generator', () => {
   }
 
   // --- Étape 7 : Relations ---
-  function setRelations(data: RelationParameter[]) { relations.value = data; }
+  function setRelations(data: RelationParameter[]) {
+    relations.value = data;
+    relationsLoaded.value = true;
+  }
   
   /**
    * Ajoute une relation après avoir vérifié qu'elle n'existe pas déjà.
@@ -254,8 +304,15 @@ export const useGeneratorStore = defineStore('generator', () => {
     const exists = relations.value.some(
       r => r.parentTable === relation.parentTable && r.childTable === relation.childTable
     );
-    if (exists) return false;
     
+    if (exists) {
+      // Définit l'erreur globale qui sera affichée par le ErrorPopup du parent
+      setWizardError(`La relation entre la table "${relation.parentTable}" et la table "${relation.childTable}" existe déjà.`);
+      return false;
+    }
+    
+    // Nettoie toute erreur précédente en cas de succès
+    clearWizardError();
     relations.value.push(relation);
     return true;
   }
@@ -266,14 +323,17 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   // --- Étape 8 & 9 : Frontend ---
   function setPendingFrontendFramework(frontendFramework: FrontendFramework | null) {
+    // Port par défaut appliqué uniquement quand le framework sélectionné change réellement
+    const changed = pendingFrontendFramework.value?.id !== frontendFramework?.id;
     pendingFrontendFramework.value = frontendFramework;
+    if (frontendFramework && changed) {
+      stepperData.value.frontendLayout.port = frontendFramework.defaultPort;
+    }
   }
 
   function setSelectedFrontendFramework(framework: FrontendFramework | null) {
+    // Simple commit : ne touche plus au port saisi par l'utilisateur
     stepperData.value.frontend = framework;
-    if (framework) {
-      stepperData.value.frontendLayout.port = framework.defaultPort;
-    }
   }
   
   function updateFrontendLayout<K extends keyof FrontendLayoutConfig>(key: K, value: FrontendLayoutConfig[K]) { 
@@ -310,6 +370,16 @@ export const useGeneratorStore = defineStore('generator', () => {
     }
   }
 
+  function updateRepositoryConfig<K extends keyof RepositoryConfig>(key: K, value: RepositoryConfig[K]) { 
+    if (!stepperData.value.repositoryConfig) {
+      // Initialisation par défaut si nul
+      stepperData.value.repositoryConfig = {
+        provider: 'github', useRemote: false, isNewRemote: true, scope: 'monorepo', authMethod: 'personal_access_token'
+      } as RepositoryConfig;
+    }
+    (stepperData.value.repositoryConfig as any)[key] = value; 
+  }
+
   function skipGitConfig() {
     stepperData.value.git = {
       useGit: false, // C'est ici qu'on désactive Git globalement
@@ -324,6 +394,10 @@ export const useGeneratorStore = defineStore('generator', () => {
     };
   }
 
+  function invalidateSteps(steps: StepId[]) {
+    lastInvalidation.value = { id: ++invalidationCounter, steps };
+  }
+
 
   // ==========================================================================
   // 4. RETURN - Ordre identique à la déclaration
@@ -332,9 +406,11 @@ export const useGeneratorStore = defineStore('generator', () => {
     // Global
     wizardError, isGenerating, stepperData,
     setWizardError, clearWizardError, setIsGenerating, reset,
+    isGenerationComplete, setIsGenerationComplete,
 
     // Étape 1 : Framework
     pendingFramework, setPendingFramework, setFramework,
+    pendingRepositoryProvider, setPendingRepositoryProvider,
 
     // Étape 2 : Configuration Projet
     getAvailableLoggingLevels, getAvailableSecurityTypes, getAvailableCacheProviders,
@@ -365,7 +441,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     generationAssociations,
 
     // Étape 7 : Relations
-    relations, getRelations, setRelations, addRelation, removeRelation,
+    relations, relationsLoaded, getRelations, setRelations, addRelation, removeRelation,
 
     // Étape 8 & 9 : Frontend
     pendingFrontendFramework, setPendingFrontendFramework, setSelectedFrontendFramework, 
@@ -373,6 +449,16 @@ export const useGeneratorStore = defineStore('generator', () => {
 
     // Étape 10 : Git
     updateGitConfig,
-    skipGitConfig
+    skipGitConfig,
+    
+    updateRepositoryConfig,
+
+    setConfigFramework,
+    resetFrameworkDependentConfig,
+    configFramework,
+    resetFrontendDependentConfig,
+    hasFrontendData,
+    invalidateSteps,
+    lastInvalidation
   };
 });

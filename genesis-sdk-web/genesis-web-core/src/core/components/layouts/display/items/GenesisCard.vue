@@ -1,11 +1,23 @@
 <template>
     <div
-        class="relative rounded-lg cursor-pointer transition-all duration-200"
+        class="group relative rounded-lg cursor-pointer transition-all duration-200"
         :class="[layoutClasses, containerClasses]"
         @click="$emit('click', $event)"
     >
         <!-- Mascotte -->
         <GenesisMascot :src="mascotSrc" :size="mascotSize" :selected="selected" />
+
+        <div
+            v-if="hasHoverSlot || feature || (selected && feature)"
+            class="absolute top-0 left-0 z-10 px-4 py-2 rounded text-md font-semibold
+                opacity-0 pointer-events-none
+                transition-all duration-200
+                group-hover:opacity-100"
+            :class="selected ? 'bg-primary text-primary-text' : 'bg-bg-secondary text-secondary'"
+        >
+            <slot v-if="hasHoverSlot" name="hover" />
+            <template v-else>{{ feature }}</template>
+        </div>
 
         <!-- Badge + close -->
         <div v-if="badge || deletable" class="absolute top-2 right-2 flex items-center gap-1 z-10">
@@ -96,6 +108,8 @@ const props = withDefaults(defineProps<{
     mascotSrc: string;
     mascotSize?: number;
     selected?: boolean;
+    feature?: string;
+    hasHoverSlot?: boolean;
 }>(), {
     selected: false,
     mascotSize: 32

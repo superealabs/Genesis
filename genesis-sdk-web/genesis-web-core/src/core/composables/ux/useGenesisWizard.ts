@@ -1,5 +1,5 @@
 // genesis-sdk-web/genesis-web-core/src/core/composables/ux/useGenesisWizard.ts
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 
 // ============================================================================
 // TYPES & INTERFACES
@@ -25,6 +25,12 @@ export function useGenesisWizard(config: WizardConfig) {
   const totalSteps = ref(config.totalSteps);
   const skippedSteps = ref<Set<number>>(new Set());
   const stepDependencies = config.skippableStepsConfig || {};
+
+  const visitedSteps = ref<Set<number>>(new Set([1]));
+
+  watch(currentStep, (newStep) => {
+    visitedSteps.value.add(newStep);
+  });  
 
   // NOUVEAU : Map inverse pour retrouver le déclencheur d'une étape sautée
   // Exemple : si skippableStepsConfig est { 5: [6] }, cette map contiendra { 6: 5 }
@@ -73,6 +79,19 @@ export function useGenesisWizard(config: WizardConfig) {
   }
 
   // --- 4. Actions de Navigation ---
+
+  async function goToStep(targetStep: number): Promise<boolean> {
+    if (targetStep < 1 || targetStep > totalSteps.value) return false;
+    
+    // Si on revient en arrière, on réactive les branches sautées
+    if (targetStep < currentStep.value) {
+      unskipBranch(targetStep);
+    }
+
+    currentStep.value = targetStep;
+    await triggerStepEnter(currentStep.value);
+    return true;
+  }
 
   async function goToNextStep(isSkip = false): Promise<boolean> {
     if (!isSkip && config.onBeforeNext) {
@@ -155,6 +174,13 @@ export function useGenesisWizard(config: WizardConfig) {
   // --- 5. Initialisation ---
   triggerStepEnter(currentStep.value);
 
+  /** Retire des steps de la liste des steps visités (leurs données ont été réinitialisées) */
+  function invalidateSteps(steps: number[]) {
+    steps.forEach(step => {
+      if (step !== currentStep.value) visitedSteps.value.delete(step); // l'étape courante reste visitée
+    });
+  }
+
   // --- 6. Retour ---
   return {
     currentStep,
@@ -162,9 +188,12 @@ export function useGenesisWizard(config: WizardConfig) {
     isFirstStep,
     isLastStep,
     skippedSteps,
+    visitedSteps,
+    goToStep,
     goToNextStep,
     goToPreviousStep,
     skipCurrentStep,
-    resetWizard
+    resetWizard,
+    invalidateSteps
   };
 }

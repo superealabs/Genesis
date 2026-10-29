@@ -35,9 +35,10 @@
             leave-from-class="transform scale-100 opacity-100"
             leave-to-class="transform scale-95 opacity-0"
         >
+            <!--  Padding dynamique appliqué via la classe calculée -->
             <DisclosurePanel
-                class="px-4 pb-4 pt-2"
-                :class="contentClass"
+                class="px-4 pb-4"
+                :class="[paddingClasses, contentClass]"
             >
                 <slot />
             </DisclosurePanel>
@@ -53,14 +54,16 @@ import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/Ico
 interface Props {
     title: string;
     defaultOpen?: boolean;
-    variant?: 'primary' | 'secondary';
+    variant?: 'primary' | 'secondary' | 'transparent'; //  Ajout de 'transparent'
     contentClass?: string;
+    padding?: 'sm' | 'md' | 'lg'; //  Nouvelle prop pour le padding-top
 }
 
 const props = withDefaults(defineProps<Props>(), {
     defaultOpen: false,
-    variant: 'secondary',
+    variant: 'transparent', //  Valeur par défaut changée
     contentClass: '',
+    padding: 'sm', //  Valeur par défaut (pt-2)
 });
 
 // ═══ Variant du header ═══
@@ -68,7 +71,21 @@ const headerVariantClasses = computed(() => {
     if (props.variant === 'primary') {
         return 'bg-bg-light hover:bg-secondary/50 border border-secondary';
     }
+    if (props.variant === 'secondary') {
+        return 'bg-bg-ghost hover:bg-secondary/30';
+    }
+    //  Fallback pour transparent (valeur par défaut)
     return 'bg-transparent hover:bg-secondary/30';
+});
+
+// ═══ Classes de padding dynamique ═══
+const paddingClasses = computed(() => {
+    switch (props.padding) {
+        case 'sm': return 'pt-2';
+        case 'md': return 'pt-4';
+        case 'lg': return 'pt-6';
+        default: return 'pt-2';
+    }
 });
 
 defineOptions({ inheritAttrs: false });

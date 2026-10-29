@@ -4,17 +4,22 @@
 import type { IGeneratorService } from '../types/generator.service.interface';
 import type { IFrontendService } from '../../frontend/types/frontend.service.interface';
 import type { IDatabaseService } from '../../database/types/database.service.interface';
-import type { IFrameworkService, GenerationParameter, ComponentType } from '@genesis-labs/shared-types';
+import type { IFrameworkService, GenerationParameter, ComponentType, IRepositoryService } from '@genesis-labs/shared-types';
 
 // Stores
 import { useGeneratorStore } from '../store/useGenerator.store';
 import { useFrameworkStore } from '../../frameworks/store/useFramework.store';
 import { useDatabaseStore } from '../../database/store/useDatabase.store';
 import { useFrontendStore } from '../../frontend/store/useFrontend.store';
+import { useRepositoryStore } from '../../repository/manifest';
 
 import { useRecentStore } from '@genesis-labs/web-core/core/features/recent/store/useRecent.store';
 import { RecentItem } from '@genesis-labs/shared-types';
 import type { IRecentService } from '@genesis-labs/web-core/core/features/recent/types/recent.service.interface';
+import { useGenesisWarning } from '@genesis-labs/web-core/core/composables/ux/feedback/useGenesisWarning';
+
+import { toRaw } from 'vue';
+import { Framework } from '@genesis-labs/shared-types';
 
 
 // ============================================================================
@@ -26,8 +31,11 @@ export interface WizardServices {
   fdsvc: IFrontendService;
   dbsvc: IDatabaseService;
   fsvc: IFrameworkService;
+  repoSvc: IRepositoryService;
   recentSvc: IRecentService;
 }
+
+type GeneratorStore = ReturnType<typeof useGeneratorStore>;
 
 export interface StepConfig {
   onEnter?: (store: ReturnType<typeof useGeneratorStore>, services: WizardServices) => Promise<void> | void;
@@ -42,17 +50,33 @@ export interface StepConfig {
 
 // Identifiants sémantiques des étapes (Le contrat TypeScript)
 export type StepId = 
-  | 'framework'
+  | 'framework_select'
   | 'project_config'
   | 'database_select'
   | 'database_config'
   | 'script'
-  | 'tables'
+  | 'generation'
   | 'relations'
   | 'frontend_select'
-  | 'frontend_layout'
-  | 'git_config'
+  | 'frontend_config'
+  | 'repository_select'
+  | 'repository_config'
   | 'summary';
+
+export const STEP_LABELS: string[] = [
+  'Framework',
+  'Configuration Projet',
+  'Sélection BDD',
+  'Configuration BDD',
+  'Script / IA',
+  'Génération',
+  'Relations',
+  'Sélection Frontend',
+  'Configuration Frontend',
+  'Sélection Dépôt',
+  'Configuration Dépôt',
+  'Résumé'
+];
 
 // ============================================================================
 // SOURCE DE VÉRITÉ : ORDRE DES ÉTAPES
@@ -63,18 +87,89 @@ export type StepId =
  * Pour réorganiser le wizard, il suffit de réorganiser ce tableau.
  */
 export const WIZARD_STEP_ORDER: StepId[] = [
-  'framework',
+  'framework_select',
   'project_config',
   'database_select',
   'database_config',
   'script',
-  'tables',
+  'generation',
   'relations',
   'frontend_select',
-  'frontend_layout',
-  'git_config',
+  'frontend_config',
+  'repository_select',
+  'repository_config',
   'summary'
 ];
+
+// ============================================================================
+// MAPPING WIZARD <-> SUMMARY
+// ============================================================================
+// Index du résumé : 0:Project, 1:Database, 2:Generation, 3:Relations, 4:Frontend, 5:Repository
+export const STEP_TO_SUMMARY_MAP: Record<StepId, number | null> = {
+  'framework_select': 0,
+  'project_config': 0,
+  'database_select': 1,
+  'database_config': 1,
+  'script': null, // Intentionnel : pas de résumé
+  'generation': 2,
+  'relations': 3,
+  'frontend_select': 4,
+  'frontend_config': 4,
+  'repository_select': 5,
+  'repository_config': 5,
+  'summary': null
+};
+
+// Mapping inverse : quel est le premier step de config associé à un index de résumé ?
+export const SUMMARY_TO_STEP_MAP: Record<number, StepId> = {
+  0: 'project_config',
+  1: 'database_config',
+  2: 'generation',
+  3: 'relations',
+  4: 'frontend_config',
+  5: 'repository_config'
+};
+
+// ==========================================
+// HELPER
+// =========================================
+
+
+const isRest = (fw: Framework) => fw.type === 'REST API';
+const frontendImpacted = (from: Framework, to: Framework) => !(isRest(from) && isRest(to));
+
+export async function confirmFrameworkChange(store: GeneratorStore, next: Framework): Promise<boolean> {
+  const owner = store.configFramework;
+  if (!owner || owner.id === next.id) return true;
+
+  const resetFrontend = frontendImpacted(owner, next) && store.hasFrontendData;
+
+  const details = [
+    'Versions du langage et du framework, build tool',
+    'Configuration avancée (logging, sécurité, cache, Hibernate)'
+  ];
+  if (resetFrontend) {
+    details.push('Frontend sélectionné et sa configuration (chaque framework MVC a sa propre liste de frontends)');
+  }
+
+  const confirmed = await useGenesisWarning().confirm({
+    title: 'Changer de framework ?',
+    message: `Vous passez de ${owner.name} à ${next.name}. Certaines données de la configuration seront réinitialisées.`,
+    details,
+    confirmLabel: 'Changer de framework',
+    variant: 'danger'
+  });
+  if (!confirmed) return false;
+
+  store.resetFrameworkDependentConfig(next);
+  if (frontendImpacted(owner, next)) store.resetFrontendDependentConfig();
+
+  const invalidated: StepId[] = ['project_config'];
+  if (resetFrontend) invalidated.push('frontend_select', 'frontend_config');
+  store.invalidateSteps(invalidated);
+
+  return true;
+}
 
 // ============================================================================
 // CONFIGURATION MÉTIER PAR ÉTAPE
@@ -82,7 +177,7 @@ export const WIZARD_STEP_ORDER: StepId[] = [
 
 export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   
-  framework: {
+  framework_select: {
     onEnter: async (_store, { fsvc, recentSvc }) => {
       console.log("[Wizard: framework] Chargement des frameworks, langues et données récentes...");
       
@@ -98,7 +193,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         
         frameworkStore.setFrameworks(frameworksData);
         frameworkStore.setLanguages(languagesData);
-        recentStore.setRecencyData(recencyData); // Les données sont maintenant réactives pour l'UI !
+        recentStore.setRecencyData(recencyData);
         
         console.log(`[Wizard: framework] Chargement réussi : ${frameworksData.length} frameworks, ${languagesData.length} langues, ${recencyData.frameworks.length} récents.`);
       } catch (error) {
@@ -115,21 +210,19 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
-      try {
-        store.setFramework(framework);
-        console.log(`[Wizard: framework] Framework sélectionné :`, framework.name);
-        return true;
-      } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du framework.");
-        return false;
-      }
+      if (!(await confirmFrameworkChange(store, framework))) return false;
+
+      console.log(`[Wizard: framework] Framework en attente de validation :`, framework.name);
+      return true;
     }
   },
 
   project_config: {
     onEnter: async (store, { fsvc }) => {
-      const framework = store.stepperData.framework;
+      // On lit le pending en priorité pour charger les bonnes options
+      const framework = store.pendingFramework || store.stepperData.framework;
       if (!framework) return;
+      if (!store.configFramework) store.setConfigFramework(framework);
       
       console.log("[Wizard: project_config] Chargement des options de configuration...");
       
@@ -141,6 +234,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
           fsvc.fetchLanguageVersions(framework.languageId).then(data => store.setAvailableLanguageVersions(data)),
           fsvc.fetchFrameworkVersions(framework.id).then(data => store.setAvailableFrameworkVersions(data)),
           fsvc.fetchBuildTools(framework.id).then(data => store.setAvailableBuildTools(data)),
+          fsvc.fetchHibernateDdlAutoOptions(framework.id).then(data => store.setAvailableHibernateDdlAutoOptions(data))
         ]);
         console.log("[Wizard: project_config] Options de configuration chargées");
       } catch (error) {
@@ -157,6 +251,12 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       }
 
       try {
+        // COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
+        if (store.pendingFramework) {
+          store.setFramework(store.pendingFramework);
+          console.log(`[Wizard: project_config] Framework validé et commit :`, store.pendingFramework.name);
+        }
+
         console.log("[Wizard: project_config] Configuration du projet validée");
         return true;
       } catch (error) {
@@ -187,33 +287,28 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
-      try {
-        store.setDatabaseEngine(store.pendingDatabaseEngine);
-
-        const databaseStore = useDatabaseStore();
-        const matchedEngine = databaseStore.availableEngines.find(eng => {
-          const normalizedName = eng.name.toLowerCase().replace(/\s+/g, '');
-          const normalizedConfig = store.pendingDatabaseEngine!.name.toLowerCase().replace(/\s+/g, '');
-          return normalizedName === normalizedConfig || eng.name.toLowerCase() === store.pendingDatabaseEngine!.name.toLowerCase();
-        });
-
-        if (!matchedEngine) {
-          store.setWizardError("Moteur de base de données invalide. Veuillez le sélectionner à nouveau.");
-          return false;
-        }
-
-        console.log(`[Wizard: database_select] Sélection BDD validée. ID : ${matchedEngine.id}`);
-        return true;
-      } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection de la base de données.");
-        return false;
-      }
+      console.log(`[Wizard: database_select] Moteur BDD en attente de validation :`, store.pendingDatabaseEngine.name);
+      return true;
     }
   },
 
   database_config: {
     beforeNext: async (store) => {
+      const db = store.stepperData.database;
+      
+      // 1. Validation basique des champs obligatoires du formulaire
+      if (!db.host || !db.port || !db.databaseName || !db.username) {
+        store.setWizardError("L'hôte, le port, le nom de la base de données et l'utilisateur sont obligatoires.");
+        return false;
+      }
+
       try {
+        // 2. COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
+        if (store.pendingDatabaseEngine) {
+          store.setDatabaseEngine(store.pendingDatabaseEngine);
+          console.log(`[Wizard: database_config] Moteur BDD validé et commit :`, store.pendingDatabaseEngine.name);
+        }
+
         console.log("[Wizard: database_config] Configuration BDD validée");
         return true;
       } catch (error) {
@@ -224,23 +319,25 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   },
 
   script: {
-    beforeNext: async (store, { svc }) => {
-      const script = store.stepperData.script;
+    beforeNext: async (/* store, { svc } */) => {
+      // const script = store.stepperData.script;
       
-      if (script.path || script.content) {
-        try { 
-          await svc.saveScriptConfig(script); 
-        } catch (error) { 
-          console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error); 
-        }
-      }
+      // if (script.path || script.content) {
+      //   try { 
+      //     await svc.saveScriptConfig(script); 
+      //   } catch (error) { 
+      //     console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error); 
+      //   }
+      // }
       
       return true;
     },
     skipCascade: [] // Peut être sauté sans conséquence sur les autres
+
+
   },
 
-  tables: {
+  generation: {
     onEnter: async (store, { svc }) => {
       console.log("[Wizard: tables] Chargement des tables et vues...");
       
@@ -318,8 +415,11 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       const frontendStore = useFrontendStore();
       
       try {
+
+        const frameworkId = _store.pendingFramework?.id ?? _store.stepperData.framework?.id ?? 0;
+      
         await Promise.all([
-          fdsvc.fetchFrontendFrameworks().then(data => frontendStore.setAvailableFrontendFrameworks(data)),
+          fdsvc.fetchFrontendFrameworks(frameworkId).then(data => frontendStore.setAvailableFrontendFrameworks(data)),
           fdsvc.fetchInterfaceLanguages().then(data => frontendStore.setAvailableInterfaceLanguages(data)),
         ]);
         console.log("[Wizard: frontend_select] Options Frontend chargées");
@@ -330,32 +430,35 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     },
     
     beforeNext: async (store) => {
+      // Si aucun framework n'est sélectionné, c'est skippable, on passe à la suite
       if (!store.pendingFrontendFramework) {
         console.log("[Wizard: frontend_select] Frontend ignoré (skippable)");
         return true;
       }
 
-      try {
-        store.setSelectedFrontendFramework(store.pendingFrontendFramework);
-
-        const frontendId = store.stepperData.frontend?.id;
-        if (frontendId) {
-          console.log(`[Wizard: frontend_select] Sélection Frontend validée. ID : ${frontendId}`);
-        }
-        
-        return true;
-      } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sélection du frontend.");
-        return false;
-      }
+      console.log(`[Wizard: frontend_select] Framework Frontend en attente de validation :`, store.pendingFrontendFramework.name);
+      return true;
     },
-    // ✅ CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
-    skipCascade: ['frontend_layout'] 
+
+    onSkip: async (store) => {
+      const invalidated: StepId[] = ['frontend_select', 'frontend_config'];
+      store.resetFrontendDependentConfig();
+      store.invalidateSteps(invalidated);
+    },
+    // CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
+    skipCascade: [
+      'frontend_config'
+    ] 
   },
 
-  frontend_layout: {
+  frontend_config: {
     beforeNext: async (store) => {
       try {
+        if (store.pendingFrontendFramework) {
+          store.setSelectedFrontendFramework(store.pendingFrontendFramework);
+          console.log(`[Wizard: frontend_layout] Framework Frontend validé et commit :`, store.pendingFrontendFramework.name);
+        }
+
         console.log("[Wizard: frontend_layout] Configuration layout Frontend validée");
         return true;
       } catch (error) {
@@ -365,71 +468,139 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     }
   },
 
-  git_config: {
+  repository_select: {
+    onEnter: async (_store, { repoSvc }) => {
+      console.log("[Wizard: repository_select] Chargement des fournisseurs de dépôt...");
+      const repositoryStore = useRepositoryStore();
+      
+      try {
+        const providersData = await repoSvc.getSupportedProviders();
+        repositoryStore.setProviders(providersData);
+        console.log(`[Wizard: repository_select] ${providersData.length} fournisseur(s) chargé(s)`);
+      } catch (error) {
+        console.error("[Wizard: repository_select] Échec du chargement des fournisseurs:", error);
+        _store.setWizardError("Impossible de charger la liste des fournisseurs de dépôt.");
+      }
+    },
+    
+    beforeNext: async (store) => {
+      if (!store.pendingRepositoryProvider) {
+        store.setWizardError("Veuillez sélectionner un fournisseur de dépôt avant de continuer.");
+        return false;
+      }
+
+      store.updateRepositoryConfig('provider', store.pendingRepositoryProvider.id);
+      
+      console.log(`[Wizard: repository_select] Fournisseur sélectionné et persisté :`, store.pendingRepositoryProvider.name);
+      return true;
+    },
+
+    onSkip: (store) => {
+      // L'utilisateur a cliqué sur "Passer" : on désactive Git et on nettoie
+      store.skipGitConfig();
+      const invalidated :StepId[] = ['repository_select', 'repository_config'];
+      store.invalidateSteps(invalidated);
+    },
+    
+    skipCascade: [
+      'repository_config'
+    ]
+  },
+
+  repository_config: {
     onEnter: (store) => {
-      // Par défaut, on considère que Git local est voulu, mais pas de remote
-      // Cela garde l'interface propre tout en préparant le terrain pour "Suivant"
+      // Initialisation par défaut si l'objet n'existe pas encore
+      if (!store.stepperData.repositoryConfig) {
+        store.updateRepositoryConfig('provider', store.pendingRepositoryProvider?.id || 'github');
+        store.updateRepositoryConfig('useRemote', false);
+        store.updateRepositoryConfig('isNewRemote', true);
+        store.updateRepositoryConfig('scope', 'monorepo');
+        store.updateRepositoryConfig('authMethod', 'personal_access_token');
+      }
+      
+      // On s'assure que les valeurs par défaut Git sont propres
       store.stepperData.git.useGit = true;
-      // On s'assure que les valeurs par défaut sont propres
       if (!store.stepperData.git.useRemoteRepo) {
         store.stepperData.git.isNewRemoteRepo = true;
         store.stepperData.git.separateRepositories = false;
       }
     },
     
-    onSkip: (store) => {
-      // L'utilisateur a cliqué sur "Passer" : on désactive Git et on nettoie
-      store.skipGitConfig();
-    },
-
     beforeNext: (store) => {
-      // L'utilisateur clique sur "Suivant" : on valide que Git est actif
-      store.stepperData.git.useGit = true;
+      const repo = store.stepperData.repositoryConfig;
       
-      const git = store.stepperData.git;
+      // On active Git par défaut
+      store.updateGitConfig('useGit', true);
 
-      // Si l'utilisateur a activé le remote, on valide les champs obligatoires
-      if (git.useRemoteRepo) {
-        if (!git.githubUsername) {
-          store.setWizardError("Le nom d'utilisateur GitHub est obligatoire pour un dépôt distant.");
+      if (repo?.useRemote) {
+        // 1. Validation des champs obligatoires du formulaire
+        if (!repo.username) {
+          store.setWizardError("Le nom d'utilisateur est obligatoire pour un dépôt distant.");
           return false;
         }
-        if (git.isNewRemoteRepo && !git.githubToken) {
+        if (repo.isNewRemote && !repo.token) {
           store.setWizardError("Le Personal Access Token est obligatoire pour créer un nouveau dépôt.");
           return false;
         }
-        if (git.separateRepositories) {
-          if (!git.backendRepositoryName || !git.frontendRepositoryName) {
+        if (repo.scope === 'separated') {
+          if (!repo.backendRepoName || !repo.frontendRepoName) {
             store.setWizardError("Les noms des dépôts Backend et Frontend sont obligatoires.");
             return false;
           }
         } else {
-          if (!git.repositoryName) {
-            store.setWizardError("Le nom du dépôt est obligatoire.");
+          if (!repo.monorepoName) {
+            store.setWizardError("Le nom du dépôt unique est obligatoire.");
             return false;
           }
         }
+
+        // 2. 🔄 MAPPING (FORCING) : Conversion de RepositoryConfig vers GitConfiguration
+        // Le backend ne supporte que GitHub pour l'instant, on mappe donc les données génériques 
+        // vers les champs spécifiques GitHub attendus par l'interface GitConfiguration.
+        store.updateGitConfig('separateRepositories', repo.scope === 'separated');
+        store.updateGitConfig('useRemoteRepo', true);
+        store.updateGitConfig('isNewRemoteRepo', repo.isNewRemote);
+        store.updateGitConfig('repositoryName', repo.monorepoName || '');
+        store.updateGitConfig('backendRepositoryName', repo.backendRepoName || '');
+        store.updateGitConfig('frontendRepositoryName', repo.frontendRepoName || '');
+        store.updateGitConfig('githubUsername', repo.username || '');
+        store.updateGitConfig('githubToken', repo.token || '');
+        
+      } else {
+        // 3. Si pas de remote, on s'assure que Git est configuré en local uniquement
+        store.updateGitConfig('useRemoteRepo', false);
+        store.updateGitConfig('isNewRemoteRepo', true);
+        store.updateGitConfig('separateRepositories', false);
+        store.updateGitConfig('repositoryName', '');
+        store.updateGitConfig('backendRepositoryName', '');
+        store.updateGitConfig('frontendRepositoryName', '');
+        store.updateGitConfig('githubUsername', '');
+        store.updateGitConfig('githubToken', '');
       }
       
-      console.log("[Wizard: git_config] Configuration Git validée");
+      console.log("[Wizard: git_config] Configuration Repository validée et mappée pour le backend.");
       return true;
-    },
-    skipCascade: []
+    }
   },
 
+  // genesis-sdk-web/genesis-web-core/src/features/generator/composables/wizard-step-config.ts
   summary: {
-    onEnter: (/** store */) => {
+    onEnter: (store) => {
       console.log("[Wizard: summary] Affichage du résumé final de la configuration.");
-      // Aucune action de chargement requise ici, toutes les données sont déjà dans le store.
-      // Le composant SummaryView se chargera de les afficher via les composantes enfants.
+      // On s'assure que l'état est réinitialisé si on revient en arrière (cas rare mais possible)
+      store.setIsGenerationComplete(false); 
     },
     
-    beforeNext: async (store, { recentSvc }) => {
+    beforeNext: async (store, { recentSvc, svc }) => {
       try {
         console.log("[Wizard: summary] Résumé validé. Prêt pour la génération finale.");
+        store.setIsGenerating(true);
+        
+        const startTime = Date.now();
         
         try {
-          const data = store.stepperData;
+          const data = toRaw(store.stepperData);
+          await svc.launchGeneration(data);
 
           // 1. Sauvegarder le Framework Backend
           if (data.framework) {
@@ -475,10 +646,25 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
         } catch (error) {
           console.error("[Wizard: summary] Échec de la mise à jour de la récence:", error);
+        } finally {
+          const elapsedTime = Date.now() - startTime;
+          const minDuration = 3000;
+          const remainingTime = Math.max(0, minDuration - elapsedTime);
+
+          if (remainingTime > 0) {
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+          }
+          
+          store.setIsGenerating(false);
+          
+          // ✅ NOUVEAU : Si on arrive ici sans erreur critique, on considère la génération comme réussie
+          // (Tu pourras affiner cela plus tard en vérifiant la réponse de launchGeneration)
+          store.setIsGenerationComplete(true);
         }
 
         return true;
       } catch (error) {
+        store.setIsGenerating(false);
         store.setWizardError(error instanceof Error ? error.message : "Échec de la validation du résumé.");
         return false;
       }

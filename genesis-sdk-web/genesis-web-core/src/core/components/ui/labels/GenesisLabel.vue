@@ -1,5 +1,5 @@
 <template>
-    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-accent/10 text-accent text-xs font-medium border border-accent/20 transition-colors group">
+    <div class="inline-flex items-center gap-3 p-3 rounded-md bg-bg-neutral-genesis text-neutral-light-genesis text-xs font-medium transition-colors group">
         <!-- Texte du label avec troncature si trop long -->
         <span class="truncate max-w-[150px]">
             {{ text }}

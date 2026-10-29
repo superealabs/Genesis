@@ -21,23 +21,35 @@
         />
 
         <!-- ═══ PARTIE 2 : Ligne d'actions Assign / Remove ═══ -->
-        <div class="flex items-center justify-start gap-3">
+        <!-- ✅ MODIFICATION : Classes conditionnelles pour one-view vs two-view -->
+        <div 
+            class="flex"
+            :class="viewMode === 'two-view' ? 'flex-col gap-4 w-full' : 'items-center justify-start gap-3'"
+        >
             <GenesisButton
                 variant="secondary"
-                size="sm"
+                :size="viewMode === 'two-view' ? 'lg' : 'sm'"
                 :disabled="!selectedConfigId || selectedItems.length === 0"
                 @click="handleAssign"
+                :justify-between="true"
                 title="Assigner les éléments sélectionnés à cette configuration"
             >
+                <template v-if="viewMode === 'two-view'" #rightIcon>
+                    <IconChevronRight />
+                </template>
                 Assign
             </GenesisButton>
 
             <GenesisButton
-                size="sm"
+                :size="viewMode === 'two-view' ? 'lg' : 'sm'"
                 :disabled="!selectedConfigId || selectedItems.length === 0"
                 @click="handleRemove"
                 title="Retirer les éléments sélectionnés de cette configuration"
+                :justify-between="true"
             >
+                <template v-if="viewMode === 'two-view'" #leftIcon>
+                    <IconChevronLeft />
+                </template>
                 Remove
             </GenesisButton>
         </div>
@@ -49,17 +61,22 @@
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisConfigurationPanel from './GenesisConfigurationPanel.vue';
 import type { ConfigurationItem } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
+import IconChevronLeft from '../../../ui/icons/IconChevronLeft.vue';
+import IconChevronRight from '../../../ui/icons/IconChevronRight.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     configurations: ConfigurationItem[];
     selectedConfigId: string | number | null;
     filteredConfigs: ConfigurationItem[];
     searchQuery: string;
     canMoveUp: boolean;
     canMoveDown: boolean;
-    // NOUVEAU : La liste des éléments actuellement sélectionnés dans le parent (ex: noms de tables/vues)
-    selectedItems: string[]; 
-}>();
+    selectedItems: string[];
+    // ✅ NOUVELLE PROP : Contrôle la disposition des boutons d'action
+    viewMode?: 'one-view' | 'two-view';
+}>(), {
+    viewMode: 'one-view' // ✅ Valeur par défaut
+});
 
 const emit = defineEmits<{
     'update:searchQuery': [value: string];

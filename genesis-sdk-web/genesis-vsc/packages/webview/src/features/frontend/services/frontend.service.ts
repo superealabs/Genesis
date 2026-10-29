@@ -9,11 +9,13 @@ import { vscodeService } from '../../../core/services/vscode.service';
 export class FrontendServiceVsc implements IFrontendService {
     constructor(private vscode = vscodeService) {}
 
-    fetchFrontendFrameworks(): Promise<FrontendFramework[]> {
+    fetchFrontendFrameworks(frameworkID: number): Promise<FrontendFramework[]> {
         return new Promise((resolve) => {
-            this.vscode.sendMessage('GET_FRONTEND_FRAMEWORKS');
+            this.vscode.sendMessage('GET_FRONTEND_FRAMEWORKS', { frameworkID });
+            
             const cleanup = this.vscode.onMessage<FrontendFramework[]>('FRONTEND_FRAMEWORKS_LOADED', (data) => {
-                cleanup(); resolve(data);
+                cleanup(); 
+                resolve(data);
             });
         });
     }

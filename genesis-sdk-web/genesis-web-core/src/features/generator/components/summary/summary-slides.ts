@@ -9,7 +9,7 @@ import DatabaseSummary from './DatabaseSummary.vue';
 import GenerationSummary from './GenerationSummary.vue';
 import RelationSummary from './RelationSummary.vue';
 import FrontendSummary from './FrontendSummary.vue';
-import GitSummary from './GitSummary.vue';
+import RepositorySummary from './RepositorySummary.vue';
 
 export interface SummarySlide {
     id: string;
@@ -23,5 +23,5 @@ export const SUMMARY_SLIDES: SummarySlide[] = [
     { id: 'generation', label: 'Génération',      component: GenerationSummary },
     { id: 'relations',  label: 'Relations',       component: RelationSummary },
     { id: 'frontend',   label: 'Frontend',        component: FrontendSummary },
-    { id: 'git',        label: 'Git',             component: GitSummary },
+    { id: 'repository', label: 'Repository',      component: RepositorySummary },
 ];

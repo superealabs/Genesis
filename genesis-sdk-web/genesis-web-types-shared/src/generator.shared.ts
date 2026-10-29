@@ -5,6 +5,7 @@
 import type { Framework } from './framework.shared';
 import type { FrontendFramework } from './frontend.shared';
 import type { DatabaseConfig } from './database.shared';
+import { RepositoryConfig } from './repository';
 
 // ═══ Interfaces et Types (Purs, sans dépendance UI) ═══
 
@@ -96,6 +97,8 @@ export interface GeneratorData {
     frontend: FrontendFramework | null;
     frontendLayout: FrontendLayoutConfig;
     git: GitConfiguration;
+
+    repositoryConfig: RepositoryConfig | null;
 }
 
 export type FileRequestField = 'script' | 'logoPath' | 'faviconPath';

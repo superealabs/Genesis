@@ -40,3 +40,7 @@ export async function selectConstrainedFilePathVsc(allowedExtensions: string[]):
 export async function selectSqlFilePathVsc(): Promise<{ path: string; content: string }> {
     return selectConstrainedFilePathVsc(['sql']);
 }
+
+export async function openProjectVsc(projectPath: string): Promise<void> {
+    vscodeService.sendMessage('OPEN_PROJECT', { projectPath });
+}

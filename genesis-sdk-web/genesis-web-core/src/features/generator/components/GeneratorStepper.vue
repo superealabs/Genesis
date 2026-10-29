@@ -5,15 +5,28 @@
     :total-steps="props.totalSteps"
     size="full"
     :content-class="stepContentClass"
-    :is-skippable="props.isSkippable" 
+    :is-skippable="props.isSkippable"
+    :show-back-to-summary="props.hasReachedSummary && currentStepId !== 'summary'"
+    :visited-steps="props.visitedSteps"
+    :step-labels="props.stepLabels"
+
+    :disable-next="hasWarning || (currentStepId === 'summary' && !isSummaryComplete)"
+    :is-loading="store.isGenerating"
+    :hide-footer="store.isGenerationComplete"
+
+    :show-tutorial-trigger="true" 
+
+
     @close="handleClose"
     @previous="emit('previous')"
     @next="emit('next')"
-    @skip="emit('skip')" 
+    @skip="emit('skip')"
+    @back-to-summary="emit('back-to-summary')"
+    @go-to-step="(step) => emit('go-to-step', step)"
   >
     <!-- ÉTAPE : FRAMEWORK -->
     <FrameworkLayout
-      v-if="currentStepId === 'framework'"
+      v-if="currentStepId === 'framework_select'"
       v-bind="frameworkLayoutProps"
       :group-by="frameworkGroupBy"
       :languages="languages"
@@ -73,7 +86,7 @@
     />
 
     <!-- ÉTAPE : SÉLECTION TABLES/VUES -->
-    <GenerationConfigurationAlt v-else-if="currentStepId === 'tables'" />
+    <GenerationConfigurationAlt v-else-if="currentStepId === 'generation'" />
 
     <!-- ÉTAPE : RELATIONS -->
     <RelationConfigView v-else-if="currentStepId === 'relations'" />
@@ -101,14 +114,47 @@
     
     <!-- ÉTAPE : CONFIGURATION LAYOUT FRONTEND -->
     <FrontendLayoutConfigView 
-      v-else-if="currentStepId === 'frontend_layout'" 
+      v-else-if="currentStepId === 'frontend_config'" 
       @request-file-path="handleRequestFilePath" 
     />
 
-    <!-- ÉTAPE : CONFIGURATION GIT -->
-    <GitConfigView v-else-if="currentStepId === 'git_config'" />
+    <RepositoryLayout 
+      v-else-if="currentStepId === 'repository_select'"
+      v-bind="repositoryLayoutProps"
+      @back="emit('close')"
+      @select-replace="handleReplaceSelectionRepo"
+      @close-replace="cancelReplaceRepo"
+      @select="handleSelectWrapperRepo"
+      @info="handleInfoRepo"
+      @close-detail="closeDetailRepo"
+      @compare="repoComparator.open"
+      @close-compare="repoComparator.close"
+    />
 
-    <SummaryView v-else-if="currentStepId === 'summary'" />
+    <!-- ÉTAPE : CONFIGURATION GIT -->
+    <RepositoryConfigView 
+      v-else-if="currentStepId === 'repository_config'" 
+      @test-connection-error="handleChildError" 
+    />
+
+    <GenerationSuccessView 
+      v-else-if="currentStepId === 'summary' && store.isGenerationComplete"
+      @close="emit('close')"
+    >
+      <!-- ✅ On transmet le slot spécifique à l'environnement vers GenerationSuccessView -->
+      <template #actions>
+        <slot name="success-actions"></slot>
+      </template>
+    </GenerationSuccessView>
+
+
+
+    <SummaryView 
+      v-else-if="currentStepId === 'summary'" 
+      :initial-index="props.targetSummaryIndex"
+      @request-edit="(idx) => emit('request-edit', idx)"
+      @update-summary-complete="(val) => isSummaryComplete = val"
+    />
 
   </StepperPopup>
 
@@ -122,25 +168,38 @@
     size="md"
     @close="clearError"
   />
+
+  <!-- POPUP D'AVERTISSEMENT GÉNÉRIQUE (alimenté par useGenesisWarning) -->
+  <WarningPopup
+    v-if="warning"
+    v-bind="warning"
+    @confirm="acceptWarning"
+    @cancel="cancelWarning"
+  />
 </template>
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import type { Framework, FrontendFramework, DatabaseEngineDto, FileRequestPayload } from '@genesis-labs/shared-types';
 
+
 // Core Components
 import StepperPopup from '@genesis-labs/web-core/core/components/layouts/Popup/StepperPopup.vue';
 import ErrorPopup from '@genesis-labs/web-core/core/components/layouts/Popup/ErrorPopup.vue';
+import WarningPopup from '@genesis-labs/web-core/core/components/layouts/Popup/WarningPopup.vue';
 
 // Feature Components & Types
 import FrameworkLayout, { type FrameworkLayoutProps } from '@genesis-labs/web-core/features/frameworks/components/FrameworkLayout.vue';
 import DatabaseLayout, { type DatabaseLayoutProps } from '@genesis-labs/web-core/features/database/components/DatabaseLayout.vue';
 import FrontendLayout, { type FrontendLayoutProps } from '@genesis-labs/web-core/features/frontend/components/FrontendLayout.vue';
+import RepositoryLayout, { type RepositoryLayoutProps } from '@genesis-labs/web-core/features/repository/components/RepositoryLayout.vue';
+import GenerationSuccessView from './steps/GenerationSuccessView.vue';
+
 import SummaryView from './steps/SummaryView.vue';
 
 import { 
   ProjectConfigView, DatabaseConfigView, ScriptConfigView, GenerationConfigurationAlt,
-  RelationConfigView, FrontendLayoutConfigView, GitConfigView 
+  RelationConfigView, FrontendLayoutConfigView, RepositoryConfigView
 } from '@genesis-labs/web-core/features/generator/components/steps';
 
 // Feature Composables (Ponts vers le Wizard)
@@ -151,8 +210,11 @@ import { useWizardFrontend } from '@genesis-labs/web-core/features/frontend/comp
 // Store
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 
-// ✅ IMPORT POUR LE MAPPING SÉMANTIQUE
+import { useGenesisWarning } from '@genesis-labs/web-core/core/composables/ux/feedback/useGenesisWarning';
 import { getStepIdByNumber } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
+import { RepositoryProviderMetadata } from '@genesis-labs/shared-types';
+import { useWizardRepository } from '@genesis-labs/web-core/features/repository/composables/useWizardRepository';
+
 
 // ============================================================================
 // 1. PROPS & EMITS
@@ -160,7 +222,12 @@ import { getStepIdByNumber } from '@genesis-labs/web-core/features/generator/com
 const props = defineProps<{ 
   currentStep: number; 
   totalSteps: number; 
-  isSkippable?: boolean; 
+  isSkippable?: boolean;
+  targetSummaryIndex?: number;
+  hasReachedSummary?: boolean;
+  visitedSteps?: Set<number>;
+  stepLabels?: string[];
+  isGenerating?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -168,9 +235,15 @@ const emit = defineEmits<{
   next: []; 
   previous: []; 
   skip: [];
+  'back-to-summary': [];
+  'request-edit': [index: number];
+  'request-tutorial': [];
+  'go-to-step': [step: number];
+  'open-project': [];
   'select-framework': [framework: Framework];
   'select-frontend': [framework: FrontendFramework];
   'select-database': [engine: DatabaseEngineDto];
+  'select-repository': [provider: RepositoryProviderMetadata];
   'request-folder-path': [];
   'request-file-path': [payload: FileRequestPayload];
 }>();
@@ -185,11 +258,17 @@ const frameworkGroupBy = ref<keyof Framework | null>(null);
 
 const feDetailFramework = ref<FrontendFramework | null>(null);
 const dbDetailEngine = ref<DatabaseEngineDto | null>(null);
+const repoDetailProvider = ref<RepositoryProviderMetadata | null>(null);
+
 
 const showError = ref(false);
 const errorMessage = ref('');
 const errorStackTrace = ref('');
 const isDevMode = import.meta.env.DEV;
+const isSummaryComplete = ref(false);
+
+// Avertissement générique : la file d'attente est globale, ce composant ne fait que l'afficher
+const { warning, hasWarning, accept: acceptWarning, cancel: cancelWarning } = useGenesisWarning();
 
 // ============================================================================
 // 3. INJECTION DES COMPOSABLES (PONTS WIZARD)
@@ -229,6 +308,29 @@ const {
   comparator: feComparator
 } = useWizardFrontend((framework: FrontendFramework) => {
   emit('select-frontend', framework);
+});
+
+const {
+  providers: repoProviders,
+  selectedId: repoSelectedId,
+  displayMode: repoDisplayMode,
+  compareMode: repoCompareMode,
+  providerSlots: repoProviderSlots,
+  searchQuery: repoSearchQuery,
+  isLoading: repoIsLoading,
+  showReplacePopup: repoShowReplacePopup,
+  pendingProvider: repoPendingProvider,
+  mouseX: repoMouseX,
+  mouseY: repoMouseY,
+  compare: repoCompare,
+  comparator: repoComparator,
+  handleSelectWrapper: handleSelectWrapperRepo,
+  handleReplaceSelection: handleReplaceSelectionRepo,
+  cancelReplace: cancelReplaceRepo,
+  closeDetail: closeDetailRepo,
+  handleInfo: handleInfoRepo
+} = useWizardRepository((provider: RepositoryProviderMetadata) => {
+  emit('select-repository', provider);
 });
 
 // ============================================================================
@@ -308,6 +410,27 @@ const frontendLayoutProps = computed<FrontendLayoutProps>(() => ({
   comparing: feComparator.isOpen.value,
   comparatorEditors: feComparator.editors.value,
   comparatorEditorIds: feComparator.initialEditorIds.value
+}));
+
+const repositoryLayoutProps = computed<RepositoryLayoutProps>(() => ({
+  providers: repoProviders.value,
+  selectedId: repoSelectedId.value,
+  displayMode: repoDisplayMode.value,
+  compareMode: repoCompareMode.value,
+  providerSlots: repoProviderSlots.value,
+  searchQuery: repoSearchQuery.value,
+  showReplacePopup: repoShowReplacePopup.value,
+  replaceOptions: [], // À adapter si tu utilises le replace pour les repos
+  mouseX: repoMouseX.value,
+  mouseY: repoMouseY.value,
+  isLoading: repoIsLoading.value,
+  detailProvider: repoDetailProvider.value,
+  pendingProvider: repoPendingProvider.value,
+  canCompare: repoComparator.canOpen.value,
+  compareCount: repoCompare.compareCount.value,
+  comparing: repoComparator.isOpen.value,
+  comparatorEditors: repoComparator.editors.value,
+  comparatorEditorIds: repoComparator.initialEditorIds.value
 }));
 
 // ============================================================================

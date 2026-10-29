@@ -3,7 +3,9 @@
         class="fixed inset-0 bg-black flex p-4"
         :class="[positionClasses, overlayClasses]"
         :style="{ zIndex }"
-        @click.self="handleOverlayClick()"
+        @mousedown="handleOverlayMouseDown"
+        @mouseup="handleOverlayMouseUp"
+        @mouseleave="handleOverlayMouseLeave"
     >
         <div
             class="bg-bg-dark text-text rounded-lg w-full flex flex-col relative"
@@ -45,7 +47,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef, onMounted, onUnmounted } from 'vue';
+import { computed, toRef, onMounted, onUnmounted, ref } from 'vue';
 import { useDraggable } from '@genesis-labs/web-core/core/composables/ux/useDraggable.ts';
 import { useResizable } from '@genesis-labs/web-core/core/composables/ux/useResizable.ts';
 import IconX from '@genesis-labs/web-core/core/components/ui/icons/IconX.vue';
@@ -96,9 +98,35 @@ const { resizeStyle, isResizing, startResizeBottom, startResizeLeft, startResize
     resizableY: toRef(props, 'resizableY'),
 });
 
+const isMouseDownOnOverlay = ref(false);
+
+function handleOverlayMouseDown(event: MouseEvent) {
+    // On enregistre le début du clic uniquement s'il a lieu directement sur l'overlay 
+    // (pas sur le contenu du popup qui est un enfant)
+    if (event.target === event.currentTarget) {
+        isMouseDownOnOverlay.value = true;
+    }
+}
+
+function handleOverlayMouseUp(event: MouseEvent) {
+    // On ne ferme que si le clic a commencé ET fini sur l'overlay
+    if (isMouseDownOnOverlay.value && event.target === event.currentTarget) {
+        handleOverlayClick();
+    }
+    // Réinitialisation dans tous les cas
+    isMouseDownOnOverlay.value = false;
+}
+
+function handleOverlayMouseLeave() {
+    // Si l'utilisateur sort de la zone de l'overlay en gardant le bouton enfoncé, on annule l'action
+    isMouseDownOnOverlay.value = false;
+}
+
 function handleOverlayClick() {
     if (isResizing.value) return;
-    if (props.isClosable && props.closeOnOverlayClick) emit('close');
+    if (props.isClosable && props.closeOnOverlayClick) {
+        emit('close');
+    }
 }
 
 const positionClasses = computed(() => {

@@ -9,7 +9,25 @@
                 :class="i <= current ? 'bg-primary/50 text-primary-text' : 'bg-bg-neutral-genesis'"
             />
 
+            <!-- ÉTAPE ACTIVE : Enveloppée par le tutoriel + ajout du dblclick -->
+            <GenesisTutorialItem v-if="i === current" id="summary-rail-active-step">
+                <button
+                    type="button"
+                    class="w-8 h-8 grid place-items-center rounded text-xs font-semibold transition-colors duration-300 cursor-pointer"
+                    :class="stateClass(i)"
+                    :title="label"
+                    :aria-label="`Étape ${i + 1} : ${label}`"
+                    :aria-current="i === current ? 'step' : undefined"
+                    @click="emit('select', i)"
+                    @dblclick="emit('select', i)" 
+                >
+                    {{ i + 1 }}
+                </button>
+            </GenesisTutorialItem>
+
+            <!-- AUTRES ÉTAPES : Rendu standard inchangé -->
             <button
+                v-else
                 type="button"
                 class="w-8 h-8 grid place-items-center rounded text-xs font-semibold transition-colors duration-300"
                 :class="stateClass(i)"
@@ -25,6 +43,8 @@
 </template>
 
 <script setup lang="ts">
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue'; // AJOUT
+
 const props = defineProps<{
     labels: string[];
     /** Index (0-based) de l'étape affichée */

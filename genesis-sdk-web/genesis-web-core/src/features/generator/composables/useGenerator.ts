@@ -1,5 +1,5 @@
 // genesis-sdk-web/genesis-web-core/src/features/generator/composables/useGenerator.ts
-import { inject, computed } from 'vue';
+import { inject, computed, ref, toRaw } from 'vue';
 import { storeToRefs } from 'pinia';
 
 // Types & Interfaces
@@ -7,7 +7,8 @@ import type {
   GeneratorData, 
   IDatabaseService, 
   IFrameworkService, 
-  IFrontendService 
+  IFrontendService, 
+  IRepositoryService
 } from '@genesis-labs/shared-types';
 
 // Stores
@@ -20,17 +21,24 @@ import { FRONTEND_SERVICE_KEY } from '../../frontend/manifest';
 import { DATABASE_SERVICE_KEY } from '../../database/manifest';
 import { FRAMEWORK_SERVICE_KEY } from '../../frameworks/manifest';
 import { RECENT_SERVICE_KEY } from '@genesis-labs/web-core/core/features/recent/manifest';
+import { REPOSITORY_SERVICE_KEY } from '../../repository/manifest';
 import { IRecentService } from '@genesis-labs/shared-types';
 
 // Core & Config
 import { useGenesisWizard } from '@genesis-labs/web-core/core/composables/ux/useGenesisWizard';
 import { 
   WIZARD_STEP_CONFIG, 
+  STEP_TO_SUMMARY_MAP,
+  WIZARD_STEP_ORDER,
   type WizardServices,
   getTotalSteps,
   getStepIdByNumber,
   getSkippableStepsConfig
 } from './wizard-step-config';
+
+import { watch } from 'vue';
+import { getStepNumberById } from './wizard-step-config';
+
 
 export function useGenerator() {
   // ==========================================================================
@@ -46,6 +54,7 @@ export function useGenerator() {
   const dbsvc = inject(DATABASE_SERVICE_KEY) as IDatabaseService;
   const fsvc = inject(FRAMEWORK_SERVICE_KEY) as IFrameworkService;
   const recentSvc = inject(RECENT_SERVICE_KEY) as IRecentService;
+  const repoSvc = inject(REPOSITORY_SERVICE_KEY) as IRepositoryService;
 
   const store = useGeneratorStore();
   const frontendStore = useFrontendStore();
@@ -53,7 +62,13 @@ export function useGenerator() {
   // ==========================================================================
   // 2. CONFIGURATION DU WIZARD (DYNAMIQUE)
   // ==========================================================================
-  const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc, recentSvc };
+  const wizardServices: WizardServices = { svc, fdsvc, dbsvc, fsvc, recentSvc, repoSvc };
+
+  const hasReachedSummary = ref(false);
+
+  watch(() => store.lastInvalidation, (inv) => {
+    if (inv) wizard.invalidateSteps(inv.steps.map(getStepNumberById));
+  });
 
   const wizard = useGenesisWizard({
     totalSteps: getTotalSteps(),
@@ -66,6 +81,10 @@ export function useGenerator() {
     onStepEnter: async (currentStep: number) => {
       const stepId = getStepIdByNumber(currentStep);
       if (!stepId) return;
+
+      if (stepId === 'summary') {
+        hasReachedSummary.value = true;
+      }
 
       const stepConfig = WIZARD_STEP_CONFIG[stepId];
       if (stepConfig?.onEnter) {
@@ -99,8 +118,13 @@ export function useGenerator() {
   // ==========================================================================
   // 3. ÉTAT RÉACTIF (Depuis le store)
   // ==========================================================================
-  const { 
+  const {
     stepperData, 
+    pendingFramework,
+    pendingDatabaseEngine,
+    pendingFrontendFramework,
+    pendingRepositoryProvider,
+
     getTablesParents, 
     getTablesChilds, 
     getRelations,
@@ -114,7 +138,10 @@ export function useGenerator() {
     getAvailableFrameworkVersions,
     getAvailableBuildTools,
     getAvailableHibernateDdlAutoOptions,
+    isGenerating
   } = storeToRefs(store);
+
+  const targetSummaryIndex = ref(0);
 
   // ==========================================================================
   // 4. COMPUTEDS
@@ -146,9 +173,47 @@ export function useGenerator() {
     return null;
   }
 
+  async function saveScript(): Promise<boolean> {
+    const script = store.stepperData.script;
+    
+    if (script.path || script.content) {
+      try { 
+        await svc.saveScriptConfig(script); 
+        console.log("[Wizard: script] Script sauvegardé/exécuté avec succès.");
+        return true;
+      } catch (error) { 
+        console.warn("[Wizard: script] Échec sauvegarde script:", error);
+        store.setWizardError("Échec de la sauvegarde ou de l'exécution du script.");
+        return false;
+      }
+    }
+    return true; // Rien à sauvegarder
+  }
+
+
+  function backToSummary() {
+    const currentId = getStepIdByNumber(wizard.currentStep.value);
+    const summaryIndex = STEP_TO_SUMMARY_MAP[currentId || 'summary'];
+
+    if (summaryIndex !== null) {
+      console.log("SUMMARY INDEX != Null " + toRaw(summaryIndex))
+      targetSummaryIndex.value = summaryIndex;
+      // On trouve le numéro d'étape du 'summary' dans l'ordre
+      const summaryStepNumber = WIZARD_STEP_ORDER.indexOf('summary') + 1;
+      wizard.goToStep(summaryStepNumber);
+    }
+  }
+
   function resetWizard() {
+    // 1. Réinitialise le store (données, isGenerationComplete, etc.)
     store.reset();
+    
+    // 2. Réinitialise le compteur d'étapes du wizard
     wizard.resetWizard();
+    
+    // 3. Réinitialise les variables locales du composable
+    hasReachedSummary.value = false;
+    targetSummaryIndex.value = 0;
   }
 
   // --- Fetching de Données (Délégation aux services) ---
@@ -164,8 +229,10 @@ export function useGenerator() {
     store.setTablesChilds(await svc.fetchTablesMetadataChilds()); 
   }
   
-  async function fetchRelations() { 
-    store.setRelations(await svc.fetchRelations()); 
+  // Chargement initial uniquement : ne jamais écraser les relations déjà éditées par l'utilisateur
+  async function fetchRelations() {
+    if (store.relationsLoaded) return;
+    store.setRelations(await svc.fetchRelations());
   }
   
   async function fetchAvailableLanguages() { 
@@ -224,9 +291,15 @@ export function useGenerator() {
     isLastStep: wizard.isLastStep,
     skippedSteps: wizard.skippedSteps,
     isCurrentStepSkippable,
+    isGenerating,
 
     // Données du Store (Refs)
     stepperData,
+    pendingFramework,
+    pendingDatabaseEngine,
+    pendingFrontendFramework,
+    pendingRepositoryProvider,
+
     tables, 
     views, 
     availableTables,
@@ -249,11 +322,16 @@ export function useGenerator() {
     skipCurrentStep: wizard.skipCurrentStep,
     reset: resetWizard,
 
+    goToStep: wizard.goToStep,
+    backToSummary,
+    targetSummaryIndex,
+
     // Mutations d'état (Délégation au store)
     setFramework: store.setFramework,
     setPendingFramework: store.setPendingFramework,
     setPendingDatabaseEngine: store.setPendingDatabaseEngine,
     setPendingFrontendFramework: store.setPendingFrontendFramework,
+    setPendingRepositoryProvider: store.setPendingRepositoryProvider,
     setDatabaseEngine: store.setDatabaseEngine,
     setSelectedFrontendFramework: store.setSelectedFrontendFramework,
     
@@ -262,6 +340,7 @@ export function useGenerator() {
     updateScript: store.updateScript,
     updateFrontendLayout: store.updateFrontendLayout,
     updateGitConfig: store.updateGitConfig,
+    updateRepositoryConfig: store.updateRepositoryConfig,
     
     toggleLanguage: store.toggleLanguage,
     
@@ -282,5 +361,8 @@ export function useGenerator() {
     fetchFrameworkVersions,
     fetchBuildTools,
     fetchHibernateDdlAutoOptions,
+    hasReachedSummary,
+    visitedSteps: wizard.visitedSteps,
+    saveScript,
   };
 }

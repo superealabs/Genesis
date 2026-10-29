@@ -26,7 +26,7 @@
                 SGBD Sélectionné <span class="text-accent ml-0.5">*</span>
               </label>
               <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
-                <span class="truncate font-medium capitalize">{{ database.engine || 'Aucun SGBD sélectionné' }}</span>
+                <span class="truncate font-medium capitalize">{{ selectedEngineName }}</span>
               </div>
             </div>
           </template>
@@ -216,11 +216,21 @@ const emit = defineEmits<{
 // ============================================================================
 // 2. COMPOSABLES & ÉTAT LOCAL
 // ============================================================================
-const { stepperData, testDatabaseConnection, setDatabaseEngine } = useGenerator();
+const { 
+  stepperData, 
+  pendingDatabaseEngine,      
+  setPendingDatabaseEngine,   
+  testDatabaseConnection 
+} = useGenerator();
 const databaseStore = useDatabaseStore();
 
 const database = computed(() => stepperData.value.database);
 const isTesting = ref(false);
+const selectedEngineName = computed(() => 
+  pendingDatabaseEngine.value?.name || stepperData.value.database.engine || 'Aucun SGBD sélectionné'
+);
+
+const dbConfig = computed(() => stepperData.value.database);
 
 // ============================================================================
 // 3. GESTION DE L'ÉDITION DU SGBD
@@ -246,7 +256,7 @@ function cancelEditingDatabase() {
 function handleDatabaseSelect(value: any) {
   if (typeof value === 'string') return;
   if (value && value.name) {
-    setDatabaseEngine(value);
+    setPendingDatabaseEngine(value);
     isEditingDatabase.value = false;
   }
 }
@@ -278,22 +288,17 @@ const panelSlides: CarouselSlide[] = [
 // 5. COMPUTEDS
 // ============================================================================
 const computedUrl = computed(() => {
-  const { engine, host, port, databaseName, sid } = database.value;
+  const { engine, host, port, databaseName, sid } = dbConfig.value;
   const hostStr = host || 'localhost';
   const portStr = port || '';
   const dbName = databaseName || '';
   
   switch (engine) {
-    case 'mysql': 
-      return `jdbc:mysql://${hostStr}:${portStr}/${dbName}`;
-    case 'postgre': 
-      return `jdbc:postgresql://${hostStr}:${portStr}/${dbName}`;
-    case 'sqlserver': 
-      return `jdbc:sqlserver://${hostStr}:${portStr};databaseName=${dbName}`;
-    case 'oracle': 
-      return `jdbc:oracle:thin:@${hostStr}:${portStr}:${sid || dbName}`;
-    default: 
-      return '';
+    case 'mysql': return `jdbc:mysql://${hostStr}:${portStr}/${dbName}`;
+    case 'postgre': return `jdbc:postgresql://${hostStr}:${portStr}/${dbName}`;
+    case 'sqlserver': return `jdbc:sqlserver://${hostStr}:${portStr};databaseName=${dbName}`;
+    case 'oracle': return `jdbc:oracle:thin:@${hostStr}:${portStr}:${sid || dbName}`;
+    default: return '';
   }
 });
 

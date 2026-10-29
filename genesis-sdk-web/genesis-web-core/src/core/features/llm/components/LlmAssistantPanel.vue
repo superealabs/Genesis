@@ -19,14 +19,14 @@
             <div
                 v-for="msg in messages"
                 :key="msg.id"
-                class="flex flex-col"
+                class="flex flex-col w-full"
                 :class="msg.role === 'user' ? 'items-end' : 'items-start'"
             >
                 <div
-                    class="max-w-[90%] px-4 py-3 rounded-2xl text-sm leading-relaxed"
+                    class="max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed break-words min-w-0"
                     :class="msg.role === 'user'
-                        ? 'bg-accent/10 text-accent border border-accent/20 rounded-tr-sm'
-                        : 'bg-bg/50 text-text border border-secondary rounded-tl-sm'"
+                        ? 'bg-bg-secondary text-text rounded-tr-sm'
+                        : 'bg-bg-neutral-genesis text-text rounded-tl-sm'"
                 >
                     <!-- Indicateur de chargement -->
                     <div v-if="msg.isLoading" class="flex items-center gap-2 text-text-muted italic">
@@ -37,8 +37,8 @@
                         Génération en cours...
                     </div>
 
-                    <!-- Contenu du message (support basique des sauts de ligne) -->
-                    <div v-else class="whitespace-pre-wrap">{{ msg.content }}</div>
+                    <!-- Contenu du message (support basique des sauts de ligne + protection contre le débordement) -->
+                    <div v-else class="whitespace-pre-wrap break-words">{{ msg.content }}</div>
                 </div>
                 <span class="text-[10px] text-text-muted/50 mt-1 px-1">
                     {{ msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
@@ -47,11 +47,11 @@
         </div>
 
         <!-- ═══ Zone de Saisie (fixe en bas) ═══ -->
-        <div class="flex-shrink-0 p-4 border-t border-secondary bg-bg-dark/50 backdrop-blur-sm space-y-3">
+        <div class="flex-shrink-0 p-4 border-t border-bg-neutral-genesis bg-bg-dark/50 backdrop-blur-sm space-y-3">
 
             <!-- Options compactes -->
             <div class="flex items-center justify-between gap-2">
-                <GenesisDropdown :match-trigger-width="true" trigger-variant="secondary" trigger-size="xs" class="w-32">
+                <GenesisDropdown :match-trigger-width="true" trigger-variant="secondary" trigger-size="xs">
                     <template #trigger>
                         <span class="text-xs font-medium text-text-muted truncate">{{ selectedModelLabel }}</span>
                     </template>
@@ -69,11 +69,12 @@
                     </div>
                 </GenesisDropdown>
 
-                <label class="flex items-center gap-1.5 cursor-pointer group">
-                    <input type="checkbox" v-model="includeDbSchema" class="sr-only peer">
-                    <div class="w-8 h-4 bg-secondary rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-accent relative"></div>
-                    <span class="text-[10px] font-medium text-text-muted group-hover:text-text transition-colors">Schéma DB</span>
-                </label>
+                <!-- ✅ REMPLACÉ PAR GenesisSwitch -->
+                <GenesisSwitch
+                    v-model="includeDbSchema"
+                    size="sm"
+                    label="Schéma DB"
+                />
             </div>
 
             <!-- Input + Bouton -->
@@ -82,14 +83,14 @@
                     v-model="prompt"
                     placeholder="Décrivez ce que vous voulez générer..."
                     rows="3"
-                    class="flex-1 px-3 py-2.5 text-sm bg-bg-dark border border-secondary rounded-lg text-text placeholder:text-text-muted/50 resize-none outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent transition-all"
+                    class="flex-1 min-w-0 px-3 py-2.5 text-sm bg-bg-dark border border-bg-neutral-genesis rounded-lg text-text placeholder:text-text-muted/50 resize-none outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent transition-all break-words"
                     @keydown.enter.exact.prevent="handleGenerate"
                 />
                 <GenesisButtonIcon
                     variant="primary"
                     size="md"
                     :disabled="!prompt.trim() || isGenerating"
-                    class="mb-0.5"
+                    class="mb-0.5 shrink-0"
                     @click="handleGenerate"
                 >
                     <svg v-if="!isGenerating" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
@@ -105,6 +106,7 @@
 import { ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import GenesisDropdown from '@genesis-labs/web-core/core/components/ui/dropdown/GenesisDropdown.vue';
+import GenesisSwitch from '@genesis-labs/web-core/core/components/ui/inputs/GenesisSwitch.vue'; // ✅ AJOUT
 import { useLlmChat, LLM_MODELS, type LlmGeneratePayload } from '@genesis-labs/web-core/core/features/llm/composables/UseLlmChat';
 import { usePanelView } from '@genesis-labs/web-core/core/composables/ux/UseGenesisPanel';
 
@@ -136,7 +138,6 @@ function onChatScroll() {
 function restoreChatScroll() {
     const el = chatContainerRef.value;
     const saved = view.value.extra.chatScrollTop;
-    // 'instant' : le conteneur est en scroll-smooth, on ne veut pas d'animation à la restauration
     if (el && typeof saved === 'number') el.scrollTo({ top: saved, behavior: 'instant' as ScrollBehavior });
 }
 
