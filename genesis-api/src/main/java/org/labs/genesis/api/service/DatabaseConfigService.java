@@ -24,18 +24,6 @@ public class DatabaseConfigService {
         this.generationContextStore = generationContextStore;
     }
 
-    public List<DatabaseResponse> getDatabases() {
-        return ProjectGenerator.databases.values()
-                .stream()
-                .sorted(Comparator.comparingInt(Database::getId))
-                .map(database -> new DatabaseResponse(
-                        database.getId(),
-                        database.getName(),
-                        database.getPort()
-                ))
-                .toList();
-    }
-
     public List<DatabaseEngineResponse> getEngines() {
         return ProjectGenerator.databases.values()
                 .stream()

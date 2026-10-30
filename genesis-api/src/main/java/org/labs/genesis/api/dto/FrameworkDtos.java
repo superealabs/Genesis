@@ -5,6 +5,7 @@ public final class FrameworkDtos {
     private FrameworkDtos() {
     }
 
+
     public record FrameworkResponse(
             int id,
             int languageId,
@@ -16,9 +17,11 @@ public final class FrameworkDtos {
             boolean useCloud,
             boolean useEurekaServer,
             boolean isGateway,
-            boolean useFrontendApp
+            boolean useFrontendApp,
+            boolean withGroupId
     ) {
     }
+
 
     public record FrameworkSelectionResponse(
             boolean success,

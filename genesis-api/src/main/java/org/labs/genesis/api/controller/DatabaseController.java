@@ -15,8 +15,8 @@ public class DatabaseController {
     }
 
     @GetMapping("/api/databases")
-    public List<DatabaseResponse> getDatabases() {
-        return databaseConfigService.getDatabases();
+    public List<DatabaseEngineResponse> getDatabases() {
+        return databaseConfigService.getEngines();
     }
 
     // Catalogue attendu par Genesis SDK Web

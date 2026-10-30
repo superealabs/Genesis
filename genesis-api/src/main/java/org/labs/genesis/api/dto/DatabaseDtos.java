@@ -38,13 +38,6 @@ public final class DatabaseDtos {
     ) {
     }
 
-    public record DatabaseResponse(
-            int id,
-            String name,
-            String defaultPort
-    ) {
-    }
-
     public record DatabaseEngineResponse(
             int id,
             String name,

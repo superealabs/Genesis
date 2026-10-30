@@ -21,7 +21,8 @@ public final class FrameworkMapper {
                 Boolean.TRUE.equals(framework.getUseCloud()),
                 Boolean.TRUE.equals(framework.getUseEurekaServer()),
                 Boolean.TRUE.equals(framework.getIsGateway()),
-                Boolean.TRUE.equals(framework.getUseFrontendApp())
+                Boolean.TRUE.equals(framework.getUseFrontendApp()),
+                Boolean.TRUE.equals(framework.getWithGroupId())
         );
     }
 }
