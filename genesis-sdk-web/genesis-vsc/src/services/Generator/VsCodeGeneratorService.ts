@@ -68,10 +68,26 @@ const MOCK_LLM_MODELS: LlmModelDto[] = [
 ];
 
 export class VsCodeGeneratorService implements IGeneratorService {
+
+    async selectGenerationMode(modes?: String): Promise<void> {
+        try {
+            // Valeur par défaut si modes est nul, undefined ou vide
+            const mode = (modes && String(modes).trim()) || 'GENERATE_NEW_PROJECT';
+
+            logger.log(LOG_CHANNEL, `🔄 Init choix de génération : mode=${mode}`);
+
+            await getAxiosInstance().post('/generation/modes/select', {
+                mode
+            });
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ InitGenerateNewProjectChoice API échouée: ${(error as Error).message}`);
+            throw error;
+        }
+    }
     
     async fetchTablesMetadata(): Promise<TableMetadataDto[]> {
         try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/api/tables_metadata_all');
+            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata_all');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchTablesMetadata API échouée. Fallback mock.`);
@@ -81,7 +97,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
 
     async fetchTablesMetadataParents(): Promise<TableMetadataDto[]> {
         try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/api/tables_metadata/parents');
+            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata/parents');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchTablesMetadataParents API échouée. Fallback mock.`);
@@ -91,7 +107,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
 
     async fetchTablesMetadataChilds(): Promise<TableMetadataDto[]> {
         try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/api/tables_metadata/childs');
+            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata/childs');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchTablesMetadataChilds API échouée. Fallback mock.`);
@@ -101,7 +117,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
 
     async fetchRelations(): Promise<RelationParameter[]> {
         try {
-            const { data } = await getAxiosInstance().get<RelationParameter[]>('/api/relations');
+            const { data } = await getAxiosInstance().get<RelationParameter[]>('/relations');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchRelations API échouée. Fallback mock.`);
@@ -114,7 +130,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async saveProjectConfig(config: ProjectConfig): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde de la config du projet: ${config.projectName}`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/project-config', config);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/project-config', config);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveProjectConfig API échouée: ${(error as Error).message}`);
@@ -125,7 +141,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async selectFramework(frameworkId: number): Promise<void> {
         try {
             logger.log(LOG_CHANNEL, `🔄 Tentative de sélection du framework ID: ${frameworkId}`);
-            await getAxiosInstance().post(`/api/generator/frameworks/${frameworkId}/select`);
+            await getAxiosInstance().post(`/generator/frameworks/${frameworkId}/select`);
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ selectFramework API échouée: ${(error as Error).message}`);
             throw error; 
@@ -135,18 +151,21 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async selectDatabase(engineId: number): Promise<void> {
         try {
             logger.log(LOG_CHANNEL, `🔄 Tentative de sélection du database ID: ${engineId}`);
-            await getAxiosInstance().post(`/api/database/${engineId}/select`);
+            await getAxiosInstance().post(`/database/${engineId}/select`);
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ selectDatabase API échouée: ${(error as Error).message}`);
             throw error; 
         }
     }
 
-    // ✅ CORRECTION : URL corrigée (était /api/database/...)
+    // ✅ CORRECTION : URL corrigée (était /database/...)
+
+
+    // inutile
     async selectFrontendFramework(frameworkFrontEndId: number): Promise<void> {
         try {
             logger.log(LOG_CHANNEL, `🔄 Tentative de sélection du frontend framework ID: ${frameworkFrontEndId}`);
-            await getAxiosInstance().post(`/api/frontend/${frameworkFrontEndId}/select`);
+            await getAxiosInstance().post(`/frontend/${frameworkFrontEndId}/select`);
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ selectFrontendFramework API échouée: ${(error as Error).message}`);
             throw error; 
@@ -154,11 +173,10 @@ export class VsCodeGeneratorService implements IGeneratorService {
     }
 
     // ═══ NOUVELLES MÉTHODES REQUISES PAR LE CONTRAT ═══
-
     async saveDatabaseConfig(databaseConfig: DatabaseConfig): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde de la config DB: ${databaseConfig.engine}`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/database-config', databaseConfig);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/database-config', databaseConfig);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveDatabaseConfig API échouée: ${(error as Error).message}`);
@@ -168,7 +186,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
 
     async fetchAvailableLlmModels(): Promise<LlmModelDto[]> {
         try {
-            const { data } = await getAxiosInstance().get<LlmModelDto[]>('/api/generator/llm-models');
+            const { data } = await getAxiosInstance().get<LlmModelDto[]>('/generator/llm-models');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchAvailableLlmModels API échouée. Fallback mock.`);
@@ -179,7 +197,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async generateAiScript(payload: AiPromptPayload): Promise<AiResponseDto> {
         try {
             logger.log(LOG_CHANNEL, `🤖 Génération de script via IA (modèle: ${payload.model})`);
-            const { data } = await getAxiosInstance().post<AiResponseDto>('/api/generator/ai-generate', payload);
+            const { data } = await getAxiosInstance().post<AiResponseDto>('/generator/ai-generate', payload);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ generateAiScript API échouée: ${(error as Error).message}`);
@@ -190,7 +208,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async saveScriptConfig(script: ScriptConfig): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde du script: ${script.path}`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/script-config', script);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/script-config', script);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveScriptConfig API échouée: ${(error as Error).message}`);
@@ -201,7 +219,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async saveGenerationParameters(params: GenerationParameter[]): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde des paramètres de génération (${params.length} profils)`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/generation-parameters', params);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/generation-parameters', params);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveGenerationParameters API échouée: ${(error as Error).message}`);
@@ -212,7 +230,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async saveRelationParameters(relations: RelationParameter[]): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde des paramètres de relations (${relations.length} relations)`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/relation-parameters', { relations });
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/relation-parameters', { relations });
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveRelationParameters API échouée: ${(error as Error).message}`);
@@ -223,7 +241,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async saveFrontendLayoutConfig(config: FrontendLayoutConfig): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde de la configuration du layout frontend`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/frontend-layout-config', config);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/frontend-layout-config', config);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveFrontendLayoutConfig API échouée: ${(error as Error).message}`);
@@ -234,7 +252,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async saveGitConfiguration(config: GitConfiguration): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde de la configuration Git`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/api/generator/git-config', config);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/git-config', config);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveGitConfiguration API échouée: ${(error as Error).message}`);
@@ -247,7 +265,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
             logger.log(LOG_CHANNEL, `🚀 Lancement de la génération du projet: ${data.config.projectName}`);
             
             // Tentative d'appel à l'API (qui échouera pour l'instant)
-            const { data: result } = await getAxiosInstance().post<GenerationResult>('/api/generator/launch', data);
+            const { data: result } = await getAxiosInstance().post<GenerationResult>('/generator/launch', data);
             return result;
             
         } catch (error) {
@@ -268,6 +286,47 @@ export class VsCodeGeneratorService implements IGeneratorService {
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             return mockResult;
+        }
+    }
+
+    // ═══ RESET / RÉINITIALISATION ═══
+
+    async resetFrontend(): Promise<{ success: boolean; message: string }> {
+        try {
+            logger.log(LOG_CHANNEL, `🔄 Reset de la configuration frontend`);
+            const { data } = await getAxiosInstance().delete<{ success: boolean; message: string }>(
+                '/generator/frontend-config'
+            );
+            return data;
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ resetFrontend API échouée: ${(error as Error).message}`);
+            throw error;
+        }
+    }
+
+    async resetGit(): Promise<{ success: boolean; message: string }> {
+        try {
+            logger.log(LOG_CHANNEL, `🔄 Reset de la configuration Git`);
+            const { data } = await getAxiosInstance().delete<{ success: boolean; message: string }>(
+                '/generator/git/config'
+            );
+            return data;
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ resetGit API échouée: ${(error as Error).message}`);
+            throw error;
+        }
+    }
+
+    async resetAll(): Promise<{ success: boolean; message: string }> {
+        try {
+            logger.log(LOG_CHANNEL, `🔄 Reset complet du contexte Genesis`);
+            const { data } = await getAxiosInstance().delete<{ success: boolean; message: string }>(
+                '/generator/reset'
+            );
+            return data;
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ resetAll API échouée: ${(error as Error).message}`);
+            throw error;
         }
     }
 }

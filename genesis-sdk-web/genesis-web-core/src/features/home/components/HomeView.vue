@@ -13,9 +13,13 @@
         </div>
 
         <GenesisTutorialItem id="create-project">
-            <GenesisButton @click="emit('open-generator')" :variant="'accent'">
+            <GenesisButton 
+                @click="handleCreateProject" 
+                :variant="'accent'"
+                :disabled="isInitializing"
+            >
                 <template #leftIcon><IconFolderPlus /></template>
-                Créer un nouveau projet
+                {{ isInitializing ? 'Initialisation...' : 'Créer un nouveau projet' }}
             </GenesisButton>
         </GenesisTutorialItem>
 
@@ -52,6 +56,19 @@ import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/c
 import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
+import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+
+// État local pour éviter les doubles clics
+
+const { initializeNewProject, isInitializing } = useGenerator();
+
+async function handleCreateProject() {
+    const ok = await initializeNewProject();
+    if (ok) {
+        emit('open-generator');
+    }
+    // Si !ok, l'erreur est déjà dans wizardError (affichée par le parent via ErrorPopup)
+}
 
 const emit = defineEmits<{
     'open-generator': [];

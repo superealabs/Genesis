@@ -18,6 +18,10 @@ import type {
  * Contrat du service générateur (Pure Interface).
  */
 export interface IGeneratorService {
+
+    // initialisateur
+    selectGenerationMode(modes?: String): Promise<void>;
+
     // ═══ ÉTAPE 1 : FRAMEWORK ═══
     selectFramework(id: number): Promise<void>;
 
@@ -35,6 +39,8 @@ export interface IGeneratorService {
 
     // ═══ ÉTAPE 6 : SÉLECTION DES TABLES, VUES ET COMPOSANTS ═══
     fetchTablesMetadata(): Promise<TableMetadataDto[]>;
+
+    // est un post au début mais normalement doit être un put après
     saveGenerationParameters(params: GenerationParameter[]): Promise<{ success: boolean; message: string }>;
 
 
@@ -42,6 +48,8 @@ export interface IGeneratorService {
     fetchTablesMetadataParents(): Promise<TableMetadataDto[]>;
     fetchTablesMetadataChilds(): Promise<TableMetadataDto[]>;
     fetchRelations(): Promise<RelationParameter[]>;
+
+    // est obligatoirement une MAJ
     saveRelationParameters(relations: RelationParameter[]): Promise<{ success: boolean; message: string }>;
 
     // ═══ ÉTAPE 8 & 9 : FRONTEND ═══
@@ -66,5 +74,26 @@ export interface IGeneratorService {
     launchGeneration(data: GeneratorData): Promise<GenerationResult>;
 
 
+
+    // utils
+
+    // ═══ RESET / RÉINITIALISATION ═══
+    /**
+     * Réinitialise la configuration frontend côté backend.
+     * DELETE /api/generator/frontend-config
+     */
+    resetFrontend(): Promise<{ success: boolean; message: string }>;
+
+    /**
+     * Réinitialise la configuration Git côté backend.
+     * DELETE /api/generator/git/config
+     */
+    resetGit(): Promise<{ success: boolean; message: string }>;
+
+    /**
+     * Réinitialise TOUT le contexte Genesis côté backend.
+     * DELETE /api/generator/reset
+     */
+    resetAll(): Promise<{ success: boolean; message: string }>;
     // rajouter une fonction qui clear le tout
 }

@@ -19,6 +19,21 @@ export class GeneratorHandler {
 
     constructor(private panel: vscode.WebviewPanel) {}
 
+    async handleSelectGenerationMode(
+        payload: { modes?: string },
+        panel: vscode.WebviewPanel
+    ): Promise<void> {
+        try {
+            await this.service.selectGenerationMode(payload?.modes);
+            panel.webview.postMessage({
+                type: 'SELECT_GENERATION_MODE_DONE',
+                payload: { success: true }
+            });
+        } catch (error) {
+            this.sendApiError(panel, 'SELECT_GENERATION_MODE', error);
+        }
+    }
+
     // ═══ ACTIONS UI SPÉCIFIQUES À VS CODE ═══
 
     async handleRequestFolderPath(): Promise<void> {
@@ -192,6 +207,37 @@ export class GeneratorHandler {
                         
         } catch (error) {
             this.sendApiError(panel, 'LAUNCH_GENERATION', error);
+        }
+    }
+
+
+    // Utilitaire
+    // ═══ RESET ═══
+
+    async handleResetFrontend(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.resetFrontend();
+            panel.webview.postMessage({ type: 'FRONTEND_CONFIG_RESET', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'RESET_FRONTEND', error);
+        }
+    }
+
+    async handleResetGit(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.resetGit();
+            panel.webview.postMessage({ type: 'GIT_CONFIG_RESET', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'RESET_GIT', error);
+        }
+    }
+
+    async handleResetAll(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.resetAll();
+            panel.webview.postMessage({ type: 'GENERATOR_RESET', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'RESET_ALL', error);
         }
     }
 

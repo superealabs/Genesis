@@ -1,11 +1,48 @@
-- Problème, l'utilisateur est obligé de faire suivant pour valider la modification, est ce que c'est une bonne idée ?
-
-si cancel, on revient à la valeur choisit à l'origine
-
-bug au bouton suivant
+- le rollBack de donnée(réinitialiser à la donnée d'origine pour la configuration de base de donnée)
 
 
-incohérence dans la logique des données
+
+- choisir le mode de génération dès le début
+    - rajouter un set (associer avec le bouton créer un nouveau projet)
+
+
+Créer les endpoints pour clear les données api
+
+
+
+BUG :
+    Quand on change de framework depuis la page de config, valeur par defaut du champs version du Framework est la première valeur du tableau de version de l'ancien framework
+
+
+
+
+
+
+rajouter un raw par étape pour voir la forme des données envoyées
+
+
+database ne contient pas de séléction mais on lui envoie directement databaseCOnfig :
+
+
+
+- pull pour récupérer les modifications
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

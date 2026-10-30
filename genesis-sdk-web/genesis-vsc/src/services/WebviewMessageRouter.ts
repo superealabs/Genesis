@@ -41,6 +41,11 @@ export class WebviewMessageRouter {
     public async route(message: any): Promise<void> {
         try {
             switch (message.type) {
+
+                case 'SELECT_GENERATION_MODE':                                    // 👈 NOUVEAU
+                    await this.generatorHandler.handleSelectGenerationMode(message.payload, this.panel);
+                    break;
+
                 // ═══ FRAMEWORKS (Étape 1) ═══
                 case 'GET_FRAMEWORKS':
                     await this.frameworkHandler.getAll(message.payload, this.panel);
@@ -211,6 +216,17 @@ export class WebviewMessageRouter {
 
                 case 'OPEN_PROJECT':
                     await this.generatorHandler.handleOpenProject(message.payload, this.panel);
+                    break;
+
+                // ═══ RESET ═══
+                case 'RESET_FRONTEND':
+                    await this.generatorHandler.handleResetFrontend(message.payload, this.panel);
+                    break;
+                case 'RESET_GIT':
+                    await this.generatorHandler.handleResetGit(message.payload, this.panel);
+                    break;
+                case 'RESET_ALL':
+                    await this.generatorHandler.handleResetAll(message.payload, this.panel);
                     break;
 
                 default:

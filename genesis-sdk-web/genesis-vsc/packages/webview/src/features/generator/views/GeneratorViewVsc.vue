@@ -11,6 +11,8 @@ import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/Gen
 
 import { openProjectVsc } from '@/features/generator/services/vsc-generator.utils';
 
+import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/manifest';
+
 const emit = defineEmits<{
     close: [];
 }>();
@@ -34,12 +36,19 @@ const {
     backToSummary,
     targetSummaryIndex,
     goToStep,
-    hasReachedSummary
+    hasReachedSummary,
+    resetAllConfig
 } = useGeneratorVsc();
 
-function handleClose() {
+const store = useGeneratorStore();
+
+async function handleClose() {
+    // Si la génération n'a pas été complétée, on doit reset le backend
+    if (!store.isGenerationComplete) {
+        await resetAllConfig();
+    }
     reset();
-    emit('close'); 
+    emit('close');
 }
 
 async function handleNextStep() {

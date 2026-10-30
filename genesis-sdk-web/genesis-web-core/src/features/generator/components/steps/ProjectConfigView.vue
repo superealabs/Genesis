@@ -369,7 +369,7 @@ console.log("✅ [ProjectConfigView] useGenesisTutorial initialisé. ScreenId: '
 // ============================================================================
 const { 
   stepperData,
-  setPendingFramework,
+  changeFramework,
   pendingFramework, 
   updateConfig,
   availableLoggingLevels, availableSecurityTypes, availableCacheProviders,
@@ -406,11 +406,15 @@ async function handleFrameworkSelect(value: any) {
   isEditingFramework.value = false;
   if (value.id === framework.value?.id) return;
 
+  // Confirmation (reset configs dépendantes)
   if (!(await confirmFrameworkChange(generatorStore, value))) {
-    generatorStore.cancelPendingFrameworkChange();  // 👈 rollback
+    generatorStore.cancelPendingFrameworkChange();
     return;
   }
-  setPendingFramework(value);
+
+  // 👇 Commit local + API (géré par le composable)
+  await changeFramework(value);
+  // Si échec, wizardError est déjà set, ErrorPopup s'affiche (via StepperPopup)
 }
 
 function handleClickOutside(event: MouseEvent) {

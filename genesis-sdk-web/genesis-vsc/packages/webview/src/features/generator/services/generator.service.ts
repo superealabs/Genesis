@@ -19,6 +19,25 @@ import { vscodeService } from '../../../core/services/vscode.service';
 export class GeneratorServiceVsc implements IGeneratorService {
     constructor(private vscode = vscodeService) {}
 
+    selectGenerationMode(modes?: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('SELECT_GENERATION_MODE', { modes });
+
+            const cleanup = this.vscode.onMessage<{ success: boolean }>('SELECT_GENERATION_MODE_DONE', (data) => {
+                cleanup();
+                if (data.success) resolve();
+                else reject(new Error('Échec de l\'initialisation du mode de génération'));
+            });
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'SELECT_GENERATION_MODE') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
     // ═══ ÉTAPE 1 : FRAMEWORK ═══
     selectFramework(frameworkId: number): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -276,6 +295,63 @@ export class GeneratorServiceVsc implements IGeneratorService {
 
             const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
                 if (data.command === 'LAUNCH_GENERATION') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
+
+    // ═══ RESET ═══
+
+    resetFrontend(): Promise<{ success: boolean; message: string }> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('RESET_FRONTEND');
+
+            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>(
+                'FRONTEND_CONFIG_RESET',
+                (data) => { cleanup(); resolve(data); }
+            );
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'RESET_FRONTEND') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
+    resetGit(): Promise<{ success: boolean; message: string }> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('RESET_GIT');
+
+            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>(
+                'GIT_CONFIG_RESET',
+                (data) => { cleanup(); resolve(data); }
+            );
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'RESET_GIT') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
+    resetAll(): Promise<{ success: boolean; message: string }> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('RESET_ALL');
+
+            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>(
+                'GENERATOR_RESET',
+                (data) => { cleanup(); resolve(data); }
+            );
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'RESET_ALL') {
                     cleanup(); errorCleanup();
                     reject(new Error(data.message));
                 }

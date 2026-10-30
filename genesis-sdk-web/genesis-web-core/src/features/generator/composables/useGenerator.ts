@@ -9,7 +9,8 @@ import type {
   IFrameworkService, 
   IFrontendService, 
   IRepositoryService,
-  DatabaseConfig
+  DatabaseConfig,
+  Framework
 } from '@genesis-labs/shared-types';
 
 // Stores
@@ -140,6 +141,7 @@ export function useGenerator() {
     getAvailableBuildTools,
     getAvailableHibernateDdlAutoOptions,
     isGenerating,
+    isInitializing
   } = storeToRefs(store);
 
   const targetSummaryIndex = ref(0);
@@ -160,6 +162,67 @@ export function useGenerator() {
   // ==========================================================================
   // 5. ACTIONS
   // ==========================================================================
+
+  // --- Initialisation d'un nouveau projet ---
+  async function initializeNewProject(): Promise<boolean> {
+    if (store.isInitializing) return false;  // anti double-clic au niveau store aussi
+
+    store.setIsInitializing(true);
+    try {
+      console.log("[Wizard: initialize] Initialisation du mode de génération...");
+      await svc.selectGenerationMode('GENERATE_NEW_PROJECT');
+      console.log("[Wizard: initialize] Mode de génération initialisé.");
+      return true;
+    } catch (error) {
+      console.error("[Wizard: initialize] Échec de l'initialisation du mode :", error);
+      store.setWizardError(
+        error instanceof Error ? error.message : "Impossible d'initialiser le mode de génération."
+      );
+      return false;
+    } finally {
+      store.setIsInitializing(false);
+    }
+  }
+
+  /**
+   * Change le framework courant : commit local + notification backend.
+   * Utilisé quand l'utilisateur change de framework depuis la vue de configuration
+   * (et non depuis l'étape de sélection, qui gère déjà son propre commit).
+   *
+   * @returns true si le changement a réussi (local + backend), false sinon.
+   */
+  async function changeFramework(framework: Framework): Promise<boolean> {
+    const current = store.stepperData.framework;
+
+    // Pas de changement : no-op
+    if (current?.id === framework.id) {
+      return true;
+    }
+
+    // Commit local
+    store.setFramework(framework);
+    store.setPendingFramework(framework);  // garde le pending aligné
+    console.log(`[Wizard: changeFramework] Framework commit local :`, framework.name);
+
+    // Commit backend
+    try {
+      await svc.selectFramework(framework.id);
+      console.log(`[Wizard: changeFramework] Framework validé côté backend :`, framework.name);
+      return true;
+    } catch (error) {
+      // Rollback local : on restaure l'ancien framework
+      if (current) {
+        store.setFramework(current);
+        store.setPendingFramework(current);
+      } else {
+        store.setPendingFramework(null);
+      }
+      store.setWizardError(
+        `Erreur à la sélection du framework : ${(error as Error).message}`
+      );
+      return false;
+    }
+  }
 
   // --- Navigation du Wizard ---
   function handleComplete(): GeneratorData | null {
@@ -305,10 +368,58 @@ export function useGenerator() {
     store.setAvailableHibernateDdlAutoOptions(await fsvc.fetchHibernateDdlAutoOptions(frameworkId));
   }
 
+
+  // --- Reset ---
+  async function resetFrontendConfig(): Promise<boolean> {
+    try {
+      const result = await svc.resetFrontend();
+      if (result.success) {
+        store.resetFrontendDependentConfig();
+      }
+      return result.success;
+    } catch (error) {
+      store.setWizardError(error instanceof Error ? error.message : 'Échec du reset frontend.');
+      return false;
+    }
+  }
+
+  async function resetGitConfig(): Promise<boolean> {
+    try {
+      const result = await svc.resetGit();
+      if (result.success) {
+        store.skipGitConfig();  // ou une action dédiée si vous en avez une
+      }
+      return result.success;
+    } catch (error) {
+      store.setWizardError(error instanceof Error ? error.message : 'Échec du reset Git.');
+      return false;
+    }
+  }
+
+  /**
+   * Réinitialise le contexte backend (DELETE /api/generator/reset).
+   * NE TOUCHE PAS au store local — c'est le rôle de `reset()`.
+   * @returns true si le backend a été reset, false sinon.
+   */
+  async function resetAllConfig(): Promise<boolean> {
+      try {
+          const result = await svc.resetAll();
+          console.log("RESULTAT DU RESET API : ", toRaw(result))
+          return result.success;
+      } catch (error) {
+          console.error("[resetAllConfig] Échec du reset backend:", error);
+          store.setWizardError(
+              error instanceof Error ? error.message : 'Échec du reset backend.'
+          );
+          return false;
+      }
+  }
   // ==========================================================================
   // 6. RETOUR FINAL (Ordonné par domaine)
   // ==========================================================================
   return {
+    initializeNewProject,
+
     // État du Wizard
     currentStep: wizard.currentStep,
     totalSteps: wizard.totalSteps,
@@ -389,6 +500,10 @@ export function useGenerator() {
     hasReachedSummary,
     visitedSteps: wizard.visitedSteps,
     saveScript,
-
+    isInitializing,
+    resetAllConfig,
+    resetFrontendConfig,
+    resetGitConfig,
+    changeFramework
   };
 }

@@ -208,7 +208,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       }
     },
     
-    beforeNext: async (store) => {
+    beforeNext: async (store, { svc }) => {
       const framework = store.pendingFramework;
       
       if (!framework) {
@@ -216,21 +216,35 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
+      // Confirmation du changement (rollback si refus)
       if (!(await confirmFrameworkChange(store, framework))) {
-        store.cancelPendingFrameworkChange();  // 👈 rollback
+        store.cancelPendingFrameworkChange();
         return false;
       }
 
-      // COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
-      if (store.pendingFramework) {
-        store.setFramework(store.pendingFramework);
-        console.log(`[Wizard: project_config] Framework validé et commit :`, store.pendingFramework.name);
+      // Commit local
+      store.setFramework(framework);
+      console.log(`[Wizard: framework_select] Framework commit local :`, framework.name);
+
+      // Commit backend (attendu + gestion d'erreur bloquante)
+      const previous = store.stepperData.framework;
+      store.setFramework(framework);
+
+      try {
+        console.log("FRAMEWORK SELECTED IN API : ", toRaw(framework));
+        await svc.selectFramework(framework.id);
+        return true;
+      } catch (error) {
+        // 👇 Rollback local
+        if (previous) {
+          store.setFramework(previous);
+        } else {
+          store.setPendingFramework(null);
+        }
+        store.setWizardError(`Erreur à la sélection du framework : ${(error as Error).message}`);
+        return false;
       }
 
-
-
-      console.log(`[Wizard: framework] Framework en attente de validation :`, framework.name);
-      return true;
     }
   },
 
@@ -259,7 +273,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       }
     },
     
-    beforeNext: async (store) => {
+    beforeNext: async (store, { svc }) => {
       const config = store.stepperData.config;
       
       if (!config.projectName || !config.projectLocation) {
@@ -267,9 +281,12 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
+      const configObject = toRaw(config);
+
       try {
 
-
+        console.log("PROJECT CONFIG IN API : ", configObject)
+        await svc.saveProjectConfig(configObject);
         console.log("[Wizard: project_config] Configuration du projet validée");
         return true;
       } catch (error) {
@@ -324,18 +341,43 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   },
 
   database_config: {
-    beforeNext: async (store, { dbsvc }) => {
-      const db = toRaw(store.stepperData.database);  // 👈 toRaw
+    beforeNext: async (store, { dbsvc, svc }) => {
+      const db = toRaw(store.stepperData.database);
 
       console.log("BEFORE NEXT : DATABASE, CONFIG : ", db);
 
+      // 1. Validation basique
       if (!db.host || !db.port || !db.databaseName || !db.username) {
         store.setWizardError("L'hôte, le port, le nom de la base de données et l'utilisateur sont obligatoires.");
         return false;
       }
 
+      // 2. Détection du changement (uniquement les champs métier)
+      const configChanged = store.hasDatabaseConfigChanged(db);
+      const isFirstCommit = !store.lastCommittedDatabaseConfig;
+
+      // 3. Confirmation utilisateur si changement (et pas premier commit)
+      if (configChanged && !isFirstCommit) {
+        const confirmed = await useGenesisWarning().confirm({
+          title: 'Changer de base de données ?',
+          message: 'La configuration de la base de données a changé. Les associations tables/profils de l\'étape Génération seront réinitialisées.',
+          details: [
+            'Les tables et vues assignées seront perdues.',
+            'Vous devrez reconfigurer l\'étape Génération.',
+            'Les relations définies seront également réinitialisées.'
+          ],
+          confirmLabel: 'Continuer',
+          variant: 'danger'
+        });
+
+        if (!confirmed) {
+          return false;
+        }
+      }
+
+      // 4. Test de connexion (avec toRaw)
       try {
-        const result = await dbsvc.testDatabaseConnection(db);  // ← objet brut
+        const result = await dbsvc.testDatabaseConnection(db);
         if (!result.success) {
           store.setWizardError(result.message);
           return false;
@@ -347,7 +389,28 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
-      console.log("[Wizard: database_config] Configuration BDD validée (test OK).");
+      // 5. Sauvegarde backend (await !)
+      try {
+        await svc.saveDatabaseConfig(db);
+        console.log("[Wizard: database_config] Configuration DB sauvegardée côté backend.");
+      } catch (error) {
+        store.setWizardError(
+          error instanceof Error ? error.message : "Échec de la sauvegarde de la configuration."
+        );
+        return false;
+      }
+
+      // 6. Reset des associations SI changement (même premier commit : no-op si vide)
+      if (configChanged) {
+        console.log("[Wizard: database_config] Config DB changée → reset des associations de génération.");
+        store.resetGenerationAssociations();
+        store.invalidateSteps(['generation', 'relations', 'summary']);
+      }
+
+      // 7. Mémorise la nouvelle config commitée
+      store.setLastCommittedDatabaseConfig(db);
+
+      console.log("[Wizard: database_config] Configuration BDD validée (test + save OK).");
       return true;
     }
   },
@@ -637,6 +700,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         try {
           const data = toRaw(store.stepperData);
           await svc.launchGeneration(data);
+          await svc.resetAll(); 
 
           // 1. Sauvegarder le Framework Backend
           if (data.framework) {
