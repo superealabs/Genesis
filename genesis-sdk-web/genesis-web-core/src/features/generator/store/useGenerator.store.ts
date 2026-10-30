@@ -178,9 +178,23 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setAvailableBuildTools(data: string[]) { availableBuildTools.value = data; }
   function setAvailableHibernateDdlAutoOptions(data: string[]) { availableHibernateDdlAutoOptions.value = data; }
 
+  /**
+ * Annule un changement de framework refusé par l'utilisateur.
+ * Réaligne le pending sur le framework réellement commité dans stepperData.
+ * Appelé après un `confirmFrameworkChange` retournant `false`.
+ */
+  function cancelPendingFrameworkChange() {
+    pendingFramework.value = stepperData.value.framework;
+  }
+
   // --- Étape 3 & 4 : Base de Données ---
   function setPendingDatabaseEngine(engine: DatabaseEngineDto | null) {
     pendingDatabaseEngine.value = engine;
+    // ⚠️ NE PAS toucher stepperData ici. Le commit se fait via setDatabaseEngine.
+  }
+
+  function cancelPendingDatabaseChange() {
+    pendingDatabaseEngine.value = null;  // pas de pending = pas de brouillon
   }
 
   /**
@@ -189,15 +203,11 @@ export const useGeneratorStore = defineStore('generator', () => {
    * pour garantir la compatibilité avec les attentes du backend.
    */
   function setDatabaseEngine(engine: DatabaseEngineDto) {
-    let engineKey = engine.name.toLowerCase().replace(' ', '');
-    if (engineKey === 'postgresql') engineKey = 'postgre';
-    if (engineKey === 'sqlserver') engineKey = 'sqlserver';
-
-    stepperData.value.database.engine = engineKey as DatabaseConfig['engine'];
-    stepperData.value.database.port = Number(engine.port);
-    stepperData.value.database.driverName = engine.driverName;
+    stepperData.value.database.engine = engine.name;
+    stepperData.value.database.port = Number(engine.port) || 0;
+    stepperData.value.database.driverName = engine.driverName || '';
     stepperData.value.database.driverType = engine.driverType || 'jdbc';
-    
+
     if (engine.sid) {
       stepperData.value.database.sid = engine.sid;
     }
@@ -424,6 +434,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     updateConfig, setAvailableLoggingLevels, setAvailableSecurityTypes,
     setAvailableCacheProviders, setAvailableLanguageVersions, setAvailableFrameworkVersions,
     setAvailableBuildTools, setAvailableHibernateDdlAutoOptions,
+    cancelPendingFrameworkChange,
 
     // Étape 3 & 4 : Base de Données
     pendingDatabaseEngine, setPendingDatabaseEngine, setDatabaseEngine, updateDatabase,
@@ -466,7 +477,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     hasFrontendData,
     invalidateSteps,
     lastInvalidation,
-
+    cancelPendingDatabaseChange
 
   };
 });

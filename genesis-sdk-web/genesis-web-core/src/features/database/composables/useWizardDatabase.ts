@@ -1,5 +1,5 @@
 // genesis-sdk-web/genesis-web-core/src/features/database/composables/useWizardDatabase.ts
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 
 // Types
 import type { DatabaseEngineDto } from '@genesis-labs/shared-types';
@@ -7,6 +7,7 @@ import type { SelectionOption } from '@genesis-labs/web-core/core/components/lay
 
 // Composables
 import { useDatabase } from './useDatabase';
+import { useGeneratorStore } from '../../generator/manifest';
 
 /**
  * Composable adaptateur pour intégrer la logique des bases de données dans le Wizard.
@@ -19,6 +20,7 @@ export function useWizardDatabase(onSelect: (engine: DatabaseEngineDto, event?: 
   // 1. COMPOSABLE DE BASE
   // ==========================================================================
   const db = useDatabase();
+  const generatorStore = useGeneratorStore();
 
   // ==========================================================================
   // 2. COMPUTEDS LOCAUX (Adaptation pour l'UI du Wizard)
@@ -68,6 +70,31 @@ export function useWizardDatabase(onSelect: (engine: DatabaseEngineDto, event?: 
     db.cancelReplace();
   }
 
+
+  // ═══ SYNCHRONISATION : aligner la sélection visuelle sur le moteur commité ═══
+  watch(
+    () => [
+      generatorStore.stepperData.database.engine,
+      db.compareMode.value,
+      db.engines.value.length,  // 👈 redéclenche quand les engines se chargent
+    ] as const,
+    ([engine, mode]) => {
+      if (mode !== 'selection') return;
+      if (!engine) return;
+
+      const matched = db.engines.value.find(e => {
+        const n = e.name.toLowerCase().replace(/\s+/g, '');
+        const c = engine.toLowerCase().replace(/\s+/g, '');
+        return n === c;
+      });
+
+      if (matched && matched.id !== db.selectedId.value) {
+        db.compare.handleSelect(matched);
+      }
+    },
+    { immediate: true }
+  );
+  
   // ==========================================================================
   // 4. RETOUR (Ordonné par domaine)
   // ==========================================================================

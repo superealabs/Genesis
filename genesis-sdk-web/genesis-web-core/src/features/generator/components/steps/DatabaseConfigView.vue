@@ -26,7 +26,7 @@
                 SGBD Sélectionné <span class="text-accent ml-0.5">*</span>
               </label>
               <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
-                <span class="truncate font-medium capitalize">{{ selectedEngineName }}</span>
+                <span class="truncate font-medium">{{ selectedEngineName }}</span>
               </div>
             </div>
           </template>
@@ -88,7 +88,7 @@
           />
         </div>
         <!-- MODIFIÉ : Visible uniquement pour PostgreSQL et SQL Server (occupe 1 colonne) -->
-        <div v-if="database.engine === 'postgre' || database.engine === 'sqlserver'" class="md:col-span-1">
+        <div v-if="engineKey === 'postgresql' || engineKey === 'sqlserver'" class="md:col-span-1">
           <GenesisInput
             v-model="database.schema"
             label="Schema"
@@ -223,7 +223,8 @@ const {
   stepperData, 
   pendingDatabaseEngine,      
   setPendingDatabaseEngine,   
-  testDatabaseConnection 
+  testDatabaseConnection,
+  setDatabaseEngine,   
 } = useGenerator();
 const databaseStore = useDatabaseStore();
 
@@ -233,6 +234,15 @@ const testSuccess = ref(false);          // 👈 nouveau
 let successTimer: ReturnType<typeof setTimeout> | null = null;  // 👈 nouveau
 const selectedEngineName = computed(() => 
   pendingDatabaseEngine.value?.name || stepperData.value.database.engine || 'Aucun SGBD sélectionné'
+);
+
+/**
+ * Clé normalisée du moteur courant (minuscules, sans espaces).
+ * Utilisée pour les comparaisons internes (URL, affichage conditionnel).
+ * Ex: 'MySQL' → 'mysql', 'SQL Server' → 'sqlserver', 'PostgreSQL' → 'postgresql'
+ */
+const engineKey = computed(() => 
+  (database.value.engine || '').toLowerCase().replace(/\s+/g, '')
 );
 
 const dbConfig = computed(() => stepperData.value.database);
@@ -261,6 +271,9 @@ function cancelEditingDatabase() {
 function handleDatabaseSelect(value: any) {
   if (typeof value === 'string') return;
   if (value && value.name) {
+    // 👇 Commit direct (on est sur la page de config, pas de pending à valider)
+    setDatabaseEngine(value);
+    // 👇 Sync du pending pour cohérence (évite un désalignement)
     setPendingDatabaseEngine(value);
     isEditingDatabase.value = false;
   }
@@ -293,17 +306,17 @@ const panelSlides: CarouselSlide[] = [
 // 5. COMPUTEDS
 // ============================================================================
 const computedUrl = computed(() => {
-  const { engine, host, port, databaseName, sid } = dbConfig.value;
+  const { host, port, databaseName, sid } = dbConfig.value;
   const hostStr = host || 'localhost';
   const portStr = port || '';
   const dbName = databaseName || '';
-  
-  switch (engine) {
-    case 'mysql': return `jdbc:mysql://${hostStr}:${portStr}/${dbName}`;
-    case 'postgre': return `jdbc:postgresql://${hostStr}:${portStr}/${dbName}`;
-    case 'sqlserver': return `jdbc:sqlserver://${hostStr}:${portStr};databaseName=${dbName}`;
-    case 'oracle': return `jdbc:oracle:thin:@${hostStr}:${portStr}:${sid || dbName}`;
-    default: return '';
+
+  switch (engineKey.value) {
+    case 'mysql':      return `jdbc:mysql://${hostStr}:${portStr}/${dbName}`;
+    case 'postgresql': return `jdbc:postgresql://${hostStr}:${portStr}/${dbName}`;
+    case 'sqlserver':  return `jdbc:sqlserver://${hostStr}:${portStr};databaseName=${dbName}`;
+    case 'oracle':     return `jdbc:oracle:thin:@${hostStr}:${portStr}:${sid || dbName}`;
+    default:           return '';
   }
 });
 

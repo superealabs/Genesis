@@ -183,7 +183,13 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       
       const frameworkStore = useFrameworkStore();
       const recentStore = useRecentStore();
+
+      console.log('[framework_select.onEnter] pendingFramework:', _store.pendingFramework?.name);
+      console.log('[framework_select.onEnter] stepperData.framework:', _store.stepperData.framework?.name);
+      console.log('[framework_select.onEnter] configFramework:', _store.configFramework?.name);
       
+      
+
       try { 
         const [frameworksData, languagesData, recencyData] = await Promise.all([
           fsvc.fetchFrameworks(),
@@ -210,7 +216,10 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
-      if (!(await confirmFrameworkChange(store, framework))) return false;
+      if (!(await confirmFrameworkChange(store, framework))) {
+        store.cancelPendingFrameworkChange();  // 👈 rollback
+        return false;
+      }
 
       // COMMIT FINAL : C'est ici qu'on grave la sélection pending dans le stepperData
       if (store.pendingFramework) {
@@ -274,24 +283,39 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     onEnter: async (_store, { dbsvc }) => {
       console.log("[Wizard: database_select] Chargement des moteurs de base de données...");
       const databaseStore = useDatabaseStore();
-      
+
       try {
         const engines = await dbsvc.fetchDatabaseEngines();
         databaseStore.setAvailableEngines(engines);
         console.log(`[Wizard: database_select] ${engines.length} moteurs chargés`);
+
+        // 👇 SYNCHRONISATION : aligner pendingDatabaseEngine sur le moteur commité
+        const committedEngine = _store.stepperData.database.engine;
+
+        if (committedEngine) {
+          const matched = engines.find(e => {
+            const n = e.name.toLowerCase().replace(/\s+/g, '');
+            const c = committedEngine.toLowerCase().replace(/\s+/g, '');
+            return n === c;  // 👈 plus de conditions postgre/postgresql
+          });
+          _store.setPendingDatabaseEngine(matched ?? null);
+          console.log(`[Wizard: database_select] Pending sync sur moteur commité :`, matched?.name);
+        } else {
+          _store.setPendingDatabaseEngine(null);
+        }
+
       } catch (error) {
         console.error("[Wizard: database_select] Échec du chargement des moteurs DB:", error);
         _store.setWizardError("Impossible de charger la liste des bases de données.");
       }
-    },    
+    },
+
     beforeNext: async (store) => {
       if (!store.pendingDatabaseEngine) {
         store.setWizardError("Veuillez sélectionner un moteur de base de données.");
         return false;
       }
 
-      // 👇 Commit du moteur dans stepperData.database
-      //    (synchronise engine, port, driverName, driverType, sid)
       store.setDatabaseEngine(store.pendingDatabaseEngine);
       console.log(`[Wizard: database_select] Moteur BDD commit :`, store.pendingDatabaseEngine.name);
 
@@ -301,16 +325,17 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
   database_config: {
     beforeNext: async (store, { dbsvc }) => {
-      const db = store.stepperData.database;
+      const db = toRaw(store.stepperData.database);  // 👈 toRaw
+
+      console.log("BEFORE NEXT : DATABASE, CONFIG : ", db);
 
       if (!db.host || !db.port || !db.databaseName || !db.username) {
         store.setWizardError("L'hôte, le port, le nom de la base de données et l'utilisateur sont obligatoires.");
         return false;
       }
 
-      // 👇 Test de connexion obligatoire
       try {
-        const result = await dbsvc.testDatabaseConnection(db);
+        const result = await dbsvc.testDatabaseConnection(db);  // ← objet brut
         if (!result.success) {
           store.setWizardError(result.message);
           return false;

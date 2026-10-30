@@ -115,7 +115,8 @@
           <div class="flex-1 flex flex-col gap-4">
             
             <GenesisInput 
-              :model-value="config.languageVersion" 
+              v-if="!hideLanguageVersion"
+              :model-value="effectiveLanguageVersion"
               type="select" 
               :options="languageVersionOptions"
               @update:model-value="(val) => updateConfig('languageVersion', val)"
@@ -124,8 +125,9 @@
               placeholder="Sélectionner..." 
             />
 
-            <GenesisInput 
-              :model-value="config.buildTool" 
+            <GenesisInput
+              v-if="!hideBuildTool"
+              :model-value="effectiveBuildTool" 
               type="select" 
               :options="buildToolOptions"
               @update:model-value="(val) => updateConfig('buildTool', val)"
@@ -135,7 +137,7 @@
             />
 
             <div v-if="showGroupId" class="space-y-1">
-              <GenesisInput 
+              <GenesisInput
                 :model-value="config.groupId" 
                 @update:model-value="(val) => updateConfig('groupId', val)"
                 size="lg" 
@@ -145,7 +147,8 @@
             </div>
 
             <GenesisInput 
-              :model-value="config.frameworkVersion" 
+              v-if="!hideFrameworkVersion"
+              :model-value="effectiveFrameworkVersion"  
               type="select" 
               :options="frameworkVersionOptions"
               @update:model-value="(val) => updateConfig('frameworkVersion', val)"
@@ -198,8 +201,9 @@
             
             <div class="flex-1 flex flex-col gap-4">
               
-              <GenesisInput 
-                :model-value="config.loggingLevel" 
+              <GenesisInput
+                v-if="!hideLoggingLevel"
+                :model-value="effectiveLoggingLevel" 
                 type="select" 
                 :options="loggingLevelOptions"
                 @update:model-value="(val) => updateConfig('loggingLevel', val)"
@@ -210,7 +214,8 @@
               />
 
               <GenesisInput 
-                :model-value="config.securityType" 
+                v-if="!hideSecurityType"
+                :model-value="effectiveSecurityType" 
                 type="select" 
                 :options="securityTypeOptions"
                 @update:model-value="(val) => updateConfig('securityType', val)"
@@ -220,8 +225,9 @@
                 :size="'lg'"
               />
 
-              <GenesisInput 
-                :model-value="config.cacheProvider" 
+              <GenesisInput
+                v-if="!hideCacheProvider"
+                :model-value="effectiveCacheProvider"
                 type="select" 
                 :options="cacheProviderOptions"
                 @update:model-value="(val) => updateConfig('cacheProvider', val)"
@@ -231,9 +237,10 @@
                 :size="'lg'"
               />
 
-              <div v-if="showHibernateDdl" class="space-y-1">
-                <GenesisInput 
-                  :model-value="config.hibernateDdlAuto" 
+              <div v-if="!hideHibernateDdlAuto" class="space-y-1">
+                <GenesisInput
+                  v-if="!hideHibernateDdlAuto"
+                  :model-value="effectiveHibernateDdlAuto" 
                   type="select" 
                   :options="hibernateDdlAutoOptions"
                   @update:model-value="(val) => updateConfig('hibernateDdlAuto', val)"
@@ -331,10 +338,11 @@ import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/sto
 
 const emit = defineEmits<{ 'request-folder-path': [] }>();
 
-const DEFAULT_VALUES_ADVANCED = ['INFO', 'NONE', 'Aucun', 'none'];
-const DEFAULT_VALUES_TECH = ['', 'maven', 'com.example', ''];
+
 const isApplyingConfig = ref(false);
 const isApplyingTechStackConfig = ref(false);
+
+
 
 const panelSlides: CarouselSlide[] = [
   { color: '#3B82F6', label: 'Slide 1' },
@@ -398,7 +406,10 @@ async function handleFrameworkSelect(value: any) {
   isEditingFramework.value = false;
   if (value.id === framework.value?.id) return;
 
-  if (!(await confirmFrameworkChange(generatorStore, value))) return; // annulé : rien ne bouge
+  if (!(await confirmFrameworkChange(generatorStore, value))) {
+    generatorStore.cancelPendingFrameworkChange();  // 👈 rollback
+    return;
+  }
   setPendingFramework(value);
 }
 
@@ -433,7 +444,7 @@ const loggingLevelOptions = computed(() =>
 );
 
 const securityTypeOptions = computed(() => 
-  [{ label: 'Aucune', value: 'NONE' }, ...availableSecurityTypes.value.map(opt => ({ label: opt, value: opt }))]
+  availableSecurityTypes.value.map(opt => ({ label: opt, value: opt }))
 );
 
 const cacheProviderOptions = computed(() => 
@@ -444,14 +455,45 @@ const hibernateDdlAutoOptions = computed(() =>
   availableHibernateDdlAutoOptions.value.map(opt => ({ label: opt, value: opt }))
 );
 
+/**
+ * Un select est masqué si :
+ * - Il n'a qu'une seule option
+ * - ET cette option a la valeur 'NONE' (exactement, en majuscules)
+ */
+function shouldHideSelect(options: { label: string; value: any }[]): boolean {
+  if (options.length === 0) return true;
+  if (options.length !== 1) return false;
+  
+  const v = options[0].value;
+  if (v === null || v === undefined) return true;
+  
+  return String(v).trim().toUpperCase() === 'NONE';
+}
+
+/**
+ * Si la valeur actuelle est vide, on prend la première option disponible.
+ * Sinon, on garde la valeur actuelle (choix utilisateur).
+ */
+function getEffectiveValue<T>(currentValue: T | '' | null | undefined, options: { value: T }[]): T | '' {
+  if (currentValue !== '' && currentValue !== null && currentValue !== undefined) {
+    return currentValue;
+  }
+  return options.length > 0 ? options[0].value : '';
+}
+
 // ============================================================================
 // 4. INITIALISATION DES LOGIQUES DE CONFIGURATION (Via le Composable DRY)
 // ============================================================================
 const advancedLogic = useConfigManagerLogic({
   manager: configManager,
   configType: 'framework_advanced-configuration',
-  defaultValues: DEFAULT_VALUES_ADVANCED,
-  getCurrentValues: () => [config.value.loggingLevel || DEFAULT_VALUES_ADVANCED[0], config.value.securityType || DEFAULT_VALUES_ADVANCED[1], config.value.cacheProvider || DEFAULT_VALUES_ADVANCED[2], config.value.hibernateDdlAuto || DEFAULT_VALUES_ADVANCED[3]],
+  defaultValues: [],
+  getCurrentValues: () => [
+    config.value.loggingLevel || availableLoggingLevels.value[0] || '',
+    config.value.securityType || availableSecurityTypes.value[0] || '',
+    config.value.cacheProvider || availableCacheProviders.value[0] || '',
+    config.value.hibernateDdlAuto || availableHibernateDdlAutoOptions.value[0] || '',
+  ],
   buildPayload: (values) => ({
     frameworkId: framework.value?.id || 0, frameworkName: framework.value?.name || 'Inconnu',
     loggingLevel: values ? values[0] : config.value.loggingLevel,
@@ -477,8 +519,13 @@ const advancedLogic = useConfigManagerLogic({
 const techStackLogic = useConfigManagerLogic({
   manager: techStackConfigManager,
   configType: 'framework_technical-stack',
-  defaultValues: DEFAULT_VALUES_TECH,
-  getCurrentValues: () => [config.value.languageVersion || DEFAULT_VALUES_TECH[0], config.value.buildTool || DEFAULT_VALUES_TECH[1], config.value.groupId || DEFAULT_VALUES_TECH[2], config.value.frameworkVersion || DEFAULT_VALUES_TECH[3]],
+  defaultValues: [],
+  getCurrentValues: () => [
+    config.value.languageVersion || availableLanguageVersions.value[0] || '',
+    config.value.buildTool || availableBuildTools.value[0] || '',
+    config.value.groupId || '',
+    config.value.frameworkVersion || availableFrameworkVersions.value[0] || '',
+  ],
   buildPayload: (values) => ({
     frameworkId: framework.value?.id || 0, frameworkName: framework.value?.name || 'Inconnu',
     languageVersion: values ? values[0] : config.value.languageVersion,
@@ -500,6 +547,74 @@ const techStackLogic = useConfigManagerLogic({
   deleteConfiguration,
   persistedConfigs
 });
+
+// ============================================================================
+// 4.5. VALEURS EFFECTIVES : DÉFAUT + MASQUAGE
+// ============================================================================
+
+// ── Stack Technique ──────────────────────────────────────────────────────
+
+const effectiveLanguageVersion = computed(() =>
+  getEffectiveValue(config.value.languageVersion, languageVersionOptions.value)
+);
+const effectiveBuildTool = computed(() =>
+  getEffectiveValue(config.value.buildTool, buildToolOptions.value)
+);
+const effectiveFrameworkVersion = computed(() =>
+  getEffectiveValue(config.value.frameworkVersion, frameworkVersionOptions.value)
+);
+
+// ── Configuration Avancée ────────────────────────────────────────────────
+
+const effectiveLoggingLevel = computed(() =>
+  getEffectiveValue(config.value.loggingLevel, loggingLevelOptions.value)
+);
+const effectiveSecurityType = computed(() =>
+  getEffectiveValue(config.value.securityType, securityTypeOptions.value)
+);
+const effectiveCacheProvider = computed(() =>
+  getEffectiveValue(config.value.cacheProvider, cacheProviderOptions.value)
+);
+const effectiveHibernateDdlAuto = computed(() =>
+  getEffectiveValue(config.value.hibernateDdlAuto, hibernateDdlAutoOptions.value)
+);
+
+// ── Masquage conditionnel ────────────────────────────────────────────────
+
+const hideLanguageVersion = computed(() => shouldHideSelect(languageVersionOptions.value));
+const hideBuildTool = computed(() => shouldHideSelect(buildToolOptions.value));
+const hideFrameworkVersion = computed(() => shouldHideSelect(frameworkVersionOptions.value));
+const hideLoggingLevel = computed(() => shouldHideSelect(loggingLevelOptions.value));
+const hideSecurityType = computed(() => shouldHideSelect(securityTypeOptions.value));
+const hideCacheProvider = computed(() => shouldHideSelect(cacheProviderOptions.value));
+// Hibernate : double condition (flag framework ET pas dans le cas "1 seul NONE")
+const hideHibernateDdlAuto = computed(() =>
+  !showHibernateDdl.value || shouldHideSelect(hibernateDdlAutoOptions.value)
+);
+
+// ── Synchronisation vers le store (défaut appliqué une fois) ─────────────
+
+watch(
+  [
+    () => effectiveLanguageVersion.value,
+    () => effectiveBuildTool.value,
+    () => effectiveFrameworkVersion.value,
+    () => effectiveLoggingLevel.value,
+    () => effectiveSecurityType.value,
+    () => effectiveCacheProvider.value,
+    () => effectiveHibernateDdlAuto.value,
+  ],
+  ([lv, bt, fv, ll, st, cp, hd]) => {
+    if (lv && lv !== config.value.languageVersion) updateConfig('languageVersion', lv as string);
+    if (bt && bt !== config.value.buildTool) updateConfig('buildTool', bt as string);
+    if (fv && fv !== config.value.frameworkVersion) updateConfig('frameworkVersion', fv as string);
+    if (ll && ll !== config.value.loggingLevel) updateConfig('loggingLevel', ll as string);
+    if (st && st !== config.value.securityType) updateConfig('securityType', st as string);
+    if (cp && cp !== config.value.cacheProvider) updateConfig('cacheProvider', cp as string);
+    if (hd && hd !== config.value.hibernateDdlAuto) updateConfig('hibernateDdlAuto', hd as string);
+  },
+  { immediate: true }
+);
 
 // ============================================================================
 // 5. LIFECYCLE & WATCHERS GLOBAUX
@@ -568,6 +683,8 @@ watch(() => framework.value?.id, async (newId, oldId) => {
     ]);
   }
 });
+
+
 
 function handleSelectFolderPath() { emit('request-folder-path'); }
 </script>

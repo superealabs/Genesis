@@ -1,12 +1,16 @@
 // genesis-sdk-web/genesis-web-core/src/features/frameworks/composables/useWizardFramework.ts
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useFrameworks } from './useFrameworks';
 import type { Framework } from '@genesis-labs/shared-types';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 
+import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
+
+
 export function useWizardFramework(onSelect: (framework: Framework, event?: MouseEvent) => void) {
   // ═══ 1. COMPOSABLE DE BASE ═══
   const fw = useFrameworks();
+  const generatorStore = useGeneratorStore();
 
   // ═══ 2. ÉTAT UI LOCAL (Spécifique au Wizard) ═══
   const isFilterOpen = ref(false);
@@ -46,6 +50,18 @@ export function useWizardFramework(onSelect: (framework: Framework, event?: Mous
   function closeFilter() { isFilterOpen.value = false; }
   function closeDetail() { detailFramework.value = null; }
   function handleInfo(fwItem: Framework) { detailFramework.value = fwItem; }
+
+
+  watch(
+    () => generatorStore.pendingFramework,
+    (pending) => {
+      if (pending && pending.id !== fw.selectedId.value) {
+        // Aligne l'état de sélection visuelle sur le pending du wizard
+        fw.compare.handleSelect(pending);  // ou une méthode dédiée
+      }
+    },
+    { immediate: true }
+  );
 
   // ═══ 5. RETURN (Ordonné) ═══
   return {

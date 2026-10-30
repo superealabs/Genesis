@@ -1,5 +1,11 @@
 - Problème, l'utilisateur est obligé de faire suivant pour valider la modification, est ce que c'est une bonne idée ?
 
+si cancel, on revient à la valeur choisit à l'origine
+
+bug au bouton suivant
+
+
+incohérence dans la logique des données
 
 
 
