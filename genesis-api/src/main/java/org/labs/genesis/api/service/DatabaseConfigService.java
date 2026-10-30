@@ -1,4 +1,3 @@
-
 package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
@@ -11,6 +10,7 @@ import org.labs.genesis.connexion.Database;
 import org.springframework.stereotype.Service;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -50,15 +50,14 @@ public class DatabaseConfigService {
             }
             return new DatabaseConnectionTestResponse(true, "Connexion à la base de données réussie");
         } catch (Exception exception) {
-            return new DatabaseConnectionTestResponse(false, "Échec de la connexion à la base de données");
+            ConnectionFailure failure = classifyConnectionFailure(exception);
+            return new DatabaseConnectionTestResponse(false, failure.message());
         }
     }
 
     public synchronized DatabaseConfigResponse configure(DatabaseConfigRequest request) {
         ResolvedDatabase resolved = resolveRequest(request);
-
         Connection newConnection = null;
-
         try {
             newConnection = resolved.database().getConnection(resolved.credentials());
             if (!newConnection.isValid(5)) {
@@ -79,12 +78,16 @@ public class DatabaseConfigService {
                 try {
                     previousConnection.close();
                 } catch (Exception ignored) {
-                    // La nouvelle connexion est déjà enregistrée.
+                    // Nouvelle connexion déjà enregistrée.
                 }
             }
+
             return new DatabaseConfigResponse(true, true, "Configuration de la base enregistrée avec succès");
+        } catch (DatabaseConfigException exception) {
+            throw exception;
         } catch (Exception exception) {
-            throw new DatabaseConfigException("Impossible de configurer la connexion à la base");
+            ConnectionFailure failure = classifyConnectionFailure(exception);
+            throw new DatabaseConfigException(failure.code(), failure.message(), exception);
         } finally {
             if (newConnection != null) {
                 try {
@@ -188,5 +191,85 @@ public class DatabaseConfigService {
     }
 
     private record ResolvedDatabase(Database database, Credentials credentials) {
+    }
+
+
+    private ConnectionFailure classifyConnectionFailure(
+            Exception exception
+    ) {
+        for (Throwable cause = exception;
+             cause != null;
+             cause = cause.getCause()) {
+
+            if (cause instanceof ClassNotFoundException) {
+                return new ConnectionFailure(
+                        "DATABASE_DRIVER_NOT_FOUND",
+                        "Le pilote JDBC du moteur sélectionné est introuvable."
+                );
+            }
+
+            if (cause instanceof SQLException sqlException) {
+                for (SQLException current = sqlException;
+                     current != null;
+                     current = current.getNextException()) {
+
+                    ConnectionFailure failure =
+                            classifySqlException(current);
+
+                    if (failure != null) {
+                        return failure;
+                    }
+                }
+            }
+        }
+
+        return new ConnectionFailure(
+                "DATABASE_CONNECTION_FAILED",
+                "Impossible d'établir la connexion à la base de données."
+        );
+    }
+
+    private ConnectionFailure classifySqlException(SQLException exception) {
+        String state = exception.getSQLState();
+        int errorCode = exception.getErrorCode();
+
+        if ("28P01".equals(state)
+                || "28000".equals(state)
+                || errorCode == 1045
+                || errorCode == 18456
+                || errorCode == 1017) {
+
+            return new ConnectionFailure("DATABASE_AUTHENTICATION_FAILED", "Identifiant ou mot de passe incorrect.");
+        }
+
+        // PostgreSQL : 3D000
+        // MySQL : 1049 (Unknown database)
+        if ("3D000".equals(state) || errorCode == 1049) {
+            return new ConnectionFailure("DATABASE_NOT_FOUND", "La basede données demandée n'existe pas. " + "Vérifiez son nom.");
+        }
+
+        // MySQL : 1044 (Access denied to database)
+        if (errorCode == 1044) {
+            return new ConnectionFailure("DATABASE_ACCESS_DENIED", "L'utilisateur ne dispose pas des droits " + "d'accès à cette base de données.");
+        }
+
+        // SQL Server : 4060
+        // Ce code peut indiquer une base inexistante
+        // ou simplement inaccessible.
+        if (errorCode == 4060) {
+            return new ConnectionFailure("DATABASE_NOT_ACCESSIBLE", "La base de données demandée est introuvable " + "ou inaccessible pour cet utilisateur.");
+        }
+
+        // SQLState classe 08 : problème de connexion.
+        if (state != null && state.startsWith("08")) {
+            return new ConnectionFailure("DATABASE_CONNECTION_FAILED", "Impossible de joindre le serveur de base " + "de données. Vérifiez l'hôte, leport " + "et la disponibilité du service.");
+        }
+        return null;
+    }
+
+    private record ConnectionFailure(
+            String code,
+            String message
+    ) {
     }
 }

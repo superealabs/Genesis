@@ -1,4 +1,3 @@
-
 package org.labs.genesis.api.exception;
 
 import org.springframework.http.HttpStatus;
@@ -53,7 +52,6 @@ public class GlobalExceptionHandler {
             RelationException.class,
             TableSelectionException.class,
             ProjectConfigException.class,
-            DatabaseConfigException.class,
             GenerationModeException.class,
             IllegalArgumentException.class
     })
@@ -98,5 +96,13 @@ public class GlobalExceptionHandler {
                         + "Le projet cible doit être vérifié."
         );
     }
-
+    
+    @ExceptionHandler(DatabaseConfigException.class)
+    public ResponseEntity<GenerationErrorResponse> handleDatabaseConfig(DatabaseConfigException exception) {
+        return generationError(
+                HttpStatus.BAD_REQUEST,
+                exception.getCode(),
+                exception.getMessage()
+        );
+    }
 }
