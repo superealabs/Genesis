@@ -97,4 +97,8 @@ public class GenerationPublicationService {
             return collisions;
         }
     }
+
+    public void clearLastPublishedTarget() {
+        lastPublishedTarget = null;
+    }
 }

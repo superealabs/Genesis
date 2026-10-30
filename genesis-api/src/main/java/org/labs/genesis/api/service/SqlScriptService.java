@@ -134,4 +134,8 @@ public class SqlScriptService {
 
         return new ScriptConfigResponse(true, "Configuration du script SQL enregistrée");
     }
+
+    public void clearSavedScript() {
+        savedScript.set(null);
+    }
 }

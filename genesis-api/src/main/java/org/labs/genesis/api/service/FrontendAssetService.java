@@ -22,7 +22,7 @@ public class FrontendAssetService {
         storage = Files.createTempDirectory("genesis-frontend-assets-").toRealPath();
     }
 
-    public String upload(String kind, MultipartFile file) throws IOException {
+    public synchronized String upload(String kind, MultipartFile file) throws IOException {
 
         if (!kind.equals("logo") && !kind.equals("favicon")) {
             throw new IllegalArgumentException("Type de ressource invalide");
@@ -86,5 +86,26 @@ public class FrontendAssetService {
             Files.deleteIfExists(path);
         }
         Files.deleteIfExists(storage);
+    }
+
+    public synchronized void clear() throws IOException {
+        IOException failure = null;
+
+        for (var entry : assets.entrySet()) {
+            try {
+                Files.deleteIfExists(entry.getValue());
+                assets.remove(entry.getKey(), entry.getValue());
+            } catch (IOException exception) {
+                if (failure == null) {
+                    failure = exception;
+                } else {
+                    failure.addSuppressed(exception);
+                }
+            }
+        }
+
+        if (failure != null) {
+            throw failure;
+        }
     }
 }

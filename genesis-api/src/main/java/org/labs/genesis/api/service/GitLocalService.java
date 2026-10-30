@@ -208,4 +208,9 @@ public class GitLocalService {
         contextStore.getContext().setGitConfiguration(configuration);
         return Map.of("success", true, "useGit", configuration.isUseGit(), "separateRepositories", configuration.isSeparateRepositories(), "createRemoteRepository", configuration.isCreateRemoteRepository());
     }
+
+    public void reset() {
+        contextStore.getContext().setGitConfiguration(null);
+    }
+
 }

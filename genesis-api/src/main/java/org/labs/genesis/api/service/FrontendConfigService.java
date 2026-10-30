@@ -350,4 +350,24 @@ public class FrontendConfigService {
             throw new ProjectConfigException(field + " doit être une URL HTTPS valide");
         }
     }
+
+    public void reset() {
+        ProjectGenerationContext context = store.getContext();
+
+        // Effacer la sélection frontend
+        context.setFrontendFramework(null);
+        context.setFrontendLanguage(null);
+        context.setFrontendPort(null);
+
+        // Effacer les options de génération sélectionnées
+        context.setFrontendGenerationOptions(new ArrayList<>());
+
+        // Désactiver le frontend après annulation
+        context.setGenerateFrontendApp(false);
+
+        // Restaurer les valeurs par défaut pour une future sélection
+        context.setGenerateFrontendSkeletons(true);
+        context.setGenerateFrontendStructure(true);
+    }
+
 }

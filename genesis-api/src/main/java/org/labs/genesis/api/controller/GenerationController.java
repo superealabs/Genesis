@@ -1,15 +1,13 @@
 package org.labs.genesis.api.controller;
 
 import java.util.List;
+import java.util.Map;
+
 import org.labs.genesis.api.context.GenerationContextStore;
 import org.labs.genesis.api.dto.GenerationDtos;
 import org.labs.genesis.api.dto.GenerationDtos.*;
 import org.labs.genesis.api.dto.MetadataDtos.*;
-import org.labs.genesis.api.service.GenerationExecutionService;
-import org.labs.genesis.api.service.GenerationPlanningService;
-import org.labs.genesis.api.service.GenerationProfilesService;
-import org.labs.genesis.api.service.GenerationProfilesStore;
-import org.labs.genesis.api.service.GenerationRelationService;
+import org.labs.genesis.api.service.*;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,13 +25,16 @@ public class GenerationController {
 
     private final GenerationExecutionService generationExecutionService;
 
-    public GenerationController(GenerationProfilesService generationProfilesService, GenerationContextStore generationContextStore, GenerationProfilesStore generationProfilesStore, GenerationPlanningService generationPlanningService, GenerationRelationService generationRelationService, GenerationExecutionService generationExecutionService) {
+    private final GenerationResetService generationResetService;
+
+    public GenerationController(GenerationProfilesService generationProfilesService, GenerationContextStore generationContextStore, GenerationProfilesStore generationProfilesStore, GenerationPlanningService generationPlanningService, GenerationRelationService generationRelationService, GenerationExecutionService generationExecutionService, GenerationResetService generationResetService) {
         this.generationProfilesService = generationProfilesService;
         this.generationContextStore = generationContextStore;
         this.generationProfilesStore = generationProfilesStore;
         this.generationPlanningService = generationPlanningService;
         this.generationRelationService = generationRelationService;
         this.generationExecutionService = generationExecutionService;
+        this.generationResetService = generationResetService;
     }
 
     @GetMapping("/api/generation/modes")
@@ -85,4 +86,11 @@ public class GenerationController {
         generationProfilesService.clearGenerationParameters();
         return new GenerationParametersResponse(true, "Profils de génération réinitialisés");
     }
+
+    @DeleteMapping("/api/generator/reset")
+    public Map<String, Object> resetAll() throws Exception {
+        generationResetService.resetAll();
+        return Map.of("success", true, "message", "Contexte Genesis réinitialisé avec succès");
+    }
+
 }

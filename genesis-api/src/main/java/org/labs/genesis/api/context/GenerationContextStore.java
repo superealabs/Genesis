@@ -7,7 +7,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class GenerationContextStore {
 
-    private final ProjectGenerationContext context = new ProjectGenerationContext();
+    private volatile ProjectGenerationContext context = new ProjectGenerationContext();
+
     @Setter
     private GenerationMode generationMode;
 
@@ -19,4 +20,10 @@ public class GenerationContextStore {
         return generationMode;
     }
 
+    public synchronized ProjectGenerationContext reset() {
+        ProjectGenerationContext previous = context;
+        context = new ProjectGenerationContext();
+        generationMode = null;
+        return previous;
+    }
 }

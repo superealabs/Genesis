@@ -27,6 +27,8 @@ import java.util.Map;
 
 import org.labs.utils.FileUtils;
 import org.labs.utils.enums.FilesUtilsMode;
+
+import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Service
@@ -330,5 +332,16 @@ public class GenerationExecutionService {
         }
     }
 
+    public void runExclusively(Callable<Void> operation) throws Exception {
+        if (!generationLock.tryLock()) {
+            throw new GenerationAlreadyRunningException();
+        }
+
+        try {
+            operation.call();
+        } finally {
+            generationLock.unlock();
+        }
+    }
 
 }

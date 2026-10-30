@@ -64,4 +64,11 @@ public class FrontendController {
     public Map<String, String> upload(@PathVariable String kind, @RequestPart("file") MultipartFile file) throws IOException {
         return Map.of("assetId", frontendAssetService.upload(kind, file));
     }
+
+    @DeleteMapping("/api/generator/frontend-config")
+    public Map<String, Object> resetFrontend() {
+        frontendConfigService.reset();
+        return Map.of("success", true, "message", "Configuration frontend réinitialisée");
+    }
+
 }

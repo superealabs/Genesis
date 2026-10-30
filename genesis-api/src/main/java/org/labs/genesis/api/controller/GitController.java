@@ -24,4 +24,11 @@ public class GitController {
     public Map<String, Object> init() throws Exception {
         return gitLocalService.init();
     }
+
+    @DeleteMapping("/api/generator/git/config")
+    public Map<String, Object> resetGit() {
+        gitLocalService.reset();
+        return Map.of("success", true, "message", "Configuration Git réinitialisée");
+    }
+
 }
