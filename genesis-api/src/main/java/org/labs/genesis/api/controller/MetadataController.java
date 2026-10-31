@@ -40,14 +40,15 @@ public class MetadataController {
     }
 
     @GetMapping("/api/tables_metadata/parents")
-    public List<TableMetadataResponse> getParents() {
-        return relationService.getParents();
+    public List<TableMetadataResponse> getParents(@RequestParam(required = false) String childTableName) {
+        return relationService.getParents(childTableName);
     }
 
     @GetMapping("/api/tables_metadata/childs")
-    public List<TableMetadataResponse> getChilds() {
-        return relationService.getChildren();
+    public List<TableMetadataResponse> getChilds(@RequestParam(required = false) String parentTableName) {
+        return relationService.getChildren(parentTableName);
     }
+
 
     @GetMapping("/api/relations")
     public List<RelationResponse> getRelations() {

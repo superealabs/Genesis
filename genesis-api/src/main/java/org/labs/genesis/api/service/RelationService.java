@@ -15,6 +15,8 @@ import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.springframework.stereotype.Service;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -24,46 +26,100 @@ public class RelationService {
     private static final String PARENTS = "PARENTS";
     private static final String CHILDS = "CHILDS";
     private final GenerationProfilesStore generationProfilesStore;
+    private final ConsolidatedGenerationContextService consolidatedService;
+    private final MetadataService metadataService;
 
     private final GenerationContextStore generationContextStore;
 
-    public RelationService(GenerationContextStore generationContextStore, ForeignKeyRelationValidator foreignKeyValidator, GenerationProfilesStore generationProfilesStore
-    ) {
+    public RelationService(GenerationContextStore generationContextStore, ForeignKeyRelationValidator foreignKeyValidator, GenerationProfilesStore generationProfilesStore, ConsolidatedGenerationContextService consolidatedService, MetadataService metadataService) {
         this.generationContextStore = generationContextStore;
         this.foreignKeyValidator = foreignKeyValidator;
         this.generationProfilesStore = generationProfilesStore;
-    }
-
-    private List<TableMetadataResponse> getTablesByRelationType(String relationType) {
-        ProjectGenerationContext context = getProfilesContext();
-        Dictionary<String, List<TableMetadata>> splitTables = context.splitTableByRelations();
-        List<TableMetadata> tables = splitTables.get(relationType);
-        if (tables == null) {
-            return List.of();
-        }
-        return tables.stream()
-                .map(TableMetadataMapper::toResponse)
-                .toList();
+        this.consolidatedService = consolidatedService;
+        this.metadataService = metadataService;
     }
 
     public List<TableMetadataResponse> getParents() {
-        return getTablesByRelationType(PARENTS);
+        return getRelatedTables(null, true);
+    }
+
+    public List<TableMetadataResponse> getParents(String childTableName) {
+        return getRelatedTables(childTableName, true);
     }
 
     public List<TableMetadataResponse> getChildren() {
-        return getTablesByRelationType(CHILDS);
+        return getRelatedTables(null, false);
+    }
+
+    public List<TableMetadataResponse> getChildren(String parentTableName) {
+        return getRelatedTables(parentTableName, false);
+    }
+
+    private List<TableMetadataResponse> getRelatedTables(String tableName, boolean parents) {
+        String filter = tableName == null ? "" : tableName.trim();
+
+        // Source unique : relations consolidées des profils
+        Set<String> relatedNames = new LinkedHashSet<>();
+
+        for (RelationResponse relation : getRelations()) {
+            String sourceName = parents
+                    ? relation.childTable()
+                    : relation.parentTable();
+
+            String relatedName = parents
+                    ? relation.parentTable()
+                    : relation.childTable();
+
+            if (!filter.isEmpty() && !sourceName.equalsIgnoreCase(filter)) {
+                continue;
+            }
+
+            relatedNames.add(relatedName.toLowerCase(Locale.ROOT));
+        }
+
+        if (relatedNames.isEmpty()) {
+            return List.of();
+        }
+
+        return metadataService.loadAll().tables()
+                .stream()
+                .filter(table -> relatedNames.contains(table.tableName().toLowerCase(Locale.ROOT)))
+                .toList();
     }
 
     public List<RelationResponse> getRelations() {
         ProjectGenerationContext context = generationContextStore.getContext();
-        List<RelationParameter> relations = context.getRelationParameters();
-        if (relations == null || relations.isEmpty()) {
-            return List.of();
+        var profiles = generationProfilesStore.getProfiles(context);
+        // Aucun profil : conserver le comportement global existant.
+        if (profiles.isEmpty()) {
+            List<RelationParameter> relations = context.getRelationParameters();
+            if (relations == null || relations.isEmpty()) {
+                return List.of();
+            }
+            return relations.stream()
+                    .map(RelationMapper::toResponse)
+                    .toList();
         }
-
-        return relations.stream()
-                .map(RelationMapper::toResponse)
-                .toList();
+        // Des profils existent : charger leurs relations consolidées.
+        if (context.getDatabase() == null || context.getCredentials() == null) {
+            throw new RelationException(
+                    "Configuration de la base de données manquante"
+            );
+        }
+        try (Connection connection = context.getDatabase().getConnection(context.getCredentials())) {
+            ProjectGenerationContext consolidated = consolidatedService.build(connection);
+            List<RelationParameter> relations = consolidated.getRelationParameters();
+            if (relations == null || relations.isEmpty()) {
+                return List.of();
+            }
+            return relations.stream()
+                    .map(RelationMapper::toResponse)
+                    .toList();
+        } catch (SQLException exception) {
+            throw new RelationException("Impossible de charger les relations consolidées : " + exception.getMessage());
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public List<RelationResponse> detectRelations() {
@@ -180,5 +236,4 @@ public class RelationService {
         copy.setTables();
         return copy;
     }
-
 }
