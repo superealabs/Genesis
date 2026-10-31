@@ -202,8 +202,15 @@
               <!-- Colonne Logo -->
               <div class="flex flex-col gap-2">
                 <!-- ✅ Prévisualisation Logo -->
-                <div v-if="layoutConfig.logoPath" class="bg-bg-secondary/30 rounded-lg border border-bg-neutral-genesis flex items-center justify-center h-24">
-                  <GenesisLogo :src="layoutConfig.logoPath" size="lg" />
+                <div 
+                  v-if="logoPreviewUrl" 
+                  class="bg-bg-secondary/30 rounded-lg border border-bg-neutral-genesis flex items-center justify-center h-24 overflow-hidden"
+                >
+                  <img 
+                    :src="logoPreviewUrl" 
+                    alt="Logo preview" 
+                    class="max-h-full max-w-full object-contain"
+                  />
                 </div>
                 <GenesisInput
                   :model-value="layoutConfig.logoPath"
@@ -220,9 +227,15 @@
 
               <!-- Colonne Favicon -->
               <div class="flex flex-col gap-2">
-                <!-- ✅ Prévisualisation Favicon -->
-                <div v-if="layoutConfig.faviconPath" class="bg-bg-secondary/30 rounded-lg border border-bg-neutral-genesis flex items-center justify-center h-24">
-                  <GenesisLogo :src="layoutConfig.faviconPath" size="md" />
+                <div 
+                  v-if="faviconPreviewUrl" 
+                  class="bg-bg-secondary/30 rounded-lg border border-bg-neutral-genesis flex items-center justify-center h-24 overflow-hidden"
+                >
+                  <img 
+                    :src="faviconPreviewUrl" 
+                    alt="Favicon preview" 
+                    class="max-h-full max-w-full object-contain"
+                  />
                 </div>
                 <GenesisInput
                   :model-value="layoutConfig.faviconPath"
@@ -271,7 +284,6 @@ import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUplo
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue'; // ✅ AJOUT
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
-import GenesisLogo from '@genesis-labs/web-core/core/components/ui/logo/GenesisLogo.vue';
 
 // ============================================================================
 // 1. EMITS
@@ -289,7 +301,8 @@ const {
   setPendingFrontendFramework,
   fetchAvailableLanguages, 
   updateFrontendLayout, 
-  toggleLanguage
+  toggleLanguage,
+  frontendAssetContents
 } = useGenerator();
 
 const { saveConfiguration, deleteConfiguration, configurations: persistedConfigs, loadFrontendLanguagesConfigurations } = useConfig();
@@ -319,6 +332,24 @@ const tempFrontendName = ref('');
 // État pour la gestion des configurations de langues
 const isApplyingLanguagesConfig = ref(false);
 const languagesConfigManager = useConfigurationManager([], { singleConfiguration: false });
+
+/**
+ * URL `data:` pour prévisualiser le logo.
+ * Retourne null si aucun contenu n'est disponible.
+ */
+const logoPreviewUrl = computed(() => {
+    const content = frontendAssetContents.value.logoContent;
+    const mimeType = frontendAssetContents.value.logoMimeType || 'image/png';
+    if (!content) return null;
+    return `data:${mimeType};base64,${content}`;
+});
+
+const faviconPreviewUrl = computed(() => {
+    const content = frontendAssetContents.value.faviconContent;
+    const mimeType = frontendAssetContents.value.faviconMimeType || 'image/x-icon';
+    if (!content) return null;
+    return `data:${mimeType};base64,${content}`;
+});
 
 // ============================================================================
 // 3.5. CONFIGURATION DU TUTORIEL

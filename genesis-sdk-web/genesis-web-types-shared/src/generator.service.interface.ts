@@ -54,6 +54,21 @@ export interface IGeneratorService {
     saveRelationParameters(relations: RelationParameter[]): Promise<{ success: boolean; message: string }>;
 
     // ═══ ÉTAPE 8 & 9 : FRONTEND ═══
+
+    /**
+     * Configure le framework frontend (frameworkId + languageId + port).
+     * POST /api/generator/frontend-config
+     * 
+     * @param frameworkId ID du framework frontend (ex: 5)
+     * @param languageId ID du langage de programmation (null si MVC)
+     * @param port Port d'exécution (string, ex: '3000')
+     */
+    saveFrontendConfig(
+        frameworkId: number,
+        languageId: number | null,
+        port: string
+    ): Promise<{ success: boolean; message: string }>
+
     /**
      * Sauvegarde le choix du framework frontend (ou du moteur de template MVC) 
      * après validation de l'étape 8.
@@ -64,6 +79,20 @@ export interface IGeneratorService {
      * Sauvegarde la configuration du layout frontend (langues d'interface, navbar, couleurs, branding, port).
      */
     saveFrontendLayoutConfig(config: FrontendLayoutConfig): Promise<{ success: boolean; message: string }>;
+    /**
+     * Upload un asset frontend (logo ou favicon) via form-data.
+     * POST /api/generator/frontend/assets/:kind
+     * 
+     * @param kind 'logo' | 'favicon'
+     * @param base64Content Contenu base64 du fichier
+     * @param mimeType MIME type (ex: 'image/png')
+     * @returns L'ID de l'asset uploadé + éventuellement d'autres métadonnées
+     */
+    uploadFrontendAsset(
+        kind: 'logo' | 'favicon',
+        base64Content: string,
+        mimeType: string
+    ): Promise<{ assetId: string; [key: string]: any }>;
 
     // ═══ ÉTAPE 10 : GIT ═══
     saveGitConfiguration(config: GitConfiguration): Promise<{ success: boolean; message: string }>;

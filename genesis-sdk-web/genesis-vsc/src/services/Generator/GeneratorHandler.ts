@@ -59,9 +59,37 @@ export class GeneratorHandler {
         if (files && files.length > 0) {
             const filePath = files[0].fsPath;
             const fileContent = await vscode.workspace.fs.readFile(files[0]);
-            const content = Buffer.from(fileContent).toString('utf-8');
-            this.panel.webview.postMessage({ type: 'FILE_PATH_SELECTED', payload: { path: filePath, content } });
-        }   
+
+            // 👇 Détecte si c'est un fichier binaire (image) ou texte (script)
+            const isBinary = /\.(png|jpg|jpeg|gif|svg|ico|webp)$/i.test(filePath);
+            const content = isBinary
+                ? Buffer.from(fileContent).toString('base64')   // base64 pour images
+                : Buffer.from(fileContent).toString('utf-8');   // utf-8 pour script
+
+            this.panel.webview.postMessage({
+                type: 'FILE_PATH_SELECTED',
+                payload: { path: filePath, content, isBinary }
+            });
+        }
+    }
+
+    async handleUploadFrontendAsset(
+        payload: { kind: 'logo' | 'favicon'; base64Content: string; mimeType: string },
+        panel: vscode.WebviewPanel
+    ): Promise<void> {
+        try {
+            const result = await this.service.uploadFrontendAsset(
+                payload.kind,
+                payload.base64Content,
+                payload.mimeType
+            );
+            panel.webview.postMessage({
+                type: 'FRONTEND_ASSET_UPLOADED',
+                payload: { kind: payload.kind, ...result }
+            });
+        } catch (error) {
+            this.sendApiError(panel, 'UPLOAD_FRONTEND_ASSET', error);
+        }
     }
 
     // ═══ ROUTAGE VERS LE SERVICE (Lecture - Pas de try/catch, le service gère le fallback) ═══
@@ -162,6 +190,23 @@ export class GeneratorHandler {
             panel.webview.postMessage({ type: 'RELATION_PARAMETERS_SAVED', payload: result });
         } catch (error) {
             this.sendApiError(panel, 'SAVE_RELATION_PARAMETERS', error);
+        }
+    }
+
+
+    async handleSaveFrontendConfig(
+        payload: { frameworkId: number; languageId: number | null; port: string },
+        panel: vscode.WebviewPanel
+    ): Promise<void> {
+        try {
+            const result = await this.service.saveFrontendConfig(
+                payload.frameworkId,
+                payload.languageId,
+                payload.port
+            );
+            panel.webview.postMessage({ type: 'FRONTEND_CONFIG_SAVED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'SAVE_FRONTEND_CONFIG', error);
         }
     }
 

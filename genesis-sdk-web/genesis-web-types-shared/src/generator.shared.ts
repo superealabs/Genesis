@@ -63,13 +63,17 @@ export interface RelationParameter {
 }
 
 export interface FrontendLayoutConfig {
-    selectedInterfaceLanguages: string[]; // ex: ['fr', 'en'] (codes des langues)
-    navbarType: 'side' | 'top' | '';      // Correspond à "Sidebar" / "Topbar" en Java
-    primaryColor: string;                 // ex: '#537cc2'
-    secondaryColor: string;               // ex: '#537cc240'
-    logoPath: string;                     // Chemin du fichier ou URL
-    faviconPath: string;                  // Chemin du fichier ou URL
-    port: string;                         // Port d'exécution du frontend (ex: '3000')
+    selectedInterfaceLanguages: string[];
+    navbarType: 'side' | 'top' | '';
+    primaryColor: string;
+    secondaryColor: string;
+    logoPath: string;            // garder (chemin local pour prévisualisation)
+    faviconPath: string;         // garder
+    port: string;
+    
+    // 👇 Nouveaux champs (renvoyés par l'upload API)
+    logoAssetId?: string;        // ex: 'asset-123'
+    faviconAssetId?: string;     // ex: 'asset-456'
 }
 
 export interface GitConfiguration {

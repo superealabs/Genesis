@@ -1,9 +1,9 @@
 URGENCE :
-    onEnter ne se déclenche pas si on change d'étape depuis le stepper display
+    onEnter ne se déclenche pas si on change d'étape depuis le stepper display (l'indicateur d'étape)
 
 
 
-
+La sauvegarde de configuration ne marche pas avec le LanguageInterface
 
 
 

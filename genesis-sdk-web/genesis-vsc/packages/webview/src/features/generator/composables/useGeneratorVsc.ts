@@ -18,6 +18,20 @@ export function useGeneratorVsc() {
         }
     }
 
+    function getMimeTypeFromExtension(filePath: string): string {
+        const ext = filePath.split('.').pop()?.toLowerCase() || '';
+        const mimeTypes: Record<string, string> = {
+            'png': 'image/png',
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'gif': 'image/gif',
+            'svg': 'image/svg+xml',
+            'ico': 'image/x-icon',
+            'webp': 'image/webp',
+        };
+        return mimeTypes[ext] || 'application/octet-stream';
+    }
+
     async function handleSelectAnyFile(field: 'script' | 'logoPath' | 'faviconPath', extensions?: string[]) {
         const data = await selectFilePathVsc(extensions);
         if (data.path) {
@@ -26,8 +40,13 @@ export function useGeneratorVsc() {
                 store.updateScript('content', data.content);
             } else if (field === 'logoPath') {
                 store.updateFrontendLayout('logoPath', data.path);
+                // 👇 Stocker le contenu + MIME type
+                const mimeType = getMimeTypeFromExtension(data.path);
+                store.setFrontendAssetContent('logo', data.content, mimeType);
             } else if (field === 'faviconPath') {
                 store.updateFrontendLayout('faviconPath', data.path);
+                const mimeType = getMimeTypeFromExtension(data.path);
+                store.setFrontendAssetContent('favicon', data.content, mimeType);
             }
         }
     }

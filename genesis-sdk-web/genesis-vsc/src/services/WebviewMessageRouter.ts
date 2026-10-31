@@ -144,11 +144,19 @@ export class WebviewMessageRouter {
                 case 'GET_NAVBAR_TYPES': // NOUVEAU
                     await this.frontendHandler.handleGetNavbarTypes(message.payload, this.panel);
                     break;
+                case 'SAVE_FRONTEND_CONFIG':
+                    await this.generatorHandler.handleSaveFrontendConfig(message.payload, this.panel);
+                    break;
                 case 'SELECT_FRONTEND_FRAMEWORK': // NOUVEAU
                     await this.generatorHandler.handleSelectFrontendFramework(message.payload, this.panel);
                     break;
+
                 case 'SAVE_FRONTEND_LAYOUT_CONFIG': // NOUVEAU
                     await this.generatorHandler.handleSaveFrontendLayoutConfig(message.payload, this.panel);
+                    break;
+
+                case 'UPLOAD_FRONTEND_ASSET':
+                    await this.generatorHandler.handleUploadFrontendAsset(message.payload, this.panel);
                     break;
 
                 // ═══ REPOSITORY (Nouveau) ═══

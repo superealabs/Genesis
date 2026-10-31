@@ -121,6 +121,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     relations.value = [];
     relationsLoaded.value = false;
     lastCommittedDatabaseConfig.value = null;  // 👈 reset
+    frontendAssetContents.value = {};
   }
 
   /**
@@ -387,6 +388,8 @@ export const useGeneratorStore = defineStore('generator', () => {
     relations.value.splice(index, 1); 
   }
 
+  
+
   // --- Étape 8 & 9 : Frontend ---
   function setPendingFrontendFramework(frontendFramework: FrontendFramework | null) {
     const changed = pendingFrontendFramework.value?.id !== frontendFramework?.id;
@@ -408,6 +411,37 @@ export const useGeneratorStore = defineStore('generator', () => {
     const list = stepperData.value.frontendLayout.selectedInterfaceLanguages;
     const idx = list.indexOf(code);
     idx === -1 ? list.push(code) : list.splice(idx, 1);
+  }
+
+  // Domaine : Étape 8 & 9 - Contenu base64 des assets frontend (prévisualisation + upload)
+  const frontendAssetContents = ref<{
+    logoContent?: string;
+    logoMimeType?: string;
+    faviconContent?: string;
+    faviconMimeType?: string;
+  }>({});
+
+  /**
+   * Met à jour le contenu (base64) et le MIME type d'un asset frontend.
+   * Utilisé après sélection du fichier, pour la prévisualisation et l'upload.
+   */
+  function setFrontendAssetContent(
+    kind: 'logo' | 'favicon',
+    content: string | undefined,
+    mimeType: string | undefined
+  ) {
+    if (kind === 'logo') {
+      frontendAssetContents.value.logoContent = content;
+      frontendAssetContents.value.logoMimeType = mimeType;
+    } else {
+      frontendAssetContents.value.faviconContent = content;
+      frontendAssetContents.value.faviconMimeType = mimeType;
+    }
+  }
+
+  /** Vide le contenu d'un asset (après upload réussi, ou reset) */
+  function clearFrontendAssetContent(kind: 'logo' | 'favicon') {
+    setFrontendAssetContent(kind, undefined, undefined);
   }
 
   // --- Étape 10 : Git ---
@@ -522,6 +556,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     hasFrontendData,
     invalidateSteps,
     lastInvalidation,
-    resetFrameworkRelatedProjectConfig
+    resetFrameworkRelatedProjectConfig,
+    frontendAssetContents, setFrontendAssetContent, clearFrontendAssetContent,
   };
 });

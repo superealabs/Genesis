@@ -266,6 +266,50 @@ export class GeneratorServiceVsc implements IGeneratorService {
         });
     }
 
+    uploadFrontendAsset(
+        kind: 'logo' | 'favicon',
+        base64Content: string,
+        mimeType: string
+    ): Promise<{ assetId: string; [key: string]: any }> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('UPLOAD_FRONTEND_ASSET', { kind, base64Content, mimeType });
+
+            const cleanup = this.vscode.onMessage<{ assetId: string; [key: string]: any }>(
+                'FRONTEND_ASSET_UPLOADED',
+                (data) => { cleanup(); resolve(data); }
+            );
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'UPLOAD_FRONTEND_ASSET') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
+    saveFrontendConfig(
+        frameworkId: number,
+        languageId: number | null,
+        port: string
+    ): Promise<{ success: boolean; message: string }> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('SAVE_FRONTEND_CONFIG', { frameworkId, languageId, port });
+
+            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>(
+                'FRONTEND_CONFIG_SAVED',
+                (data) => { cleanup(); resolve(data); }
+            );
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'SAVE_FRONTEND_CONFIG') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
     // ═══ ÉTAPE 10 : GIT ═══
     saveGitConfiguration(config: GitConfiguration): Promise<{ success: boolean; message: string }> {
         return new Promise((resolve, reject) => {

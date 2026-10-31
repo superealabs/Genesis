@@ -1,5 +1,6 @@
 import { getAxiosInstance } from '../http/genesisAxiosInstance';
 import { logger } from '../LoggerService';
+import FormData from 'form-data';
 import type { 
     IGeneratorService, 
     TableMetadataDto, 
@@ -66,6 +67,28 @@ const MOCK_LLM_MODELS: LlmModelDto[] = [
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
     { id: 'claude-sonnet-3-5', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' }
 ];
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+    const binaryString = Buffer.from(base64, 'base64').toString('binary');
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new Blob([bytes], { type: mimeType });
+}
+
+function getExtensionFromMime(mimeType: string): string {
+    const map: Record<string, string> = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/gif': 'gif',
+        'image/svg+xml': 'svg',
+        'image/x-icon': 'ico',
+        'image/vnd.microsoft.icon': 'ico',
+        'image/webp': 'webp',
+    };
+    return map[mimeType] || 'bin';
+}
 
 export class VsCodeGeneratorService implements IGeneratorService {
 
@@ -298,6 +321,32 @@ export class VsCodeGeneratorService implements IGeneratorService {
         }
     }
 
+    async saveFrontendConfig(
+        frameworkId: number,
+        languageId: number | null,
+        port: string
+    ): Promise<{ success: boolean; message: string }> {
+        try {
+            logger.log(LOG_CHANNEL, `💾 Sauvegarde de la config frontend (frameworkId=${frameworkId}, languageId=${languageId}, port=${port})`);
+
+            const body = {
+                frameworkId,
+                languageId,
+                port,
+            };
+
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>(
+                '/generator/frontend-config',
+                body
+            );
+
+            return data;
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ saveFrontendConfig API échouée: ${(error as Error).message}`);
+            throw error;
+        }
+    }
+
     async saveFrontendLayoutConfig(config: FrontendLayoutConfig): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde de la configuration du layout frontend`);
@@ -309,10 +358,37 @@ export class VsCodeGeneratorService implements IGeneratorService {
         }
     }
 
+    async uploadFrontendAsset(
+        kind: 'logo' | 'favicon',
+        base64Content: string,
+        mimeType: string
+    ): Promise<{ assetId: string; [key: string]: any }> {
+        try {
+            logger.log(LOG_CHANNEL, `📤 Upload asset frontend (${kind})`);
+
+            const formData = new FormData();
+            formData.append('file', Buffer.from(base64Content, 'base64'), {
+                filename: `${kind}.${getExtensionFromMime(mimeType)}`,
+                contentType: mimeType
+            });
+
+            const { data } = await getAxiosInstance().post(
+                `/generator/frontend/assets/${kind}`,
+                formData,
+                { headers: formData.getHeaders() }
+            );
+
+            return data;
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ uploadFrontendAsset API échouée: ${(error as Error).message}`);
+            throw error;
+        }
+    }
+
     async saveGitConfiguration(config: GitConfiguration): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde de la configuration Git`);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/git-config', config);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/git/config', config);
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveGitConfiguration API échouée: ${(error as Error).message}`);

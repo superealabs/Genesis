@@ -143,7 +143,8 @@ export function useGenerator() {
     isGenerating,
     isInitializing,
     tablesChilds,
-    tablesParents
+    tablesParents,
+    frontendAssetContents
   } = storeToRefs(store);
 
   const targetSummaryIndex = ref(0);
@@ -398,6 +399,63 @@ export function useGenerator() {
     }
   }
 
+
+    /**
+   * Récupère le contenu (base64) + MIME type d'un asset frontend.
+   * Utilisé pour la prévisualisation et avant upload.
+   */
+  function getFrontendAssetContent(kind: 'logo' | 'favicon'): {
+    content?: string;
+    mimeType?: string;
+  } {
+    if (kind === 'logo') {
+      return {
+        content: store.frontendAssetContents.logoContent,
+        mimeType: store.frontendAssetContents.logoMimeType,
+      };
+    }
+    return {
+      content: store.frontendAssetContents.faviconContent,
+      mimeType: store.frontendAssetContents.faviconMimeType,
+    };
+  }
+
+  /**
+   * Upload un asset frontend vers le backend (form-data).
+   * Stocke l'assetId résultant dans `stepperData.frontendLayout`.
+   * @returns true si l'upload a réussi, false sinon.
+   */
+  async function uploadFrontendAsset(kind: 'logo' | 'favicon'): Promise<boolean> {
+    const { content, mimeType } = getFrontendAssetContent(kind);
+
+    if (!content || !mimeType) {
+      console.warn(`[uploadFrontendAsset] Aucun contenu pour ${kind}, skip.`);
+      return false;
+    }
+
+    try {
+      const result = await svc.uploadFrontendAsset(kind, content, mimeType);
+
+      if (kind === 'logo') {
+        store.updateFrontendLayout('logoAssetId', result.assetId);
+      } else {
+        store.updateFrontendLayout('faviconAssetId', result.assetId);
+      }
+
+      // ⚠️ NE PAS vider le contenu ici : il sert à la prévisualisation.
+      // Il sera vidé au store.reset() (fin de wizard).
+
+      console.log(`[uploadFrontendAsset] ${kind} uploadé : ${result.assetId}`);
+      return true;
+    } catch (error) {
+      console.error(`[uploadFrontendAsset] Échec pour ${kind}:`, error);
+      store.setWizardError(
+        error instanceof Error ? error.message : `Échec de l'upload du ${kind}.`
+      );
+      return false;
+    }
+  }
+
   /**
    * Réinitialise le contexte backend (DELETE /api/generator/reset).
    * NE TOUCHE PAS au store local — c'est le rôle de `reset()`.
@@ -508,6 +566,9 @@ export function useGenerator() {
     resetGitConfig,
     changeFramework,
     tablesChilds,
-    tablesParents
+    tablesParents,
+    frontendAssetContents,  // 👈 ajout (ref)
+    getFrontendAssetContent,
+    uploadFrontendAsset,
   };
 }

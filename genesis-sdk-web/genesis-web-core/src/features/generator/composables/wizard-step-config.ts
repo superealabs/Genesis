@@ -596,14 +596,111 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   },
 
   frontend_config: {
-    beforeNext: async (store) => {
+    beforeNext: async (store, { svc }) => {
       try {
 
+        const frontend = store.stepperData.frontend;
+        if (!frontend) {
+          store.setWizardError("Aucun framework frontend sélectionné.");
+          return false;
+        }
 
-        console.log("[Wizard: frontend_layout] Configuration layout Frontend validée");
+        // 1. Config frontend (frameworkId + languageId + port)
+        await svc.saveFrontendConfig(
+          frontend.id,
+          frontend.languageId ?? null,
+          frontend.defaultPort
+        );
+
+        const config = store.stepperData.frontendLayout;
+        const assets = store.frontendAssetContents;
+
+        console.log("[frontend_config] Début beforeNext", {
+          logoContent: assets.logoContent ? `${assets.logoContent.length} chars` : 'null',
+          logoMimeType: assets.logoMimeType,
+          logoAssetId: config.logoAssetId,
+          faviconContent: assets.faviconContent ? `${assets.faviconContent.length} chars` : 'null',
+          faviconMimeType: assets.faviconMimeType,
+          faviconAssetId: config.faviconAssetId,
+        });
+
+        // 1. Upload logo
+        if (assets.logoContent && !config.logoAssetId) {
+          console.log("[frontend_config] Upload logo — START");
+          try {
+            const result = await svc.uploadFrontendAsset(
+              'logo',
+              assets.logoContent,
+              assets.logoMimeType || 'image/png'
+            );
+            console.log("[frontend_config] Upload logo — SUCCESS", result);
+            store.updateFrontendLayout('logoAssetId', result.assetId);
+          } catch (error) {
+            console.error("[frontend_config] Upload logo — FAIL", error);
+            store.setWizardError(
+              error instanceof Error ? `Échec de l'upload du logo : ${error.message}` : "Échec de l'upload du logo."
+            );
+            return false;
+          }
+        } else {
+          console.log("[frontend_config] Upload logo — SKIP", {
+            hasContent: !!assets.logoContent,
+            hasAssetId: !!config.logoAssetId,
+          });
+        }
+
+        // 2. Upload favicon
+        if (assets.faviconContent && !config.faviconAssetId) {
+          console.log("[frontend_config] Upload favicon — START");
+          try {
+            const result = await svc.uploadFrontendAsset(
+              'favicon',
+              assets.faviconContent,
+              assets.faviconMimeType || 'image/x-icon'
+            );
+            console.log("[frontend_config] Upload favicon — SUCCESS", result);
+            store.updateFrontendLayout('faviconAssetId', result.assetId);
+          } catch (error) {
+            console.error("[frontend_config] Upload favicon — FAIL", error);
+            store.setWizardError(
+              error instanceof Error ? `Échec de l'upload du favicon : ${error.message}` : "Échec de l'upload du favicon."
+            );
+            return false;
+          }
+        } else {
+          console.log("[frontend_config] Upload favicon — SKIP", {
+            hasContent: !!assets.faviconContent,
+            hasAssetId: !!config.faviconAssetId,
+          });
+        }
+
+        // 3. Save config
+        const configToSend = {
+          selectedInterfaceLanguages: [...config.selectedInterfaceLanguages],
+          navbarType: config.navbarType,
+          primaryColor: config.primaryColor,
+          secondaryColor: config.secondaryColor,
+          
+          //  IMPORTANT : logoPath/faviconPath = '' quand assetId est présent
+          //    (le backend refuse URL + assetId simultanément)
+          logoPath: config.logoAssetId ? '' : (config.logoPath || ''),
+          faviconPath: config.faviconAssetId ? '' : (config.faviconPath || ''),
+          
+          port: config.port,
+          logoAssetId: config.logoAssetId ?? '',
+          faviconAssetId: config.faviconAssetId ?? '',
+        };
+
+        console.log("[frontend_config] Save config — START", configToSend);
+        const saveResult = await svc.saveFrontendLayoutConfig(configToSend);
+        console.log("[frontend_config] Save config — SUCCESS", saveResult);
+
         return true;
       } catch (error) {
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde du layout frontend.");
+        console.error("[frontend_config] ERREUR GLOBALE", error);
+        store.setWizardError(
+          error instanceof Error ? error.message : "Échec de la sauvegarde du layout frontend."
+        );
         return false;
       }
     }
@@ -636,10 +733,21 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       return true;
     },
 
-    onSkip: (store) => {
-      // L'utilisateur a cliqué sur "Passer" : on désactive Git et on nettoie
+    onSkip: async (store, { svc }) => {
+      // 1. Reset local
       store.skipGitConfig();
-      const invalidated :StepId[] = ['repository_select', 'repository_config'];
+      
+      // 2. Reset backend (non bloquant)
+      try {
+        await svc.resetGit();
+        console.log("[Wizard: repository_select] Reset Git backend OK.");
+      } catch (error) {
+        console.warn("[Wizard: repository_select] Échec du reset Git backend:", error);
+        // Non bloquant : on continue
+      }
+      
+      // 3. Invalider les étapes
+      const invalidated: StepId[] = ['repository_select', 'repository_config'];
       store.invalidateSteps(invalidated);
     },
     
@@ -667,7 +775,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       }
     },
     
-    beforeNext: (store) => {
+    beforeNext: async (store, { svc }) => {
       const repo = store.stepperData.repositoryConfig;
       
       // On active Git par défaut
@@ -717,6 +825,19 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         store.updateGitConfig('frontendRepositoryName', '');
         store.updateGitConfig('githubUsername', '');
         store.updateGitConfig('githubToken', '');
+      }
+
+
+      try {
+        const gitConfig = toRaw(store.stepperData.git);
+        console.log("[Wizard: git_config] Envoi de la config Git :", gitConfig);
+        await svc.saveGitConfiguration(gitConfig);
+        console.log("[Wizard: git_config] Configuration Git sauvegardée.");
+      } catch (error) {
+        store.setWizardError(
+          error instanceof Error ? error.message : "Échec de la sauvegarde de la configuration Git."
+        );
+        return false;
       }
       
       console.log("[Wizard: git_config] Configuration Repository validée et mappée pour le backend.");
