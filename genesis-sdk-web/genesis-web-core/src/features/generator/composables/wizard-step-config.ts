@@ -218,12 +218,14 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
+      console.log('[beforeNext] AVANT — buildTool =', store.stepperData.config.buildTool, '| configFramework =', store.configFramework?.name);
       // Confirmation du changement (rollback si refus)
       if (!(await confirmFrameworkChange(store, framework))) {
         store.cancelPendingFrameworkChange();
         store.resetFrameworkRelatedProjectConfig();
         return false;
       }
+      console.log('[framework_select.beforeNext] Après confirm, buildTool =', store.stepperData.config.buildTool);
 
       // Commit local
       store.setFramework(framework);

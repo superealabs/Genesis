@@ -122,6 +122,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     relationsLoaded.value = false;
     lastCommittedDatabaseConfig.value = null;  // 👈 reset
     frontendAssetContents.value = {};
+    clearFrameworkOptions();
   }
 
   /**
@@ -161,6 +162,9 @@ export const useGeneratorStore = defineStore('generator', () => {
       'loggingLevel', 'securityType', 'cacheProvider', 'hibernateDdlAuto'
     ] as const;
     keys.forEach(k => updateConfig(k, initial[k]));
+    // Les listes d'options appartiennent à l'ancien framework : on les vide en même temps que les
+    // valeurs, sinon une valeur par défaut est calculée sur des options périmées (voir ProjectConfigView).
+    clearFrameworkOptions();
     configFramework.value = next;
   }
 
@@ -213,6 +217,21 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setAvailableFrameworkVersions(data: string[]) { availableFrameworkVersions.value = data; }
   function setAvailableBuildTools(data: string[]) { availableBuildTools.value = data; }
   function setAvailableHibernateDdlAutoOptions(data: string[]) { availableHibernateDdlAutoOptions.value = data; }
+
+  /**
+   * Vide les listes d'options qui dépendent du framework (étape 2).
+   * À appeler quand le framework change (ou au reset complet), jamais pour un simple nettoyage
+   * de valeurs sans changement de framework : personne ne recharge alors les options.
+   */
+  function clearFrameworkOptions() {
+    availableLoggingLevels.value = [];
+    availableSecurityTypes.value = [];
+    availableCacheProviders.value = [];
+    availableHibernateDdlAutoOptions.value = [];
+    availableLanguageVersions.value = [];
+    availableFrameworkVersions.value = [];
+    availableBuildTools.value = [];
+  }
 
   /**
    * Annule un changement de framework refusé par l'utilisateur.
