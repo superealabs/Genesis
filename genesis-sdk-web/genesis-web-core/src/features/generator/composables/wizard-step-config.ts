@@ -161,7 +161,9 @@ export async function confirmFrameworkChange(store: GeneratorStore, next: Framew
   });
   if (!confirmed) return false;
 
+  store.resetFrameworkRelatedProjectConfig();
   store.resetFrameworkDependentConfig(next);
+  
   if (frontendImpacted(owner, next)) store.resetFrontendDependentConfig();
 
   const invalidated: StepId[] = ['project_config'];
@@ -219,6 +221,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       // Confirmation du changement (rollback si refus)
       if (!(await confirmFrameworkChange(store, framework))) {
         store.cancelPendingFrameworkChange();
+        store.resetFrameworkRelatedProjectConfig();
         return false;
       }
 
@@ -517,12 +520,25 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         store.setRelations(relations);
         // store
       } catch (error) {
-        
+        store.setWizardError(error instanceof Error ? error.message : "Échec du chargement des relations.");
       }
     },
-    beforeNext: async (store) => {
+    beforeNext: async (store, { svc }) => {
       try {
         console.log("[Wizard: relations] Configuration des relations validée");
+
+        const relations = store.relations;
+        const relationRaw = relations.map(r => ({
+            parentTable: r.parentTable,
+            childTable: r.childTable,
+            mandatory: r.mandatory,
+            hasForm: r.hasForm
+        }));
+
+        console.log("BEFORE NEXT RELATION : ", relationRaw);
+
+        await svc.saveRelationParameters(relationRaw);
+
         return true;
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec de la sauvegarde des relations.");
@@ -537,9 +553,10 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       const frontendStore = useFrontendStore();
       
       try {
-
         const frameworkId = _store.pendingFramework?.id ?? _store.stepperData.framework?.id ?? 0;
-      
+
+        console.log("ID FRAMEWORK sended TO API : ", frameworkId);
+
         await Promise.all([
           fdsvc.fetchFrontendFrameworks(frameworkId).then(data => frontendStore.setAvailableFrontendFrameworks(data)),
           fdsvc.fetchInterfaceLanguages().then(data => frontendStore.setAvailableInterfaceLanguages(data)),

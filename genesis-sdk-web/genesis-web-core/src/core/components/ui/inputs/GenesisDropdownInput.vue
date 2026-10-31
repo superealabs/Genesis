@@ -5,7 +5,7 @@
             :trigger-class="selectTriggerClasses"
             :menu-class="fieldMenuClasses"
             :trigger-size="size"
-            :trigger-disabled="disabled"
+            :disabled="disabled"
             :match-trigger-width="matchTriggerWidth"
             :fill-width="fillWidth"
             :align="'left'"
@@ -70,7 +70,7 @@ const props = withDefaults(defineProps<{
     options: () => [],
     multiChoice: false,
     choices: () => [],
-    matchTriggerWidth: false,
+    matchTriggerWidth: true,
     fillWidth: false
 });
 

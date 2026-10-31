@@ -25,18 +25,6 @@
         <div class="flex flex-col gap-3">
           <h3 class="text-sm font-semibold text-text">Ajouter une relation</h3>
 
-          <!-- 👇 Switch de mode : ParentFirst (false) / ChildFirst (true) -->
-          <div class="flex items-center gap-3 pb-2">
-            <GenesisSwitch
-              v-model="isChildFirstMode"
-              :label="isChildFirstMode 
-                ? 'Recherche par Enfant (Child → Parent)' 
-                : 'Recherche par Parent (Parent → Child)'"
-              description="Détermine quel champ doit être renseigné en premier."
-              size="md"
-            />
-          </div>
-
           <div class="flex flex-wrap items-end gap-3">
             
             <!-- ÉTAPE 1 : Table Parent -->
@@ -53,6 +41,18 @@
                 class="flex-1 min-w-[200px]"
               />
             </GenesisTutorialItem>
+
+            <!-- Bouton de bascule de mode (ParentFirst ↔ ChildFirst) -->
+            <GenesisButtonIcon
+              variant="secondary"
+              size="lg"
+              @click="toggleSearchMode"
+            >
+              <IconChevronRight 
+                class="transition-transform duration-300 ease-in-out"
+                :class="isChildFirstMode ? '-rotate-180' : 'rotate-0'"
+              />
+            </GenesisButtonIcon>
 
             <!-- ÉTAPE 2 : Table Enfant -->
             <GenesisTutorialItem id="relation-child-input">
@@ -120,7 +120,6 @@ import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutoria
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
-import GenesisSwitch from '@genesis-labs/web-core/core/components/ui/inputs/GenesisSwitch.vue';  // 👈 nouveau
 import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
@@ -128,6 +127,7 @@ import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/u
 
 import RelationTableView from '../relation/RelationTableView.vue';
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
+import IconChevronRight from '@genesis-labs/web-core/core/components/ui/icons/IconChevronRight.vue';
 
 const size = window.innerHeight * 0.4;
 
@@ -200,15 +200,23 @@ const canAddRelation = computed(() =>
 
 const parentTableOptions = computed(() => 
   tablesParents.value.map(t => ({ 
-    label: `${t.className}${t.isView ? ' (Vue)' : ''}`, 
-    value: t.className 
+    label: `${t.tableName}${t.isView ? ' (Vue)' : ''}`, 
+    value: t.tableName
   }))
 );
 
+/**
+ * Bascule entre ParentFirst et ChildFirst.
+ * Le `watch` sur `isChildFirstMode` se charge du reset + rechargement.
+ */
+function toggleSearchMode() {
+  isChildFirstMode.value = !isChildFirstMode.value;
+}
+
 const childTableOptions = computed(() => 
   tablesChilds.value.map(t => ({ 
-    label: `${t.className}${t.isView ? ' (Vue)' : ''}`, 
-    value: t.className 
+    label: `${t.tableName}${t.isView ? ' (Vue)' : ''}`, 
+    value: t.tableName 
   }))
 );
 
@@ -224,14 +232,14 @@ const childInputDisabled = computed(() =>
 
 const parentPlaceholder = computed(() => 
   parentInputDisabled.value 
-    ? 'Sélectionnez d\'abord une table enfant' 
-    : 'Sélectionner une table...'
+    ? 'Select Child First' 
+    : 'Select Table'
 );
 
 const childPlaceholder = computed(() => 
   childInputDisabled.value 
-    ? 'Sélectionnez d\'abord une table parent' 
-    : 'Sélectionner une table...'
+    ? 'Select Parent First' 
+    : 'Select Table'
 );
 
 // ============================================================================

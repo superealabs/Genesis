@@ -1,3 +1,13 @@
+URGENCE :
+    onEnter ne se déclenche pas si on change d'étape depuis le stepper display
+
+
+
+
+
+
+
+
 - le rollBack de donnée(réinitialiser à la donnée d'origine pour la configuration de base de donnée)
 
 
@@ -13,6 +23,22 @@ Relation(mettre en place le système d'interdépendance entre les deux dropdowns
     Mettre en place le fonctionnement de l'api
 
 
+
+
+
+
+
+l'ajout d'une relation permet d'afficher le détail de fille :
+    Créer une fonction qui permet de créer plusieurs relation
+
+
+    Rajouter un bouton qui permet de rajouter toutes les relations d'un enfant/parent
+        rajouter une fonctionnalité qui permet de set plusieurs colonnes en une fois
+
+
+
+
+Absence de chargement
 
 
 BUG :

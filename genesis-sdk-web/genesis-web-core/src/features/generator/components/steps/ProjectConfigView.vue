@@ -1,9 +1,9 @@
 <template>
   <main class="flex gap-4 h-full overflow-hidden">
-    <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+    <div class="flex flex-col gap-8 flex-1 min-h-0 overflow-y-auto p-6 space-y-6 custom-scrollbar">
       
       <!-- 1. CONFIGURATION DE BASE -->
-      <div class="space-y-4">
+      <div class="flex flex-col gap-4">
         <!-- ✅ AJOUT : En-tête avec le déclencheur du tutoriel -->
         <div class="flex items-center justify-between border-b border-neutral-light-genesis pb-2">
           <h3 class="text-xl font-semibold text-text">
@@ -13,64 +13,71 @@
               <IconHelp />
           </GenesisButtonIcon>
         </div>
-        
-        <div ref="frameworkSelectorRef" class="flex items-end gap-3">
-          <div class="flex-1">
-            <template v-if="isEditingFramework">
-              <GenesisInput
-                type="combobox"
-                :options="availableFrameworksOptions"
-                :model-value="tempFrameworkName"
-                @update:model-value="handleFrameworkSelect"
-                label="Framework"
-                placeholder="Rechercher un framework..."
-                size="lg"
-                fill-width
-              />
-            </template>
-            <template v-else>
-              <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium text-muted">Framework sélectionné</label>
-                <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
-                  <span class="truncate font-medium">{{ framework?.name || 'Aucun framework sélectionné' }}</span>
+      
+        <div class="flex flex-col gap-4 w-full">
+          <div ref="frameworkSelectorRef" class="flex items-end gap-3">
+            <div class="flex-1">
+              <template v-if="isEditingFramework">
+                <GenesisInput
+                  type="combobox"
+                  :options="availableFrameworksOptions"
+                  :model-value="tempFrameworkName"
+                  @update:model-value="handleFrameworkSelect"
+                  label="Framework"
+                  placeholder="Rechercher un framework..."
+                  size="lg"
+                  fill-width
+                />
+              </template>
+              <template v-else>
+                <div class="flex flex-col gap-1">
+                  <label class="text-sm font-medium text-muted">Framework sélectionné</label>
+                  <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
+                    <span class="truncate font-medium">{{ framework?.name || 'Aucun framework sélectionné' }}</span>
+                  </div>
                 </div>
-              </div>
-            </template>
+              </template>
+            </div>
+            
+            <div class="pb-0.5">
+              <GenesisButton v-if="!isEditingFramework" variant="secondary" size="lg" @click="startEditingFramework">
+                Modifier
+              </GenesisButton>
+              <GenesisButton v-else variant="tertiary" size="lg" @click="cancelEditingFramework">
+                Annuler
+              </GenesisButton>
+            </div>
           </div>
-          
-          <div class="pb-0.5">
-            <GenesisButton v-if="!isEditingFramework" variant="secondary" size="lg" @click="startEditingFramework">
-              Modifier
-            </GenesisButton>
-            <GenesisButton v-else variant="tertiary" size="lg" @click="cancelEditingFramework">
-              Annuler
-            </GenesisButton>
+          <!-- ✅ CORRECTION : Remplacement de v-model par :model-value + @update:model-value -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <GenesisInput 
+              :model-value="config.projectName" 
+              @update:model-value="(val) => updateConfig('projectName', val)"
+              label="Nom du projet" 
+              placeholder="mon-super-projet" 
+              size="lg" 
+              is-mandatory 
+              fill-width 
+            />
+            <GenesisInput 
+              :model-value="config.projectPort" 
+              @update:model-value="(val) => updateConfig('projectPort', val)"
+              type="number" 
+              size="lg" 
+              label="Port d'exécution" 
+              placeholder="ex: 8080" 
+              fill-width 
+            />
           </div>
-        </div>
-
-        <!-- ✅ CORRECTION : Remplacement de v-model par :model-value + @update:model-value -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <GenesisInput 
-            :model-value="config.projectName" 
-            @update:model-value="(val) => updateConfig('projectName', val)"
-            label="Nom du projet" 
-            placeholder="mon-super-projet" 
-            size="lg" 
-            is-mandatory 
+            :model-value="config.projectLocation" 
+            @update:model-value="(val) => updateConfig('projectLocation', val)"
+            type="path" 
+            label="Emplacement" 
             fill-width 
-          />
-          <GenesisInput 
-            :model-value="config.projectPort" 
-            @update:model-value="(val) => updateConfig('projectPort', val)"
-            type="number" 
             size="lg" 
-            label="Port d'exécution" 
-            placeholder="ex: 8080" 
-            fill-width 
+            @request-folder-path="handleSelectFolderPath" 
           />
-        </div>
-
-        <div class="w-full">
           <GenesisInput 
             :model-value="config.projectDescription" 
             @update:model-value="(val) => updateConfig('projectDescription', val)"
@@ -81,110 +88,105 @@
             fill-width 
           />
         </div>
-
-        <div class="w-full">
-          <GenesisInput 
-            :model-value="config.projectLocation" 
-            @update:model-value="(val) => updateConfig('projectLocation', val)"
-            type="path" 
-            label="Emplacement" 
-            fill-width 
-            size="lg" 
-            @request-folder-path="handleSelectFolderPath" 
-          />
-        </div>
       </div>
 
       <!-- 2. CONFIGURATION DU FRAMEWORK (STACK TECHNIQUE) -->
-      <div class="space-y-6">
+      <div class="flex flex-col gap-4 w-full">
         <div class="flex items-center justify-between border-b border-neutral-light-genesis pb-2">
           <h3 class="text-xl font-semibold text-text">
             Stack Technique ({{ framework?.name || 'Non sélectionné' }})
           </h3>
-          <GenesisButtonIcon 
-            variant="neutral" 
-            size="sm" 
-            @click="tutorial.restart('tech-stack')"
-            title="Aide sur la configuration de la stack technique"
-          >
-            <IconHelp />
-          </GenesisButtonIcon>
         </div>
         
         <div class="flex flex-col lg:flex-row gap-6">
-          <div class="flex-1 flex flex-col gap-4">
-            
-            <GenesisInput 
-              v-if="!hideLanguageVersion"
-              :model-value="effectiveLanguageVersion"
-              type="select" 
-              :options="languageVersionOptions"
-              @update:model-value="(val) => updateConfig('languageVersion', val)"
-              size="lg" 
-              label="Version du Language" 
-              placeholder="Sélectionner..." 
-            />
-
-            <GenesisInput
-              v-if="!hideBuildTool"
-              :model-value="effectiveBuildTool" 
-              type="select" 
-              :options="buildToolOptions"
-              @update:model-value="(val) => updateConfig('buildTool', val)"
-              size="lg" 
-              label="Build Tool" 
-              placeholder="Sélectionner..." 
-            />
-
-            <div v-if="showGroupId" class="space-y-1">
-              <GenesisInput
-                :model-value="config.groupId" 
-                @update:model-value="(val) => updateConfig('groupId', val)"
-                size="lg" 
-                label="Group ID" 
-                placeholder="com.example" 
-              />
-            </div>
-
-            <GenesisInput 
-              v-if="!hideFrameworkVersion"
-              :model-value="effectiveFrameworkVersion"  
-              type="select" 
-              :options="frameworkVersionOptions"
-              @update:model-value="(val) => updateConfig('frameworkVersion', val)"
-              size="lg" 
-              label="Version du Framework" 
-              placeholder="Sélectionner..." 
-            />
-
-          </div>
-
-          <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-            <GenesisTutorialItem id="tutorial-tech-stack-config">
-              <GenesisConfigurationPanel
-                :tutorial-id="'tutorial-tech-stack-config'"
-                :include-sub-tutorial="true"
-                :configurations="techStackConfigManager.configurations.value"
-                :selected-config-id="techStackConfigManager.selectedConfigId.value"
-                :filtered-configs="techStackConfigManager.filteredConfigs.value"
-                :search-query="techStackConfigManager.searchQuery.value"
-                :can-move-up="techStackConfigManager.canMoveUp.value"
-                :can-move-down="techStackConfigManager.canMoveDown.value"
-                @update:search-query="(val) => techStackConfigManager.searchQuery.value = val"
-                @add="techStackLogic.handleAdd"
-                @delete="techStackLogic.handleDelete"
-                @rename="techStackLogic.handleRename"
-                @toggle-visibility="techStackConfigManager.toggleVisibility"
-                @move-up="techStackConfigManager.moveUp"
-                @move-down="techStackConfigManager.moveDown"
-                @select-configuration="techStackLogic.handleSelect"
-              />
-            </GenesisTutorialItem>
-            <div class="flex gap-2 justify-end">
-              <GenesisButtonIcon title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
-                <IconUpload />
+          <div class="flex flex-col gap-4 w-full">
+            <div class="flex items-center justify-end gap-1.5">
+              <span class="text-sm text-text-muted">How to use</span>
+              <GenesisButtonIcon 
+                variant="neutral" 
+                size="sm" 
+                @click="tutorial.restart('tech-stack')"
+                title="Aide sur la configuration de la stack technique"
+              >
+                <IconHelp :size="16" />
               </GenesisButtonIcon>
             </div>
+            <div class="flex justify-between w-full">
+              <div class="flex-1 w-full flex flex-col gap-4">
+                <GenesisInput 
+                  v-if="!hideLanguageVersion"
+                  :model-value="effectiveLanguageVersion"
+                  type="select" 
+                  :options="languageVersionOptions"
+                  @update:model-value="(val) => updateConfig('languageVersion', val)"
+                  size="lg" 
+                  label="Version du Language" 
+                  placeholder="Sélectionner..." 
+                />
+
+                <GenesisInput
+                  v-if="!hideBuildTool"
+                  :model-value="effectiveBuildTool" 
+                  type="select" 
+                  :options="buildToolOptions"
+                  @update:model-value="(val) => updateConfig('buildTool', val)"
+                  size="lg" 
+                  label="Build Tool" 
+                  placeholder="Sélectionner..." 
+                />
+
+                <div v-if="showGroupId" class="space-y-1">
+                  <GenesisInput
+                    :model-value="config.groupId" 
+                    @update:model-value="(val) => updateConfig('groupId', val)"
+                    size="lg" 
+                    label="Group ID" 
+                    placeholder="com.example" 
+                  />
+                </div>
+
+                <GenesisInput 
+                  v-if="!hideFrameworkVersion"
+                  :model-value="effectiveFrameworkVersion"  
+                  type="select" 
+                  :options="frameworkVersionOptions"
+                  @update:model-value="(val) => updateConfig('frameworkVersion', val)"
+                  size="lg" 
+                  label="Version du Framework" 
+                  placeholder="Sélectionner..." 
+                />
+
+              </div>
+
+              <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+                <GenesisTutorialItem id="tutorial-tech-stack-config">
+                  <GenesisConfigurationPanel
+                    :tutorial-id="'tutorial-tech-stack-config'"
+                    :include-sub-tutorial="true"
+                    :configurations="techStackConfigManager.configurations.value"
+                    :selected-config-id="techStackConfigManager.selectedConfigId.value"
+                    :filtered-configs="techStackConfigManager.filteredConfigs.value"
+                    :search-query="techStackConfigManager.searchQuery.value"
+                    :can-move-up="techStackConfigManager.canMoveUp.value"
+                    :can-move-down="techStackConfigManager.canMoveDown.value"
+                    @update:search-query="(val) => techStackConfigManager.searchQuery.value = val"
+                    @add="techStackLogic.handleAdd"
+                    @delete="techStackLogic.handleDelete"
+                    @rename="techStackLogic.handleRename"
+                    @toggle-visibility="techStackConfigManager.toggleVisibility"
+                    @move-up="techStackConfigManager.moveUp"
+                    @move-down="techStackConfigManager.moveDown"
+                    @select-configuration="techStackLogic.handleSelect"
+                  />
+                </GenesisTutorialItem>
+                <div class="flex gap-2 justify-end">
+                  <GenesisButtonIcon title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
+                    <IconUpload />
+                  </GenesisButtonIcon>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -196,102 +198,99 @@
           <template #title>
               <span class="text-xl font-semibold">Configuration Avancée du Backend</span>
           </template>
-
-          <div class="flex flex-col lg:flex-row gap-6">
-            
-            <div class="flex-1 flex flex-col gap-4">
-              
-              <GenesisInput
-                v-if="!hideLoggingLevel"
-                :model-value="effectiveLoggingLevel" 
-                type="select" 
-                :options="loggingLevelOptions"
-                @update:model-value="(val) => updateConfig('loggingLevel', val)"
-                label="Niveau de Logging" 
-                placeholder="INFO" 
-                fill-width
-                :size="'lg'"
-              />
-
-              <GenesisInput 
-                v-if="!hideSecurityType"
-                :model-value="effectiveSecurityType" 
-                type="select" 
-                :options="securityTypeOptions"
-                @update:model-value="(val) => updateConfig('securityType', val)"
-                label="Type de Sécurité" 
-                placeholder="Aucune" 
-                fill-width
-                :size="'lg'"
-              />
-
-              <GenesisInput
-                v-if="!hideCacheProvider"
-                :model-value="effectiveCacheProvider"
-                type="select" 
-                :options="cacheProviderOptions"
-                @update:model-value="(val) => updateConfig('cacheProvider', val)"
-                label="Fournisseur de Cache" 
-                placeholder="Aucun" 
-                fill-width
-                :size="'lg'"
-              />
-
-              <div v-if="!hideHibernateDdlAuto" class="space-y-1">
-                <GenesisInput
-                  v-if="!hideHibernateDdlAuto"
-                  :model-value="effectiveHibernateDdlAuto" 
-                  type="select" 
-                  :options="hibernateDdlAutoOptions"
-                  @update:model-value="(val) => updateConfig('hibernateDdlAuto', val)"
-                  label="Hibernate DDL Auto" 
-                  placeholder="none" 
-                  fill-width 
-                  :size="'lg'"
-                />
-              </div>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center justify-end gap-1.5">
+              <span class="text-sm text-text-muted">How to use</span>
+              <GenesisButtonIcon 
+                variant="neutral" 
+                size="sm" 
+                @click="tutorial.restart('advanced')"
+                title="Aide sur la configuration avancée"
+              >
+                <IconHelp :size="16" />
+              </GenesisButtonIcon>
             </div>
 
-            <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-              <div class="flex items-center justify-end gap-1.5">
-                <span class="text-sm text-text-muted">How to use</span>
-                <GenesisButtonIcon 
-                  variant="neutral" 
-                  size="sm" 
-                  @click="tutorial.restart('advanced')"
-                  title="Aide sur la configuration avancée"
-                >
-                  <IconHelp :size="16" />
-                </GenesisButtonIcon>
+            <div class="flex flex-col lg:flex-row gap-6 w-full">  
+              <div class="flex-1 w-full flex flex-col gap-4">  
+                <GenesisInput
+                  v-if="!hideLoggingLevel"
+                  :model-value="effectiveLoggingLevel" 
+                  type="select" 
+                  :options="loggingLevelOptions"
+                  @update:model-value="(val) => updateConfig('loggingLevel', val)"
+                  label="Niveau de Logging" 
+                  placeholder="INFO" 
+                  fill-width
+                  :size="'lg'"
+                />
+
+                <GenesisInput 
+                  v-if="!hideSecurityType"
+                  :model-value="effectiveSecurityType" 
+                  type="select" 
+                  :options="securityTypeOptions"
+                  @update:model-value="(val) => updateConfig('securityType', val)"
+                  label="Type de Sécurité" 
+                  placeholder="Aucune" 
+                  fill-width
+                  :size="'lg'"
+                />
+
+                <GenesisInput
+                  v-if="!hideCacheProvider"
+                  :model-value="effectiveCacheProvider"
+                  type="select" 
+                  :options="cacheProviderOptions"
+                  @update:model-value="(val) => updateConfig('cacheProvider', val)"
+                  label="Fournisseur de Cache" 
+                  placeholder="Aucun" 
+                  fill-width
+                  :size="'lg'"
+                />
+
+                  <GenesisInput
+                    v-if="!hideHibernateDdlAuto"
+                    :model-value="effectiveHibernateDdlAuto" 
+                    type="select" 
+                    :options="hibernateDdlAutoOptions"
+                    @update:model-value="(val) => updateConfig('hibernateDdlAuto', val)"
+                    label="Hibernate DDL Auto" 
+                    placeholder="none" 
+                    fill-width 
+                    :size="'lg'"
+                  />
               </div>
 
-              <GenesisTutorialItem id="tutorial-advanced-config">
-                <GenesisConfigurationPanel
-                  :tutorial-id="'tutorial-advanced-config'"
-                  :configurations="configManager.configurations.value"
-                  :selected-config-id="configManager.selectedConfigId.value"
-                  :filtered-configs="configManager.filteredConfigs.value"
-                  :search-query="configManager.searchQuery.value"
-                  :can-move-up="configManager.canMoveUp.value"
-                  :can-move-down="configManager.canMoveDown.value"
-                  @update:search-query="(val) => configManager.searchQuery.value = val"
-                  @add="advancedLogic.handleAdd"
-                  @delete="advancedLogic.handleDelete"
-                  @rename="advancedLogic.handleRename"
-                  @toggle-visibility="configManager.toggleVisibility"
-                  @move-up="configManager.moveUp"
-                  @move-down="configManager.moveDown"
-                  @select-configuration="advancedLogic.handleSelect"
-                />
-              </GenesisTutorialItem>
+              <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+                <GenesisTutorialItem id="tutorial-advanced-config">
+                  <GenesisConfigurationPanel
+                    :tutorial-id="'tutorial-advanced-config'"
+                    :configurations="configManager.configurations.value"
+                    :selected-config-id="configManager.selectedConfigId.value"
+                    :filtered-configs="configManager.filteredConfigs.value"
+                    :search-query="configManager.searchQuery.value"
+                    :can-move-up="configManager.canMoveUp.value"
+                    :can-move-down="configManager.canMoveDown.value"
+                    @update:search-query="(val) => configManager.searchQuery.value = val"
+                    @add="advancedLogic.handleAdd"
+                    @delete="advancedLogic.handleDelete"
+                    @rename="advancedLogic.handleRename"
+                    @toggle-visibility="configManager.toggleVisibility"
+                    @move-up="configManager.moveUp"
+                    @move-down="configManager.moveDown"
+                    @select-configuration="advancedLogic.handleSelect"
+                  />
+                </GenesisTutorialItem>
 
-              <div class="flex gap-2 justify-end">
-                <GenesisButtonIcon title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
-                  <IconUpload />
-                </GenesisButtonIcon>
-                <GenesisButtonIcon title="Exporter toutes les configurations avancées" @click="advancedLogic.handleExportAll">
-                  <IconSave />
-                </GenesisButtonIcon>
+                <div class="flex gap-2 justify-end">
+                  <GenesisButtonIcon title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
+                    <IconUpload />
+                  </GenesisButtonIcon>
+                  <GenesisButtonIcon title="Exporter toutes les configurations avancées" @click="advancedLogic.handleExportAll">
+                    <IconSave />
+                  </GenesisButtonIcon>
+                </div>
               </div>
             </div>
           </div>
@@ -306,7 +305,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref } from 'vue';
+
 import { computed, watch, ref, onMounted, nextTick } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useConfigurationManager } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';

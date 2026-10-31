@@ -123,6 +123,35 @@ export const useGeneratorStore = defineStore('generator', () => {
     lastCommittedDatabaseConfig.value = null;  // 👈 reset
   }
 
+  /**
+   * Réinitialise les données de configuration projet qui dépendent du framework.
+   * 
+   * Ne touche PAS aux champs "utilisateur" :
+   * - projectName, projectLocation, projectDescription, projectPort
+   * 
+   * Reset les champs qui dépendent du framework :
+   * - languageVersion, buildTool, groupId, frameworkVersion,
+   *   loggingLevel, securityType, cacheProvider, hibernateDdlAuto
+   * 
+   * ⚠️ Ne touche PAS à `configFramework` : c'est le rôle de `resetFrameworkDependentConfig(next)`.
+   *    Utilisez cette fonction pour nettoyer la config sans changer de framework.
+   */
+  function resetFrameworkRelatedProjectConfig() {
+    const initial = INITIAL_STATE.config;
+
+    // On ne reset QUE les champs dépendants du framework.
+    // Les champs utilisateur (projectName, projectLocation, projectDescription, projectPort)
+    // sont conservés.
+    updateConfig('languageVersion', initial.languageVersion);
+    updateConfig('buildTool', initial.buildTool);
+    updateConfig('groupId', initial.groupId);
+    updateConfig('frameworkVersion', initial.frameworkVersion);
+    updateConfig('loggingLevel', initial.loggingLevel);
+    updateConfig('securityType', initial.securityType);
+    updateConfig('cacheProvider', initial.cacheProvider);
+    updateConfig('hibernateDdlAuto', initial.hibernateDdlAuto);
+  }
+
   
   function resetFrameworkDependentConfig(next: Framework) {
     const initial = INITIAL_STATE.config;
@@ -337,8 +366,11 @@ export const useGeneratorStore = defineStore('generator', () => {
   }
   
   function addRelation(relation: RelationParameter): boolean {
+    const normalize = (s: string) => s.trim().toLowerCase();
+    
     const exists = relations.value.some(
-      r => r.parentTable === relation.parentTable && r.childTable === relation.childTable
+      r => normalize(r.parentTable) === normalize(relation.parentTable) 
+        && normalize(r.childTable) === normalize(relation.childTable)
     );
     
     if (exists) {
@@ -490,5 +522,6 @@ export const useGeneratorStore = defineStore('generator', () => {
     hasFrontendData,
     invalidateSteps,
     lastInvalidation,
+    resetFrameworkRelatedProjectConfig
   };
 });

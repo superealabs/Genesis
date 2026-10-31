@@ -71,7 +71,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // ═══ Variant du header (désactivé dans un formulaire) ═══
 const headerVariantClasses = computed(() => {
-    if (props.isInForm) return '';
+    if (props.isInForm) return 'border-b border-bg-neutral-genesis';
     if (props.variant === 'primary') {
         return 'bg-bg-light hover:bg-secondary/50 border border-secondary';
     }

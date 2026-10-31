@@ -2,6 +2,7 @@
   <Menu 
     v-slot="{ open, close }" 
     as="div" 
+    :key="isDisabled ? 'disabled' : 'enabled'"
     :class="{ 'w-full': fillWidth }"
     :model-value="internalOpen" 
     @update:model-value="internalOpen = $event"
@@ -16,13 +17,14 @@
       <label
         v-if="label"
         class="text-sm font-medium text-muted"
+        :class="{ 'opacity-50': isDisabled }"
       >
         {{ label }}<span v-if="isMandatory" class="text-accent ml-0.5">*</span>
       </label>
 
       <!-- Wrapper trigger + dropdown -->
       <div class="relative" :class="fillWidth ? 'block w-full' : 'inline-block'">
-        <MenuButton as="template">
+        <MenuButton as="template" :disabled="isDisabled">
           
           <!-- Cas 1 : Slot trigger personnalisé -->
           <GenesisButton
@@ -30,7 +32,7 @@
             ref="triggerRef"
             :variant="triggerVariant"
             :size="triggerSize"
-            :disabled="triggerDisabled"
+            :disabled="isDisabled"
             :fill-width="fillWidth"
             :use-default-text="false"
             :class="triggerClass"
@@ -55,7 +57,7 @@
             ref="triggerRef"
             :variant="triggerVariant"
             :size="triggerSize"
-            :disabled="triggerDisabled"
+            :disabled="isDisabled"
             :fill-width="fillWidth"
             :use-default-text="false"
             :class="triggerClass"
@@ -78,7 +80,7 @@
             ref="triggerRef"
             :variant="triggerVariant"
             :size="triggerSize"
-            :disabled="triggerDisabled"
+            :disabled="isDisabled"
             :class="triggerClass"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
           >
@@ -131,6 +133,9 @@ const props = withDefaults(defineProps<{
   /** Variante du déclencheur. 'none' = aucune couleur (le style vient de `triggerClass`). */
   triggerVariant?: ButtonVariant;
   triggerSize?: UI_Size_Unit;
+  /** Désactive le déclencheur (comme GenesisButton) : plus de clic, plus d'ouverture au survol, menu fermé */
+  disabled?: boolean;
+  /** @deprecated Utiliser `disabled` */
   triggerDisabled?: boolean;
   /** Classes ajoutées au déclencheur (ex. style de champ fourni par GenesisInput) */
   triggerClass?: string;
@@ -148,6 +153,7 @@ const props = withDefaults(defineProps<{
   fillWidth: false,
   triggerVariant: 'neutral',
   triggerSize: 'lg',
+  disabled: false,
   triggerDisabled: false,
   triggerClass: '',
   menuClass: '',
@@ -180,6 +186,9 @@ watch(internalOpen, (newValue) => {
 // ============================================================================
 // 3. COMPUTEDS & LOGIQUE DE POSITIONNEMENT
 // ============================================================================
+
+/** `triggerDisabled` reste accepté (ancien nom de `disabled`) */
+const isDisabled = computed(() => props.disabled || props.triggerDisabled);
 
 /** fillWidth implique que le panneau ait la largeur du déclencheur */
 const shouldMatchTriggerWidth = computed(() => props.matchTriggerWidth || props.fillWidth);
@@ -281,7 +290,7 @@ function handleTriggerMouseDown(e: MouseEvent, isOpen: boolean) {
 }
 
 function handleMouseEnter(isOpen: boolean) {
-  if (!props.openAtHover || props.triggerDisabled) return;
+  if (!props.openAtHover || isDisabled.value) return;
   clearHoverTimeout();
   if (!isOpen) {
     if (shouldMatchTriggerWidth.value) measureTriggerWidth();

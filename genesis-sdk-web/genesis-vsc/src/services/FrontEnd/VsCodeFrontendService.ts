@@ -35,15 +35,18 @@ export const MOCK_NAVBAR_TYPES: string[] = ['side', 'top'];
 
 export class VsCodeFrontendService implements IFrontendService {
     
-    async fetchFrontendFrameworks(frameworkID: number): Promise<FrontendFramework[]> {
+    async fetchFrontendFrameworks(frameworkID?: number): Promise<FrontendFramework[]> {
         try {
-            // Envoi de l'ID du framework backend en paramètre de requête pour filtrer les résultats
-            const { data } = await getAxiosInstance().get<FrontendFramework[]>('/api/frontend/frameworks', {
-                params: { frameworkID }
-            });
+            // Construit l'URL dynamiquement : soit avec l'ID dans le chemin, soit sans
+            const url = frameworkID 
+                ? `/frontend/frameworks/${frameworkID}` 
+                : '/frontend/frameworks';
+
+            const { data } = await getAxiosInstance().get<FrontendFramework[]>(url);
             return data;
         } catch (error) {
-            logger.log(LOG_CHANNEL, `⚠️ fetchFrontendFrameworks API échouée. Fallback mock.`);
+
+            logger.log(LOG_CHANNEL, `⚠️ fetchFrontendFrameworks API échouée. Fallback mock, error : ${error}`, true);
             return MOCK_FRONTEND_FRAMEWORKS;
         }
     }
@@ -51,7 +54,7 @@ export class VsCodeFrontendService implements IFrontendService {
     //  NOUVEAU : Récupération des langages de programmation (JS/TS)
     async fetchFrontendProgrammingLanguages(): Promise<FrontendProgrammingLanguage[]> {
         try {
-            const { data } = await getAxiosInstance().get<FrontendProgrammingLanguage[]>('/api/frontend/programming-languages');
+            const { data } = await getAxiosInstance().get<FrontendProgrammingLanguage[]>('/frontend/programming-languages');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchFrontendProgrammingLanguages API échouée. Fallback mock.`);
@@ -62,7 +65,7 @@ export class VsCodeFrontendService implements IFrontendService {
     //  RENOMMÉ : fetchAvailableLanguages -> fetchInterfaceLanguages pour coller au contrat
     async fetchInterfaceLanguages(): Promise<InterfaceLanguage[]> {
         try {
-            const { data } = await getAxiosInstance().get<InterfaceLanguage[]>('/api/frontend/interface-languages');
+            const { data } = await getAxiosInstance().get<InterfaceLanguage[]>('/frontend/interface-languages');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchInterfaceLanguages API échouée. Fallback mock.`);
@@ -73,7 +76,7 @@ export class VsCodeFrontendService implements IFrontendService {
     //  NOUVEAU : Récupération des types de Navbar
     async fetchNavbarTypes(): Promise<string[]> {
         try {
-            const { data } = await getAxiosInstance().get<string[]>('/api/frontend/navbar-types');
+            const { data } = await getAxiosInstance().get<string[]>('/frontend/navbar-types');
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `⚠️ fetchNavbarTypes API échouée. Fallback mock.`);
