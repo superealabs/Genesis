@@ -84,4 +84,16 @@ public class MetadataController {
     public TableSelectionResponse select(@RequestBody TableSelectionRequest request) {
         return metadataService.select(request);
     }
+
+    @DeleteMapping("/api/generator/profiles/{profileName}/relations")
+    public RelationParametersResponse resetProfileRelations(@PathVariable String profileName) {
+        return profileRelationService.resetRelations(profileName);
+    }
+
+    @DeleteMapping("/api/generator/profiles/relations")
+    public RelationParametersResponse resetAllProfileRelations() {
+        profileRelationService.clear();
+        return new RelationParametersResponse(true, "Les relations de tous les profils ont été réinitialisées");
+    }
+
 }

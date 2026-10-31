@@ -1,4 +1,3 @@
-
 package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
@@ -224,5 +223,16 @@ public class ProfileRelationService {
         }
         return Map.copyOf(result);
     }
+
+    public synchronized RelationParametersResponse resetRelations(String profileName) {
+        // Vérifier que le profil existe
+        findProfile(profileName, contextStore.getContext());
+
+        // Supprimer uniquement sa configuration manuelle
+        manualRelations.remove(profileName);
+
+        return new RelationParametersResponse(true, "Relations du profil " + profileName + " réinitialisées avec succès");
+    }
+
 
 }
