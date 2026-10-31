@@ -23,17 +23,19 @@ public class RelationService {
     private final ForeignKeyRelationValidator foreignKeyValidator;
     private static final String PARENTS = "PARENTS";
     private static final String CHILDS = "CHILDS";
+    private final GenerationProfilesStore generationProfilesStore;
 
     private final GenerationContextStore generationContextStore;
 
-    public RelationService(GenerationContextStore generationContextStore, ForeignKeyRelationValidator foreignKeyValidator) {
+    public RelationService(GenerationContextStore generationContextStore, ForeignKeyRelationValidator foreignKeyValidator, GenerationProfilesStore generationProfilesStore
+    ) {
         this.generationContextStore = generationContextStore;
         this.foreignKeyValidator = foreignKeyValidator;
+        this.generationProfilesStore = generationProfilesStore;
     }
 
-
     private List<TableMetadataResponse> getTablesByRelationType(String relationType) {
-        ProjectGenerationContext context = requireSelectedTables();
+        ProjectGenerationContext context = getProfilesContext();
         Dictionary<String, List<TableMetadata>> splitTables = context.splitTableByRelations();
         List<TableMetadata> tables = splitTables.get(relationType);
         if (tables == null) {
@@ -161,4 +163,22 @@ public class RelationService {
         }
         return tableName.trim();
     }
+
+    private ProjectGenerationContext getProfilesContext() {
+        ProjectGenerationContext source = generationContextStore.getContext();
+        var profiles = generationProfilesStore.getProfiles(source);
+        if (profiles.isEmpty()) {
+            throw new RelationException("Enregistrez d'abord les profils de génération");
+        }
+        Set<String> tables = new LinkedHashSet<>();
+        for (var profile : profiles) {
+            tables.addAll(profile.selectedTables());
+        }
+        ProjectGenerationContext copy = source.duplicateWithNoTables();
+        copy.setEntityNames(new ArrayList<>(tables));
+        copy.setViewNames(new ArrayList<>());
+        copy.setTables();
+        return copy;
+    }
+
 }
