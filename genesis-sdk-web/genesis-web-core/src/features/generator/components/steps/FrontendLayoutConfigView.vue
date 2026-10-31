@@ -437,6 +437,7 @@ const languagesLogic = useConfigManagerLogic({
   fileNamePrefix: 'languages',
   watchSource: () => layoutConfig.value.selectedInterfaceLanguages,
   applyValues: (vals) => {
+    console.log('[FrontendLayoutConfigView] applyValues called with:', vals);
     isApplyingLanguagesConfig.value = true;
     
     const currentLangs = [...layoutConfig.value.selectedInterfaceLanguages];
@@ -447,6 +448,8 @@ const languagesLogic = useConfigManagerLogic({
         toggleLanguage(code);
       }
     });
+    
+    console.log('[FrontendLayoutConfigView] After applyValues:', [...layoutConfig.value.selectedInterfaceLanguages]);
     
     nextTick(() => { isApplyingLanguagesConfig.value = false; });
   },
@@ -469,8 +472,11 @@ function getLanguageName(code: string): string {
 async function loadLanguagesConfigurations() {
   const languagesData = await loadFrontendLanguagesConfigurations();
 
+  console.log('[FrontendLayoutConfigView] loadLanguagesConfigurations — raw:', JSON.parse(JSON.stringify(languagesData)));
+
   languagesConfigManager.configurations.value = languagesData.map(c => {
     const p = c.payload as any;
+    console.log(`[FrontendLayoutConfigView] Config "${c.name}" (id=${c.id}): payload=`, p, '→ languages=', p?.languages);
     return { id: c.id, name: c.name, isHidden: false, components: p.languages || [] };
   });
 

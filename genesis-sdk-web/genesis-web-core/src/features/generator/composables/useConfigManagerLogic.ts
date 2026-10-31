@@ -147,7 +147,7 @@ export function useConfigManagerLogic<TPayload = any>(params: ConfigLogicParams<
         } as GenesisConfig<TPayload>);
       }
     }
-  });
+  }, { deep:true });
 
   return {
     handleSelect,

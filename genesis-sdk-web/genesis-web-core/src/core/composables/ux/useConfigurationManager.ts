@@ -76,7 +76,7 @@ export function useConfigurationManager(
       id: Date.now(),
       name: generateUniqueName(),
       isHidden: false,
-      components
+      components: [...components]
     };
     
     configurations.value.push(newConfig);
