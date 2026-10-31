@@ -472,6 +472,7 @@ export const useGeneratorStore = defineStore('generator', () => {
 
     // Étape 7 : Relations
     relations, relationsLoaded, getRelations, setRelations, addRelation, removeRelation,
+    tablesParents, tablesChilds,
 
     // Étape 8 & 9 : Frontend
     pendingFrontendFramework, setPendingFrontendFramework, setSelectedFrontendFramework, 

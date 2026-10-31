@@ -185,18 +185,18 @@ export class GeneratorServiceVsc implements IGeneratorService {
     }
 
     // ═══ ÉTAPE 7 : RELATIONS ═══
-    fetchTablesMetadataParents(): Promise<TableMetadataDto[]> {
+    fetchTablesMetadataParents(childTableName?: string): Promise<TableMetadataDto[]> {
         return new Promise((resolve) => {
-            this.vscode.sendMessage('GET_TABLES_METADATA_PARENTS');
+            this.vscode.sendMessage('GET_TABLES_METADATA_PARENTS', { childTableName });
             const cleanup = this.vscode.onMessage<TableMetadataDto[]>('TABLES_METADATA_PARENTS_LOADED', (data) => {
                 cleanup(); resolve(data);
             });
         });
     }
 
-    fetchTablesMetadataChilds(): Promise<TableMetadataDto[]> {
+    fetchTablesMetadataChilds(parentTableName?: string): Promise<TableMetadataDto[]> {
         return new Promise((resolve) => {
-            this.vscode.sendMessage('GET_TABLES_METADATA_CHILDS');
+            this.vscode.sendMessage('GET_TABLES_METADATA_CHILDS', { parentTableName });
             const cleanup = this.vscode.onMessage<TableMetadataDto[]>('TABLES_METADATA_CHILDS_LOADED', (data) => {
                 cleanup(); resolve(data);
             });

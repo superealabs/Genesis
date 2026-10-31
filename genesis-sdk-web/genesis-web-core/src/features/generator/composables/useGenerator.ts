@@ -141,7 +141,9 @@ export function useGenerator() {
     getAvailableBuildTools,
     getAvailableHibernateDdlAutoOptions,
     isGenerating,
-    isInitializing
+    isInitializing,
+    tablesChilds,
+    tablesParents
   } = storeToRefs(store);
 
   const targetSummaryIndex = ref(0);
@@ -285,12 +287,12 @@ export function useGenerator() {
     store.setAvailableTables(await svc.fetchTablesMetadata()); 
   }
   
-  async function fetchTablesMetadataParents() { 
-    store.setTablesParents(await svc.fetchTablesMetadataParents()); 
+  async function fetchTablesMetadataParents(childTableName?: String) { 
+    store.setTablesParents(await svc.fetchTablesMetadataParents(childTableName)); 
   }
   
-  async function fetchTablesMetadataChilds() { 
-    store.setTablesChilds(await svc.fetchTablesMetadataChilds()); 
+  async function fetchTablesMetadataChilds(parentTableName?: String) { 
+    store.setTablesChilds(await svc.fetchTablesMetadataChilds(parentTableName)); 
   }
   
   // Chargement initial uniquement : ne jamais écraser les relations déjà éditées par l'utilisateur
@@ -504,6 +506,8 @@ export function useGenerator() {
     resetAllConfig,
     resetFrontendConfig,
     resetGitConfig,
-    changeFramework
+    changeFramework,
+    tablesChilds,
+    tablesParents
   };
 }

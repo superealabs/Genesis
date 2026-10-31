@@ -7,6 +7,7 @@
             :trigger-size="size"
             :trigger-disabled="disabled"
             :match-trigger-width="matchTriggerWidth"
+            :fill-width="fillWidth"
             :align="'left'"
             :force-down="true"
         >
@@ -57,6 +58,8 @@ const props = withDefaults(defineProps<{
     multiChoice?: boolean;
     choices?: string[];
     matchTriggerWidth?: boolean;
+    /** Le déclencheur prend la largeur de son conteneur (le panneau suit la largeur du déclencheur) */
+    fillWidth?: boolean;
 }>(), {
     modelValue: undefined,
     placeholder: '',
@@ -67,7 +70,8 @@ const props = withDefaults(defineProps<{
     options: () => [],
     multiChoice: false,
     choices: () => [],
-    matchTriggerWidth: true
+    matchTriggerWidth: false,
+    fillWidth: false
 });
 
 const emit = defineEmits<{

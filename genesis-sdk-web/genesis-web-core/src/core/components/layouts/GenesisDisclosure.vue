@@ -9,10 +9,10 @@
         <!-- ═══ Header / Bouton ═══ -->
         <DisclosureButton
             class="flex justify-between items-center w-full text-left text-sm font-medium text-text
-                   px-4 py-3 rounded-lg
+                   py-3 rounded-lg
                    focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50
                    transition-all duration-200"
-            :class="headerVariantClasses"
+            :class="[headerVariantClasses, horizontalPaddingClasses]"
         >
             <!-- Slot title custom ou texte par défaut -->
             <span class="flex items-center gap-2">
@@ -37,8 +37,8 @@
         >
             <!--  Padding dynamique appliqué via la classe calculée -->
             <DisclosurePanel
-                class="px-4 pb-4"
-                :class="[paddingClasses, contentClass]"
+                class="pb-4"
+                :class="[horizontalPaddingClasses, paddingClasses, contentClass]"
             >
                 <slot />
             </DisclosurePanel>
@@ -57,6 +57,8 @@ interface Props {
     variant?: 'primary' | 'secondary' | 'transparent'; //  Ajout de 'transparent'
     contentClass?: string;
     padding?: 'sm' | 'md' | 'lg'; //  Nouvelle prop pour le padding-top
+    /** Dans un formulaire : plus de padding horizontal (px) sur le bouton et le panneau, et plus de style de variante sur le bouton */
+    isInForm?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -64,10 +66,12 @@ const props = withDefaults(defineProps<Props>(), {
     variant: 'transparent', //  Valeur par défaut changée
     contentClass: '',
     padding: 'sm', //  Valeur par défaut (pt-2)
+    isInForm: false,
 });
 
-// ═══ Variant du header ═══
+// ═══ Variant du header (désactivé dans un formulaire) ═══
 const headerVariantClasses = computed(() => {
+    if (props.isInForm) return '';
     if (props.variant === 'primary') {
         return 'bg-bg-light hover:bg-secondary/50 border border-secondary';
     }
@@ -77,6 +81,9 @@ const headerVariantClasses = computed(() => {
     //  Fallback pour transparent (valeur par défaut)
     return 'bg-transparent hover:bg-secondary/30';
 });
+
+// ═══ Padding horizontal (bouton + panneau) : supprimé dans un formulaire ═══
+const horizontalPaddingClasses = computed(() => (props.isInForm ? '' : 'px-4'));
 
 // ═══ Classes de padding dynamique ═══
 const paddingClasses = computed(() => {

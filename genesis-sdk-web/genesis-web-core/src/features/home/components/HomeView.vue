@@ -25,6 +25,9 @@
 
         <GenesisButton variant="secondary" @click="emit('navigate', 'design-system')">
             Design System
+            <template #rightIcon>
+                <IconChevronDown/>
+            </template>
         </GenesisButton>
 
         <GenesisTutorialItem id="frameworks">
@@ -57,6 +60,8 @@ import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutoria
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+import IconChevronDown from '@genesis-labs/web-core/core/components/ui/icons/IconChevronDown.vue';
+
 
 // État local pour éviter les doubles clics
 

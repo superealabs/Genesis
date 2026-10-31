@@ -24,10 +24,11 @@ class LoggerService {
     /**
      * Écrit une ligne dans un canal spécifique.
      */
-    public log(channelName: string, message: string): void {
+    public log(channelName: string, message: string, show: boolean = false): void {
         const channel = this.getChannel(channelName);
-        const timestamp = new Date().toISOString().substring(11, 23); // HH:mm:ss.SSS
+        const timestamp = new Date().toISOString().substring(11, 23);
         channel.appendLine(`[${timestamp}] ${message}`);
+        if (show) channel.show(true);
     }
 
     /**

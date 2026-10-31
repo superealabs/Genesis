@@ -70,6 +70,7 @@ export interface ControlSizeTokens {
   slotPx: string;
   /** Espacement entre les éléments */
   gap: string;
+  pxAsymmetric: string;
 }
 
 export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
@@ -85,6 +86,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pr: 'pr-2.5',
     slotPx: 'px-1.5',
     gap: 'gap-1.5',
+    pxAsymmetric: 'pl-2.5 pr-2',
   },
   sm: {
     box: 'h-7',
@@ -98,6 +100,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pr: 'pr-3.5',
     slotPx: 'px-2',
     gap: 'gap-2',
+    pxAsymmetric: 'pl-3.5 pr-3',
   },
   md: {
     box: 'h-8',
@@ -111,6 +114,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pr: 'pr-4',
     slotPx: 'px-2.5',
     gap: 'gap-2',
+    pxAsymmetric: 'pl-4 pr-2.5',
   },
   lg: {
     box: 'h-10',
@@ -124,6 +128,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pr: 'pr-5',
     slotPx: 'px-2',
     gap: 'gap-2.5',
+    pxAsymmetric: 'pl-5 pr-3',
   },
   xl: {
     box: 'h-12',
@@ -137,6 +142,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pr: 'pr-6',
     slotPx: 'px-3',
     gap: 'gap-3',
+    pxAsymmetric: 'pl-6 pr-4',
   },
   '2xl': {
     box: 'h-14',
@@ -150,6 +156,7 @@ export const CONTROL_SIZES: Record<UI_Size_Unit, ControlSizeTokens> = {
     pr: 'pr-7',
     slotPx: 'px-3',
     gap: 'gap-3',
+    pxAsymmetric: 'pl-7 pr-5',
   },
 };
 

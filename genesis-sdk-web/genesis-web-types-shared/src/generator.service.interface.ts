@@ -45,8 +45,9 @@ export interface IGeneratorService {
 
 
     // ═══ ÉTAPE 7 : RELATIONS ═══
-    fetchTablesMetadataParents(): Promise<TableMetadataDto[]>;
-    fetchTablesMetadataChilds(): Promise<TableMetadataDto[]>;
+    fetchTablesMetadataParents(childTableName?: String): Promise<TableMetadataDto[]>;
+    fetchTablesMetadataChilds(parentTableName?: String): Promise<TableMetadataDto[]>;
+    
     fetchRelations(): Promise<RelationParameter[]>;
 
     // est obligatoirement une MAJ

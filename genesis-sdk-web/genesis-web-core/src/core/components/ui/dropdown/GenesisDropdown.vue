@@ -2,11 +2,13 @@
   <Menu 
     v-slot="{ open, close }" 
     as="div" 
+    :class="{ 'w-full': fillWidth }"
     :model-value="internalOpen" 
     @update:model-value="internalOpen = $event"
   >
     <div
-      class="inline-flex flex-col gap-1"
+      class="flex-col gap-1"
+      :class="fillWidth ? 'flex w-full' : 'inline-flex'"
       @mouseenter="handleMouseEnter(open)"
       @mouseleave="handleMouseLeave(open, close)"
     >
@@ -19,7 +21,7 @@
       </label>
 
       <!-- Wrapper trigger + dropdown -->
-      <div class="relative inline-block">
+      <div class="relative" :class="fillWidth ? 'block w-full' : 'inline-block'">
         <MenuButton as="template">
           
           <!-- Cas 1 : Slot trigger personnalisé -->
@@ -29,6 +31,7 @@
             :variant="triggerVariant"
             :size="triggerSize"
             :disabled="triggerDisabled"
+            :fill-width="fillWidth"
             :use-default-text="false"
             :class="triggerClass"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
@@ -53,6 +56,7 @@
             :variant="triggerVariant"
             :size="triggerSize"
             :disabled="triggerDisabled"
+            :fill-width="fillWidth"
             :use-default-text="false"
             :class="triggerClass"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
@@ -122,6 +126,8 @@ const props = withDefaults(defineProps<{
   dropdownSize?: MenuSize | '3xl';
   hideChevron?: boolean;
   matchTriggerWidth?: boolean;
+  /** Le déclencheur prend la largeur de son conteneur ; le panneau reprend alors la largeur du déclencheur (matchTriggerWidth implicite) */
+  fillWidth?: boolean;
   /** Variante du déclencheur. 'none' = aucune couleur (le style vient de `triggerClass`). */
   triggerVariant?: ButtonVariant;
   triggerSize?: UI_Size_Unit;
@@ -139,6 +145,7 @@ const props = withDefaults(defineProps<{
   dropdownSize: 'lg',
   hideChevron: false,
   matchTriggerWidth: false,
+  fillWidth: false,
   triggerVariant: 'neutral',
   triggerSize: 'lg',
   triggerDisabled: false,
@@ -159,6 +166,7 @@ const internalOpen = ref(false);
 const isPersistent = ref(false); // Verrouille le menu contre la fermeture au survol après un clic
 const triggerRef = ref<ComponentPublicInstance | HTMLElement | null>(null);
 const triggerWidth = ref<number | null>(null);
+let resizeObserver: ResizeObserver | null = null;
 let hoverTimeout: number | null = null; 
 
 // Surveille la fermeture du menu pour réinitialiser l'état de persistance
@@ -172,6 +180,9 @@ watch(internalOpen, (newValue) => {
 // ============================================================================
 // 3. COMPUTEDS & LOGIQUE DE POSITIONNEMENT
 // ============================================================================
+
+/** fillWidth implique que le panneau ait la largeur du déclencheur */
+const shouldMatchTriggerWidth = computed(() => props.matchTriggerWidth || props.fillWidth);
 
 /**
  * Couleurs (fond et bordure) du menu déduites de la variante du trigger.
@@ -219,7 +230,7 @@ const dropdownStyle = computed(() => {
   }
 
   // Gestion de la largeur identique au trigger
-  if (props.matchTriggerWidth && triggerWidth.value !== null) {
+  if (shouldMatchTriggerWidth.value && triggerWidth.value !== null) {
     style.width = `${triggerWidth.value}px`;
     style.minWidth = `${triggerWidth.value}px`;
   }
@@ -246,6 +257,16 @@ function measureTriggerWidth() {
   if (el) triggerWidth.value = el.offsetWidth;
 }
 
+/** Garde `triggerWidth` à jour quand le déclencheur est redimensionné (ex. fillWidth dans un conteneur fluide) */
+function observeTrigger() {
+  resizeObserver?.disconnect();
+  const el = getMenuButtonEl();
+  if (!el || !shouldMatchTriggerWidth.value) return;
+  resizeObserver ??= new ResizeObserver(measureTriggerWidth);
+  resizeObserver.observe(el);
+  measureTriggerWidth();
+}
+
 /**
  * Intercepte le mousedown pour empêcher Headless UI de fermer le menu 
  * si l'utilisateur clique sur le trigger alors qu'il est déjà ouvert via hover.
@@ -263,7 +284,7 @@ function handleMouseEnter(isOpen: boolean) {
   if (!props.openAtHover || props.triggerDisabled) return;
   clearHoverTimeout();
   if (!isOpen) {
-    if (props.matchTriggerWidth) measureTriggerWidth();
+    if (shouldMatchTriggerWidth.value) measureTriggerWidth();
     getMenuButtonEl()?.click(); // Simule un clic pour ouvrir via Headless UI
   }
 }
@@ -290,13 +311,13 @@ function clearHoverTimeout() {
 // ============================================================================
 // 5. LIFECYCLE
 // ============================================================================
-onMounted(() => {
-  if (props.matchTriggerWidth) {
-    nextTick(measureTriggerWidth);
-  }
-});
+onMounted(() => nextTick(observeTrigger));
+
+// Le déclencheur peut être remplacé (changement de cas) ou le mode de largeur modifié
+watch([triggerRef, shouldMatchTriggerWidth], () => nextTick(observeTrigger));
 
 onUnmounted(() => {
   clearHoverTimeout();
+  resizeObserver?.disconnect();
 });
 </script>

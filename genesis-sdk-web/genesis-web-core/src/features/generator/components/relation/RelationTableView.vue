@@ -191,7 +191,7 @@ const props = withDefaults(defineProps<{
   maxHeight?: number;
 }>(), {
   isEditable: false,
-  maxHeight: () => window.innerHeight * 0.5
+  maxHeight: () => 600
 });
 
 const emit = defineEmits<{

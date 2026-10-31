@@ -447,7 +447,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       }
     },
     
-    beforeNext: async (store) => {
+    beforeNext: async (store, { svc }) => {
       try {
         // 1. Récupérer les données sources
         const profiles = store.generationProfiles; // Type 1 : Les profils avec composants
@@ -482,8 +482,19 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
           generationParameters.push(param);
         }
         
+        const rawParams = generationParameters.map(p => ({
+            profileName: p.profileName,
+            selectedTables: [...p.selectedTables],
+            selectedViews: [...p.selectedViews],
+            selectedComponents: [...p.selectedComponents]
+        }));
+
+        await svc.saveGenerationParameters(rawParams);
+
         // 3. Stocker dans stepperData pour l'envoi au backend
         store.stepperData.generationParameters = generationParameters;
+
+
         
         console.log("[Wizard: tables] Sélection validée. Seules les entités assignées sont incluses :", generationParameters);
         return true;
@@ -495,6 +506,20 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   },
 
   relations: {
+    onEnter: async (store, { svc }) => {
+      try {
+        const tableParents = await svc.fetchTablesMetadataParents();
+        const tableChilds = await svc.fetchTablesMetadataChilds();
+        const relations = await svc.fetchRelations();
+
+        store.setTablesParents(tableParents);
+        store.setTablesChilds(tableChilds);
+        store.setRelations(relations);
+        // store
+      } catch (error) {
+        
+      }
+    },
     beforeNext: async (store) => {
       try {
         console.log("[Wizard: relations] Configuration des relations validée");

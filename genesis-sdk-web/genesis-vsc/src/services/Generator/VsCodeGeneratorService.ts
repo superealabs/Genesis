@@ -95,26 +95,86 @@ export class VsCodeGeneratorService implements IGeneratorService {
         }
     }
 
-    async fetchTablesMetadataParents(): Promise<TableMetadataDto[]> {
+    async fetchTablesMetadataParents(childTableName?: String): Promise<TableMetadataDto[]> {
+        const url = '/tables_metadata/parents';
+        const fullUrl = (getAxiosInstance().defaults.baseURL || '') + url;
+        const params = childTableName ? { childTableName } : undefined;
+
+        logger.log(LOG_CHANNEL, `📤 [fetchTablesMetadataParents] Appel GET ${fullUrl}`, true);
+
         try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata/parents');
-            return data;
+            const response = await getAxiosInstance().get<TableMetadataDto[]>(url, { params });
+
+            // 👇 Log la réponse RÉELLE (statut + data)
+            logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataParents] Statut: ${response.status}`, true);
+            logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataParents] Data reçue: ${JSON.stringify(response.data)}`, true);
+            logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataParents] Nombre d'éléments: ${response.data?.length ?? 'null/undefined'}`, true);
+
+            // 👇 Détecte les cas suspects
+            if (!response.data) {
+                logger.log(LOG_CHANNEL, `⚠️ [fetchTablesMetadataParents] response.data est null/undefined !`);
+            } else if (!Array.isArray(response.data)) {
+                logger.log(LOG_CHANNEL, `⚠️ [fetchTablesMetadataParents] response.data n'est pas un tableau ! Type: ${typeof response.data}`);
+            } else if (response.data.length === 0) {
+                logger.log(LOG_CHANNEL, `⚠️ [fetchTablesMetadataParents] response.data est un tableau VIDE !`);
+            }
+
+            return response.data;
         } catch (error) {
-            logger.log(LOG_CHANNEL, `⚠️ fetchTablesMetadataParents API échouée. Fallback mock.`);
+            // 👇 Log l'erreur COMPLÈTE
+            logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataParents] Erreur: ${(error as Error).message}`);
+
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as any;
+                logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataParents] Statut HTTP: ${axiosError.response?.status}`, true);
+                logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataParents] Data erreur: ${JSON.stringify(axiosError.response?.data)}`, true);
+                logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataParents] URL: ${axiosError.config?.url}`, true);
+                logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataParents] BaseURL: ${axiosError.config?.baseURL}`, true);
+            }
+
+            logger.log(LOG_CHANNEL, `⚠️ [fetchTablesMetadataParents] Fallback mock activé.`);
             return MOCK_PARENT_TABLES;
         }
     }
 
-    async fetchTablesMetadataChilds(): Promise<TableMetadataDto[]> {
+    async fetchTablesMetadataChilds(parentTableName?: String): Promise<TableMetadataDto[]> {
+        const baseURL = getAxiosInstance().defaults.baseURL || '(undefined)';
+        const fullUrl = `${baseURL}/tables_metadata/childs`;
+        const params = parentTableName ? { parentTableName } : undefined;
+        logger.log(LOG_CHANNEL, `📤 [fetchTablesMetadataChilds] GET ${fullUrl}`);
+        const url = '/tables_metadata/childs';
+
         try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata/childs');
-            return data;
+            const response = await getAxiosInstance().get<TableMetadataDto[]>(url, { params });
+
+            logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataChilds] Status: ${response.status}`);
+            logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataChilds] Data: ${JSON.stringify(response.data)}`);
+            logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataChilds] Length: ${response.data?.length ?? 'N/A'}`);
+
+            if (!response.data) {
+                logger.log(LOG_CHANNEL, `⚠️ [fetchTablesMetadataChilds] response.data = null/undefined`);
+            } else if (!Array.isArray(response.data)) {
+                logger.log(LOG_CHANNEL, `⚠️ [fetchTablesMetadataChilds] response.data n'est PAS un tableau (type: ${typeof response.data})`);
+            } else if (response.data.length === 0) {
+                logger.log(LOG_CHANNEL, `⚠️ [fetchTablesMetadataChilds] response.data = [] (tableau vide)`);
+            }
+
+            return response.data;
         } catch (error) {
-            logger.log(LOG_CHANNEL, `⚠️ fetchTablesMetadataChilds API échouée. Fallback mock.`);
+            logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataChilds] Erreur: ${(error as Error).message}`);
+
+            if (error && typeof error === 'object' && 'response' in error) {
+                const axiosError = error as any;
+                logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataChilds] HTTP Status: ${axiosError.response?.status}`);
+                logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataChilds] Response Data: ${JSON.stringify(axiosError.response?.data)}`);
+                logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataChilds] Config URL: ${axiosError.config?.url}`);
+                logger.log(LOG_CHANNEL, `❌ [fetchTablesMetadataChilds] Config BaseURL: ${axiosError.config?.baseURL}`);
+            }
+
+            logger.log(LOG_CHANNEL, `⚠️ [fetchTablesMetadataChilds] Fallback mock activé.`);
             return MOCK_CHILD_TABLES;
         }
     }
-
     async fetchRelations(): Promise<RelationParameter[]> {
         try {
             const { data } = await getAxiosInstance().get<RelationParameter[]>('/relations');
@@ -222,7 +282,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
             const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/generation-parameters', params);
             return data;
         } catch (error) {
-            logger.log(LOG_CHANNEL, `❌ saveGenerationParameters API échouée: ${(error as Error).message}`);
+            logger.log(LOG_CHANNEL, `❌ saveGenerationParameters API échouée: ${(error as Error).message}`, true);
             throw error;
         }
     }

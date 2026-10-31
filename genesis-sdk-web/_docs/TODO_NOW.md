@@ -9,6 +9,11 @@
 Créer les endpoints pour clear les données api
 
 
+Relation(mettre en place le système d'interdépendance entre les deux dropdowns)
+    Mettre en place le fonctionnement de l'api
+
+
+
 
 BUG :
     Quand on change de framework depuis la page de config, valeur par defaut du champs version du Framework est la première valeur du tableau de version de l'ancien framework

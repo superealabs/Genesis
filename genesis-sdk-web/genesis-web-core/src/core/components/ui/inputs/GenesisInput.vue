@@ -126,6 +126,7 @@ const sharedSelectProps = computed(() => ({
     multiChoice: props.multiChoice,
     choices: props.choices,
     matchTriggerWidth: props.matchTriggerWidth,
+    fillWidth: props.fillWidth
 }));
 
 const sharedTextareaProps = computed(() => ({

@@ -191,7 +191,7 @@
 
       <!-- 3. CONFIGURATION AVANCÉE -->
       <div class="space-y-4">
-        <GenesisDisclosure title="Configuration Avancée du Backend" :variant="'secondary'" :padding="'lg'" :default-open="false">
+        <GenesisDisclosure title="Configuration Avancée du Backend" :variant="'secondary'" :padding="'lg'" :is-in-form="true" :default-open="false">
 
           <template #title>
               <span class="text-xl font-semibold">Configuration Avancée du Backend</span>

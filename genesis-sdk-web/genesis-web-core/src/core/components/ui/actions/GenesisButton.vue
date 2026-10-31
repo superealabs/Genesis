@@ -18,19 +18,22 @@
         :disabled="disabled"
         v-bind="$attrs"
     >
-        <!-- ✅ WRAPPER UNIFIÉ pour shape='rectangle' : assure justify-between et un espacement cohérent -->
-        <!-- ✅ WRAPPER UNIFIÉ : même structure quelle que soit la position de l'icône
-             div(justify-between + gap) > span(icône gauche?) + span(texte) + span.right-part(icône droite?) -->
+        <!-- ✅ WRAPPER UNIFIÉ pour shape='rectangle' (même structure quelle que soit la position de l'icône) :
+             div.wrapper(justify-between si icône droite)
+               > div.left-part  (icône gauche + texte : toujours côte à côte)
+               > div.right-part (icône droite : collée au bord droit) -->
         <div v-if="shape === 'rectangle'" :class="wrapperClasses">
-            <span v-if="hasLeftIcon" class="flex items-center">
-                <slot name="leftIcon" />
-            </span>
-            <span v-if="hasText" class="left-part flex items-center">
-                <slot />
-            </span>
-            <span v-if="hasRightIcon" :class="['right-part flex items-center', rightIconAbsoluteClasses]">
+            <div v-if="hasLeftIcon || hasText" :class="['left-part flex items-center', groupGapClasses]">
+                <span v-if="hasLeftIcon" class="flex items-center">
+                    <slot name="leftIcon" />
+                </span>
+                <span v-if="hasText" class="flex items-center">
+                    <slot />
+                </span>
+            </div>
+            <div v-if="hasRightIcon" :class="['right-part flex items-center shrink-0', rightIconAbsoluteClasses]">
                 <slot name="rightIcon" />
-            </span>
+            </div>
         </div>
 
         <!-- Fallback pour les boutons carrés (shape === 'square') -->
@@ -66,8 +69,6 @@ interface Props {
     size?: UI_Size_Unit;
     fillWidth?: boolean;
     contentAlign?: 'left' | 'center' | 'right';
-    /** Écarte l'icône de gauche, le texte et l'icône de droite (justify-between). Sans effet si contentAlign != 'left' */
-    justifyBetween?: boolean;
     useDefaultText?: boolean;
     useDefaultHover?: boolean;
 }
@@ -79,7 +80,6 @@ const props = withDefaults(defineProps<Props>(), {
     size: 'md',
     fillWidth: false,
     contentAlign: 'left',
-    justifyBetween: false,
     useDefaultText: true,
     useDefaultHover: true
 });
@@ -120,10 +120,17 @@ const sizeClasses = computed(() => {
 });
 
 // ═══ Paddings : horizontal uniquement (la hauteur est imposée, pas de py) ═══
+// Source de vérité : le padding d'un bouton texte sans icône (tokens.px), avec ou sans icône à gauche.
 const paddingClasses = computed(() => {
     if (props.shape === 'square') return '';
-    // Même padding pour une icône à gauche ou à droite (rightIcon = référence)
-    return hasIcon.value ? tokens.value.pxWithRight : tokens.value.px;
+
+    // Bouton rectangle réduit à une icône (sans texte) : padding serré et symétrique
+    if (hasIcon.value && !hasText.value) return tokens.value.pxWithRight;
+
+    // Icône à droite : padding droit < padding gauche. Pas en mode centré : l'icône y est
+    // positionnée en absolu et un padding asymétrique décalerait le texte hors du centre.
+    const asymmetric = hasRightIcon.value && props.contentAlign !== 'center';
+    return asymmetric ? tokens.value.pxAsymmetric : tokens.value.px;
 });
 
 // ═══ Gaps ═══
@@ -133,6 +140,9 @@ const wrapperGapClasses = computed(() => {
     return (hasIcon.value || !hasText.value) ? tokens.value.gap : '';
 });
 
+// Écart entre l'icône de gauche et le texte (à l'intérieur du groupe gauche)
+const groupGapClasses = computed(() => tokens.value.gap);
+
 const wrapperClasses = computed(() => {
     const isIconOnly = !hasText.value;
     const base = isIconOnly ? 'flex items-center' : 'w-full flex items-center';
@@ -141,8 +151,8 @@ const wrapperClasses = computed(() => {
     if (props.contentAlign === 'center') return `${base} justify-center relative`;
     if (props.contentAlign === 'right')  return `${base} justify-end ${wrapperGapClasses.value}`;
 
-    // contentAlign === 'left' : écarté si justifyBetween, sinon regroupé à gauche
-    const justify = props.justifyBetween ? 'justify-between' : 'justify-start';
+    // contentAlign === 'left' : icône droite collée au bord droit, sinon tout regroupé à gauche
+    const justify = hasRightIcon.value ? 'justify-between' : 'justify-start';
     return `${base} ${justify} ${wrapperGapClasses.value}`;
 });
 

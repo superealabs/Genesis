@@ -71,13 +71,13 @@ export class GeneratorHandler {
         panel.webview.postMessage({ type: 'TABLES_METADATA_LOADED', payload: data });
     }
 
-    async handleGetTablesMetadataParents(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchTablesMetadataParents();
+    async handleGetTablesMetadataParents(payload: { childTableName?: string }, panel: vscode.WebviewPanel): Promise<void> {
+        const data = await this.service.fetchTablesMetadataParents(payload?.childTableName);
         panel.webview.postMessage({ type: 'TABLES_METADATA_PARENTS_LOADED', payload: data });
     }
 
-    async handleGetTablesMetadataChilds(_payload: any, panel: vscode.WebviewPanel): Promise<void> {
-        const data = await this.service.fetchTablesMetadataChilds();
+    async handleGetTablesMetadataChilds(payload: { parentTableName?: string }, panel: vscode.WebviewPanel): Promise<void> {
+        const data = await this.service.fetchTablesMetadataChilds(payload?.parentTableName);
         panel.webview.postMessage({ type: 'TABLES_METADATA_CHILDS_LOADED', payload: data });
     }
 
