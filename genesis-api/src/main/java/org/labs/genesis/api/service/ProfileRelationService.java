@@ -10,6 +10,7 @@ import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
 import org.springframework.stereotype.Service;
 
+import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.sql.Connection;
@@ -234,5 +235,143 @@ public class ProfileRelationService {
         return new RelationParametersResponse(true, "Relations du profil " + profileName + " réinitialisées avec succès");
     }
 
+    public synchronized RelationParametersResponse saveConsolidatedRelations(RelationParametersRequest request) {
+        if (request == null || request.relations() == null) {
+            throw new RelationException("La liste des relations est obligatoire");
+        }
+
+        ProjectGenerationContext source = contextStore.getContext();
+        List<GenerationParameterRequest> profiles = profilesStore.getProfiles(source);
+
+        if (profiles.isEmpty()) {
+            throw new RelationException("Aucun profil de génération enregistré");
+        }
+
+        if (source.getDatabase() == null || source.getCredentials() == null) {
+            throw new RelationException("Configuration de la base de données manquante");
+        }
+
+        // Préparer les nouvelles relations sans modifier les profils.
+        Map<String, List<RelationParameter>> prepared = new LinkedHashMap<>();
+        Map<String, Set<String>> tablesByProfile = new LinkedHashMap<>();
+
+        // Permet de conserver l'appartenance actuelle des relations.
+        Map<RelationKey, Set<String>> currentOwners = new HashMap<>();
+
+        for (GenerationParameterRequest profile : profiles) {
+            prepared.put(profile.profileName(), new ArrayList<>());
+
+            Set<String> tables = new HashSet<>();
+            for (String table : profile.selectedTables()) {
+                tables.add(normalizeRelationKey(table));
+            }
+            tablesByProfile.put(profile.profileName(), tables);
+        }
+
+        Set<RelationKey> unique = new HashSet<>();
+
+        try (Connection connection = source.getDatabase().getConnection(source.getCredentials())) {
+            // Récupérer les relations actuelles de chaque profil.
+            for (GenerationParameterRequest profile : profiles) {
+                ProjectGenerationContext profileContext = buildContext(profile.profileName(), connection);
+
+                List<RelationParameter> relations = profileContext.getRelationParameters();
+
+                if (relations == null) {
+                    continue;
+                }
+
+                for (RelationParameter relation : relations) {
+                    RelationKey key = new RelationKey(
+                            normalizeRelationKey(relation.getParentTable()),
+                            normalizeRelationKey(relation.getChildTable())
+                    );
+
+                    currentOwners
+                            .computeIfAbsent(key, ignored -> new HashSet<>())
+                            .add(profile.profileName());
+                }
+            }
+
+            // Répartir les relations envoyées entre les profils.
+            for (RelationUpdateRequest relation : request.relations()) {
+                if (relation == null) {
+                    throw new RelationException("Une relation de la liste est null");
+                }
+
+                String parent = normalizeRelationKey(relation.parentTable());
+                String child = normalizeRelationKey(relation.childTable());
+
+                if (parent.equals(child)) {
+                    throw new RelationException("Une relation ne peut pas relier une table à elle-même");
+                }
+
+                RelationKey key = new RelationKey(parent, child);
+
+                if (!unique.add(key)) {
+                    throw new RelationException("Relation dupliquée : " + parent + " -> " + child);
+                }
+
+                List<GenerationParameterRequest> compatibleProfiles =
+                        profiles.stream()
+                                .filter(profile -> {
+                                    Set<String> tables = tablesByProfile.get(profile.profileName());
+                                    return tables.contains(parent) && tables.contains(child);
+                                })
+                                .toList();
+
+                if (compatibleProfiles.isEmpty()) {
+                    throw new RelationException("Aucun profil ne contient les deux tables : " + parent + " -> " + child);
+                }
+                
+                GenerationParameterRequest first = compatibleProfiles.get(0);
+                String actualParent = first.selectedTables().stream()
+                        .filter(name -> normalizeRelationKey(name).equals(parent))
+                        .findFirst()
+                        .orElseThrow();
+
+                String actualChild = first.selectedTables().stream()
+                        .filter(name -> normalizeRelationKey(name).equals(child))
+                        .findFirst()
+                        .orElseThrow();
+
+                foreignKeyValidator.validate(connection, actualParent, actualChild);
+
+                Set<String> previousOwners = currentOwners.get(key);
+
+                for (GenerationParameterRequest profile : compatibleProfiles) {
+
+                    // Une relation déjà existante conserve ses profils d'origine.
+                    // Une nouvelle relation est ajoutée à tous les profils contenant les 2 tables
+                    if (previousOwners != null && !previousOwners.contains(profile.profileName())) {
+                        continue;
+                    }
+
+                    prepared.get(profile.profileName()).add(new RelationParameter(actualParent, actualChild, relation.mandatory(), relation.hasForm()));
+                }
+            }
+
+        } catch (SQLException | ClassNotFoundException exception) {
+            throw new RelationException("Impossible de valider les relations : " + exception.getMessage());
+        }
+
+        // Toutes les validations sont terminées.
+        // Une liste vide reste une sélection manuelle explicitement vide.
+        for (var entry : prepared.entrySet()) {
+            manualRelations.put(entry.getKey(), List.copyOf(entry.getValue()));
+        }
+
+        return new RelationParametersResponse(true, request.relations().size() + " relation(s) consolidée(s) enregistrée(s)");
+    }
+
+    private String normalizeRelationKey(String value) {
+        if (value == null || value.isBlank()) {
+            throw new RelationException("Nom de table obligatoire");
+        }
+        return value.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private record RelationKey(String parent, String child) {
+    }
 
 }

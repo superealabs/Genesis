@@ -7,9 +7,9 @@ import org.labs.genesis.api.dto.RelationDtos.RelationUpdateRequest;
 import org.labs.genesis.api.dto.RelationDtos.RelationUpdateResponse;
 import org.labs.genesis.api.dto.RelationDtos.RelationParametersRequest;
 import org.labs.genesis.api.dto.RelationDtos.RelationParametersResponse;
+import org.labs.genesis.api.dto.MetadataDtos.GenerationParameterRequest;
 import org.labs.genesis.api.exception.RelationException;
 import org.labs.genesis.api.mapper.RelationMapper;
-import org.labs.genesis.api.mapper.TableMetadataMapper;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
@@ -28,15 +28,17 @@ public class RelationService {
     private final GenerationProfilesStore generationProfilesStore;
     private final ConsolidatedGenerationContextService consolidatedService;
     private final MetadataService metadataService;
+    private final ProfileRelationService profileRelationService;
 
     private final GenerationContextStore generationContextStore;
 
-    public RelationService(GenerationContextStore generationContextStore, ForeignKeyRelationValidator foreignKeyValidator, GenerationProfilesStore generationProfilesStore, ConsolidatedGenerationContextService consolidatedService, MetadataService metadataService) {
+    public RelationService(GenerationContextStore generationContextStore, ForeignKeyRelationValidator foreignKeyValidator, GenerationProfilesStore generationProfilesStore, ConsolidatedGenerationContextService consolidatedService, MetadataService metadataService, ProfileRelationService profileRelationService) {
         this.generationContextStore = generationContextStore;
         this.foreignKeyValidator = foreignKeyValidator;
         this.generationProfilesStore = generationProfilesStore;
         this.consolidatedService = consolidatedService;
         this.metadataService = metadataService;
+        this.profileRelationService = profileRelationService;
     }
 
     public List<TableMetadataResponse> getParents() {
@@ -138,18 +140,9 @@ public class RelationService {
         return context;
     }
 
-
     public RelationParametersResponse saveRelationParameters(RelationParametersRequest request) {
-        if (request == null || request.relations() == null) {
-            throw new RelationException("La liste des relations est obligatoire");
-        }
-        RelationUpdateResponse result = updateRelations(request.relations());
-        if (!result.success()) {
-            throw new RelationException("Impossible d'enregistrer les relations");
-        }
-        return new RelationParametersResponse(true, result.relations().size() + " relation(s) enregistrée(s) avec succès");
+        return profileRelationService.saveConsolidatedRelations(request);
     }
-
 
     public RelationUpdateResponse updateRelations(List<RelationUpdateRequest> requests) {
         ProjectGenerationContext context = requireSelectedTables();
