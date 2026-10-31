@@ -223,7 +223,7 @@ public class ProjectGenerationContext {
                     TableMetadata parentTable = findTableByName(refTableName, this.entityTables);
                     if (parentTable != null && !parentTable.equals(childTable)) {
                         boolean isMandatory = !col.isNullable();
-                        boolean hasForm = true;
+                        boolean hasForm = false;
                         RelationParameter autoRelation = new RelationParameter(
                                 parentTable.getTableName(),
                                 childTable.getTableName(),
