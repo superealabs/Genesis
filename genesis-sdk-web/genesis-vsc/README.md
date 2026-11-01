@@ -20,3 +20,5 @@ Cette extension contribue aux paramètres suivants :
 ### 0.0.1
 - Version initiale de pré-production.
 - Mise en place du wizard de configuration et de l'interface de base.
+
+vsce package --no-dependencies
