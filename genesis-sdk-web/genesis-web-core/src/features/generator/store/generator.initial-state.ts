@@ -5,7 +5,7 @@ export const INITIAL_STATE: GeneratorData = {
     framework: null,
     config: {
         projectName: 'test',
-        projectLocation: 'T:/_STAGE-OFFICIAL/Dev_part/workspace',
+        projectLocation: 'T:/_STAGE-OFFICIAL/Dev_part/workspace/_generated',
         languageVersion: '',
         buildTool: '',
         groupId: 'com.example',
@@ -42,7 +42,7 @@ export const INITIAL_STATE: GeneratorData = {
     frontend: null,
     frontendLayout: {
         selectedInterfaceLanguages: [],
-        navbarType: '',
+        navbarType: 'side',
         primaryColor: '#3B82F6',
         secondaryColor: '#64748B',
         logoPath: '',

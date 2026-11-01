@@ -329,10 +329,11 @@ export class GeneratorServiceVsc implements IGeneratorService {
     }
 
     // ═══ ÉTAPE 11 : GÉNÉRATION FINALE ═══
-    launchGeneration(data: GeneratorData): Promise<GenerationResult> {
+    // ═══ ÉTAPE 11 : GÉNÉRATION FINALE ═══
+    launchGeneration(): Promise<GenerationResult> {
         return new Promise((resolve, reject) => {
-            this.vscode.sendMessage('LAUNCH_GENERATION', data);
-            
+            this.vscode.sendMessage('LAUNCH_GENERATION');
+
             const cleanup = this.vscode.onMessage<GenerationResult>('GENERATION_RESULT', (result) => {
                 cleanup(); resolve(result);
             });

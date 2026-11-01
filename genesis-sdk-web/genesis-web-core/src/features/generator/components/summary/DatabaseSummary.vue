@@ -96,6 +96,8 @@ interface FeatureField { label: string; value: string }
 interface FeatureGroup { id: string; gridClass: string; valueClass: string; fields: FeatureField[] }
 
 // Une seule source de vérité pour le rendu, alignée sur DatabaseConfigView.vue
+
+// à corriger
 const featureGroups = computed<FeatureGroup[]>(() => {
   const db = database.value;
   const isOracle = db.engine === 'oracle';

@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { spawn, ChildProcess } from 'child_process';
 import { createAxiosInstance } from './http/genesisAxiosInstance';
+import * as fs from 'fs';
+
 
 export class GenesisApiService {
     private process: ChildProcess | null = null;
@@ -15,29 +17,34 @@ export class GenesisApiService {
             this.port = await this.findFreePort();
             const jarPath = path.join(context.extensionPath, 'bin', 'genesis-api-1.0.0.jar');
 
+            // 👇 Redirige stdout + stderr vers un fichier
+            const logDir = context.globalStorageUri.fsPath;
+            fs.mkdirSync(logDir, { recursive: true });
+            const logPath = path.join(logDir, 'genesis-api.log');
+            const logFd = fs.openSync(logPath, 'a');
+
             this.process = spawn('java', [
                 '-jar', jarPath,
                 `--server.port=${this.port}`,
-                '--server.address=127.0.0.1'
-            ]);
-
-            this.process.stderr?.on('data', (data) => {
-                console.error('[Genesis API STDERR]', data.toString());
+                `--server.address=127.0.0.1`,
+                `--logging.file.name=${logPath}`   // 👈 Spring Boot écrit dans le même fichier
+            ], {
+                stdio: ['ignore', logFd, logFd],   // 👈 stdin fermé, stdout/stderr → fichier
+                windowsHide: true
             });
 
+            // ⚠️ Fermer le fd côté Node quand le process termine (le fd est déjà utilisé par le process)
             this.process.on('exit', (code) => {
                 console.log(`[Genesis API] Processus terminé (code ${code})`);
+                try { fs.closeSync(logFd); } catch { /* already closed */ }
                 this.process = null;
                 this.port = null;
                 this.ready = false;
             });
 
             await this.waitForApi();
-            
-            // ✅ Initialisation d'Axios pour les futures features (ex: Frameworks)
             createAxiosInstance(this.port!);
             this.ready = true;
-
         } catch (err) {
             this.startupError = err instanceof Error ? err.message : 'Erreur inconnue';
             throw err;

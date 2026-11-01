@@ -395,7 +395,7 @@ const availableFrameworksOptions = computed(() => frameworkStore.frameworks.map(
 const config = computed(() => stepperData.value.config);
 const framework = computed(() => pendingFramework.value || stepperData.value.framework);
 const showGroupId = computed(() => framework.value?.withGroupId === true);
-const showHibernateDdl = computed(() => framework.value?.withHibernateDdlAuto === true);
+// const showHibernateDdl = computed(() => framework.value?.withHibernateDdlAuto === true);
 
 function startEditingFramework() { tempFrameworkName.value = ''; isEditingFramework.value = true; }
 function cancelEditingFramework() { isEditingFramework.value = false; tempFrameworkName.value = ''; }
@@ -592,7 +592,7 @@ const hideSecurityType = computed(() => shouldHideSelect(securityTypeOptions.val
 const hideCacheProvider = computed(() => shouldHideSelect(cacheProviderOptions.value));
 // Hibernate : double condition (flag framework ET pas dans le cas "1 seul NONE")
 const hideHibernateDdlAuto = computed(() =>
-  !showHibernateDdl.value || shouldHideSelect(hibernateDdlAutoOptions.value)
+  /*!showHibernateDdl.value ||*/ shouldHideSelect(hibernateDdlAutoOptions.value)
 );
 
 // ── Synchronisation vers le store (défaut appliqué une fois) ─────────────

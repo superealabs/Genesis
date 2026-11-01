@@ -237,19 +237,15 @@ export class GeneratorHandler {
         }
     }
 
-// src/services/Generator/GeneratorHandler.ts
+    // src/services/Generator/GeneratorHandler.ts
 
-    async handleLaunchGeneration(payload: GeneratorData, panel: vscode.WebviewPanel): Promise<void> {
+    async handleLaunchGeneration(panel: vscode.WebviewPanel): Promise<void> {
         try {
-            logger.log(LOG_CHANNEL, `🚀 [launchGeneration] Lancement de la génération pour: ${payload.config.projectName}`);
-            
-            // 1. Appel au service pour la génération réelle
-            const result = await this.service.launchGeneration(payload);
-            
-            // 2. ✅ CORRECTION : Notifier la webview IMMÉDIATEMENT que la génération est finie.
-            // Cela permet au frontend de résoudre sa Promise et d'arrêter l'écran de chargement.
+            logger.log(LOG_CHANNEL, `🚀 [launchGeneration] Lancement de la génération`);
+
+            const result = await this.service.launchGeneration();
+
             panel.webview.postMessage({ type: 'GENERATION_RESULT', payload: result });
-                        
         } catch (error) {
             this.sendApiError(panel, 'LAUNCH_GENERATION', error);
         }

@@ -172,8 +172,8 @@ export class WebviewMessageRouter {
                 case 'SAVE_GIT_CONFIGURATION': // NOUVEAU
                     await this.generatorHandler.handleSaveGitConfiguration(message.payload, this.panel);
                     break;
-                case 'LAUNCH_GENERATION': // NOUVEAU
-                    await this.generatorHandler.handleLaunchGeneration(message.payload, this.panel);
+                case 'LAUNCH_GENERATION':
+                    await this.generatorHandler.handleLaunchGeneration(this.panel);  // ← plus de message.payload
                     break;
 
                 // ═══ UTILITAIRES UI ═══

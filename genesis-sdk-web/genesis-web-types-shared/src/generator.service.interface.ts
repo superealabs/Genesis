@@ -101,7 +101,7 @@ export interface IGeneratorService {
     /**
      * Déclenche la génération complète du projet en envoyant l'état global.
      */
-    launchGeneration(data: GeneratorData): Promise<GenerationResult>;
+    launchGeneration(data?: GeneratorData): Promise<GenerationResult>;
 
 
 

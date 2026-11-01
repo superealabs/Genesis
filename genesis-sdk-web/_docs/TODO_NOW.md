@@ -1,9 +1,15 @@
+BUG MAJEURE :
+    même donnée
+    différent port(l'autre le port de l'extension host où le jar est exposé, l'autre le port de l'application en bootrun)
+    celui avec le port de l'extension host est bloquée à la génération
+
+
+
 URGENCE :
     onEnter ne se déclenche pas si on change d'étape depuis le stepper display (l'indicateur d'étape)
 
+    un bug dans la génération (les données envoyées créent un état bloquant)
 
-
-La sauvegarde de configuration ne marche pas avec le LanguageInterface
 
 
 

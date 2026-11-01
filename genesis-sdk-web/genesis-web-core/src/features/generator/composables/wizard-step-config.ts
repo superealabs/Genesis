@@ -607,6 +607,8 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
           return false;
         }
 
+        console.log("BEFORE_NEXT FRONTEND SAVED : ", toRaw(frontend));
+
         // 1. Config frontend (frameworkId + languageId + port)
         await svc.saveFrontendConfig(
           frontend.id,
@@ -850,87 +852,78 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   // genesis-sdk-web/genesis-web-core/src/features/generator/composables/wizard-step-config.ts
   summary: {
     onEnter: (store) => {
-      console.log("[Wizard: summary] Affichage du résumé final de la configuration.");
-      // On s'assure que l'état est réinitialisé si on revient en arrière (cas rare mais possible)
-      store.setIsGenerationComplete(false); 
+      store.setIsGenerationComplete(false);
     },
     
     beforeNext: async (store, { recentSvc, svc }) => {
       try {
         console.log("[Wizard: summary] Résumé validé. Prêt pour la génération finale.");
         store.setIsGenerating(true);
-        
-        const startTime = Date.now();
-        
-        try {
-          const data = toRaw(store.stepperData);
-          await svc.launchGeneration(data);
-          await svc.resetAll(); 
 
-          // 1. Sauvegarder le Framework Backend
+        const startTime = Date.now();
+        const data = toRaw(store.stepperData);
+
+        // 1. Génération (bloquant — si throw, on sort)
+        await svc.launchGeneration();
+
+        // 2. Reset backend (bloquant aussi ? ou optionnel ?)
+        await svc.resetAll();
+
+        // 3. Récence (non bloquant)
+        try {
           if (data.framework) {
             await recentSvc.addRecentItem('frameworks', {
               id: data.framework.id,
               name: data.framework.name,
               lastUsed: Date.now()
             } as RecentItem);
-            console.log(`[Recency] Framework ajouté aux récents: ${data.framework.name}`);
           }
-
-          // 2. Sauvegarder le Moteur de Base de Données
           if (data.database?.engine) {
             const databaseStore = useDatabaseStore();
-            
-            // 1. Retrouver l'objet moteur complet grâce à son nom (string)
             const matchedEngine = databaseStore.availableEngines.find(eng => {
-              const normalizedName = eng.name.toLowerCase().replace(/\s+/g, '');
-              const normalizedConfig = data.database!.engine.toLowerCase().replace(/\s+/g, '');
-              return normalizedName === normalizedConfig;
+              const n = eng.name.toLowerCase().replace(/\s+/g, '');
+              const c = data.database!.engine.toLowerCase().replace(/\s+/g, '');
+              return n === c;
             });
-            
-            // 2. Sauvegarder en utilisant le VRAI ID numérique du moteur
             if (matchedEngine) {
               await recentSvc.addRecentItem('databases', {
-                id: matchedEngine.id,  // ✅ Maintenant c'est un number, comme e.id
+                id: matchedEngine.id,
                 name: matchedEngine.name,
                 lastUsed: Date.now()
               } as RecentItem);
-              console.log(`[Recency] Database ajouté aux récents: ${matchedEngine.name} (ID: ${matchedEngine.id})`);
             }
           }
-
-          // 3. Sauvegarder le Framework Frontend (si sélectionné)
           if (data.frontend) {
             await recentSvc.addRecentItem('frontends', {
               id: data.frontend.id,
               name: data.frontend.name,
               lastUsed: Date.now()
             } as RecentItem);
-            console.log(`[Recency] Frontend ajouté aux récents: ${data.frontend.name}`);
           }
-
-        } catch (error) {
-          console.error("[Wizard: summary] Échec de la mise à jour de la récence:", error);
-        } finally {
-          const elapsedTime = Date.now() - startTime;
-          const minDuration = 3000;
-          const remainingTime = Math.max(0, minDuration - elapsedTime);
-
-          if (remainingTime > 0) {
-            await new Promise(resolve => setTimeout(resolve, remainingTime));
-          }
-          
-          store.setIsGenerating(false);
-          
-          // ✅ NOUVEAU : Si on arrive ici sans erreur critique, on considère la génération comme réussie
-          // (Tu pourras affiner cela plus tard en vérifiant la réponse de launchGeneration)
-          store.setIsGenerationComplete(true);
+        } catch (recentError) {
+          console.warn("[Wizard: summary] Échec récence (non bloquant):", recentError);
         }
 
-        return true;
-      } catch (error) {
+        // 4. Attente minimum (UX)
+        const elapsedTime = Date.now() - startTime;
+        const remainingTime = Math.max(0, 3000 - elapsedTime);
+        if (remainingTime > 0) {
+          await new Promise(resolve => setTimeout(resolve, remainingTime));
+        }
+
+        // 5. SUCCÈS uniquement si tout s'est bien passé
         store.setIsGenerating(false);
-        store.setWizardError(error instanceof Error ? error.message : "Échec de la validation du résumé.");
+        store.setIsGenerationComplete(true);
+        return true;
+
+      } catch (error) {
+        // ❌ ÉCHEC : on reset le flag, on propage l'erreur
+        console.error("[Wizard: summary] Échec de la génération:", error);
+        store.setIsGenerating(false);
+        store.setIsGenerationComplete(false);   // 👈 forcer false
+        store.setWizardError(
+          error instanceof Error ? error.message : "Échec de la génération."
+        );
         return false;
       }
     }
