@@ -97,6 +97,14 @@ export interface IGeneratorService {
     // ═══ ÉTAPE 10 : GIT ═══
     saveGitConfiguration(config: GitConfiguration): Promise<{ success: boolean; message: string }>;
 
+    /**
+     * Initialise le dépôt Git côté backend (commit + push si remote configuré).
+     * POST /api/generator/git/init
+     * ⚠️ Non bloquant : si l'utilisateur n'a pas de réseau, l'erreur doit être
+     * tolérée côté appelant (la génération a déjà réussi).
+     */
+    initGitRepository(): Promise<{ success: boolean; message: string }>;
+
     // ═══ ÉTAPE 11 : GÉNÉRATION FINALE ═══
     /**
      * Déclenche la génération complète du projet en envoyant l'état global.

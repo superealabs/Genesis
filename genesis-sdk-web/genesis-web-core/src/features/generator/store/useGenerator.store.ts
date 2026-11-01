@@ -36,6 +36,8 @@ export const useGeneratorStore = defineStore('generator', () => {
   const isGenerationComplete = ref(false);
   const wizardError = ref<string | null>(null);
   const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
+  // Domaine : Étapes explicitement skippées par l'utilisateur (pour l'affichage résumé)
+  const skippedSteps = ref<StepId[]>([]);
 
   // Domaine : Sélections en attente (Brouillons avant validation)
   const pendingFramework = ref<Framework | null>(null);
@@ -123,6 +125,7 @@ export const useGeneratorStore = defineStore('generator', () => {
     lastCommittedDatabaseConfig.value = null;  // 👈 reset
     frontendAssetContents.value = {};
     clearFrameworkOptions();
+    skippedSteps.value = [];
   }
 
   /**
@@ -217,6 +220,24 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setAvailableFrameworkVersions(data: string[]) { availableFrameworkVersions.value = data; }
   function setAvailableBuildTools(data: string[]) { availableBuildTools.value = data; }
   function setAvailableHibernateDdlAutoOptions(data: string[]) { availableHibernateDdlAutoOptions.value = data; }
+
+  /** Marque une étape comme skippée par l'utilisateur. */
+  function markStepAsSkipped(step: StepId) {
+    if (!skippedSteps.value.includes(step)) {
+      skippedSteps.value.push(step);
+    }
+  }
+
+  /** Retire une étape de la liste des skippées (ex: l'utilisateur revient et configure). */
+  function unmarkStepAsSkipped(step: StepId) {
+    const idx = skippedSteps.value.indexOf(step);
+    if (idx !== -1) skippedSteps.value.splice(idx, 1);
+  }
+
+  /** Réinitialise la liste des étapes skippées. */
+  function clearSkippedSteps() {
+    skippedSteps.value = [];
+  }
 
   /**
    * Vide les listes d'options qui dépendent du framework (étape 2).
@@ -577,5 +598,9 @@ export const useGeneratorStore = defineStore('generator', () => {
     lastInvalidation,
     resetFrameworkRelatedProjectConfig,
     frontendAssetContents, setFrontendAssetContent, clearFrontendAssetContent,
+    skippedSteps,
+    markStepAsSkipped,
+    unmarkStepAsSkipped,
+    clearSkippedSteps,
   };
 });

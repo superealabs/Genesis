@@ -237,6 +237,14 @@ export class GeneratorHandler {
         }
     }
 
+    async handleInitGitRepository(panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.initGitRepository();
+            panel.webview.postMessage({ type: 'GIT_REPOSITORY_INITIALIZED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'INIT_GIT_REPOSITORY', error);
+        }
+    }
     // src/services/Generator/GeneratorHandler.ts
 
     async handleLaunchGeneration(panel: vscode.WebviewPanel): Promise<void> {

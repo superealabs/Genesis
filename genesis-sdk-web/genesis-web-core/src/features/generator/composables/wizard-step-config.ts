@@ -4,7 +4,7 @@
 import type { IGeneratorService } from '../types/generator.service.interface';
 import type { IFrontendService } from '../../frontend/types/frontend.service.interface';
 import type { IDatabaseService } from '../../database/types/database.service.interface';
-import type { IFrameworkService, GenerationParameter, ComponentType, IRepositoryService } from '@genesis-labs/shared-types';
+import type { IFrameworkService, GenerationParameter, ComponentType, IRepositoryService, ProjectConfig } from '@genesis-labs/shared-types';
 
 // Stores
 import { useGeneratorStore } from '../store/useGenerator.store';
@@ -20,6 +20,7 @@ import { useGenesisWarning } from '@genesis-labs/web-core/core/composables/ux/fe
 
 import { toRaw } from 'vue';
 import { Framework } from '@genesis-labs/shared-types';
+import { buildProjectConfigPayload } from '../utils/projectConfigHelpers';
 
 
 // ============================================================================
@@ -286,12 +287,23 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
-      const configObject = toRaw(config);
+      const payload = buildProjectConfigPayload(
+        toRaw(config),
+        {
+          languageVersionOptions: store.getAvailableLanguageVersions.map(v => ({ label: v, value: v })),
+          buildToolOptions:       store.getAvailableBuildTools.map(v => ({ label: v, value: v })),
+          frameworkVersionOptions: store.getAvailableFrameworkVersions.map(v => ({ label: v, value: v })),
+          loggingLevelOptions:    store.getAvailableLoggingLevels.map(v => ({ label: v, value: v })),
+          securityTypeOptions:    store.getAvailableSecurityTypes.map(v => ({ label: v, value: v })),
+          cacheProviderOptions:   store.getAvailableCacheProviders.map(v => ({ label: v, value: v })),
+          hibernateDdlAutoOptions: store.getAvailableHibernateDdlAutoOptions.map(v => ({ label: v, value: v })),
+        }
+      ) as unknown as ProjectConfig;   // cast si nécessaire
 
       try {
 
-        console.log("PROJECT CONFIG IN API : ", configObject)
-        await svc.saveProjectConfig(configObject);
+        console.log("PROJECT CONFIG IN API : ", payload)
+        await svc.saveProjectConfig(payload);
         console.log("[Wizard: project_config] Configuration du projet validée");
         return true;
       } catch (error) {
@@ -582,11 +594,18 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         console.log(`[Wizard: frontend_layout] Framework Frontend validé et commit :`, store.pendingFrontendFramework.name);
       }
 
+      store.unmarkStepAsSkipped('frontend_select');
+      store.unmarkStepAsSkipped('frontend_config');
+
       console.log(`[Wizard: frontend_select] Framework Frontend en attente de validation :`, store.pendingFrontendFramework.name);
       return true;
     },
 
     onSkip: async (store) => {
+      store.markStepAsSkipped('frontend_select');
+      store.markStepAsSkipped('frontend_config');
+
+
       const invalidated: StepId[] = ['frontend_select', 'frontend_config'];
       store.resetFrontendDependentConfig();
       store.invalidateSteps(invalidated);
@@ -731,6 +750,9 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         return false;
       }
 
+      store.unmarkStepAsSkipped('repository_select');
+      store.unmarkStepAsSkipped('repository_config');
+
       store.updateRepositoryConfig('provider', store.pendingRepositoryProvider.id);
       
       console.log(`[Wizard: repository_select] Fournisseur sélectionné et persisté :`, store.pendingRepositoryProvider.name);
@@ -740,6 +762,12 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     onSkip: async (store, { svc }) => {
       // 1. Reset local
       store.skipGitConfig();
+
+      store.markStepAsSkipped('repository_select');
+      store.markStepAsSkipped('repository_config');
+
+      const currentGitConfig = store.stepperData.git;
+      console.log("ON SKIP GIT CONFIGURATION : ", toRaw(currentGitConfig));
       
       // 2. Reset backend (non bloquant)
       try {
@@ -865,6 +893,34 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
         // 1. Génération (bloquant — si throw, on sort)
         await svc.launchGeneration();
+
+        // // 2. Init Git (NON BLOQUANT + avertissement UI si échec)
+        
+        // if (data.git?.useGit && data.git?.UseRemote) {
+        //   try {
+        //     const gitResult = await svc.initGitRepository();
+        //     console.log("[Wizard: summary] Dépôt Git initialisé :", gitResult);
+        //   } catch (gitError) {
+        //     // 👇 Avertissement UI non bloquant
+        //     const gitMessage = gitError instanceof Error ? gitError.message : 'Erreur inconnue';
+        //     console.warn("[Wizard: summary] Échec init Git (non bloquant):", gitError);
+            
+        //     useGenesisWarning().confirm({
+        //       title: 'Dépôt Git non initialisé',
+        //       message: "Le projet a bien été généré, mais l'initialisation du dépôt Git a échoué.",
+        //       details: [
+        //         gitMessage,
+        //         "Vérifiez votre connexion et la configuration Git (token, remote).",
+        //         "Vous pourrez réinitialiser le dépôt manuellement plus tard."
+        //       ],
+        //       confirmLabel: 'Compris',
+        //       variant: 'danger'  // ou 'warning' si dispo
+        //     });
+        //   }
+        // } else {
+        //   console.log("[Wizard: summary] Git désactivé, pas d'init.");
+        // }
+
 
         // 2. Reset backend (bloquant aussi ? ou optionnel ?)
         await svc.resetAll();

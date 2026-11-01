@@ -8,14 +8,29 @@
 
         <!-- 1. Framework frontend (H1) -->
         <header class="flex flex-col gap-2">
-          <span class="text-xs font-semibold uppercase tracking-widest text-muted">Frontend</span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold uppercase tracking-widest text-muted">Frontend</span>
+            <span 
+              v-if="isFrontendSkipped" 
+              class="px-2 py-0.5 text-[10px] font-semibold uppercase rounded bg-secondary/20 text-muted"
+            >
+              Passé
+            </span>
+          </div>
           <h1 class="text-5xl font-bold leading-tight text-text break-words">
-            {{ frontend?.name || 'Aucun frontend sélectionné' }}
+            {{ frontendTitle }}
           </h1>
         </header>
 
-        <!-- 2. Fonctionnalités : exécution & interface → charte graphique → assets -->
-        <section class="flex flex-col gap-8">
+        <!-- Si skippé : message court -->
+        <div v-if="isFrontendSkipped" class="flex flex-col items-center justify-center text-center gap-2 py-8">
+          <p class="text-sm text-text-muted">
+            Cette étape a été passée. Aucun frontend ne sera généré.
+          </p>
+        </div>
+
+        <!-- Sinon : feature groups classiques -->
+        <section v-else class="flex flex-col gap-8">
           <dl
             v-for="group in featureGroups"
             :key="group.id"
@@ -25,7 +40,6 @@
             <div v-for="field in group.fields" :key="field.label" class="flex flex-col gap-1 min-w-0">
               <dt class="text-xs font-semibold uppercase tracking-wider text-muted">{{ field.label }}</dt>
               <dd class="flex items-center gap-2 text-text min-w-0" :class="group.valueClass">
-                <!-- Pastille de couleur : la couleur EST la donnée, pas de la décoration -->
                 <span
                   v-if="field.swatch"
                   class="w-4 h-4 rounded-full shrink-0"
@@ -75,7 +89,7 @@ import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store
 // ✅ IMPORT DE L'ILLUSTRATION FRONTEND
 import frontendIllustration from '../../assets/frontend.png';
 
-const { stepperData } = useGenerator();
+const { stepperData, skippedSteps } = useGenerator();
 const frontendStore = useFrontendStore();
 
 const frontend = computed(() => stepperData.value.frontend);
@@ -134,6 +148,16 @@ const featureGroups = computed<FeatureGroup[]>(() => {
       ],
     },
   ];
+});
+
+const isFrontendSkipped = computed(() =>
+  skippedSteps.value.includes('frontend_select')
+);
+
+const frontendTitle = computed(() => {
+  if (frontend.value?.name) return frontend.value.name;
+  if (isFrontendSkipped.value) return 'Frontend non configuré';
+  return 'Aucun frontend sélectionné';
 });
 </script>
 

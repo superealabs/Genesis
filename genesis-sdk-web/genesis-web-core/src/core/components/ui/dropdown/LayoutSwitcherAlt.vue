@@ -8,6 +8,7 @@
     :open-at-hover="true"
     :trigger-variant="dropdownVariant"
     :positioning="'absolute'"
+    :force-down="true"
   >
     <template #triggerIcon>
       <component :is="currentIcon" :size="24" aria-hidden="true" />

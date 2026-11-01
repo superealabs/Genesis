@@ -329,6 +329,7 @@ import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.v
 
 import { confirmFrameworkChange } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
+import { isNoneOnly } from '../../utils/projectConfigHelpers';
 
 
 // ============================================================================
@@ -458,20 +459,6 @@ const hibernateDdlAutoOptions = computed(() =>
   availableHibernateDdlAutoOptions.value.map(opt => ({ label: opt, value: opt }))
 );
 
-/**
- * Un select est masqué si :
- * - Il n'a qu'une seule option
- * - ET cette option a la valeur 'NONE' (exactement, en majuscules)
- */
-function shouldHideSelect(options: { label: string; value: any }[]): boolean {
-  if (options.length === 0) return true;
-  if (options.length !== 1) return false;
-  
-  const v = options[0].value;
-  if (v === null || v === undefined) return true;
-  
-  return String(v).trim().toUpperCase() === 'NONE';
-}
 
 /**
  * Si la valeur actuelle est vide, on prend la première option disponible.
@@ -584,16 +571,13 @@ const effectiveHibernateDdlAuto = computed(() =>
 
 // ── Masquage conditionnel ────────────────────────────────────────────────
 
-const hideLanguageVersion = computed(() => shouldHideSelect(languageVersionOptions.value));
-const hideBuildTool = computed(() => shouldHideSelect(buildToolOptions.value));
-const hideFrameworkVersion = computed(() => shouldHideSelect(frameworkVersionOptions.value));
-const hideLoggingLevel = computed(() => shouldHideSelect(loggingLevelOptions.value));
-const hideSecurityType = computed(() => shouldHideSelect(securityTypeOptions.value));
-const hideCacheProvider = computed(() => shouldHideSelect(cacheProviderOptions.value));
-// Hibernate : double condition (flag framework ET pas dans le cas "1 seul NONE")
-const hideHibernateDdlAuto = computed(() =>
-  /*!showHibernateDdl.value ||*/ shouldHideSelect(hibernateDdlAutoOptions.value)
-);
+const hideLanguageVersion = computed(() => isNoneOnly(languageVersionOptions.value));
+const hideBuildTool = computed(() => isNoneOnly(buildToolOptions.value));
+const hideFrameworkVersion = computed(() => isNoneOnly(frameworkVersionOptions.value));
+const hideLoggingLevel = computed(() => isNoneOnly(loggingLevelOptions.value));
+const hideSecurityType = computed(() => isNoneOnly(securityTypeOptions.value));
+const hideCacheProvider = computed(() => isNoneOnly(cacheProviderOptions.value));
+const hideHibernateDdlAuto = computed(() => isNoneOnly(hibernateDdlAutoOptions.value));
 
 // ── Synchronisation vers le store (défaut appliqué une fois) ─────────────
 

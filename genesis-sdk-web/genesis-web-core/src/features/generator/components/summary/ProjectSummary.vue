@@ -86,8 +86,15 @@ import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
 import projectIllustration from '../../assets/project-illustration.png'; // Assure-toi que le chemin est bon
+import { isNoneOnly } from '../../utils/projectConfigHelpers';
 
-const { stepperData } = useGenerator();
+const { 
+  stepperData,   
+  availableLoggingLevels, 
+  availableSecurityTypes, 
+  availableCacheProviders, 
+  availableHibernateDdlAutoOptions 
+} = useGenerator();
 const frameworkStore = useFrameworkStore();
 
 const framework = computed(() => stepperData.value.framework);
@@ -110,43 +117,55 @@ interface FeatureGroup {
   fields: FeatureField[] 
 }
 
-const featureGroups = computed<FeatureGroup[]>(() => [
-  {
-    id: 'stack',
-    // Pas de titre pour la stack, car c'est l'information principale qui suit directement le nom du projet
-    gridClass: 'grid-cols-2',
-    valueClass: 'text-2xl font-semibold',
-    fields: [
-      { label: 'Framework', value: `${framework.value?.name ?? 'Aucun'} ${config.value.frameworkVersion ?? ''}`.trim() },
-      { label: 'Langage',   value: `${languageName.value} ${config.value.languageVersion ?? ''}`.trim() },
-    ],
-  },
-  {
-    id: 'build',
-    title: 'Configuration de Build', // ✅ AJOUTÉ
-    gridClass: 'grid-cols-3',
-    valueClass: 'text-base font-medium',
-    fields: [
-      { label: 'Build tool', value: or(config.value.buildTool) },
-      { label: 'Group ID',   value: or(config.value.groupId) },
-      { label: 'Port',       value: or(config.value.projectPort) },
-    ],
-  },
-  {
-    id: 'advanced',
-    title: 'Options Avancées', // ✅ AJOUTÉ
-    gridClass: 'grid-cols-2 lg:grid-cols-4',
-    valueClass: 'text-sm',
-    fields: [
-      { label: 'Logging',  value: or(config.value.loggingLevel) },
-      { label: 'Sécurité', value: or(config.value.securityType) },
-      { label: 'Cache',    value: or(config.value.cacheProvider) },
-      ...(config.value.hibernateDdlAuto
-        ? [{ label: 'Hibernate DDL', value: config.value.hibernateDdlAuto }]
-        : []),
-    ],
-  },
-]);
+const featureGroups = computed<FeatureGroup[]>(() => {
+  const advancedFields: FeatureField[] = [];
+  
+  if (!isNoneOnly(availableLoggingLevels.value.map(v => ({ label: v, value: v })))) {
+    advancedFields.push({ label: 'Logging', value: or(config.value.loggingLevel) });
+  }
+  if (!isNoneOnly(availableSecurityTypes.value.map(v => ({ label: v, value: v })))) {
+    advancedFields.push({ label: 'Sécurité', value: or(config.value.securityType) });
+  }
+  if (!isNoneOnly(availableCacheProviders.value.map(v => ({ label: v, value: v })))) {
+    advancedFields.push({ label: 'Cache', value: or(config.value.cacheProvider) });
+  }
+  if (!isNoneOnly(availableHibernateDdlAutoOptions.value.map(v => ({ label: v, value: v })))) {
+    advancedFields.push({ label: 'Hibernate DDL', value: or(config.value.hibernateDdlAuto) });
+  }
+
+  return [
+    {
+      id: 'stack',
+      gridClass: 'grid-cols-2',
+      valueClass: 'text-2xl font-semibold',
+      fields: [
+        { label: 'Framework', value: `${framework.value?.name ?? 'Aucun'} ${config.value.frameworkVersion ?? ''}`.trim() },
+        { label: 'Langage',   value: `${languageName.value} ${config.value.languageVersion ?? ''}`.trim() },
+      ],
+    },
+    {
+      id: 'build',
+      title: 'Configuration de Build',
+      gridClass: 'grid-cols-3',
+      valueClass: 'text-base font-medium',
+      fields: [
+        { label: 'Build tool', value: or(config.value.buildTool) },
+        { label: 'Group ID',   value: or(config.value.groupId) },
+        { label: 'Port',       value: or(config.value.projectPort) },
+      ],
+    },
+    // 👇 N'ajouter le groupe advanced QUE s'il reste des champs
+    ...(advancedFields.length > 0
+      ? [{
+          id: 'advanced',
+          title: 'Options Avancées',
+          gridClass: 'grid-cols-2 lg:grid-cols-4',
+          valueClass: 'text-sm',
+          fields: advancedFields,
+        }]
+      : []),
+  ];
+});
 </script>
 
 <style scoped>

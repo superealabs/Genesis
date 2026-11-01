@@ -72,6 +72,7 @@
                                     triggerVariant="secondary"
                                     trigger-size="lg"
                                     :hide-chevron="true"
+                                    :force-down="true"
                                 >
                                     <template #triggerIcon>
                                         <IconSort />

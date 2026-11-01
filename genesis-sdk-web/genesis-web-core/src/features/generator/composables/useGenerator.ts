@@ -114,7 +114,18 @@ export function useGenerator() {
         }
       }
       return true; 
-    }
+    },
+
+    onSkip: async (currentStep: number) => {
+        const stepId = getStepIdByNumber(currentStep);
+        if (!stepId) return;
+
+        const stepConfig = WIZARD_STEP_CONFIG[stepId];
+        if (stepConfig?.onSkip) {
+            console.log(`[Wizard] Skip de l'étape : ${stepId} (Étape ${currentStep})`);
+            await stepConfig.onSkip(store, wizardServices);
+        }
+    },
   });
 
   // ==========================================================================
@@ -144,7 +155,8 @@ export function useGenerator() {
     isInitializing,
     tablesChilds,
     tablesParents,
-    frontendAssetContents
+    frontendAssetContents,
+    skippedSteps,
   } = storeToRefs(store);
 
   const targetSummaryIndex = ref(0);
@@ -485,7 +497,8 @@ export function useGenerator() {
     totalSteps: wizard.totalSteps,
     isFirstStep: wizard.isFirstStep,
     isLastStep: wizard.isLastStep,
-    skippedSteps: wizard.skippedSteps,
+    skippedSteps,
+
     isCurrentStepSkippable,
     isGenerating,
 

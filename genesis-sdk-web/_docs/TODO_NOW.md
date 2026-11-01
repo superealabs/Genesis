@@ -1,9 +1,15 @@
-BUG MAJEURE :
-    même donnée
-    différent port(l'autre le port de l'extension host où le jar est exposé, l'autre le port de l'application en bootrun)
-    celui avec le port de l'extension host est bloquée à la génération
+tester la création de ripository
+
+BUG BACKEND(
+    .NET MVC nécessite une version de language que le backend ne fournit pas
+)
 
 
+modifier les champs à envoyer depuis project ConfigView en fonction du framework séléctionnée
+    (
+        si le fetchstacktechnique (version du language par exemple) ne contient que none, on envoit pas ce champs
+        si configuration avancée (version hddlhibernate auto par exemple) ne contient que none, on envoit pas ce champs
+    )
 
 URGENCE :
     onEnter ne se déclenche pas si on change d'étape depuis le stepper display (l'indicateur d'étape)

@@ -396,6 +396,19 @@ export class VsCodeGeneratorService implements IGeneratorService {
         }
     }
 
+    async initGitRepository(): Promise<{ success: boolean; message: string }> {
+        try {
+            logger.log(LOG_CHANNEL, `🔄 Initialisation du dépôt Git`);
+            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>(
+                '/generator/git/init'
+            );
+            return data;
+        } catch (error) {
+            logger.log(LOG_CHANNEL, `❌ initGitRepository API échouée: ${(error as Error).message}`);
+            throw error;
+        }
+    }
+
     async launchGeneration(): Promise<GenerationResult> {
         try {
             logger.log(LOG_CHANNEL, `🚀 Lancement de la génération du projet`);

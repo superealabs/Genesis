@@ -328,6 +328,24 @@ export class GeneratorServiceVsc implements IGeneratorService {
         });
     }
 
+    initGitRepository(): Promise<{ success: boolean; message: string }> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('INIT_GIT_REPOSITORY');
+
+            const cleanup = this.vscode.onMessage<{ success: boolean; message: string }>(
+                'GIT_REPOSITORY_INITIALIZED',
+                (data) => { cleanup(); resolve(data); }
+            );
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'INIT_GIT_REPOSITORY') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
     // ═══ ÉTAPE 11 : GÉNÉRATION FINALE ═══
     // ═══ ÉTAPE 11 : GÉNÉRATION FINALE ═══
     launchGeneration(): Promise<GenerationResult> {
