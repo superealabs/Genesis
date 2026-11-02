@@ -35,7 +35,7 @@ public class ProjectConfigService {
         Language language = requireLanguage(context);
 
         return new ProjectConfigOptionsResponse(
-                getOptions(language.getConfigurations(), "languageVersion"),
+                languageVersions(language.getId()),
                 getCompatibleProjects(framework).stream()
                         .map(Project::getName)
                         .map(name -> name.trim().toLowerCase(Locale.ROOT))
@@ -51,16 +51,17 @@ public class ProjectConfigService {
         Framework framework = requireFramework(context);
         Language language = requireLanguage(context);
 
-        validateRequired(request);
+        validateRequired(request, language);
 
         Project project = findCompatibleProject(framework, request.buildTool());
         Map<String, Object> languageConfiguration = createDefaultConfiguration(language.getConfigurations());
         Map<String, Object> frameworkConfiguration = createDefaultConfiguration(framework.getConfigurations());
-
-        validateOption(language.getConfigurations(), "languageVersion", request.languageVersion(), "Version du langage non supportée");
+        boolean hasLanguageVersion = !getOptions(language.getConfigurations(), "languageVersion").isEmpty();
+        if (hasLanguageVersion) {
+            validateOption(language.getConfigurations(), "languageVersion", request.languageVersion(), "Version du langage non supportée");
+            languageConfiguration.put("languageVersion", request.languageVersion());
+        }
         validateOption(framework.getConfigurations(), "frameworkVersion", request.frameworkVersion(), "Version du framework non supportée");
-
-        languageConfiguration.put("languageVersion", request.languageVersion());
         frameworkConfiguration.put("frameworkVersion", request.frameworkVersion());
 
         applyFrameworkOption(framework, frameworkConfiguration, "loggingLevel", request.loggingLevel());
@@ -91,7 +92,7 @@ public class ProjectConfigService {
                 "Configuration du projet enregistrée avec succès",
                 context.getProjectName(),
                 context.getDestinationFolder(),
-                request.languageVersion(),
+                hasLanguageVersion ? request.languageVersion() : null,
                 project.getName().trim().toLowerCase(Locale.ROOT),
                 context.getGroupLink(),
                 request.frameworkVersion(),
@@ -184,7 +185,7 @@ public class ProjectConfigService {
         return context.getLanguage();
     }
 
-    private void validateRequired(ProjectConfigRequest request) {
+    private void validateRequired(ProjectConfigRequest request, Language language) {
         if (request == null) {
             throw new ProjectConfigException("La configuration du projet est obligatoire");
         }
@@ -194,7 +195,7 @@ public class ProjectConfigService {
         if (request.projectLocation() == null || request.projectLocation().isBlank()) {
             throw new ProjectConfigException("La localisation du projet est obligatoire");
         }
-        if (request.languageVersion() == null || request.languageVersion().isBlank()) {
+        if (!getOptions(language.getConfigurations(), "languageVersion").isEmpty() && (request.languageVersion() == null || request.languageVersion().isBlank())) {
             throw new ProjectConfigException("La version du langage est obligatoire");
         }
         if (request.buildTool() == null || request.buildTool().isBlank()) {
@@ -295,7 +296,8 @@ public class ProjectConfigService {
             throw new ProjectConfigException("Langage inconnu : " + languageId);
         }
 
-        return getOptions(language.getConfigurations(), "languageVersion");
+        List<String> versions = getOptions(language.getConfigurations(), "languageVersion");
+        return versions.isEmpty() ? List.of("NONE") : versions;
     }
 
     public List<String> buildTools(int frameworkId) {
