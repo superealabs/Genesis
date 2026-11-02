@@ -302,6 +302,10 @@ export class VsCodeGeneratorService implements IGeneratorService {
     async saveGenerationParameters(params: GenerationParameter[]): Promise<{ success: boolean; message: string }> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde des paramètres de génération (${params.length} profils)`);
+            
+            // ✅ JSON.stringify avec 'null' et '2' pour un formatage lisible (pretty-print)
+            logger.log(LOG_CHANNEL, `💾 génération envoyé au backend : \n${JSON.stringify(params, null, 2)}`); 
+            
             const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/generation-parameters', params);
             return data;
         } catch (error) {
@@ -413,10 +417,23 @@ export class VsCodeGeneratorService implements IGeneratorService {
         try {
             logger.log(LOG_CHANNEL, `🚀 Lancement de la génération du projet`);
 
-            const { data: result } = await getAxiosInstance().post<GenerationResult>('/generator/launch');
+            // ✅ AJOUT : 3ème argument pour la configuration Axios
+            const { data: result } = await getAxiosInstance().post<GenerationResult>(
+                '/generator/launch', 
+                {}, // 2ème argument : les données (vide ici, mais nécessaire pour placer le 3ème argument)
+                { 
+                    timeout: 180000 // ⏱️ Durée en millisecondes (ici 180 000 ms = 3 minutes)
+                }
+            );
+            
             return result;
-        } catch (error) {
-            logger.log(LOG_CHANNEL, `❌ launchGeneration API échouée: ${(error as Error).message}`);
+        } catch (error: any) {
+            // ✅ AMÉLIORATION : Détecter spécifiquement si l'erreur est un timeout Axios
+            if (error.code === 'ECONNABORTED') {
+                logger.log(LOG_CHANNEL, `❌ launchGeneration API échouée : Le délai d'attente (timeout) de 3 minutes a été dépassé.`);
+            } else {
+                logger.log(LOG_CHANNEL, `❌ launchGeneration API échouée : ${error.message}`);
+            }
             throw error;
         }
     }

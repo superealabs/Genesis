@@ -5,6 +5,7 @@ import { spawn, ChildProcess } from 'child_process';
 import { createAxiosInstance } from './http/genesisAxiosInstance';
 import * as fs from 'fs';
 
+import { logger } from './LoggerService';
 
 export class GenesisApiService {
     private process: ChildProcess | null = null;
@@ -32,6 +33,8 @@ export class GenesisApiService {
                 stdio: ['ignore', logFd, logFd],   // 👈 stdin fermé, stdout/stderr → fichier
                 windowsHide: true
             });
+
+            logger.log('Genesis Generator Service', `Project set on port : ${this.port}`, true);
 
             // ⚠️ Fermer le fd côté Node quand le process termine (le fd est déjà utilisé par le process)
             this.process.on('exit', (code) => {

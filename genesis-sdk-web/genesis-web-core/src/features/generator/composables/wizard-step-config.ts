@@ -506,6 +506,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
             selectedComponents: [...p.selectedComponents]
         }));
 
+        console.log("BEFORE NEXT GENERATION SENDED : ", rawParams);
         await svc.saveGenerationParameters(rawParams);
 
         // 3. Stocker dans stepperData pour l'envoi au backend
