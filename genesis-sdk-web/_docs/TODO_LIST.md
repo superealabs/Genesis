@@ -7,7 +7,7 @@ NOTE IMPORTANTE, on ne manipule que des tableaux d'élément visible
         permet de faire une séléction multiple, clic gauche(check box) sur le premier élément, clic gauche + Maj pour le dernier élément
             - tous les éléments entre ces deux séléctions sont impactée
                 - une fonction s'occupe de l'impacte==selectMode(a un paramètre nullable : 'Select', 'UnSelect', 'Invert')
-                    comportement par defaut select
+                    comportement par defaut Invert
                     Note, si tout les éléments du tableau sont séléctionnée, alors on déséléction et inversement
 
     - rajouter ce système sur le tableau de generation de la liste des tables

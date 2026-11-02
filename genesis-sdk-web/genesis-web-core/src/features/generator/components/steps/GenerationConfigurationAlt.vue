@@ -68,7 +68,7 @@
               :min-height="200"
               :max-height="500"
               :height="400"
-              @toggle="toggleItem"
+              @update:selected-items="(val) => store.selectedItemsInList = val"
           />
         </div>
       </GenesisTutorialItem>
@@ -183,7 +183,7 @@
               :min-height="200"
               :max-height="500"
               :height="400"
-              @toggle="toggleItem"
+              @update:selected-items="(val) => store.selectedItemsInList = val"
           />
         </div>
       </GenesisTutorialItem>
@@ -437,11 +437,6 @@ function isComponentDisabled(comp: ComponentType): boolean {
   }
   return false;
 }
-
-
-const toggleItem = (item: any): void => {
-  store.toggleItemInList(item.tableName);
-};
 
 const toggleAllUnassigned = (): void => {
   const allSelected = areAllUnassignedSelected.value;
