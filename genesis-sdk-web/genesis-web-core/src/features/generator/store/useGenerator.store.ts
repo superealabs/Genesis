@@ -110,23 +110,34 @@ export const useGeneratorStore = defineStore('generator', () => {
   function setConfigFramework(fw: Framework | null) { configFramework.value = fw; }
   function setIsInitializing(value: boolean) { isInitializing.value = value; }
   
-  function reset() {
-    isGenerating.value = false;
-    wizardError.value = null;
-    isInitializing.value = false;
-    isGenerationComplete.value = false;
-    stepperData.value = structuredClone(INITIAL_STATE);
-    pendingFramework.value = null;
-    pendingDatabaseEngine.value = null;
-    pendingFrontendFramework.value = null;
-    generationAssociations.value = [];
-    relations.value = [];
-    relationsLoaded.value = false;
-    lastCommittedDatabaseConfig.value = null;  // 👈 reset
-    frontendAssetContents.value = {};
-    clearFrameworkOptions();
-    skippedSteps.value = [];
-  }
+function reset() {
+  isGenerating.value = false;
+  wizardError.value = null;
+  isInitializing.value = false;
+  isGenerationComplete.value = false;
+  stepperData.value = structuredClone(INITIAL_STATE);
+
+  pendingFramework.value = null;
+  pendingDatabaseEngine.value = null;
+  pendingFrontendFramework.value = null;
+  pendingRepositoryProvider.value = null;      // oubli également
+
+  configFramework.value = null;                // ← la cause du bug
+  lastInvalidation.value = null;
+
+  generationAssociations.value = [];
+  generationProfiles.value = [];               // restes de la session précédente
+  selectedItemsInList.value = [];
+  relations.value = [];
+  relationsLoaded.value = false;
+  tablesParents.value = [];
+  tablesChilds.value = [];
+
+  lastCommittedDatabaseConfig.value = null;
+  frontendAssetContents.value = {};
+  clearFrameworkOptions();
+  skippedSteps.value = [];
+}
 
   /**
    * Réinitialise les données de configuration projet qui dépendent du framework.

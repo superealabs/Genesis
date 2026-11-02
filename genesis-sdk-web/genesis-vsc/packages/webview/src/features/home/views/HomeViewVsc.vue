@@ -16,10 +16,12 @@ import { useRouter } from 'vue-router';
 import { HomeView } from '@genesis-labs/core/features/home/manifest';
 import GeneratorViewVsc from '@/features/generator/views/GeneratorViewVsc.vue';
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
+import { useGenerator } from '@genesis-labs/web-core/index';
 
 const router = useRouter();
 const isOpen = ref(false);
 const store = useGeneratorStore();
+const { reset } = useGenerator();
 
 function handleOpenGenerator() {
     isOpen.value = true;
@@ -27,7 +29,8 @@ function handleOpenGenerator() {
 
 function handleCloseGenerator() {
     isOpen.value = false;
-
+    
+    reset();
     // au cas où s'il est démonté sans close dans generatorView
     store.setIsInitializing(false);
 }

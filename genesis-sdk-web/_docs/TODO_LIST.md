@@ -1,3 +1,12 @@
+BUG :
+Vous passez de ASP.NET Core - MVC à Spring Boot - WEB API REST. Certaines données de la configuration seront réinitialisées.
+
+Versions du langage et du framework, build tool
+Configuration avancée (logging, sécurité, cache, Hibernate)
+
+se déclenche même après la dernière génération
+
+
 NOTE IMPORTANTE, on ne manipule que des tableaux d'élément visible
 
 
@@ -15,7 +24,7 @@ NOTE IMPORTANTE, on ne manipule que des tableaux d'élément visible
 
 
 - Relation
-    - créer une copie de Relation tableView avec les colonnes : checkbox, parent, child, hasForm, isMandatory
+    - créer une copie de Relation tableView avec les colonnes : checkbox, parent, child, hasForm(readOnly), isMandatory(readOnly)
     - créer une vue AdvancedRelationConfiguration 
         - Partie gauche (gestion de séléction de parent enfant)
             - modes a(on cherche à rajouter quelques relation d'un parent/enfant à quelques enfants/parents)
@@ -38,5 +47,5 @@ NOTE IMPORTANTE, on ne manipule que des tableaux d'élément visible
                 - à droite des inputs, rajouter le bouton assign qui permet d'assigner ce modèle de relation au éléments séléctionnée de la partie 2
 
             - partie 2(liste des relations en selection Only via checkbox)
-                - c'est la liste des relations(colonnes : checkbox, parent, child, hasForm, isMandatory)
+                - c'est la liste des relations avec la copie de relationTableView
 

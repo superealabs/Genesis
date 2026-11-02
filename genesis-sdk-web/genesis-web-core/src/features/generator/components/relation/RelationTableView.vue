@@ -169,8 +169,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import type { RelationParameter } from '@genesis-labs/shared-types';
+import { useRelationFilters } from './composables/useRelationFilters';
 
 // UI Components
 import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
@@ -200,64 +200,19 @@ const emit = defineEmits<{
 }>();
 
 // ============================================================================
-// ÉTATS DE FILTRAGE
+// RECHERCHE & FILTRES (logique partagée avec RelationTableViewEditable)
 // ============================================================================
-const searchQuery = ref('');
-const filterForm = ref<'all' | 'yes' | 'no'>('all');
-const filterMandatory = ref<'all' | 'yes' | 'no'>('all');
-
-type SearchTarget = 'all' | 'parent' | 'child';
-const searchTarget = ref<SearchTarget>('all');
-
-const searchPlaceholder = computed(() => {
-  if (searchTarget.value === 'parent') return 'Rechercher dans les tables parentes...';
-  if (searchTarget.value === 'child') return 'Rechercher dans les tables filles...';
-  return 'Rechercher une table (Parent ou Child)...';
-});
-
-const toggleFilterForm = () => {
-  if (filterForm.value === 'all') filterForm.value = 'yes';
-  else if (filterForm.value === 'yes') filterForm.value = 'no';
-  else filterForm.value = 'all';
-};
-
-const toggleFilterMandatory = () => {
-  if (filterMandatory.value === 'all') filterMandatory.value = 'yes';
-  else if (filterMandatory.value === 'yes') filterMandatory.value = 'no';
-  else filterMandatory.value = 'all';
-};
-
-const toggleSearchTarget = (target: SearchTarget) => {
-  searchTarget.value = searchTarget.value === target ? 'all' : target;
-};
-
-// ============================================================================
-// LOGIQUE DE FILTRAGE COMBINÉE
-// ============================================================================
-const filteredRelations = computed(() => {
-  return props.relations.filter(rel => {
-    const query = searchQuery.value.toLowerCase().trim();
-    let matchesSearch = true;
-
-    if (query) {
-      if (searchTarget.value === 'parent') {
-        matchesSearch = rel.parentTable.toLowerCase().includes(query);
-      } else if (searchTarget.value === 'child') {
-        matchesSearch = rel.childTable.toLowerCase().includes(query);
-      } else {
-        matchesSearch = rel.parentTable.toLowerCase().includes(query) || 
-                        rel.childTable.toLowerCase().includes(query);
-      }
-    }
-
-    if (!matchesSearch) return false;
-
-    if (filterForm.value !== 'all' && rel.hasForm !== (filterForm.value === 'yes')) return false;
-    if (filterMandatory.value !== 'all' && rel.mandatory !== (filterMandatory.value === 'yes')) return false;
-
-    return true;
-  });
-});
+const {
+  searchQuery,
+  filterForm,
+  filterMandatory,
+  searchTarget,
+  searchPlaceholder,
+  filteredRelations,
+  toggleFilterForm,
+  toggleFilterMandatory,
+  toggleSearchTarget,
+} = useRelationFilters(() => props.relations);
 
 // ============================================================================
 // ACTIONS

@@ -100,6 +100,7 @@ function handleOpenProject() {
     const projectPath = `${location}/${name}`; 
     
     openProjectVsc(projectPath);
+    handleClose();
 }
 </script>
 

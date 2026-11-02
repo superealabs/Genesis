@@ -1,8 +1,8 @@
 <!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/Popup/WarningPopup.vue -->
 <template>
     <BaseFormPopup :title="title" :size="size" :position="position" @close="$emit('cancel')">
-        <div class="flex flex-col gap-4 py-4 flex-1">
-            <!-- Message + conséquences : la couleur de la bordure dépend de la variante -->
+        <div class="flex flex-col gap-4 py-4 flex-1 min-h-0">
+            <!-- Message + conséquences -->
             <div class="flex flex-col gap-3 border-l-4 pl-4" :class="accentClass">
                 <p class="text-sm text-text">{{ message }}</p>
 
@@ -11,8 +11,11 @@
                 </ul>
             </div>
 
+            <!-- 👇 NOUVEAU : slot custom (ex: liste scrollable des doublons) -->
+            <slot name="custom" />
+
             <!-- Actions -->
-            <div class="flex justify-end items-center gap-2 pt-4 mt-auto border-t border-bg-neutral-genesis">
+            <div class="flex justify-end items-center gap-2 pt-4 mt-auto border-t border-bg-neutral-genesis shrink-0">
                 <GenesisButton variant="secondary" @click="$emit('cancel')">
                     {{ cancelLabel }}
                 </GenesisButton>
