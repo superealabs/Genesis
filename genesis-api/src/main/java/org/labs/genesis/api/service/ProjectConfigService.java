@@ -192,6 +192,9 @@ public class ProjectConfigService {
         if (request.projectName() == null || request.projectName().isBlank()) {
             throw new ProjectConfigException("Le nom du projet est obligatoire");
         }
+        if (!request.projectName().trim().matches("[A-Za-z][A-Za-z0-9_]*")) {
+            throw new ProjectConfigException("Le nom du projet doit commencer par une lettre (A-Z ou a-z) et ne doit pas contenir de caracteres speciaux");
+        }
         if (request.projectLocation() == null || request.projectLocation().isBlank()) {
             throw new ProjectConfigException("La localisation du projet est obligatoire");
         }

@@ -110,8 +110,10 @@ public class FrontendConfigService {
 
     public FrontendConfigResponse configure(FrontendConfigRequest request) {
         ProjectGenerationContext context = store.getContext();
-        if (context.getFramework() == null || context.getFramework() instanceof FrameworkMVC
-                || !Boolean.TRUE.equals(context.getFramework().getUseFrontendApp())) {
+        if (context.getFramework() instanceof FrameworkMVC mvc) {
+            return configureMvc(context, mvc, request);
+        }
+        if (context.getFramework() == null || !Boolean.TRUE.equals(context.getFramework().getUseFrontendApp())) {
             throw new ProjectConfigException("Sélectionnez un framework API compatible avec un frontend séparé");
         }
         if (request == null || request.frameworkId() == null) {
@@ -157,6 +159,39 @@ public class FrontendConfigService {
 
 
 
+    private FrontendConfigResponse configureMvc(ProjectGenerationContext context, FrameworkMVC selected, FrontendConfigRequest request) {
+        if (request == null || request.frameworkId() == null || request.frameworkId() != selected.getId()) {
+            throw new ProjectConfigException("Sélectionnez le moteur de vues du framework MVC courant");
+        }
+        if (selected.getView() == null || selected.getView().getViewTemplateEngine() == null) {
+            throw new ProjectConfigException("Aucun moteur de vues disponible pour ce framework MVC");
+        }
+        if (request.port() != null && !request.port().isBlank()) {
+            throw new ProjectConfigException("Le moteur MVC utilise le port du backend, sans port frontend séparé");
+        }
+        if (request.languageId() != null && request.languageId() != selected.getLanguageId()) {
+            throw new ProjectConfigException("Langage incompatible avec le moteur de vues MVC");
+        }
+        FrameworkMVC mvc = isolation.copyMvc(selected);
+        var template = context.getViewsTemplate() == null
+                ? mvc.findViewsTemplateById(org.labs.genesis.config.Constantes.Template_1_ID)
+                : mvc.findViewsTemplateById(context.getViewsTemplate().getId());
+        if (template == null) {
+            throw new ProjectConfigException("Template de vues MVC introuvable");
+        }
+        if (mvc.getFrontendLayout() == null) mvc.setFrontendLayout(new FrontendLayout());
+        if (mvc.getProjectBranding() == null) mvc.setProjectBranding(new ProjectBranding());
+        context.setFramework(mvc);
+        context.setViewsTemplate(template);
+        context.setGenerateViewsTemplates(true);
+        context.setFrontendFramework(null);
+        context.setFrontendLanguage(null);
+        context.setFrontendPort(null);
+        context.setGenerateFrontendApp(false);
+        context.setFrontendGenerationOptions(new ArrayList<>());
+        return new FrontendConfigResponse(true, mvc.getId(), mvc.getLanguageId(), null);
+    }
+
     public List<ProgrammingLanguageOption> programmingLanguages() {
         return ProjectGenerator.frontendLanguage.values()
                 .stream()
@@ -186,8 +221,13 @@ public class FrontendConfigService {
     public void configureLayout(FrontendLayoutRequest request) {
         ProjectGenerationContext context = store.getContext();
 
-        if (request == null || context.getFrontendFramework() == null) {
+        boolean mvcProject = context.getFramework() instanceof FrameworkMVC;
+        if (request == null || (mvcProject ? context.getViewsTemplate() == null : context.getFrontendFramework() == null)) {
             throw new ProjectConfigException("Configurez d'abord le framework frontend");
+        }
+
+        if (mvcProject && request.port() != null && !request.port().isBlank()) {
+            throw new ProjectConfigException("Le moteur MVC utilise le port du backend, sans port frontend séparé");
         }
 
         // 1. Valider la navbar
@@ -293,14 +333,16 @@ public class FrontendConfigService {
         }
 
         // 9. Copier le framework sans modifier le contexte original
-        var framework = isolation.copy(context.getFrontendFramework());
+        FrameworkMVC mvc = mvcProject ? isolation.copyMvc((FrameworkMVC) context.getFramework()) : null;
+        var framework = mvcProject ? null : isolation.copy(context.getFrontendFramework());
 
         // 10. Configurer le layout sur la copie
-        FrontendLayout layout = framework.getFrontendLayout();
+        FrontendLayout layout = mvcProject ? mvc.getFrontendLayout() : framework.getFrontendLayout();
 
         if (layout == null) {
             layout = new FrontendLayout();
-            framework.setFrontendLayout(layout);
+            if (mvcProject) mvc.setFrontendLayout(layout);
+            else framework.setFrontendLayout(layout);
         }
 
         layout.setNavbar(navbar);
@@ -309,11 +351,12 @@ public class FrontendConfigService {
         layout.setLangs(new ArrayList<>(languages));
 
         // 11. Configurer le branding sur la copie
-        ProjectBranding branding = framework.getProjectBranding();
+        ProjectBranding branding = mvcProject ? mvc.getProjectBranding() : framework.getProjectBranding();
 
         if (branding == null) {
             branding = new ProjectBranding();
-            framework.setProjectBranding(branding);
+            if (mvcProject) mvc.setProjectBranding(branding);
+            else framework.setProjectBranding(branding);
         }
 
         branding.setLogoFile(logoFile == null ? null : logoFile.toFile());
@@ -323,7 +366,8 @@ public class FrontendConfigService {
         branding.setFaviconLink(faviconUrl);
 
         // 12. Enregistrer le framework seulement après validation
-        context.setFrontendFramework(framework);
+        if (mvcProject) context.setFramework(mvc);
+        else context.setFrontendFramework(framework);
 
         // 13. Enregistrer le port validé
         if (validatedPort != null) {
@@ -358,6 +402,7 @@ public class FrontendConfigService {
         context.setFrontendFramework(null);
         context.setFrontendLanguage(null);
         context.setFrontendPort(null);
+        context.setViewsTemplate(null);
 
         // Effacer les options de génération sélectionnées
         context.setFrontendGenerationOptions(new ArrayList<>());

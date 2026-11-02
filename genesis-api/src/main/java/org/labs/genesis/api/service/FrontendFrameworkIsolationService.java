@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.frontend.generator.FrontendFramework;
 import org.springframework.stereotype.Service;
+import org.labs.genesis.config.langage.FrameworkMVC;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -21,6 +22,15 @@ public class FrontendFrameworkIsolationService {
         Objects.requireNonNull(context, "Contexte obligatoire");
         if (context.getFrontendFramework() != null) {
             context.setFrontendFramework(copy(context.getFrontendFramework()));
+        }
+    }
+
+    public FrameworkMVC copyMvc(FrameworkMVC original) {
+        Objects.requireNonNull(original, "Framework MVC obligatoire");
+        try {
+            return objectMapper.readValue(objectMapper.writeValueAsBytes(original), FrameworkMVC.class);
+        } catch (Exception exception) {
+            throw new IllegalStateException("Impossible de copier le framework MVC", exception);
         }
     }
 
