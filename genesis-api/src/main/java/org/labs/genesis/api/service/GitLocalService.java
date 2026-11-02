@@ -4,6 +4,8 @@ import org.labs.genesis.api.context.GenerationContextStore;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.git.GitConfiguration;
 import org.labs.genesis.config.langage.FilesEdit;
+import org.labs.genesis.config.langage.FrameworkMVC;
+import org.labs.genesis.api.dto.GitDtos.GitConfigRequest;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
 import org.labs.utils.GitUtils;
@@ -74,7 +76,8 @@ public class GitLocalService {
         }
         Path root = Path.of(context.getDestinationFolder()).toAbsolutePath().normalize();
         FilesEdit backendIgnore = GitUtils.getGitIgnore(context.getFramework().getConditionalFiles());
-        Path backend = Path.of(backendIgnore == null ? root + "/" + StringUtils.majStart(context.getProjectName()) : ProjectGenerator.engine.simpleRender(backendIgnore.getDestinationPath(), Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))).toAbsolutePath().normalize();
+
+        Path backend = context.getFramework() instanceof FrameworkMVC ? root : Path.of(backendIgnore == null ? root + "/" + StringUtils.majStart(context.getProjectName()) : ProjectGenerator.engine.simpleRender(backendIgnore.getDestinationPath(), Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))).toAbsolutePath().normalize();
         List<IgnoreFile> ignores = new ArrayList<>();
         if (backendIgnore != null)
             ignores.add(new IgnoreFile(backend, backendIgnore.getContent()));
@@ -90,7 +93,7 @@ public class GitLocalService {
             if (frontendIgnore != null)
                 ignores.add(new IgnoreFile(frontendPath, frontendIgnore.getContent()));
             if (config.isSeparateRepositories()) {
-                if (config.isCreateRemoteRepository())
+                if (config.isCreateRemoteRepository() || config.getGithubUsername() != null)
                     validateName(config.getFrontendRepositoryName());
                 repositories.add(repository(frontendPath, config.getFrontendRepositoryName(), config));
             }
@@ -159,10 +162,10 @@ public class GitLocalService {
             throw exception;
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Opération Git interrompue ; vérifier les dépôts créés");
+            throw new GitOperationException(HttpStatus.INTERNAL_SERVER_ERROR, "Opération Git interrompue ; vérifier les dépôts créés");
         } catch (Exception exception) {
             // Les erreurs de Core peuvent contenir un message GitHub : ne jamais les restituer.
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Échec Git ; les fichiers et dépôts éventuellement créés sont conservés pour vérification");
+            throw new GitOperationException(HttpStatus.INTERNAL_SERVER_ERROR, "Échec Git ; les fichiers et dépôts éventuellement créés sont conservés pour vérification");
         }
     }
 
@@ -182,11 +185,17 @@ public class GitLocalService {
     }
 
     private static ResponseStatusException invalid(String message) {
-        return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+        return new GitOperationException(HttpStatus.BAD_REQUEST, message);
     }
 
     private static ResponseStatusException conflict(String message) {
-        return new ResponseStatusException(HttpStatus.CONFLICT, message);
+        return new GitOperationException(HttpStatus.CONFLICT, message);
+    }
+
+    public static class GitOperationException extends ResponseStatusException {
+        public GitOperationException(HttpStatus status, String reason) {
+            super(status, reason);
+        }
     }
 
     public record GitPlan(boolean enabled, Path root, List<Repository> repositories, List<IgnoreFile> ignores) {
@@ -201,6 +210,34 @@ public class GitLocalService {
         public String toString() {
             return "Repository[path=" + path + ", remote=" + remote + "]";
         }
+    }
+
+    public Map<String, Object> configureRequest(GitConfigRequest request) {
+        if (request == null) throw invalid("Configuration Git absente");
+        var config = new GitConfiguration();
+        config.setUseGit(request.useGit());
+        config.setSeparateRepositories(request.separateRepositories());
+        config.setRepositoryName(request.separateRepositories() ? null : normalize(request.repositoryName()));
+        config.setBackendRepositoryName(request.separateRepositories() ? normalize(request.backendRepositoryName()) : null);
+        config.setFrontendRepositoryName(request.separateRepositories() ? normalize(request.frontendRepositoryName()) : null);
+        boolean remote = request.useGit() && request.useRemoteRepo();
+        config.setCreateRemoteRepository(remote && request.isNewRemoteRepo());
+        if (remote) {
+            String username = normalize(request.githubUsername());
+            if (username == null || !username.matches("[A-Za-z0-9][A-Za-z0-9-]{0,38}")) {
+                throw invalid("Utilisateur GitHub invalide");
+            }
+            config.setGithubUsername(username);
+            config.setGithubToken(normalize(request.githubToken()));
+            validateName(config.isSeparateRepositories() ? config.getBackendRepositoryName() : config.getRepositoryName());
+        }
+
+        configure(config);
+        return Map.of("success", true, "useGit", config.isUseGit(), "separateRepositories", config.isSeparateRepositories(), "useRemoteRepo", remote, "isNewRemoteRepo", request.isNewRemoteRepo());
+    }
+
+    private String normalize(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     public Map<String, Object> configure(GitConfiguration configuration) {

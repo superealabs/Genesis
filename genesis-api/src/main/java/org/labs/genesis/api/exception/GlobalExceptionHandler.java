@@ -10,6 +10,7 @@ import java.util.Map;
 
 import org.labs.genesis.api.dto.GenerationErrorResponse;
 import org.labs.genesis.api.service.GenerationPublicationService;
+import org.labs.genesis.api.service.GitLocalService.GitOperationException;
 import java.io.IOException;
 import org.labs.genesis.api.service.GeneratedFilesPublisher;
 
@@ -28,6 +29,18 @@ public class GlobalExceptionHandler {
                         "error", "Bad Request",
                         "message", exception.getMessage()
                 ));
+    }
+
+    @ExceptionHandler(GitOperationException.class)
+    public ResponseEntity<GenerationErrorResponse> handleGit(GitOperationException exception) {
+        String code = switch (exception.getStatusCode().value()) {
+            case 400 -> "INVALID_GIT_CONFIGURATION";
+            case 409 -> "GIT_CONFLICT";
+            default -> "GIT_OPERATION_FAILED";
+        };
+
+        return ResponseEntity.status(exception.getStatusCode()).body(new GenerationErrorResponse(
+                Instant.now(), exception.getStatusCode().value(), code, exception.getReason()));
     }
 
     @ExceptionHandler(GenerationAlreadyRunningException.class)

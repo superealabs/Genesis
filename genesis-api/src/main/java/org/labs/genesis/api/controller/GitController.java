@@ -2,7 +2,7 @@ package org.labs.genesis.api.controller;
 
 import java.util.Map;
 import org.labs.genesis.api.service.GitLocalService;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.api.dto.GitDtos.GitConfigRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,8 +16,8 @@ public class GitController {
     }
 
     @PostMapping("/api/generator/git/config")
-    public ResponseEntity<Map<String, Object>> configure(@RequestBody GitConfiguration configuration) {
-        return ResponseEntity.ok(gitLocalService.configure(configuration));
+    public ResponseEntity<Map<String, Object>> configure(@RequestBody GitConfigRequest configuration) {
+        return ResponseEntity.ok(gitLocalService.configureRequest(configuration));
     }
 
     @PostMapping("/api/generator/git/init")
