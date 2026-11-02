@@ -1,3 +1,5 @@
+CORRIGER LE BOUTON AddALl avec le mode B
+
 BUG :
 Vous passez de ASP.NET Core - MVC à Spring Boot - WEB API REST. Certaines données de la configuration seront réinitialisées.
 
@@ -5,6 +7,7 @@ Versions du langage et du framework, build tool
 Configuration avancée (logging, sécurité, cache, Hibernate)
 
 se déclenche même après la dernière génération
+
 
 
 NOTE IMPORTANTE, on ne manipule que des tableaux d'élément visible

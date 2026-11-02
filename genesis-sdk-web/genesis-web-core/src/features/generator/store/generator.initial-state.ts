@@ -52,9 +52,9 @@ export const INITIAL_STATE: GeneratorData = {
     git: {
         useGit: true,
         separateRepositories: false,
-        useRemoteRepo: false,
+        useRemoteRepo: true,
         isNewRemoteRepo: true,
-        repositoryName: '',
+        repositoryName: 'genesis-project-test',
         backendRepositoryName: '',
         frontendRepositoryName: '',
         githubUsername: '',

@@ -107,6 +107,7 @@ const {
   getRelations,
   addRelation,
   removeRelation,
+  getChildrenOf, getParentsOf,
 } = useGenerator();
 
 // État PARTAGÉ avec RelationConfigSimpleView (sens, ancre, cibles + chargements API)
@@ -171,6 +172,7 @@ const canAddAll = computed(() => {
     const linked = isChildFirst.value ? tablesParents.value : tablesChilds.value;
     return !!anchor.value && linked.length > 0;
   }
+
   return canAdd.value;
 });
 
@@ -188,18 +190,14 @@ const canRemoveAll = computed(() => getRelations.value.length > 0);
  * Construit la liste des relations à ajouter.
  * @param all true = "Add All" (tous les enfants/parents possibles, pas seulement cochés)
  */
-function computeRelationsToAdd(all: boolean): RelationParameter[] {
+async function computeRelationsToAdd(all: boolean): Promise<RelationParameter[]> {
   const toRelation = (parentTable: string, childTable: string): RelationParameter => ({
-    parentTable,
-    childTable,
-    mandatory: isMandatory.value,
-    hasForm: hasForm.value,
+    parentTable, childTable, mandatory: isMandatory.value, hasForm: hasForm.value,
   });
 
-  // ── MODE A : 1 parent + N enfants (ou 1 enfant + N parents) ─────────
+  // ── MODE A : inchangé (la liste est déjà celle de l'ancre) ──
   if (mode.value === 'A') {
     if (!anchor.value) return [];
-
     if (!isChildFirst.value) {
       const childNames = all ? tablesChilds.value.map(c => c.tableName) : targets.value;
       return childNames.map(child => toRelation(anchor.value, child));
@@ -208,15 +206,23 @@ function computeRelationsToAdd(all: boolean): RelationParameter[] {
     return parentNames.map(parent => toRelation(parent, anchor.value));
   }
 
-  // ── MODE B : N parents × tous les enfants (ou N enfants × tous les parents)
+  // ── MODE B : relations réelles de CHAQUE table sélectionnée ──
   if (!isChildFirst.value) {
-    return massSelection.value.flatMap(parent =>
-      tablesChilds.value.map(child => toRelation(parent, child.tableName))
+    const perParent = await Promise.all(
+      massSelection.value.map(async parent => {
+        const children = await getChildrenOf(parent);
+        return children.map(c => toRelation(parent, c.tableName));
+      })
     );
+    return perParent.flat();
   }
-  return massSelection.value.flatMap(child =>
-    tablesParents.value.map(parent => toRelation(parent.tableName, child))
+  const perChild = await Promise.all(
+    massSelection.value.map(async child => {
+      const parents = await getParentsOf(child);
+      return parents.map(p => toRelation(p.tableName, child));
+    })
   );
+  return perChild.flat();
 }
 
 /**
@@ -264,15 +270,8 @@ async function addRelations(candidates: RelationParameter[]): Promise<void> {
 // ACTIONS UTILISATEUR
 // ============================================================================
 
-async function handleAdd() {
-  const candidates = computeRelationsToAdd(false);
-  await addRelations(candidates);
-}
-
-async function handleAddAll() {
-  const candidates = computeRelationsToAdd(true);
-  await addRelations(candidates);
-}
+async function handleAdd()    { await addRelations(await computeRelationsToAdd(false)); }
+async function handleAddAll() { await addRelations(await computeRelationsToAdd(true)); }
 
 function handleRemove() {
   const toRemove = new Set(selectedRelations.value);
