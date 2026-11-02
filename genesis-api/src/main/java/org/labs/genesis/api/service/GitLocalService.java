@@ -128,7 +128,9 @@ public class GitLocalService {
             for (Repository repository : plan.repositories()) {
                 Path path = checkedDirectory(repository.path(), root);
                 for (Path parent = path; parent != null; parent = parent.getParent()) {
-                    if (Files.exists(parent.resolve(".git"), LinkOption.NOFOLLOW_LINKS)) {
+                    Path marker = parent.resolve(".git");
+                    if (Files.exists(marker, LinkOption.NOFOLLOW_LINKS)
+                            && (parent.startsWith(root) || !isEmptyGitDirectory(marker))) {
                         throw conflict("Un dépôt Git existe déjà dans le projet ou un parent");
                     }
                 }
@@ -165,6 +167,14 @@ public class GitLocalService {
         } catch (Exception exception) {
             // Les erreurs de Core peuvent contenir un message GitHub : ne jamais les restituer.
             throw new GitOperationException(HttpStatus.INTERNAL_SERVER_ERROR, "Échec Git ; les fichiers et dépôts éventuellement créés sont conservés pour vérification");
+        }
+    }
+
+    private boolean isEmptyGitDirectory(Path marker) throws IOException {
+        if (!Files.isDirectory(marker, LinkOption.NOFOLLOW_LINKS))
+            return false;
+        try (var entries = Files.list(marker)) {
+            return entries.findAny().isEmpty();
         }
     }
 
