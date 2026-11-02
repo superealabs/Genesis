@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class GenerationProfilesStore {
@@ -14,8 +15,8 @@ public class GenerationProfilesStore {
     private List<GenerationParameterRequest> profiles = List.of();
 
     private Connection sourceConnection;
-    private Object sourceFramework;
-    private Object sourceLanguage;
+    private Integer sourceFrameworkId;
+    private Integer sourceLanguageId;
 
     public synchronized void save(ProjectGenerationContext context, List<GenerationParameterRequest> parameters) {
         List<GenerationParameterRequest> snapshot = parameters.stream()
@@ -29,8 +30,8 @@ public class GenerationProfilesStore {
 
         profiles = snapshot;
         sourceConnection = context.getConnection();
-        sourceFramework = context.getFramework();
-        sourceLanguage = context.getLanguage();
+        sourceFrameworkId = context.getFramework() == null ? null : context.getFramework().getId();
+        sourceLanguageId = context.getLanguage() == null ? null : context.getLanguage().getId();
     }
 
     public synchronized List<GenerationParameterRequest> getProfiles(ProjectGenerationContext context) {
@@ -44,11 +45,15 @@ public class GenerationProfilesStore {
     public synchronized void clear() {
         profiles = List.of();
         sourceConnection = null;
-        sourceFramework = null;
-        sourceLanguage = null;
+        sourceFrameworkId = null;
+        sourceLanguageId = null;
     }
 
     private boolean belongsTo(ProjectGenerationContext context) {
-        return sourceConnection == context.getConnection() && sourceFramework == context.getFramework() && sourceLanguage == context.getLanguage();
+        Integer frameworkId = context.getFramework() == null ? null : context.getFramework().getId();
+        Integer languageId = context.getLanguage() == null ? null : context.getLanguage().getId();
+        return sourceConnection == context.getConnection()
+                && Objects.equals(sourceFrameworkId, frameworkId)
+                && Objects.equals(sourceLanguageId, languageId);
     }
 }
