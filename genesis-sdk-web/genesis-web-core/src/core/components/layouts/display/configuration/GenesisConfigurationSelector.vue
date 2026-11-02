@@ -21,15 +21,30 @@
         />
 
         <!-- ═══ PARTIE 2 : Ligne d'actions Assign / Remove ═══ -->
-        <!-- ✅ MODIFICATION : Classes conditionnelles pour one-view vs two-view -->
         <div 
             class="flex"
             :class="viewMode === 'two-view' ? 'flex-col gap-4 w-full' : 'items-center justify-start gap-3'"
         >
+            <!-- 👇 Assign All (au-dessus de Assign) -->
+            <GenesisButton
+                variant="neutral"
+                :size="viewMode === 'two-view' ? 'lg' : 'sm'"
+                :disabled="!selectedConfigId || !canAssignAll"
+                @click="handleAssignAll"
+                :justify-between="true"
+                title="Assigner toutes les entités visibles à cette configuration"
+            >
+                <template v-if="viewMode === 'two-view'" #rightIcon>
+                    <IconChevronsRight />
+                </template>
+                Assign All
+            </GenesisButton>
+
+            <!-- Assign (existant) -->
             <GenesisButton
                 variant="secondary"
                 :size="viewMode === 'two-view' ? 'lg' : 'sm'"
-                :disabled="!selectedConfigId || selectedItems.length === 0"
+                :disabled="!selectedConfigId || !canAssign"
                 @click="handleAssign"
                 :justify-between="true"
                 title="Assigner les éléments sélectionnés à cette configuration"
@@ -40,17 +55,33 @@
                 Assign
             </GenesisButton>
 
+            <!-- Remove (existant) -->
             <GenesisButton
                 :size="viewMode === 'two-view' ? 'lg' : 'sm'"
-                :disabled="!selectedConfigId || selectedItems.length === 0"
+                :disabled="!selectedConfigId || !canRemove"
                 @click="handleRemove"
-                title="Retirer les éléments sélectionnés de cette configuration"
                 :justify-between="true"
+                title="Retirer les éléments sélectionnés de cette configuration"
             >
                 <template v-if="viewMode === 'two-view'" #leftIcon>
                     <IconChevronLeft />
                 </template>
                 Remove
+            </GenesisButton>
+
+            <!-- 👇 Remove All (en dessous de Remove) -->
+            <GenesisButton
+                variant="neutral"
+                :size="viewMode === 'two-view' ? 'lg' : 'sm'"
+                :disabled="!selectedConfigId || !canRemoveAll"
+                @click="handleRemoveAll"
+                :justify-between="true"
+                title="Retirer toutes les entités visibles de cette configuration"
+            >
+                <template v-if="viewMode === 'two-view'" #leftIcon>
+                    <IconChevronsLeft />
+                </template>
+                Remove All
             </GenesisButton>
         </div>
 
@@ -63,6 +94,8 @@ import GenesisConfigurationPanel from './GenesisConfigurationPanel.vue';
 import type { ConfigurationItem } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
 import IconChevronLeft from '../../../ui/icons/IconChevronLeft.vue';
 import IconChevronRight from '../../../ui/icons/IconChevronRight.vue';
+import IconChevronsLeft from '../../../ui/icons/IconChevronsLeft.vue';
+import IconChevronsRight from '../../../ui/icons/IconChevronsRight.vue';
 
 const props = withDefaults(defineProps<{
     configurations: ConfigurationItem[];
@@ -74,8 +107,16 @@ const props = withDefaults(defineProps<{
     selectedItems: string[];
     // ✅ NOUVELLE PROP : Contrôle la disposition des boutons d'action
     viewMode?: 'one-view' | 'two-view';
+    canAssign?: boolean;
+    canRemove?: boolean;
+    canAssignAll?: boolean;    // nouveau (défaut : true)
+    canRemoveAll?: boolean;    // nouveau (défaut : true)
 }>(), {
-    viewMode: 'one-view' // ✅ Valeur par défaut
+    viewMode: 'one-view', // ✅ Valeur par défaut
+    canAssignAll: true,
+    canRemoveAll: true,
+    canAssign: true,
+    canRemove: true,
 });
 
 const emit = defineEmits<{
@@ -90,6 +131,8 @@ const emit = defineEmits<{
     selectConfiguration: [id: string | number];
     assign: [configId: string | number, items: string[]];
     remove: [configId: string | number, items: string[]];
+    assignAll: [configId: string | number];
+    removeAll: [configId: string | number];
 }>();
 
 // ═══ HANDLERS D'ASSOCIATION ═══
@@ -103,6 +146,18 @@ function handleAssign() {
 function handleRemove() {
     if (props.selectedConfigId !== null && props.selectedItems.length > 0) {
         emit('remove', props.selectedConfigId, props.selectedItems);
+    }
+}
+
+function handleAssignAll() {
+    if (props.selectedConfigId !== null) {
+        emit('assignAll', props.selectedConfigId);
+    }
+}
+
+function handleRemoveAll() {
+    if (props.selectedConfigId !== null) {
+        emit('removeAll', props.selectedConfigId);
     }
 }
 </script>

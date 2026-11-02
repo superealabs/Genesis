@@ -85,24 +85,33 @@
               </h3>
 
               <GenesisConfigurationSelector
-                :configurations="configManager.configurations.value"
-                :selected-config-id="configManager.selectedConfigId.value"
-                :filtered-configs="configManager.filteredConfigs.value"
-                :search-query="configManager.searchQuery.value"
-                :can-move-up="configManager.canMoveUp.value"
-                :can-move-down="configManager.canMoveDown.value"
-                :selected-items="selectedItemsInListRef"
-                :view-mode="'two-view'"
-                @update:search-query="(val) => configManager.searchQuery.value = val"
-                @add="handleAddConfig" 
-                @delete="handleDeleteConfig" 
-                @rename="handleRename"
-                @toggle-visibility="handleToggleVisibility"
-                @move-up="configManager.moveUp"
-                @move-down="configManager.moveDown"
-                @select-configuration="configManager.selectConfiguration"
-                @assign="handleAssign"
-                @remove="handleRemove"
+                  :configurations="configManager.configurations.value"
+                  :selected-config-id="configManager.selectedConfigId.value"
+                  :filtered-configs="configManager.filteredConfigs.value"
+                  :search-query="configManager.searchQuery.value"
+                  :can-move-up="configManager.canMoveUp.value"
+                  :can-move-down="configManager.canMoveDown.value"
+                  :selected-items="selectedItemsInListRef"
+                  :view-mode="'two-view'"
+
+                  :can-assign="hasSelectedInUnassigned"
+                  :can-remove="hasSelectedInAssigned"
+                  :can-assign-all="unassignedItems.length > 0"
+                  :can-remove-all="assignedItems.length > 0"
+
+                  @update:search-query="(val) => configManager.searchQuery.value = val"
+                  @add="handleAddConfig"
+                  @delete="handleDeleteConfig"
+                  @rename="handleRename"
+                  @toggle-visibility="handleToggleVisibility"
+                  @move-up="configManager.moveUp"
+                  @move-down="configManager.moveDown"
+                  @select-configuration="configManager.selectConfiguration"
+                  @assign="handleAssign"
+                  @remove="handleRemove"
+
+                  @assign-all="handleAssignAll"
+                  @remove-all="handleRemoveAll"
               />
             </div>
           </GenesisTutorialItem>
@@ -381,6 +390,26 @@ function handleRemove(configId: string | number, items: string[]) {
   persistConfig(configId);
 }
 
+function handleAssignAll(configId: string | number) {
+    // Assigner TOUTES les entités visibles (filtrées) de la colonne "Disponibles"
+    const allVisible = unassignedItems.value;
+    allVisible.forEach(item => {
+        store.assignTableToConfig(configId, item.tableName, item.isView);
+    });
+    store.clearSelectedItemsInList();
+    persistConfig(configId);
+}
+
+function handleRemoveAll(configId: string | number) {
+    // Retirer TOUTES les entités visibles (filtrées) de la colonne "Assignées"
+    const allVisible = assignedItems.value;
+    allVisible.forEach(item => {
+        store.removeTableFromConfig(configId, item.tableName, item.isView);
+    });
+    store.clearSelectedItemsInList();
+    persistConfig(configId);
+}
+
 function handleToggleVisibility(id: string | number) {
   configManager.toggleVisibility(id);
   const cfg = configManager.configurations.value.find(c => c.id === id);
@@ -487,6 +516,24 @@ function getAssignedConfig(item: { tableName: string; isView: boolean }): string
   const state = getAssignmentState(item);
   return state.status === 'assigned' ? state.name : '';
 }
+
+/**
+ * Y a-t-il au moins une entité sélectionnée dans la colonne "Disponibles" (non assignées) ?
+ * Utilisé pour activer/désactiver le bouton "Assign".
+ */
+const hasSelectedInUnassigned = computed(() => {
+  const set = new Set(store.selectedItemsInList);
+  return unassignedItems.value.some(item => set.has(item.tableName));
+});
+
+/**
+ * Y a-t-il au moins une entité sélectionnée dans la colonne "Assignées" ?
+ * Utilisé pour activer/désactiver le bouton "Remove".
+ */
+const hasSelectedInAssigned = computed(() => {
+  const set = new Set(store.selectedItemsInList);
+  return assignedItems.value.some(item => set.has(item.tableName));
+});
 
 // ============================================================================
 // 5. LIFECYCLE & SYNCHRONISATION
