@@ -224,11 +224,11 @@
                 {{#if useMicrosoftExtensionsCachingMemory}}<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.7" />{{else}}{{removeLine}}{{/if}}
                 <PackageReference Include="Swashbuckle.AspNetCore" Version="6.9.0"/>
                 <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.9.0"/>
-                {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>{{/if}}
+                {{#if useEurekaServer}}<PackageReference Include="Steeltoe.Discovery.Eureka" Version="3.2.0"/>
                 <PackageReference Include="Steeltoe.Management.Endpoint.Info" Version="1.1.0" />
                 <PackageReference Include="Steeltoe.Management.Endpoint.Health" Version="1.1.0" />
                 <PackageReference Include="Steeltoe.Management.EndpointCore" Version="3.2.0" />
-                <PackageReference Include="Steeltoe.Management.TracingCore" Version="3.2.0" />
+                <PackageReference Include="Steeltoe.Management.TracingCore" Version="3.2.0" />{{/if}}
                 {{#if useJWT or useAuthCookie}}
                 <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.18" />
                 <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.13.0" />

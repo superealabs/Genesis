@@ -24,7 +24,12 @@ public class FrontendGenerationModel {
     private int viewsId;
 
     public FrontendGenerationModel(ProjectGenerationContext context) {
-        this.port = Integer.parseInt(context.getFrontendPort());
+        String frontendPort = context.getFrontendPort();
+        if ((frontendPort == null || frontendPort.isBlank()) && context.getFrontendFramework() != null) {
+            frontendPort = context.getFrontendFramework().getDefaultPort();
+        }
+        
+        this.port = frontendPort == null || frontendPort.isBlank() ? 0 : Integer.parseInt(frontendPort);
         this.useFrontend = context.isGenerateFrontendApp();
         if (context.getFrontendFramework() != null) {
             this.frameworkId = context.getFrontendFramework().getId();
