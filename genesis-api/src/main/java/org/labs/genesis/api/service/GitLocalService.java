@@ -153,9 +153,8 @@ public class GitLocalService {
                     GitUtils.generateGitIgnoreIfNeeded(file, ignore.directory().toString());
                 }
             }
-            ProjectGenerator generator = new ProjectGenerator();
             for (Repository repository : plan.repositories()) {
-                generator.initGit(repository.path().toString(), repository.remote(), repository.name(), repository.username(), repository.token());
+                initializeRepository(repository);
             }
             return Map.of("success", true, "initialized", true, "branch", "main", "repositories", plan.repositories().stream().map(repository -> root.relativize(repository.path()).toString()).toList());
         } catch (ResponseStatusException exception) {
@@ -166,6 +165,54 @@ public class GitLocalService {
         } catch (Exception exception) {
             // Les erreurs de Core peuvent contenir un message GitHub : ne jamais les restituer.
             throw new GitOperationException(HttpStatus.INTERNAL_SERVER_ERROR, "Échec Git ; les fichiers et dépôts éventuellement créés sont conservés pour vérification");
+        }
+    }
+
+    private void initializeRepository(Repository repository) throws InterruptedException {
+        String path = repository.path().toString();
+        gitStep("initialisation du dépôt local", "Vérifiez l'installation de Git et les droits du dossier.",
+                () -> GitUtils.gitInit(path));
+        gitStep("ajout des fichiers", "Vérifiez les droits des fichiers et le fichier .gitignore.",
+                () -> GitUtils.gitAdd(path));
+        gitStep("création du premier commit", "Vérifiez user.name, user.email, la signature et les hooks Git.",
+                () -> GitUtils.gitCommit(path, "Initialisation du projet"));
+        if (repository.name() != null && !repository.name().isBlank()
+                && repository.username() != null && !repository.username().isBlank()) {
+            gitStep("configuration du remote origin", "Vérifiez le nom du dépôt et le propriétaire GitHub.",
+                    () -> GitUtils.gitRemote(path, repository.username(), repository.name()));
+        }
+        if (repository.remote()) {
+            gitStep("création du dépôt GitHub", "Vérifiez les droits du token et si le dépôt existe déjà.",
+                    () -> GitUtils.createRemoteRepo(repository.token(), repository.name(), false));
+            gitStep("push vers GitHub", "Vérifiez le propriétaire du dépôt et les droits d'écriture du token.",
+                    () -> GitUtils.gitPush(path, repository.username(), repository.token()));
+        }
+    }
+
+    @FunctionalInterface
+    private interface GitAction {
+        void run() throws Exception;
+    }
+
+    private void gitStep(String step, String hint, GitAction action) throws InterruptedException {
+        try {
+            action.run();
+        } catch (InterruptedException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            // Only allow known HTTP status codes out of Core's GitHub error, never its body or token.
+            String status = "";
+            if (step.equals("création du dépôt GitHub") && exception.getMessage() != null) {
+                for (int code : new int[]{400, 401, 403, 404, 409, 422, 429, 500, 502, 503}) {
+                    if (exception.getMessage().startsWith("Erreur GitHub (" + code + ")")) {
+                        status = " (HTTP " + code + ")";
+                        break;
+                    }
+                }
+            }
+            throw new GitOperationException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Échec Git lors de l'étape : " + step + status + ". " + hint
+                            + " Les fichiers et dépôts éventuellement créés sont conservés pour vérification.");
         }
     }
 

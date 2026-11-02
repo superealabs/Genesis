@@ -94,7 +94,7 @@ class GitIntegrationTest {
                 .POST(HttpRequest.BodyPublishers.ofString(body)).build(), HttpResponse.BodyHandlers.ofString());
     }
     private void configure(boolean separate) throws Exception {
-        assertThat(post("/config", "{\"useGit\":true,\"separateRepositories\":" + separate + "}").statusCode()).isEqualTo(200);
+        assertThat(post("/config", "{\"useGit\":true,\"separateRepositories\":" + separate + ",\"useRemoteRepo\":false,\"isNewRemoteRepo\":false,\"repositoryName\":null,\"backendRepositoryName\":null,\"frontendRepositoryName\":null,\"githubUsername\":null,\"githubToken\":null}").statusCode()).isEqualTo(200);
     }
     private String git(Path path, String... args) throws Exception {
         var command = new java.util.ArrayList<>(List.of("git", "-C", path.toString()));
@@ -226,11 +226,11 @@ class GitIntegrationTest {
     @Test void invalidRemoteConfigurationDoesNotReplacePreviousConfig() throws Exception {
         configure(false);
         var previous = store.getContext().getGitConfiguration();
-        assertThat(post("/config", "{\"useGit\":true,\"createRemoteRepository\":true}").statusCode()).isEqualTo(400);
+        assertThat(post("/config", "{\"useGit\":true,\"separateRepositories\":false,\"useRemoteRepo\":true,\"isNewRemoteRepo\":true}").statusCode()).isEqualTo(400);
         assertThat(store.getContext().getGitConfiguration()).isSameAs(previous);
     }
     @Test void githubConfigurationNeverEchoesToken() throws Exception {
-        var response = post("/config", "{\"useGit\":true,\"createRemoteRepository\":true,\"repositoryName\":\"demo\",\"githubUsername\":\"example\",\"githubToken\":\"FAKE-TEST-SECRET\"}");
+        var response = post("/config", "{\"useGit\":true,\"separateRepositories\":false,\"useRemoteRepo\":true,\"isNewRemoteRepo\":true,\"repositoryName\":\"demo\",\"githubUsername\":\"example\",\"githubToken\":\"FAKE-TEST-SECRET\"}");
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.body()).doesNotContain("FAKE-TEST-SECRET", "githubToken");
         assertThat(service.plan(store.getContext(), service.configuration()).toString()).doesNotContain("FAKE-TEST-SECRET");
@@ -334,10 +334,47 @@ class GitIntegrationTest {
         try (var core = localCore()) {
             core.when(() -> GitUtils.gitCommit(anyString(), anyString())).thenThrow(new RuntimeException("FAKE-TEST-SECRET"));
             assertThatThrownBy(service::init).isInstanceOf(ResponseStatusException.class)
-                    .hasMessageContaining("500").hasMessageNotContaining("FAKE-TEST-SECRET").hasNoCause();
+                    .hasMessageContaining("500").hasMessageContaining("création du premier commit")
+                    .hasMessageContaining("user.name").hasMessageContaining("user.email")
+                    .hasMessageNotContaining("FAKE-TEST-SECRET").hasNoCause();
         }
         assertThat(root.resolve(".git")).isDirectory();
         assertThat(root.resolve("Demo/backend.txt")).hasContent("backend");
+    }
+
+    @Test void rejectedGithubCreationIsReportedAndNeverAttemptsPush() throws Exception {
+        var config = enabled();
+        config.setCreateRemoteRepository(true);
+        config.setRepositoryName("demo");
+        config.setGithubUsername("example");
+        config.setGithubToken("FAKE-TEST-SECRET");
+        store.getContext().setGitConfiguration(config);
+        try (var core = localCore()) {
+            core.when(() -> GitUtils.createRemoteRepo(anyString(), anyString(), anyBoolean()))
+                    .thenThrow(new RuntimeException("Erreur GitHub (403) : FAKE-TEST-SECRET PRIVATE-BODY"));
+            assertThatThrownBy(service::init).isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("création du dépôt GitHub").hasMessageContaining("HTTP 403")
+                    .hasMessageNotContaining("FAKE-TEST-SECRET").hasMessageNotContaining("PRIVATE-BODY").hasNoCause();
+            core.verify(() -> GitUtils.gitPush(anyString(), anyString(), anyString()), never());
+        }
+        committed(root);
+    }
+
+    @Test void pushFailureIsReportedWithoutEchoingTheToken() throws Exception {
+        var config = enabled();
+        config.setCreateRemoteRepository(true);
+        config.setRepositoryName("demo");
+        config.setGithubUsername("example");
+        config.setGithubToken("FAKE-TEST-SECRET");
+        store.getContext().setGitConfiguration(config);
+        try (var core = localCore()) {
+            core.when(() -> GitUtils.gitPush(anyString(), anyString(), anyString()))
+                    .thenThrow(new RuntimeException("PRIVATE-BODY FAKE-TEST-SECRET"));
+            assertThatThrownBy(service::init).isInstanceOf(ResponseStatusException.class)
+                    .hasMessageContaining("push vers GitHub")
+                    .hasMessageNotContaining("FAKE-TEST-SECRET").hasMessageNotContaining("PRIVATE-BODY").hasNoCause();
+        }
+        committed(root);
     }
 
     @Test void emptyCommitFailureKeepsRepositoryAndFiles() throws Exception {
