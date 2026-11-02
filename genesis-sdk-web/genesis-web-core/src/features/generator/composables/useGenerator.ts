@@ -319,7 +319,12 @@ export function useGenerator() {
     frontendStore.setAvailableInterfaceLanguages(data); 
   }
 
-
+  async function getChildrenOf(parentTableName: string) {
+    return svc.fetchTablesMetadataChilds(parentTableName);
+  }
+  async function getParentsOf(childTableName: string) {
+    return svc.fetchTablesMetadataParents(childTableName);
+  }
 
   async function testDatabaseConnection(
     config?: DatabaseConfig
@@ -583,5 +588,7 @@ export function useGenerator() {
     frontendAssetContents,  // 👈 ajout (ref)
     getFrontendAssetContent,
     uploadFrontendAsset,
+    getChildrenOf,
+    getParentsOf
   };
 }

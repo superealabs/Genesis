@@ -53,7 +53,7 @@ export const INITIAL_STATE: GeneratorData = {
         useGit: true,
         separateRepositories: false,
         useRemoteRepo: false,
-        isNewRemoteRepo: true,
+        isNewRemoteRepo: false,
         repositoryName: '',
         backendRepositoryName: '',
         frontendRepositoryName: '',
