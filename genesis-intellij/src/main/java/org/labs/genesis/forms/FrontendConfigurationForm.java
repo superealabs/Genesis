@@ -145,7 +145,11 @@ public class FrontendConfigurationForm {
                 .withDescription("Choose image or icon file to load into the editor")
                 .withFileFilter(file -> {
                     String extension = file.getExtension();
-                    return extension.equals("png") || extension.equals("jpeg") || extension.equals("jpg") || extension.equals("svg") || extension.equals("ico");
+                    return extension != null && (extension.equalsIgnoreCase("png")
+                                    || extension.equalsIgnoreCase("jpeg")
+                                    || extension.equalsIgnoreCase("jpg")
+                                    || extension.equalsIgnoreCase("svg")
+                                    || extension.equalsIgnoreCase("ico"));
                 });
 
         logoFileField.addBrowseFolderListener(null, logoChooserDescriptor);

@@ -299,23 +299,25 @@ public final class SpringMvcDashboardQueryRenderer {
 
     private static String renderCondition(String field, String operatorRaw, Object value, List<Object> params) {
         String op = operatorRaw == null ? "is" : operatorRaw.trim().toLowerCase(Locale.ROOT).replace('_', ' ').replaceAll("\\s+", " ");
-        String v = value == null ? null : value.toString();
+        Object v = value;
+        String textValue = value == null ? null : value.toString();
 
         String comparator = COMPARATORS.get(op);
-        if (comparator != null) return renderComparison(field, comparator, v, params);
-
+        if (comparator != null) {
+            return renderComparison(field, comparator, v, params);
+        }
         return switch (op) {
             case "is not", "!=", "<>", "not equals", "ne" -> renderEquals(field, v, true, params);
-            case "contains", "like" -> renderLike(field, v, "%", "%", false, params);
-            case "doesn't contain", "does not contain", "not contains", "not like" -> renderLike(field, v, "%", "%", true, params);
-            case "starts with", "startswith" -> renderLike(field, v, "", "%", false, params);
-            case "ends with", "endswith" -> renderLike(field, v, "%", "", false, params);
+            case "contains", "like" -> renderLike(field, textValue, "%", "%", false, params);
+            case "doesn't contain", "does not contain", "not contains", "not like" -> renderLike(field, textValue, "%", "%", true, params);
+            case "starts with", "startswith" -> renderLike(field, textValue, "", "%", false, params);
+            case "ends with", "endswith" -> renderLike(field, textValue, "%", "", false, params);
             case "is empty" -> "(" + field + " IS NULL OR " + field + " = '')";
             case "is not empty" -> "(" + field + " IS NOT NULL AND " + field + " <> '')";
-            case "between" -> renderBetween(field, v, params);
-            case "in", "is one of", "one of" -> renderIn(field, v, false, params);
-            case "not in", "is not one of" -> renderIn(field, v, true, params);
-            default -> renderEquals(field, v, false, params); // "is", "=", "equals", "eq" et inconnus
+            case "between" -> renderBetween(field, textValue, params);
+            case "in", "is one of", "one of" -> renderIn(field, textValue, false, params);
+            case "not in", "is not one of" -> renderIn(field, textValue, true, params);
+            default -> renderEquals(field, v, false, params);
         };
     }
 
@@ -324,8 +326,13 @@ public final class SpringMvcDashboardQueryRenderer {
         return "?" + params.size();
     }
 
-    private static String renderEquals(String field, String value, boolean negate, List<Object> params) {
-        if (value == null || value.isBlank()) return field + (negate ? " IS NOT NULL" : " IS NULL");
+    private static String renderEquals(String field, Object value, boolean negate, List<Object> params) {
+        if (value == null) {
+            return field + (negate ? " IS NOT NULL" : " IS NULL");
+        }
+        if (value instanceof String text && text.isBlank()) {
+            return field + (negate ? " IS NOT NULL" : " IS NULL");
+        }
         return field + (negate ? " <> " : " = ") + addParameter(value, params);
     }
 
@@ -333,8 +340,14 @@ public final class SpringMvcDashboardQueryRenderer {
         return value == null ? null : field + (negate ? " NOT LIKE " : " LIKE ") + addParameter(prefix + value + suffix, params);
     }
 
-    private static String renderComparison(String field, String operator, String value, List<Object> params) {
-        return value == null || value.isBlank() ? null : field + " " + operator + " " + addParameter(value, params);
+    private static String renderComparison(String field, String operator, Object value, List<Object> params) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof String text && text.isBlank()) {
+            return null;
+        }
+        return field + " " + operator + " " + addParameter(value, params);
     }
 
     private static String renderBetween(String field, String value, List<Object> params) {

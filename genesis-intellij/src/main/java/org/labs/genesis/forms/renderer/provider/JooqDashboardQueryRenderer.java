@@ -199,8 +199,29 @@ public final class JooqDashboardQueryRenderer implements DashboardQueryRenderer<
         if (field == null) {
             return null;
         }
-        return filterBuilder.build(field,
-                null, filter.getColumnName(), filter.getOperator(), filter.getValue() == null ? null : filter.getValue().toString());
+        FieldReference reference = resolveFilterReference(filter, plan, defaultTable);
+        String tableName = reference != null ? reference.table() : defaultTable;
+        String columnName = reference != null ? reference.column() : filter.getColumnName();
+        return filterBuilder.build(field, tableName, columnName, filter.getOperator(), filter.getValue() == null ? null : filter.getValue().toString());
+    }
+
+    private FieldReference resolveFilterReference(DashboardFilter filter, DashboardQueryPlan plan, String defaultTable) {
+        String target = filter.getColumnName();
+        for (DashboardQuerySelection selection : plan.getSelections()) {
+            boolean matches = target.equalsIgnoreCase(selection.getAlias()) || target.equalsIgnoreCase(selection.getColumnName());
+
+            if (!matches) {
+                continue;
+            }
+
+            if (selection.getStatisticExpression() != null) {
+                return FieldReference.parse(selection.getStatisticExpression().getColumnName(), defaultTable);
+            }
+
+            return FieldReference.parse(selection.getColumnName(), defaultTable);
+        }
+
+        return FieldReference.parse(target, defaultTable);
     }
 
     private Field<?> resolveFilterField(DashboardFilter filter, DashboardQueryPlan plan, String defaultTable) {
