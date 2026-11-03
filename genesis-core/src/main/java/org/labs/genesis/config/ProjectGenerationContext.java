@@ -24,6 +24,8 @@ import org.labs.utils.StringUtils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 @Getter
@@ -105,6 +107,7 @@ public class ProjectGenerationContext {
         copy.setFrontendFramework(this.frontendFramework);
         copy.setFrontendLanguage(this.frontendLanguage);
         copy.setConnection(this.connection);
+        copy.setSqlScript(this.sqlScript);
         copy.setViewsTemplate(this.viewsTemplate);
         return copy;
     }
@@ -196,11 +199,38 @@ public class ProjectGenerationContext {
 
             int idx = upper.indexOf("TABLE");
             String afterTable = trimmed.substring(idx + 5).trim();
-            if (afterTable.toUpperCase().startsWith("IF NOT EXISTS")) afterTable = afterTable.substring(13).trim();
+            afterTable = afterTable.replaceFirst("(?i)^IF\\s+NOT\\s+EXISTS\\s+", "").trim();
 
             int openParen = afterTable.indexOf('(');
-            int closeParen = afterTable.lastIndexOf(')');
-            if (openParen == -1 || closeParen <= openParen) continue;
+            if (openParen == -1) continue;
+
+            int depth = 0;
+            int closeParen = -1;
+            boolean inSingle = false;
+            boolean inDouble = false;
+            for (int i = openParen; i < afterTable.length(); i++) {
+                char c = afterTable.charAt(i);
+                if (c == '\'' && !inDouble) {
+                    if (inSingle && i + 1 < afterTable.length() && afterTable.charAt(i + 1) == '\'') {
+                        i++;
+                        continue;
+                    }
+                    inSingle = !inSingle;
+                } else if (c == '"' && !inSingle) {
+                    inDouble = !inDouble;
+                } else if (!inSingle && !inDouble) {
+                    if (c == '(') {
+                        depth++;
+                    } else if (c == ')') {
+                        depth--;
+                        if (depth == 0) {
+                            closeParen = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (closeParen <= openParen) continue;
 
             String tableName = afterTable.substring(0, openParen).replaceAll("[\"``\\[\\]]", "").trim();
             if (tableName.contains(".")) tableName = tableName.substring(tableName.lastIndexOf('.') + 1);
@@ -215,14 +245,78 @@ public class ProjectGenerationContext {
             tables.add(tm);
         }
 
+        // Support ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY ... REFERENCES ...
+        for (String query : clean.split(";")) {
+            String trimmed = query.trim();
+            String upper = trimmed.toUpperCase();
+            if (upper.contains("ALTER TABLE") && upper.contains("FOREIGN KEY") && upper.contains("REFERENCES")) {
+                Pattern alterFkPat = Pattern.compile(
+                        "ALTER\\s+TABLE\\s+(?:ONLY\\s+)?([\\w.`\"\\[\\]]+)\\s+ADD\\s+(?:CONSTRAINT\\s+[\\w.`\"\\[\\]]+\\s+)?FOREIGN\\s+KEY\\s*\\(([^)]+)\\)\\s*REFERENCES\\s+([\\w.`\"\\[\\]]+)\\s*\\(([^)]+)\\)",
+                        Pattern.CASE_INSENSITIVE);
+                Matcher am = alterFkPat.matcher(trimmed);
+                if (am.find()) {
+                    String srcTable = am.group(1).replaceAll("[\"``\\[\\]]", "").trim();
+                    if (srcTable.contains(".")) srcTable = srcTable.substring(srcTable.lastIndexOf('.') + 1);
+                    String fkColName = am.group(2).replaceAll("[\"``\\[\\]]", "").trim();
+                    String refTable = am.group(3).replaceAll("[\"``\\[\\]]", "").trim();
+                    if (refTable.contains(".")) refTable = refTable.substring(refTable.lastIndexOf('.') + 1);
+                    String refCol = am.group(4).replaceAll("[\"``\\[\\]]", "").trim();
+
+                    final String finalSrcTable = srcTable;
+                    final String finalRefTable = refTable;
+                    final String finalRefCol = refCol;
+                    tables.stream().filter(t -> t.getTableName().equalsIgnoreCase(finalSrcTable)).findFirst().ifPresent(t -> {
+                        if (t.getColumns() != null) {
+                            for (ColumnMetadata col : t.getColumns()) {
+                                if (col.getReferencedColumn().equalsIgnoreCase(fkColName)) {
+                                    col.setForeign(true);
+                                    col.setReferencedTable(finalRefTable);
+                                    col.setReferencedPrimaryKeyColumn(StringUtils.toCamelCase(finalRefCol.toLowerCase()));
+                                    t.setHasFk(true);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
         for (TableMetadata tm : tables) {
             if (tm.getColumns() == null) continue;
             for (ColumnMetadata col : tm.getColumns()) {
                 if (col.isForeign() && col.getReferencedTable() != null) {
+                    tm.setHasFk(true);
                     String refTable = col.getReferencedTable();
                     col.setType(Stream.of(refTable).map(String::toLowerCase).map(StringUtils::toCamelCase).map(StringUtils::removeLastS).map(StringUtils::majStart).findFirst().orElse(refTable));
                     col.setName(StringUtils.toCamelCase(col.getReferencedColumn().toLowerCase()) + StringUtils.majStart(StringUtils.toCamelCase(refTable.toLowerCase())));
                     col.setReferencedTable(StringUtils.toCamelCase(refTable));
+
+                    // Resolve referencedColumnType & referencedPrimaryKeyColumn
+                    TableMetadata targetTable = tables.stream()
+                            .filter(t -> t.getTableName().equalsIgnoreCase(refTable))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (targetTable != null && targetTable.getColumns() != null) {
+                        String targetColName = col.getReferencedPrimaryKeyColumn();
+                        ColumnMetadata targetCol = null;
+                        if (targetColName != null) {
+                            targetCol = Arrays.stream(targetTable.getColumns())
+                                    .filter(c -> c.getName().equalsIgnoreCase(targetColName) || c.getReferencedColumn().equalsIgnoreCase(targetColName))
+                                    .findFirst()
+                                    .orElse(null);
+                        }
+                        if (targetCol == null && targetTable.getPrimaryColumn() != null) {
+                            targetCol = targetTable.getPrimaryColumn();
+                        }
+                        if (targetCol != null) {
+                            col.setReferencedColumnType(targetCol.getType());
+                            col.setColumnType(targetCol.getColumnType());
+                            if (col.getReferencedPrimaryKeyColumn() == null) {
+                                col.setReferencedPrimaryKeyColumn(targetCol.getName());
+                            }
+                        }
+                    }
                 }
             }
         }

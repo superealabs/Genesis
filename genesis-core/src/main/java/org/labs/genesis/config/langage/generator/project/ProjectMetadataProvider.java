@@ -66,7 +66,7 @@ public class ProjectMetadataProvider {
             configFile.put("databaseUsername", dbUser != null ? dbUser : "");
             configFile.put("databasePassword", dbPassword != null ? dbPassword : "");
             configFile.put("databaseType", database.getName());
-            configFile.put("databaseVersion", database.getDriverVersion());
+            configFile.put("databaseVersion", database.getDriverVersion() != null ? database.getDriverVersion() : "");
             boolean isOracleLegacy = "Oracle".equalsIgnoreCase(database.getName())
                     && database.getDatabaseMajorVersion() > 0 && database.getDatabaseMajorVersion() < 12;
             String hibernateDialect;

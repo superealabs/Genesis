@@ -824,7 +824,7 @@ public class FrameworkMetadataProvider {
         // Defaults values:
         frameworkSecurityBooleanMetadata.put("useJWT", false);
 
-        String securityType = (String) frameworkConfiguration.get("securityType");
+        String securityType = frameworkConfiguration != null ? (String) frameworkConfiguration.get("securityType") : null;
         Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
         selectedSecurityOption.ifPresent(security -> {
             for(String key : security.getMetadataBooleanTrueKeys()){
@@ -840,7 +840,7 @@ public class FrameworkMetadataProvider {
     }
     private static HashMap<String, Object> getFrameworkCachingTrueBooleanHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
         HashMap<String, Object> frameworkSelectedCacheProviderBooleanMetadata = new HashMap<>();
-        String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
+        String cacheProvider = frameworkConfiguration != null ? (String) frameworkConfiguration.get("cacheProvider") : null;
         Optional<FrameworkCaching> selectedSelectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
         selectedSelectedCacheProviderOption.ifPresent(frameworkCaching -> {
             for(String key : frameworkCaching.getMetadataBooleanTrueKeys()){

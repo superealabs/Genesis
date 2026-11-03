@@ -802,13 +802,22 @@ public class ProjectGenerator {
 
     public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         indicator.setProgress(0.2,"Fetching data from database...");
-        if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
-            indicator.setText2("Fetching tables");
-            context.setEntityTables(connex);
-        }
-        if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
-            indicator.setText("Fetching views");
-            context.setViewTables(connex);
+        if (connex != null) {
+            if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
+                indicator.setText2("Fetching tables");
+                context.setEntityTables(connex);
+            }
+            if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
+                indicator.setText("Fetching views");
+                context.setViewTables(connex);
+            }
+        } else {
+            if (context.getEntityTables() == null) {
+                context.setEntityTables(new ArrayList<>());
+            }
+            if (context.getViewTables() == null) {
+                context.setViewTables(new ArrayList<>());
+            }
         }
         indicator.setText2("Build all entities table");
         indicator.setFraction(0.25);

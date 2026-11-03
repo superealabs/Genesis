@@ -120,9 +120,7 @@ public class SQLRunner {
                 int idx = upper.indexOf("TABLE");
                 if (idx != -1) {
                     String afterTable = trimmed.substring(idx + 5).trim();
-                    if (afterTable.toUpperCase().startsWith("IF NOT EXISTS")) {
-                        afterTable = afterTable.substring(13).trim();
-                    }
+                    afterTable = afterTable.replaceFirst("(?i)^IF\\s+NOT\\s+EXISTS\\s+", "").trim();
                     String[] tokens = afterTable.split("[\\s(]+");
                     if (tokens.length > 0 && !tokens[0].isBlank()) {
                         String name = tokens[0].replaceAll("[\"``\\[\\]]", "").trim();
@@ -183,19 +181,39 @@ public class SQLRunner {
 
         StringBuilder current = new StringBuilder();
         int depth = 0;
+        boolean inSingleQuotes = false;
+        boolean inDoubleQuotes = false;
 
-        for (char c : body.toCharArray()) {
-            if (c == '(') {
-                depth++;
+        for (int i = 0; i < body.length(); i++) {
+            char c = body.charAt(i);
+
+            if (c == '\'' && !inDoubleQuotes) {
+                if (inSingleQuotes && i + 1 < body.length() && body.charAt(i + 1) == '\'') {
+                    current.append(c);
+                    current.append('\'');
+                    i++;
+                    continue;
+                }
+                inSingleQuotes = !inSingleQuotes;
                 current.append(c);
-            } else if (c == ')') {
-                depth--;
+            } else if (c == '"' && !inSingleQuotes) {
+                inDoubleQuotes = !inDoubleQuotes;
                 current.append(c);
-            } else if (c == ',' && depth == 0) {
-                String clause = current.toString().trim();
-                if (!clause.isEmpty())
-                    clauses.add(clause);
-                current.setLength(0);
+            } else if (!inSingleQuotes && !inDoubleQuotes) {
+                if (c == '(') {
+                    depth++;
+                    current.append(c);
+                } else if (c == ')') {
+                    depth--;
+                    current.append(c);
+                } else if (c == ',' && depth == 0) {
+                    String clause = current.toString().trim();
+                    if (!clause.isEmpty())
+                        clauses.add(clause);
+                    current.setLength(0);
+                } else {
+                    current.append(c);
+                }
             } else {
                 current.append(c);
             }
