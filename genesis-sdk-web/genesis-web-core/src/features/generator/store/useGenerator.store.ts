@@ -388,6 +388,7 @@ function reset() {
       } else {
         assoc.associatedTables = assoc.associatedTables.filter(t => t !== tableName);
       }
+      pruneRelations();
     });
 
     generationAssociations.value = generationAssociations.value.filter(
@@ -439,6 +440,16 @@ function reset() {
     relations.value.splice(index, 1); 
   }
 
+  /** Retire les relations dont une des deux tables n'est plus assignée à un profil */
+  function pruneRelations() {
+    const assigned = new Set<string>();
+    generationAssociations.value.forEach(a =>
+      [...a.associatedTables, ...a.associatedViews].forEach(n => assigned.add(n.toLowerCase()))
+    );
+    relations.value = relations.value.filter(r =>
+      assigned.has(r.parentTable.toLowerCase()) && assigned.has(r.childTable.toLowerCase())
+    );
+  }  
   
 
   // --- Étape 8 & 9 : Frontend ---
@@ -541,6 +552,8 @@ function reset() {
     lastInvalidation.value = { id: ++invalidationCounter, steps };
   }
 
+
+
   // ==========================================================================
   // 4. RETURN - Ordre identique à la déclaration
   // ==========================================================================
@@ -589,7 +602,7 @@ function reset() {
 
     // Étape 7 : Relations
     relations, relationsLoaded, getRelations, setRelations, addRelation, removeRelation,
-    tablesParents, tablesChilds,
+    tablesParents, tablesChilds, pruneRelations,
 
     // Étape 8 & 9 : Frontend
     pendingFrontendFramework, setPendingFrontendFramework, setSelectedFrontendFramework, 

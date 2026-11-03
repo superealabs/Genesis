@@ -84,7 +84,9 @@
     size="lg"
     @close="$emit('closeFilter')"
   >
-    <FrameworkFilter 
+    <FrameworkFilter
+      :languages="languages ?? []"
+      :frameworks="allFrameworks ?? frameworks"      
       :filters="filters"
       @update:filters="$emit('update:filters', $event)"
       @close="$emit('closeFilter')" 
@@ -131,6 +133,7 @@ export interface FrameworkLayoutProps {
   searchPlaceholder?: string;
   showBackButton?: boolean;
   frameworks: Framework[];
+  allFrameworks?: Framework[];
   languages?: Language[];
   selectedId?: number;
   frameworkSlots: Map<number, string>;

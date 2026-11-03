@@ -9,11 +9,12 @@
 
         <div
             v-if="hasHoverSlot || feature || (selected && feature)"
-            class="absolute top-0 left-0 z-10 px-4 py-2 rounded text-md font-semibold
+            class="absolute top-0 left-0 z-10 px-4 py-2 rounded-tl rounded-br text-md font-semibold
                 opacity-0 pointer-events-none
                 transition-all duration-200
-                group-hover:opacity-100"
-            :class="selected ? 'bg-primary text-primary-text' : 'bg-bg-secondary text-secondary'"
+                group-hover:opacity-100
+                bg-primary text-primary-text
+                "
         >
             <slot v-if="hasHoverSlot" name="hover" />
             <template v-else>{{ feature }}</template>

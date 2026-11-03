@@ -274,12 +274,12 @@ const { warning, hasWarning, accept: acceptWarning, cancel: cancelWarning } = us
 // 3. INJECTION DES COMPOSABLES (PONTS WIZARD)
 // ============================================================================
 const {
-  searchQuery, displayMode, compareMode, frameworks, selectedId, frameworkSlots,
+  searchQuery, displayMode, compareMode, frameworks, allFrameworks, selectedId, frameworkSlots,
   replaceOptions, showReplacePopup, mouseX, mouseY, filters, detailFramework,
   isFilterOpen, pendingFramework, isLoading, setSearch, setFilters,
   setDisplayMode, handleModeChange, handleSelectWrapper, handleReplaceSelection,
   cancelReplace, openFilter, closeFilter, closeDetail, handleInfo, languages,
-  compare, comparator
+  compare, comparator,
 } = useWizardFramework((framework: Framework) => {
   emit('select-framework', framework);
 });
@@ -346,6 +346,7 @@ const frameworkLayoutProps = computed<FrameworkLayoutProps>(() => ({
   searchPlaceholder: 'Rechercher par nom, core, type...',
   showBackButton: false,
   frameworks: frameworks.value,
+  allFrameworks: allFrameworks.value,
   selectedId: selectedId.value,
   frameworkSlots: frameworkSlots.value,
   replaceOptions: replaceOptions.value,

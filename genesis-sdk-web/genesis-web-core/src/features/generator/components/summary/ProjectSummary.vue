@@ -85,7 +85,7 @@
 import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useFrameworkStore } from '@genesis-labs/web-core/features/frameworks/store/useFramework.store';
-import projectIllustration from '../../assets/project-illustration.png'; // Assure-toi que le chemin est bon
+import projectIllustration from '../../assets/project-summary.png'; // Assure-toi que le chemin est bon
 import { isNoneOnly } from '../../utils/projectConfigHelpers';
 
 const { 

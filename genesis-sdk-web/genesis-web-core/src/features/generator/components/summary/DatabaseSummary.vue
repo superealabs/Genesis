@@ -65,7 +65,7 @@ import { useGenerator } from '@genesis-labs/web-core/features/generator/composab
 import { useDatabaseStore } from '@genesis-labs/web-core/features/database/store/useDatabase.store';
 
 // ✅ IMPORT DE L'ILLUSTRATION BASE DE DONNÉES
-import databaseIllustration from '../../assets/database.png';
+import databaseIllustration from '../../assets/database-summary.png';
 
 const { stepperData } = useGenerator();
 const databaseStore = useDatabaseStore();

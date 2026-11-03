@@ -1,7 +1,8 @@
 // genesis-sdk-web/genesis-web-core/src/features/frameworks/composables/useFrameworks.ts
 import { inject, computed } from 'vue';
 import { storeToRefs } from 'pinia';
-import type { Framework, FrameworkFilters } from '@genesis-labs/shared-types';
+import type { Framework } from '@genesis-labs/shared-types';
+import type { FrameworkFilterState } from '../store/useFramework.store';
 
 import { FRAMEWORK_SERVICE_KEY, type IFrameworkService } from '../types/framework.service.interface';
 import { useFrameworkStore } from '../store/useFramework.store';
@@ -81,7 +82,7 @@ export function useFrameworks() {
   }
 
   function setSearch(query: string) { store.setSearch(query); }
-  function setFilters(newFilters: FrameworkFilters) { store.setFilters(newFilters); }
+  function setFilters(newFilters: FrameworkFilterState) { store.setFilters(newFilters); }
   
   function handleModeChange(newMode: 'selection' | 'compare') {
     compare.switchMode(newMode);
@@ -103,6 +104,7 @@ export function useFrameworks() {
   return {
     // Données
     frameworks: filteredFrameworks,
+    allFrameworks,
     languages,
     filters,
     searchQuery,

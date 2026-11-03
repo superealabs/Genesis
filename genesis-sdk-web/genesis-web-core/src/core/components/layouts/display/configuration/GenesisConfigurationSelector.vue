@@ -27,7 +27,7 @@
         >
             <!-- 👇 Assign All (au-dessus de Assign) -->
             <GenesisButton
-                variant="neutral"
+                :variant="'accent'"
                 :size="viewMode === 'two-view' ? 'lg' : 'sm'"
                 :disabled="!selectedConfigId || !canAssignAll"
                 @click="handleAssignAll"

@@ -87,7 +87,7 @@ import { useGenerator } from '@genesis-labs/web-core/features/generator/composab
 import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store/useFrontend.store';
 
 // ✅ IMPORT DE L'ILLUSTRATION FRONTEND
-import frontendIllustration from '../../assets/frontend.png';
+import frontendIllustration from '../../assets/frontend-summary.png';
 
 const { stepperData, skippedSteps } = useGenerator();
 const frontendStore = useFrontendStore();

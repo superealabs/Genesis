@@ -422,6 +422,8 @@ function handleToggleVisibility(id: string | number) {
 
 async function handleDeleteConfig(id: string | number) {
   configManager.deleteConfiguration(id);
+  store.generationAssociations = store.generationAssociations.filter(a => a.configId !== id);
+  store.pruneRelations();
   await deleteConfiguration(String(id));
 }
 

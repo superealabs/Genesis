@@ -216,20 +216,25 @@ async function computeRelationsToAdd(all: boolean): Promise<RelationParameter[]>
     return parentNames.map(parent => toRelation(parent, anchor.value));
   }
 
-  // ── MODE B : relations réelles de CHAQUE table (visible si "Add All", cochée sinon) ──
-  const sources = all ? visibleMassIds.value : massSelection.value;
+  // ── MODE B : chaque table a ses PROPRES enfants/parents (récupérés via l'API) ──
+  // Add = tables cochées ; Add All = toutes les tables visibles.
+  // Appels SÉQUENTIELS : getChildrenOf/getParentsOf s'appuient sur un état partagé ; lancés en parallèle,
+  // tous les appels lisent le résultat du dernier et un seul parent "gagne".
+  // On fige le sens et la liste avant les `await` (la sélection peut changer pendant les appels).
+  const childFirst = isChildFirst.value;
+  const sources = [...(all ? visibleMassIds.value : massSelection.value)];
+  const result: RelationParameter[] = [];
 
-  const perSource = await Promise.all(
-    sources.map(async name => {
-      if (!isChildFirst.value) {
-        const children = await getChildrenOf(name);
-        return children.map(c => toRelation(name, c.tableName));
-      }
+  for (const name of sources) {
+    if (!childFirst) {
+      const children = await getChildrenOf(name);
+      children.forEach(c => result.push(toRelation(name, c.tableName)));
+    } else {
       const parents = await getParentsOf(name);
-      return parents.map(p => toRelation(p.tableName, name));
-    })
-  );
-  return perSource.flat();
+      parents.forEach(p => result.push(toRelation(p.tableName, name)));
+    }
+  }
+  return result;
 }
 
 

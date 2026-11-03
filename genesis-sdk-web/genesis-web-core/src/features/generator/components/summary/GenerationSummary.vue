@@ -139,7 +139,7 @@ import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/la
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
 import GenesisEntityTable from '@genesis-labs/web-core/core/components/layouts/display/table/GenesisEntityTable.vue';
 
-import generationIllustration from '../../assets/generation-illustration.png';
+import generationIllustration from '../../assets/generation-summary.png';
 
 const { tables, views, stepperData } = useGenerator();
 
