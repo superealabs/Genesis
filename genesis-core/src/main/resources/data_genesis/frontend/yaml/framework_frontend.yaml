@@ -6968,6 +6968,7 @@
                   :get-table-data-callback="set${majStart(this.className)}s"
                   :violations="${minStart(this.className)}Violations"
                   parentClassName="${majStart(className)}"
+                  parentFieldName="${minStart(this.parentName)}"
                   class="w-full"
                 />
                 {{/each}}{{/if}}
@@ -7722,6 +7723,7 @@
           ${minStart(className)}: ${majStart(className)}
           violations?: Record<string, string> | null
           parentClassName?: string
+          parentFieldName?: string
         }>()
 
         const emit = defineEmits<{
@@ -7732,8 +7734,13 @@
         const formModel = ref<${majStart(className)}FormDTO>(${majStart(className)}FormDTO.parse(props.${minStart(className)}))
         {{#if containsFile=true}}const { previewSource, previewAlt, downloadedFile, openImagePreview, closeImagePreview, downloadAsset } = useImagePreview(){{/if}}
         
-        // Masque la FK correspondant au parent courant (résolu à l'exécution via parentClassName)
-        const isParentFK = (fkType: string) => !!props.parentClassName && fkType === props.parentClassName
+        // Masque la FK correspondant au parent courant (résolu à l'exécution via parentFieldName ou parentClassName)
+        const isParentFK = (fieldName: string, fkType: string) => {
+          if (props.parentFieldName) {
+            return fieldName.toLowerCase() === props.parentFieldName.toLowerCase()
+          }
+          return !!props.parentClassName && fkType.toLowerCase() === props.parentClassName.toLowerCase()
+        }
         
         {{#each fieldsFK}}
         const ${minStart(this.name)}SearchField = ${majStart(className)}.getSearchFieldByKey('${minStart(this.name)}')
@@ -7773,7 +7780,7 @@
             {{#each fields}}
             {{#if this.isPrimaryKey}}{{removeLine}}
             {{elseIf this.isForeignKey}}
-            <td v-if="!isParentFK('${majStart(this.type)}')">
+            <td v-if="!isParentFK('${minStart(this.name)}', '${majStart(this.type)}')">
               <GenesisSelectSearchCriteria
                 v-if="${minStart(this.name)}SearchField?.multicriteriaSelect"
                 :violation="violations ? violations['${minStart(this.name)}'] : undefined"
@@ -7857,7 +7864,7 @@
                     <th class="">#</th>
                     {{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
                     {{elseIf this.isForeignKey}}
-                    <th v-if="!isParentFK('${majStart(this.type)}')" class="">${formatReadable(this.name)}</th>
+                    <th v-if="!isParentFK('${minStart(this.name)}', '${majStart(this.type)}')" class="">${formatReadable(this.name)}</th>
                     {{else}}
                     <th class="">${formatReadable(this.name)}</th>
                     {{/if}}{{/each}}{{removeLine}}  
@@ -7871,6 +7878,7 @@
                       :${minStart(className)}="row.data"
                       :violations="violations ? violations[index] : undefined"
                       :parent-class-name="parentClassName"
+                      :parent-field-name="parentFieldName"
                       @request:remove="removeRowHandler(row._internalId)"
                       @udpate:model-value="(rowData) => (row.rowValue = rowData)"
                     />
@@ -7905,10 +7913,16 @@
           initialData?: ${majStart(className)}[]
           violations?: Record<string, string>[]
           parentClassName?: string
+          parentFieldName?: string
         }>()
 
-        // Masque la FK correspondant au parent courant (résolu à l'exécution via parentClassName)
-        const isParentFK = (fkType: string) => !!props.parentClassName && fkType === props.parentClassName
+        // Masque la FK correspondant au parent courant (résolu à l'exécution via parentFieldName ou parentClassName)
+        const isParentFK = (fieldName: string, fkType: string) => {
+          if (props.parentFieldName) {
+            return fieldName.toLowerCase() === props.parentFieldName.toLowerCase()
+          }
+          return !!props.parentClassName && fkType.toLowerCase() === props.parentClassName.toLowerCase()
+        }
         
         const { rows, addRow, removeRow, getTableData } = useTableForm<${majStart(className)}, ${majStart(className)}FormDTO>(
           props.initialData,
