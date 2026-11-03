@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.SQLRunner;
 import org.labs.genesis.listener.MoreButtonListener;
 import org.labs.genesis.services.TableNameStrategy;
 import org.labs.genesis.services.tablename.TableNamePaginatorStrategy;
@@ -167,9 +168,10 @@ public class GenerationOptionForm {
 
     private void handleLinkLabelShown() {
         Connection conn = projectGenerationContext.getConnection();
-        if (conn == null) {
-            System.out.println("Connection not ready yet, skipping populateTableNames");
-            return; // Ne pas appeler populateTableNames() si la connection n'est pas prête
+        boolean hasScript = projectGenerationContext.getSqlScript() != null && !projectGenerationContext.getSqlScript().isBlank();
+        if (conn == null && !hasScript) {
+            System.out.println("Connection and script not ready yet, skipping populateTableNames");
+            return;
         }
 
         populateTableNames();
@@ -178,7 +180,22 @@ public class GenerationOptionForm {
         refreshLinkLabel.setToolTipText("Click to refresh table names");
     }
 
+    public void refreshTablesAndViews() {
+        allTablesNames.clear();
+        allViewsNames.clear();
+        populateTableNames();
+        populateViewNames();
+    }
+
     private void populateTableNames() {
+        if (projectGenerationContext != null && projectGenerationContext.getSqlScript() != null && !projectGenerationContext.getSqlScript().isBlank()) {
+            this.allTablesNames.clear();
+            this.allTablesNames.add(SELECT_ALL);
+            this.allTablesNames.addAll(SQLRunner.extractTableNames(projectGenerationContext.getSqlScript()));
+            tableNamesList.setListData(this.allTablesNames.toArray(new String[0]));
+            return;
+        }
+
         String message = "before tableNamePaginatorStrategy";
         try {
             this.tableNameStrategy = new TableNamePaginatorStrategy(this.projectGenerationContext, SELECT_ALL, this);
@@ -204,6 +221,14 @@ public class GenerationOptionForm {
     }
 
     private void populateViewNames() {
+        if (projectGenerationContext != null && projectGenerationContext.getSqlScript() != null && !projectGenerationContext.getSqlScript().isBlank()) {
+            this.allViewsNames.clear();
+            this.allViewsNames.add(SELECT_ALL);
+            this.allViewsNames.addAll(SQLRunner.extractViewNames(projectGenerationContext.getSqlScript()));
+            viewNamesList.setListData(this.allViewsNames.toArray(new String[0]));
+            return;
+        }
+
         try {
             this.tableNameStrategy = new TableNamePaginatorStrategy(this.projectGenerationContext, SELECT_ALL, this);
             List<String> list = tableNameStrategy.getViewNames();
@@ -225,6 +250,13 @@ public class GenerationOptionForm {
     }
 
     public List<String> getAllTableNames() throws Exception {
+        if (projectGenerationContext != null && projectGenerationContext.getSqlScript() != null && !projectGenerationContext.getSqlScript().isBlank()) {
+            List<String> tables = new ArrayList<>();
+            tables.add(SELECT_ALL);
+            tables.addAll(SQLRunner.extractTableNames(projectGenerationContext.getSqlScript()));
+            return tables;
+        }
+
         Database database = projectGenerationContext.getDatabase();
         Connection connection = projectGenerationContext.getConnection();
 

@@ -1,6 +1,5 @@
 package org.labs.genesis.config.langage.generator.ruleToCode;
 
-
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
@@ -18,73 +17,85 @@ public class CodeInjector {
     public List<CodeBlock> splitCode(String bigString, int idFramework) {
         List<CodeBlock> blocks = new ArrayList<>();
         String pattern = "";
-        String nameImport = "" ;
-        if (idFramework == 1 ) {
+        String nameImport = "";
+        if (idFramework == 1) {
             pattern = "@(Service|Repository):\\s*(\\w+)\\s*((?:import\\s+[\\w\\.\\*]+;\\s*)*)(.*?)(?=@Service|@Repository|$)";
-            nameImport = "import" ;
+            nameImport = "import";
         }
-        if (idFramework == 2 ) {
+        if (idFramework == 2) {
             pattern = "@(Service|Repository):\\s*(\\w+)\\s*((?:using\\s+[\\w\\.\\*]+;\\s*)*)(.*?)(?=@Service|@Repository|$)";
-            nameImport = "using" ;
+            nameImport = "using";
         }
         Pattern p = Pattern.compile(pattern, Pattern.DOTALL);
         Matcher m = p.matcher(bigString);
 
         while (m.find()) {
-            String layer = m.group(1).trim();           // Service oR Repository
-            String className = m.group(2).trim();       // Name of class
-            String importsBlock = m.group(3).trim();    // All import
-            String code = m.group(4).trim();            // Rule code
+            String layer = m.group(1).trim(); // Service oR Repository
+            String className = m.group(2).trim(); // Name of class
+            String importsBlock = m.group(3).trim(); // All import
+            String code = m.group(4).trim(); // Rule code
 
             if (!importsBlock.isEmpty()) {
                 String[] imports = importsBlock.split("\\r?\\n");
                 for (String imp : imports) {
-                    blocks.add(new CodeBlock( nameImport , layer, className, imp.trim()));
+                    blocks.add(new CodeBlock(nameImport, layer, className, imp.trim()));
                 }
             }
             if (!code.isEmpty()) {
                 code = code.replaceAll("^```\\s*", "");
                 code = code.replaceAll("\\s*```$", "");
-                blocks.add(new CodeBlock("none" , layer, className, code));
+                blocks.add(new CodeBlock("none", layer, className, code));
             }
         }
         return blocks;
     }
-    //INJECT CODE IN CLASS
-    public Path injectBlockCondition( int idFramework , String projectPath , String projectName , Path filePath , CodeBlock block ) throws Exception {
+
+    // INJECT CODE IN CLASS
+    public Path injectBlockCondition(int idFramework, String projectPath, String projectName, Path filePath,
+            CodeBlock block) throws Exception {
         String layer = block.layer.trim();
-        layer = layer.replaceAll("\\s", "") ;
+        layer = layer.replaceAll("\\s", "");
 
-        String targetDir = "" ;
-        String subDir ="";
-        String fileType = "" ;
+        String targetDir = "";
+        String subDir = "";
+        String fileType = "";
 
-        if ( idFramework == 1 ) {
-            if (layer.equalsIgnoreCase("Service") || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Service"))) {
+        if (idFramework == 1) {
+            YamlData yamlData = new YamlData();
+            String[] meta = yamlData.extractGroupAndArtifact(Paths.get(projectPath), idFramework);
+            String groupIdPath = meta[0].replace(".", "/");
+            String artifactId = meta[1].toLowerCase();
+
+            if (layer.equalsIgnoreCase("Service")
+                    || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Service"))) {
                 subDir = "services";
-            } else if (layer.equalsIgnoreCase("Repository") || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Repository"))) {
+            } else if (layer.equalsIgnoreCase("Repository")
+                    || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Repository"))) {
                 subDir = "repositories";
             }
-            targetDir = projectPath + "/" + projectName + "/src/main/java/org/example/" + projectName + "/" + subDir;
-            fileType = ".java" ;
+            targetDir = projectPath + "/src/main/java/" + groupIdPath + "/" + artifactId + "/" + subDir;
+            fileType = ".java";
         }
-        if ( idFramework == 2 ) {
-            if (layer.equalsIgnoreCase("Service") || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Service"))) {
+        if (idFramework == 2) {
+            if (layer.equalsIgnoreCase("Service")
+                    || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Service"))) {
                 subDir = "services";
-            } else if (layer.equalsIgnoreCase("Repository") || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Repository"))) {
+            } else if (layer.equalsIgnoreCase("Repository")
+                    || (layer.equalsIgnoreCase(block.nameImport) && block.className.endsWith("Repository"))) {
                 subDir = "repositories";
             }
             targetDir = projectPath + "/" + projectName + "/" + projectName + "/" + subDir + "/implementation";
-            fileType = ".cs" ;
+            fileType = ".cs";
         }
 
-        System.out.println(targetDir) ;
-        filePath = Paths.get(targetDir, block.className + fileType) ;
-        return  filePath;
+        System.out.println(targetDir);
+        filePath = Paths.get(targetDir, block.className + fileType);
+        return filePath;
     }
 
-    public void injectBlocks(@NotNull List<CodeBlock> blocks, String projectPath , int idFramework , String projectName ) throws Exception {
-        Path filePath = null ;
+    public void injectBlocks(@NotNull List<CodeBlock> blocks, String projectPath, int idFramework, String projectName)
+            throws Exception {
+        Path filePath = null;
         for (CodeBlock block : blocks) {
 
             filePath = injectBlockCondition(idFramework, projectPath, projectName, filePath, block);
@@ -94,13 +105,16 @@ public class CodeInjector {
             if (block.nameImport.equals("using")) {
                 injectImportInClass(filePath, block.code);
             }
-            if(block.nameImport.equals("none")) {
+            if (block.nameImport.equals("none")) {
                 injectCodeInClass(filePath, block.code);
             }
         }
     }
 
     public void injectCodeInClass(Path filePath, String codeToInject) throws Exception {
+        if (!Files.exists(filePath)) {
+            throw new Exception("File not found for code injection: " + filePath);
+        }
         String content = Files.readString(filePath);
         int insertPos = content.lastIndexOf("}");
         if (insertPos == -1) {
@@ -113,7 +127,11 @@ public class CodeInjector {
         String newContent = before + "\n\n" + codeIndented + "\n" + after;
         Files.writeString(filePath, newContent);
     }
+
     public void injectImportInClass(Path filePath, String importToInject) throws Exception {
+        if (!Files.exists(filePath)) {
+            throw new Exception("File not found for import injection: " + filePath);
+        }
         String content = Files.readString(filePath);
 
         if (!importToInject.trim().endsWith(";")) {
@@ -137,6 +155,7 @@ public class CodeInjector {
         }
         Files.writeString(filePath, newContent.toString());
     }
+
     private String indentCode(String code) {
         StringBuilder sb = new StringBuilder();
         for (String line : code.split("\n")) {
@@ -145,9 +164,9 @@ public class CodeInjector {
         return sb.toString();
     }
 
-
-    //DELETE CODE IN CLASS
-    public void deleteBlocks(@NotNull List<CodeBlock> blocks, String projectPath, int idFramework, String projectName) throws Exception {
+    // DELETE CODE IN CLASS
+    public void deleteBlocks(@NotNull List<CodeBlock> blocks, String projectPath, int idFramework, String projectName)
+            throws Exception {
         Path filePath = null;
         for (CodeBlock block : blocks) {
 
@@ -184,6 +203,5 @@ public class CodeInjector {
             Files.writeString(filePath, content);
         }
     }
-
 
 }

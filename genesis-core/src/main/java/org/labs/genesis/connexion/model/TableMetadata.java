@@ -96,6 +96,34 @@ public class TableMetadata {
         }
     }
 
+    /**
+     * Initialise ce TableMetadata depuis un body DDL (texte SQL).
+     * Symétrique de initialize() qui lit depuis JDBC.
+     * Délègue la construction des colonnes à database.fetchColumnsFromScript().
+     */
+    public void initializeFromScript(String body, Database database, Language language) {
+        setDatabase(database);
+        setIsView(false);
+        setClassName(
+                Stream.of(getTableName())
+                        .map(String::toLowerCase)
+                        .map(StringUtils::toCamelCase)
+                        .map(StringUtils::majStart)
+                        .map(StringUtils::removeLastS)
+                        .findFirst()
+                        .orElse(getTableName())
+        );
+
+        List<ColumnMetadata> cols = database.fetchColumnsFromScript(body, language);
+
+        for (ColumnMetadata col : cols) {
+            if (col.isPrimary()) setPrimaryColumn(col);
+            if (col.isForeign()) setHasFk(true);
+        }
+        setColumns(cols.toArray(new ColumnMetadata[0]));
+    }
+
+
     public List<String> getAllTableNames(Database database, Connection connection) throws SQLException {
         return database.getAllTableNames(connection);
     }

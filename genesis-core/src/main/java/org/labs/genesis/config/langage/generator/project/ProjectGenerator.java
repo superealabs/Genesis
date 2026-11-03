@@ -823,8 +823,15 @@ public class ProjectGenerator {
         Connection connection = context.getConnection();
 
         if (framework.getUseDB()) {
-            try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> allEntities = generateFullProjectComponents(context, connex, false, indicator);
+            // Mode script SQL : connection=null mais tables déjà construites dans le contexte.
+            // Les gardes isEmpty() dans generateFullProjectComponents évitent tout appel DB.
+            boolean isScriptMode = connection == null
+                    && context.getSqlScript() != null
+                    && !context.getSqlScript().isBlank();
+
+            Connection connex = isScriptMode ? null : database.getConnection(credentials);
+            try (Connection c = (connection != null) ? connection : connex) {
+                List<TableMetadata> allEntities = generateFullProjectComponents(context, c, false, indicator);
                 generateFullProjectStrucutres(context, allEntities, indicator);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -837,13 +844,22 @@ public class ProjectGenerator {
 
     public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         indicator.setProgress(0.2,"Fetching data from database...");
-        if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
-            indicator.setText2("Fetching tables");
-            context.setEntityTables(connex);
-        }
-        if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
-            indicator.setText("Fetching views");
-            context.setViewTables(connex);
+        if (connex != null) {
+            if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
+                indicator.setText2("Fetching tables");
+                context.setEntityTables(connex);
+            }
+            if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
+                indicator.setText("Fetching views");
+                context.setViewTables(connex);
+            }
+        } else {
+            if (context.getEntityTables() == null) {
+                context.setEntityTables(new ArrayList<>());
+            }
+            if (context.getViewTables() == null) {
+                context.setViewTables(new ArrayList<>());
+            }
         }
         indicator.setText2("Build all entities table");
         indicator.setFraction(0.25);
