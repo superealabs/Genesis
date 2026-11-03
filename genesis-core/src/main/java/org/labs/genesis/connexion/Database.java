@@ -178,30 +178,25 @@ public abstract class Database {
 
         String defaultUser;
         String defaultSchema;
-        String defaultDatabase;
         if ("PostgreSQL".equalsIgnoreCase(this.name)) {
             defaultUser = "postgres";
             defaultSchema = "public";
-            defaultDatabase = dbName;
         } else if ("Oracle".equalsIgnoreCase(this.name)) {
             defaultUser = "SYSTEM";
             defaultSchema = "SYSTEM";
             if (effectiveDriverType.isBlank()) effectiveDriverType = "thin";
             if (effectiveSid.isBlank()) effectiveSid = "ORCLCDB";
-            defaultDatabase = effectiveSid;
         } else if ("SQL Server".equalsIgnoreCase(this.name)) {
             defaultUser = "sa";
             defaultSchema = "dbo";
-            defaultDatabase = dbName;
         } else {
             defaultUser = "root";
             defaultSchema = dbName;
-            defaultDatabase = dbName;
         }
 
         databaseMetadata.put("host", "localhost");
         databaseMetadata.put("port", effectivePort);
-        databaseMetadata.put("database", defaultDatabase);
+        databaseMetadata.put("database", dbName);
         databaseMetadata.put("schema", defaultSchema);
         databaseMetadata.put("username", defaultUser);
         databaseMetadata.put("password", "");
@@ -324,31 +319,21 @@ public abstract class Database {
 
             String colName = tokens[0].replaceAll("[\"``\\[\\]]", "").trim();
             String rawType = tokens[1].replaceAll("[\"``\\[\\]]", "").trim();
-
-            if (tokens.length >= 3) {
-                String twoWords = (tokens[1] + " " + tokens[2]).replaceAll("[\"``\\[\\]]", "").trim();
-                if (twoWords.contains("(")) twoWords = twoWords.substring(0, twoWords.indexOf('(')).trim();
-                final String tw = twoWords;
-                if (getTypes().keySet().stream().anyMatch(k -> k.equalsIgnoreCase(tw))) {
-                    rawType = twoWords;
-                } else if (tokens.length >= 4) {
-                    String threeWords = (tokens[1] + " " + tokens[2] + " " + tokens[3]).replaceAll("[\"``\\[\\]]", "").trim();
-                    if (threeWords.contains("(")) threeWords = threeWords.substring(0, threeWords.indexOf('(')).trim();
-                    final String thw = threeWords;
-                    if (getTypes().keySet().stream().anyMatch(k -> k.equalsIgnoreCase(thw))) {
-                        rawType = threeWords;
-                    } else if (tokens.length >= 5) {
-                        String fourWords = (tokens[1] + " " + tokens[2] + " " + tokens[3] + " " + tokens[4]).replaceAll("[\"``\\[\\]]", "").trim();
-                        if (fourWords.contains("(")) fourWords = fourWords.substring(0, fourWords.indexOf('(')).trim();
-                        final String fw = fourWords;
-                        if (getTypes().keySet().stream().anyMatch(k -> k.equalsIgnoreCase(fw))) {
-                            rawType = fourWords;
-                        }
-                    }
-                }
-            }
             if (rawType.contains("("))
                 rawType = rawType.substring(0, rawType.indexOf('(')).trim();
+
+            // Détection des types multi-mots définis dans databases.json (ex: DOUBLE PRECISION, INT UNSIGNED, TIMESTAMP WITH TIME ZONE)
+            StringBuilder candidate = new StringBuilder(rawType);
+            for (int i = 2; i < Math.min(tokens.length, 5); i++) {
+                String tok = tokens[i].replaceAll("[\"``\\[\\]]", "").trim();
+                if (tok.contains("("))
+                    tok = tok.substring(0, tok.indexOf('(')).trim();
+                candidate.append(" ").append(tok);
+                String normalizedCandidate = normalizeColumnType(candidate.toString());
+                if (getTypes().containsKey(normalizedCandidate)) {
+                    rawType = normalizedCandidate;
+                }
+            }
 
             // Résolution via les JSON : databases.json (SQL -> intermédiaire) +
             // languages.json (intermédiaire -> langage cible)
