@@ -24,6 +24,7 @@ public class FrameworkMetadataProvider {
         Credentials credentials = database.getCredentials();
 
         Map<String, Object> map = new HashMap<>();
+
         map.put("host", credentials.getHost());
         map.put("port", credentials.getPort());
         map.put("database", credentials.getDatabaseName());
@@ -184,10 +185,17 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getHashMapIntermediaire(TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata);
+        List<String> fkTypes = fkList.stream()
+                .map(fk -> fk.get("type").toString())
+                .distinct()
+                .toList();
+
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("fields", getFieldsList(tableMetadata));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata));
-        metadata.put("fieldsFK", getFieldsFKList(tableMetadata));
+        metadata.put("fieldsFK", fkList);
+        metadata.put("fkTypes", fkTypes);
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
@@ -196,10 +204,17 @@ public class FrameworkMetadataProvider {
     public static HashMap<String, Object> getHashMapIntermediaire(Language language, TableMetadata tableMetadata, Framework framework, Map<String, Object> frameworkConfiguration, String destinationFolder, String projectName, String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
 
+        List<Map<String,Object>> fkList=getFieldsFKList(tableMetadata, language);
+        List<String> fkTypes = fkList.stream()
+                .map(fk -> fk.get("type").toString())
+                .distinct()
+                .toList();
+
         addGeneralMetadata(metadata, tableMetadata, framework, frameworkConfiguration, destinationFolder, projectName, groupLink);
         metadata.put("fields", getFieldsList(tableMetadata, language));
         metadata.put("fieldsPK", getFieldsPKList(tableMetadata, language));
-        metadata.put("fieldsFK", getFieldsFKList(tableMetadata, language));
+        metadata.put("fieldsFK", fkList);
+        metadata.put("fkTypes", fkTypes);
         metadata.putAll(MereFilleMetadataProvider.getRelationsHashMap(tableMetadata));
 
         return metadata;
@@ -586,7 +601,7 @@ public class FrameworkMetadataProvider {
         return fieldMap;
     }
 
-    public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName) throws Exception {
+    public static Map<String, Object> getHashMapDaoGlobal(Framework framework, List<TableMetadata> tableMetadata, String projectName, boolean useDocker) throws Exception {
         String packageDefault = "";
         if (framework.getModelDao() == null) {
             throw new RuntimeException("ModelDao is not configured for framework: " + framework.getName());
@@ -600,9 +615,11 @@ public class FrameworkMetadataProvider {
 
         String connectionString = database.getConnectionString().get(framework.getLanguageId());
         Map<String, Object> connectionStringMetadata = getCredentialsHashMap(database);
-        if(database.getId() == Constantes.Oracle_ID)
-        {
+        if(database.getId() == Constantes.Oracle_ID) {
             connectionStringMetadata.put("database",database.getSid().toLowerCase());
+        }
+        if(useDocker && "localhost".equalsIgnoreCase(String.valueOf(connectionStringMetadata.get("host")))) {
+            connectionStringMetadata.put("host", "host.docker.internal");
         }
         connectionString = engine.render(connectionString, connectionStringMetadata);
         System.out.println("Renderedeee");
