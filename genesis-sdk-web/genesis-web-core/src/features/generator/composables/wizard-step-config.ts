@@ -21,6 +21,13 @@ import { useGenesisWarning } from '@genesis-labs/web-core/core/composables/ux/fe
 import { toRaw } from 'vue';
 import { Framework } from '@genesis-labs/shared-types';
 import { buildProjectConfigPayload } from '../utils/projectConfigHelpers';
+import {
+  validateStep,
+  validateBeforeGeneration,
+  validateDatabaseFields,
+  validateGenerationParameters,
+  isRestFramework,
+} from '../utils/validators/stepValidators';
 
 
 // ============================================================================
@@ -136,8 +143,17 @@ export const SUMMARY_TO_STEP_MAP: Record<number, StepId> = {
 // =========================================
 
 
-const isRest = (fw: Framework) => fw.type === 'REST API';
-const frontendImpacted = (from: Framework, to: Framework) => !(isRest(from) && isRest(to));
+const frontendImpacted = (from: Framework, to: Framework) => !(isRestFramework(from) && isRestFramework(to));
+
+/**
+ * Affiche les problèmes d'un validator dans le wizard.
+ * Renvoie true s'il y en a (→ `return false` dans le beforeNext).
+ */
+function reject(store: GeneratorStore, issues: string[]): boolean {
+  if (issues.length === 0) return false;
+  store.setWizardError(issues.join('\n'));
+  return true;
+}
 
 export async function confirmFrameworkChange(store: GeneratorStore, next: Framework): Promise<boolean> {
   const owner = store.configFramework;
@@ -282,10 +298,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     beforeNext: async (store, { svc }) => {
       const config = store.stepperData.config;
       
-      if (!config.projectName || !config.projectLocation) {
-        store.setWizardError("Le nom du projet et la localisation sont obligatoires.");
-        return false;
-      }
+      if (reject(store, validateStep('project_config', store))) return false;
 
       const payload = buildProjectConfigPayload(
         toRaw(config),
@@ -363,11 +376,8 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
       console.log("BEFORE NEXT : DATABASE, CONFIG : ", db);
 
-      // 1. Validation basique
-      if (!db.host || !db.port || !db.databaseName || !db.username) {
-        store.setWizardError("L'hôte, le port, le nom de la base de données et l'utilisateur sont obligatoires.");
-        return false;
-      }
+      // 1. Validation des champs
+      if (reject(store, validateDatabaseFields(store))) return false;
 
       // 2. Détection du changement (uniquement les champs métier)
       const configChanged = store.hasDatabaseConfigChanged(db);
@@ -499,6 +509,9 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
           generationParameters.push(param);
         }
         
+        // Au moins un profil avec entités + composants (sinon rien à générer)
+        if (reject(store, validateGenerationParameters(generationParameters))) return false;
+
         const rawParams = generationParameters.map(p => ({
             profileName: p.profileName,
             selectedTables: [...p.selectedTables],
@@ -575,6 +588,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         await Promise.all([
           fdsvc.fetchFrontendFrameworks(frameworkId).then(data => frontendStore.setAvailableFrontendFrameworks(data)),
           fdsvc.fetchInterfaceLanguages().then(data => frontendStore.setAvailableInterfaceLanguages(data)),
+          fdsvc.fetchFrontendProgrammingLanguages().then(data => frontendStore.setAvailableProgrammingLanguages(data))
         ]);
         console.log("[Wizard: frontend_select] Options Frontend chargées");
       } catch (error) {
@@ -584,22 +598,15 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     },
     
     beforeNext: async (store) => {
-      // Si aucun framework n'est sélectionné, c'est skippable, on passe à la suite
-      if (!store.pendingFrontendFramework) {
-        console.log("[Wizard: frontend_select] Frontend ignoré (skippable)");
-        return true;
-      }
-
       if (store.pendingFrontendFramework) {
         store.setSelectedFrontendFramework(store.pendingFrontendFramework);
-        console.log(`[Wizard: frontend_layout] Framework Frontend validé et commit :`, store.pendingFrontendFramework.name);
+        store.unmarkStepAsSkipped('frontend_select');
+        store.unmarkStepAsSkipped('frontend_config');
+        console.log(`[Wizard: frontend_select] Framework Frontend validé et commit :`, store.pendingFrontendFramework.name);
       }
 
-      store.unmarkStepAsSkipped('frontend_select');
-      store.unmarkStepAsSkipped('frontend_config');
-
-      console.log(`[Wizard: frontend_select] Framework Frontend en attente de validation :`, store.pendingFrontendFramework.name);
-      return true;
+      // Sans sélection : autorisé seulement pour un framework REST (frontend skippable)
+      return !reject(store, validateStep('frontend_select', store));
     },
 
     onSkip: async (store) => {
@@ -626,6 +633,8 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
           store.setWizardError("Aucun framework frontend sélectionné.");
           return false;
         }
+
+        if (reject(store, validateStep('frontend_config', store))) return false;
 
         console.log("BEFORE_NEXT FRONTEND SAVED : ", toRaw(frontend));
 
@@ -815,28 +824,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       store.updateGitConfig('useGit', true);
 
       if (repo?.useRemote) {
-        // 1. Validation des champs obligatoires du formulaire
-        if (!repo.username) {
-          store.setWizardError("Le nom d'utilisateur est obligatoire pour un dépôt distant.");
-          return false;
-        }
-        if (repo.isNewRemote && !repo.token) {
-          store.setWizardError("Le Personal Access Token est obligatoire pour créer un nouveau dépôt.");
-          return false;
-        }
-        if (repo.scope === 'separated') {
-          if (!repo.backendRepoName || !repo.frontendRepoName) {
-            store.setWizardError("Les noms des dépôts Backend et Frontend sont obligatoires.");
-            return false;
-          }
-        } else {
-          if (!repo.monorepoName) {
-            store.setWizardError("Le nom du dépôt unique est obligatoire.");
-            return false;
-          }
-        }
-
-        // 2. 🔄 MAPPING (FORCING) : Conversion de RepositoryConfig vers GitConfiguration
+        // 🔄 MAPPING (FORCING) : Conversion de RepositoryConfig vers GitConfiguration
         // Le backend ne supporte que GitHub pour l'instant, on mappe donc les données génériques 
         // vers les champs spécifiques GitHub attendus par l'interface GitConfiguration.
         store.updateGitConfig('separateRepositories', repo.scope === 'separated');
@@ -860,6 +848,9 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         store.updateGitConfig('githubToken', '');
       }
 
+
+      // Validation sur les données mappées (git) : champs du dépôt distant
+      if (reject(store, validateStep('repository_config', store))) return false;
 
       try {
         const gitConfig = toRaw(store.stepperData.git);
@@ -887,6 +878,17 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     beforeNext: async (store, { recentSvc, svc }) => {
       try {
         console.log("[Wizard: summary] Résumé validé. Prêt pour la génération finale.");
+        // Toutes les étapes obligatoires doivent être valides avant de lancer la génération
+        const reports = validateBeforeGeneration(store);
+        if (reports.length > 0) {
+          store.setWizardError(
+            reports
+              .map(r => `${STEP_LABELS[getStepNumberById(r.step) - 1]} : ${r.issues.join(' ')}`)
+              .join('\n')
+          );
+          return false;
+        }
+
         store.setIsGenerating(true);
 
         const startTime = Date.now();

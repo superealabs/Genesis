@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { TableMetadataDto } from '@genesis-labs/shared-types';
 
 import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
@@ -145,6 +145,7 @@ const emit = defineEmits<{
   'update:anchor': [value: string];
   'update:targets': [value: string[]];
   'update:massSelection': [value: string[]];
+  'update:visibleMassIds': [value: string[]];
 }>();
 
 // ============================================================================
@@ -221,5 +222,12 @@ const {
   () => modeBItems.value.map(t => t.tableName),
   () => props.massSelection,
   (ids) => emit('update:massSelection', ids),
+);
+
+// Remonte les éléments visibles du mode B (utilisés par "Add All")
+watch(
+  () => modeBItems.value.map(t => t.tableName),
+  (ids) => emit('update:visibleMassIds', ids),
+  { immediate: true },
 );
 </script>

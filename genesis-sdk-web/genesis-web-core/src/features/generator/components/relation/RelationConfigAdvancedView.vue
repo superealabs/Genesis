@@ -13,6 +13,7 @@
         @update:is-child-first="setDirection"
         @update:anchor="setAnchor"
         @update:targets="setTargets"
+        @update:visible-mass-ids="visibleMassIds = $event"
     />
 
     <!-- Colonne centre -->
@@ -44,8 +45,8 @@
     <WarningPopup
       v-if="duplicateWarning.show"
       title="Relations déjà existantes"
-      :message="`${duplicateWarning.duplicates.length} relation(s) existent déjà et seront ignorées.`"
-      confirm-label="Continuer"
+      :message="duplicateMessage"
+      confirm-label="Mettre à jour"
       cancel-label="Annuler"
       variant="warning"
       size="lg"
@@ -98,6 +99,13 @@ const props = withDefaults(defineProps<{
   confirmOnDuplicate: true,
 });
 
+const duplicateMessage = computed(() => {
+  const yesNo = (v: boolean) => (v ? 'oui' : 'non');
+  return `${duplicateWarning.value.duplicates.length} relation(s) existent déjà : `
+    + `Has Form et Mandatory seront mis à jour selon le modèle `
+    + `(Has Form : ${yesNo(hasForm.value)}, Mandatory : ${yesNo(isMandatory.value)}).`;
+});
+
 // ============================================================================
 // COMPOSABLES & STORE
 // ============================================================================
@@ -130,6 +138,8 @@ const mode = ref<'A' | 'B'>('A');
 
 /** Mode B : tables cochées (parents si ParentFirst, enfants si ChildFirst) */
 const massSelection = ref<string[]>([]);
+/** Mode B : éléments visibles (après recherche), cochés ou non — pour "Add All" */
+const visibleMassIds = ref<string[]>([]);
 
 // Mode B croise avec les listes COMPLÈTES : on vide l'ancre (→ rechargement complet)
 watch(mode, (m) => {
@@ -173,7 +183,7 @@ const canAddAll = computed(() => {
     return !!anchor.value && linked.length > 0;
   }
 
-  return canAdd.value;
+  return visibleMassIds.value.length > 0;
 });
 
 /** "Remove" actif si au moins une relation cochée à droite. */
@@ -206,23 +216,29 @@ async function computeRelationsToAdd(all: boolean): Promise<RelationParameter[]>
     return parentNames.map(parent => toRelation(parent, anchor.value));
   }
 
-  // ── MODE B : relations réelles de CHAQUE table sélectionnée ──
-  if (!isChildFirst.value) {
-    const perParent = await Promise.all(
-      massSelection.value.map(async parent => {
-        const children = await getChildrenOf(parent);
-        return children.map(c => toRelation(parent, c.tableName));
-      })
-    );
-    return perParent.flat();
-  }
-  const perChild = await Promise.all(
-    massSelection.value.map(async child => {
-      const parents = await getParentsOf(child);
-      return parents.map(p => toRelation(p.tableName, child));
+  // ── MODE B : relations réelles de CHAQUE table (visible si "Add All", cochée sinon) ──
+  const sources = all ? visibleMassIds.value : massSelection.value;
+
+  const perSource = await Promise.all(
+    sources.map(async name => {
+      if (!isChildFirst.value) {
+        const children = await getChildrenOf(name);
+        return children.map(c => toRelation(name, c.tableName));
+      }
+      const parents = await getParentsOf(name);
+      return parents.map(p => toRelation(p.tableName, name));
     })
   );
-  return perChild.flat();
+  return perSource.flat();
+}
+
+
+const relationKey = (r: RelationParameter) => `${r.parentTable}::${r.childTable}`;
+
+/** Applique le modèle du panneau de droite (Has Form / Mandatory) à une relation. */
+function applyModel(rel: RelationParameter) {
+  rel.hasForm = hasForm.value;
+  rel.mandatory = isMandatory.value;
 }
 
 /**
@@ -242,27 +258,28 @@ async function addRelations(candidates: RelationParameter[]): Promise<void> {
     return true;
   });
 
-  const existingKeys = new Set(
-    getRelations.value.map(r => `${r.parentTable}::${r.childTable}`)
-  );
+  const existingByKey = new Map(getRelations.value.map(r => [relationKey(r), r]));
 
-  const duplicates = uniqueCandidates.filter(r =>
-    existingKeys.has(`${r.parentTable}::${r.childTable}`)
-  );
-  const newOnes = uniqueCandidates.filter(r =>
-    !existingKeys.has(`${r.parentTable}::${r.childTable}`)
-  );
+  const newOnes = uniqueCandidates.filter(r => !existingByKey.has(relationKey(r)));
 
-  // Confirmation utilisateur si doublons
-  if (duplicates.length > 0 && props.confirmOnDuplicate) {
+  // Doublons dont les valeurs diffèrent du modèle → à mettre à jour (identiques : rien à faire)
+  const toUpdate = uniqueCandidates
+    .map(r => existingByKey.get(relationKey(r)))
+    .filter((existing): existing is RelationParameter =>
+      !!existing &&
+      (!!existing.hasForm !== hasForm.value || !!existing.mandatory !== isMandatory.value)
+    );
+
+  // Confirmation utilisateur avant d'écraser
+  if (toUpdate.length > 0 && props.confirmOnDuplicate) {
     const ok = await new Promise<boolean>((resolve) => {
-      duplicateWarning.value = { show: true, duplicates, resolve };
+      duplicateWarning.value = { show: true, duplicates: toUpdate, resolve };
     });
     if (!ok) return;
   }
 
-  // Ajout effectif (addRelation du store est censé être idempotent,
-  // mais on a déjà filtré les doublons donc pas de rejet attendu)
+  // MAJ DE LA VALEUR DES DOUBLONS
+  toUpdate.forEach(applyModel);
   newOnes.forEach(r => addRelation(r));
 }
 

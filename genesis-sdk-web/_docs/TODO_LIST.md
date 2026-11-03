@@ -1,12 +1,25 @@
-CORRIGER LE BOUTON AddALl avec le mode B
+Generation
+    CORRIGER LE BOUTON AddALl avec le mode B
+        permet de récupérer la liste de tout les parents/enfants visible même non séléctionné et générer les relations enfants/parents pour chaque élément de la liste parents/enfants
 
-BUG :
-Vous passez de ASP.NET Core - MVC à Spring Boot - WEB API REST. Certaines données de la configuration seront réinitialisées.
+FrontendSelect
+    En MVC, on ne peut passer le nombre le choix de frontend
+    en MVC, désactiver le choix de port
 
-Versions du langage et du framework, build tool
-Configuration avancée (logging, sécurité, cache, Hibernate)
 
-se déclenche même après la dernière génération
+Correction de l'interface des recents
+
+Recent Frontend
+    Si le framework selected est mvc,
+    on récupère le frontend recent associé avec
+
+    Si le framework selected n'est pas mvc,
+    on récupère la liste de tous les recents qui ne sont pas associé à un framework
+
+
+
+
+
 
 
 
