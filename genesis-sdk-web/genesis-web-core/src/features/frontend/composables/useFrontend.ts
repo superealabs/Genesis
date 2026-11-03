@@ -92,7 +92,9 @@ export function useFrontend() {
     store.setLoading(true);
     try {
       const data = await svc.fetchFrontendFrameworks();
+      const dataProgrammingLanguage = await svc.fetchFrontendProgrammingLanguages();
       store.setAvailableFrontendFrameworks(data);
+      store.setAvailableProgrammingLanguages(dataProgrammingLanguage);
     } catch (error) {
       console.error('[useFrontend] Erreur lors du chargement des frameworks frontend:', error);
     } finally {

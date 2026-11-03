@@ -3,7 +3,7 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 
 // Types
-import type { FrontendFramework, InterfaceLanguage } from '@genesis-labs/shared-types';
+import type { FrontendFramework, FrontendProgrammingLanguage, InterfaceLanguage } from '@genesis-labs/shared-types';
 import type { DisplayMode } from '@genesis-labs/web-core/core/components/layouts/display/items/GenesisItem.types';
 
 export const useFrontendStore = defineStore('frontend', () => {
@@ -16,6 +16,7 @@ export const useFrontendStore = defineStore('frontend', () => {
   const availableFrontendFrameworks = ref<FrontendFramework[]>([]);
   const selectedFrontendFramework = ref<FrontendFramework | null>(null);
   const availableInterfaceLanguages = ref<InterfaceLanguage[]>([]);
+  const availableProgrammingLanguages = ref<FrontendProgrammingLanguage[]>([]);
 
   // Domaine : Interface Utilisateur (UI)
   const displayMode = ref<DisplayMode>('grid');
@@ -30,6 +31,8 @@ export const useFrontendStore = defineStore('frontend', () => {
   const hasSelectedFrontendFramework = computed(() => selectedFrontendFramework.value !== null);
   
   const getAvailableInterfaceLanguages = computed(() => availableInterfaceLanguages.value);
+
+  const getAvailableProgrammingLanguages = computed(() => availableProgrammingLanguages.value);
 
 
   // ==========================================================================
@@ -49,6 +52,10 @@ export const useFrontendStore = defineStore('frontend', () => {
     availableInterfaceLanguages.value = languages;
   }
 
+  function setAvailableProgrammingLanguages(languages: FrontendProgrammingLanguage[]) {
+    availableProgrammingLanguages.value = languages;
+  }
+
   // Actions : Interface Utilisateur (UI)
   function setDisplayMode(mode: DisplayMode) {
     displayMode.value = mode;
@@ -64,6 +71,7 @@ export const useFrontendStore = defineStore('frontend', () => {
 
   // Action : Réinitialisation complète du store
   function reset() {
+    availableProgrammingLanguages.value = [];
     availableFrontendFrameworks.value = [];
     selectedFrontendFramework.value = null;
     availableInterfaceLanguages.value = [];
@@ -88,11 +96,13 @@ export const useFrontendStore = defineStore('frontend', () => {
     // Getters
     hasSelectedFrontendFramework,
     getAvailableInterfaceLanguages,
+    getAvailableProgrammingLanguages,
     
     // Actions
     setAvailableFrontendFrameworks,
     selectFrontendFramework,
     setAvailableInterfaceLanguages,
+    setAvailableProgrammingLanguages,
     setDisplayMode,
     setSearch,
     setLoading,

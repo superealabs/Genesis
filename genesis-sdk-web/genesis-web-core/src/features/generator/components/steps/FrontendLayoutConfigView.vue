@@ -46,8 +46,8 @@
           </div>
         </div>
 
-        <div class="w-full">
-          <GenesisInput 
+        <div class="w-full" v-if="stepperData.framework?.type != 'MVC'">
+          <GenesisInput  
             :model-value="layoutConfig.port" 
             @update:model-value="(val) => updateFrontendLayout('port', val)"
             type="number" 
@@ -302,7 +302,7 @@ const {
   fetchAvailableLanguages, 
   updateFrontendLayout, 
   toggleLanguage,
-  frontendAssetContents
+  frontendAssetContents,
 } = useGenerator();
 
 const { saveConfiguration, deleteConfiguration, configurations: persistedConfigs, loadFrontendLanguagesConfigurations } = useConfig();
