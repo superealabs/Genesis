@@ -1,3 +1,10 @@
+COrrection du filtre des framworks.
+
+Champs de chargement pour les éléments qui charge
+
+
+Création des visuels pour les erreurs
+
 Generation
     CORRIGER LE BOUTON AddALl avec le mode B
         permet de récupérer la liste de tout les parents/enfants visible même non séléctionné et générer les relations enfants/parents pour chaque élément de la liste parents/enfants

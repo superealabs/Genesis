@@ -61,7 +61,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
-import gitIllustration from '../../assets/git-illustration.png'
+import gitIllustration from '../../assets/repository-summary.png'
 
 const { stepperData } = useGenerator();
 

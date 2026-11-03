@@ -170,6 +170,17 @@ export function useGenerator() {
    * Vérifie dynamiquement si le numéro de l'étape actuelle est une clé dans la config de saut.
    */
   const isCurrentStepSkippable = computed(() => {
+    const currentStepId = getStepIdByNumber(wizard.currentStep.value);
+    
+    // ✅ EXCEPTION DYNAMIQUE : Le frontend est OBLIGATOIRE pour les architectures MVC
+    if (currentStepId === 'frontend_select') {
+      const framework = store.stepperData.framework;
+      if (framework && framework.type === 'MVC') {
+        return false; // Force le bouton "Passer" à être désactivé/masqué
+      }
+    }
+
+    // Fallback sur la configuration statique des étapes skippables
     const skippableConfig = getSkippableStepsConfig();
     return Object.keys(skippableConfig).map(Number).includes(wizard.currentStep.value);
   });
@@ -281,6 +292,25 @@ export function useGenerator() {
       const summaryStepNumber = WIZARD_STEP_ORDER.indexOf('summary') + 1;
       wizard.goToStep(summaryStepNumber);
     }
+  }
+
+  async function goToStep(target: number): Promise<boolean> {
+    const current = wizard.currentStep.value;
+
+    // Navigation vers l'avant : on exécute beforeNext de chaque étape traversée
+    // (sauvegarde backend, validations). Vers l'arrière : rien à valider.
+    if (target > current) {
+      for (let s = current; s < target; s++) {
+        if (wizard.skippedSteps.value.has(s)) continue;
+        const id = getStepIdByNumber(s);
+        const cfg = id && WIZARD_STEP_CONFIG[id];
+        if (cfg && cfg.beforeNext) {
+          store.clearWizardError();
+          if (!(await cfg.beforeNext(store, wizardServices))) return false;
+        }
+      }
+    }
+    return wizard.goToStep(target);
   }
 
   function resetWizard() {
@@ -536,7 +566,7 @@ export function useGenerator() {
     skipCurrentStep: wizard.skipCurrentStep,
     reset: resetWizard,
 
-    goToStep: wizard.goToStep,
+    goToStep,
     backToSummary,
     targetSummaryIndex,
 

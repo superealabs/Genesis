@@ -546,6 +546,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
         store.setTablesParents(tableParents);
         store.setTablesChilds(tableChilds);
         store.setRelations(relations);
+        store.pruneRelations();
         // store
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec du chargement des relations.");
@@ -619,6 +620,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       store.invalidateSteps(invalidated);
     },
     // CORRECTION MAJEURE : Si on saute le choix du frontend, on saute automatiquement sa configuration
+    
     skipCascade: [
       'frontend_config'
     ] 

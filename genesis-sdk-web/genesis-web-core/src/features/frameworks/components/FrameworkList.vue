@@ -28,7 +28,8 @@
           :badge="frameworkSlots?.get(framework.id) ?? null"
           @click="$emit('select', framework, $event)"
           @info="$emit('info', framework)"
-          :feature="getLanguageName(framework.languageId)" 
+          :feature="framework.name"
+          class="!text-xs" 
           :size="'sm'"
         >
           <template #default>

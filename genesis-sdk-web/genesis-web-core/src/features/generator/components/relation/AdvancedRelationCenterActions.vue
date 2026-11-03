@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-3 w-64 shrink-0 justify-center">
-    <GenesisButton :size="'lg'" variant="neutral" :disabled="!canAddAll" @click="$emit('addAll')">
+    <GenesisButton :size="'lg'" variant="accent" :disabled="!canAddAll" @click="$emit('addAll')">
       <template #leftIcon><IconChevronsRight /></template>
       Add All
     </GenesisButton>

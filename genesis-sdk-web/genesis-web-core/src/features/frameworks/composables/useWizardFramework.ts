@@ -67,6 +67,7 @@ export function useWizardFramework(onSelect: (framework: Framework, event?: Mous
   return {
     // Données & État (délégués à useFrameworks)
     frameworks: fw.frameworks,
+    allFrameworks: fw.allFrameworks,
     languages: fw.languages,
     selectedId: fw.selectedId,
     displayMode: fw.displayMode,
