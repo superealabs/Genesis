@@ -4384,6 +4384,7 @@
                                         "/js/**",
                                         "/images/**",
                                         "/fonts/**",
+                                        "/i18n/**",
                                         "/favicon.ico"
                                 ).permitAll()
                                 
@@ -5024,11 +5025,10 @@
 
                     {{#if useLogoLink or hasLogo}}
                     <div class="project-logo">
-                        <img th:src="@{/images${logoUrl}}" alt="">
+                        <img th:src="@{/images/${logoUrl}}" alt="${majStart(projectName)}">
                     </div>
-                    {{else}}
-                    <h1 class="app-name">${majStart(projectName)}</h1>
                     {{/if}}
+                    <h1 class="app-name">${majStart(projectName)}</h1>
 
                 </div>
 
