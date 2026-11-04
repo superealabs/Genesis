@@ -1,6 +1,16 @@
 <template>
+  <GenesisLoader
+    v-if="isLoading && frameworks.length === 0"
+    :loading="true"
+    title="Chargement des frameworks"
+    message="Récupération des données depuis l'API Genesis..."
+    :full-page="false"
+  >
+
+  </GenesisLoader>
+
   <!-- État vide global -->
-  <div v-if="frameworks.length === 0" class="p-6 text-center text-muted bg-bg-light rounded-lg">
+  <div v-if="frameworks.length === 0" class="p-6 text-center mt-12 text-muted">
     Aucun framework disponible.
   </div>
 
@@ -83,16 +93,18 @@ import GenesisItem from '@genesis-labs/web-core/core/components/layouts/display/
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
 import { resolveFrameworkLogo } from '../assets/frameworkLogos';
 import { useRecency } from '@genesis-labs/web-core/core/features/recent/composables/useRecency';
+import GenesisLoader from '@genesis-labs/web-core/core/components/ui/feedback/GenesisLoader.vue';
 
 // ============================================================================
 // 1. PROPS
 // ============================================================================
 const props = defineProps<{
   frameworks: Framework[];
-  languages?: { id: number; name: string }[]; // ✅ AJOUT : On reçoit la liste des langages
+  languages?: { id: number; name: string }[]; // AJOUT : On reçoit la liste des langages
   selectedId?: number;
   display: DisplayMode;
   frameworkSlots?: Map<number, string>;
+  isLoading?: boolean; // AJOUT : Indique si les données sont en cours de chargement
   
   groupBy?: keyof Framework | null;
   groupOptions?: { label: string; value: keyof Framework | null }[];
@@ -119,7 +131,7 @@ const recentFrameworks = computed<Framework[]>(() => {
     .filter((f): f is Framework => f !== undefined);
 });
 
-// ✅ NOUVEAU : Fonction fiable pour récupérer le nom du langage
+// NOUVEAU : Fonction fiable pour récupérer le nom du langage
 const getLanguageName = (languageId: number): string => {
   const lang = props.languages?.find(l => l.id === languageId);
   return lang ? lang.name : 'Inconnu';

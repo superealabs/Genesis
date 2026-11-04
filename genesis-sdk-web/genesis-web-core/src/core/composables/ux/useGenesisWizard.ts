@@ -25,6 +25,7 @@ export function useGenesisWizard(config: WizardConfig) {
   const totalSteps = ref(config.totalSteps);
   const skippedSteps = ref<Set<number>>(new Set());
   const stepDependencies = config.skippableStepsConfig || {};
+  const isAdvancing = ref(false);
 
   const visitedSteps = ref<Set<number>>(new Set([1]));
 
@@ -81,19 +82,23 @@ export function useGenesisWizard(config: WizardConfig) {
   // --- 4. Actions de Navigation ---
 
   async function goToStep(targetStep: number): Promise<boolean> {
+    if (isAdvancing.value) return false;
     if (targetStep < 1 || targetStep > totalSteps.value) return false;
-    
-    // Si on revient en arrière, on réactive les branches sautées
-    if (targetStep < currentStep.value) {
-      unskipBranch(targetStep);
-    }
 
-    currentStep.value = targetStep;
-    await triggerStepEnter(currentStep.value);
-    return true;
+    isAdvancing.value = true;
+    try {
+      if (targetStep < currentStep.value) {
+        unskipBranch(targetStep);
+      }
+      currentStep.value = targetStep;
+      await triggerStepEnter(currentStep.value);
+      return true;
+    } finally {
+      isAdvancing.value = false;
+    }
   }
 
-  async function goToNextStep(isSkip = false): Promise<boolean> {
+  async function doGoToNextStep(isSkip = false): Promise<boolean> {
     if (!isSkip && config.onBeforeNext) {
       const canProceed = await config.onBeforeNext(currentStep.value, { skippedSteps: skippedSteps.value });
       if (!canProceed) return false;
@@ -101,7 +106,7 @@ export function useGenesisWizard(config: WizardConfig) {
 
     if (currentStep.value < totalSteps.value) {
       let nextStep = currentStep.value + 1;
-      
+
       if (!isSkip && skippedSteps.value.has(nextStep)) {
         unskipBranch(nextStep);
       }
@@ -109,7 +114,7 @@ export function useGenesisWizard(config: WizardConfig) {
       while (nextStep <= totalSteps.value && skippedSteps.value.has(nextStep)) {
         nextStep++;
       }
-      
+
       if (nextStep <= totalSteps.value) {
         currentStep.value = nextStep;
         await triggerStepEnter(currentStep.value);
@@ -118,57 +123,65 @@ export function useGenesisWizard(config: WizardConfig) {
     }
     return false;
   }
+
+  async function goToNextStep(isSkip = false): Promise<boolean> {
+    if (isAdvancing.value) return false;
+    isAdvancing.value = true;
+    try {
+      return await doGoToNextStep(isSkip);
+    } finally {
+      isAdvancing.value = false;
+    }
+  }
   
   // ✅ CORRECTION MAJEURE : Gestion intelligente du retour arrière
   async function goToPreviousStep(): Promise<boolean> {
-    if (config.onBeforePrevious) {
-      const canProceed = await config.onBeforePrevious(currentStep.value);
-      if (!canProceed) return false;
-    }
-
-    if (currentStep.value > 1) {
-      let targetStep = currentStep.value - 1;
-      
-      // Si l'étape précédente immédiate est sautée, on applique la logique de retour au déclencheur
-      if (targetStep >= 1 && skippedSteps.value.has(targetStep)) {
-        // On regarde si cette étape sautée est une dépendance d'un déclencheur précédent
-        const trigger = reverseDependencies.get(targetStep);
-        
-        if (trigger !== undefined) {
-          // C'est une dépendance (ex: étape 6), on remonte directement au déclencheur (ex: étape 5)
-          targetStep = trigger;
-        }
-        
-        // Dans tous les cas (que targetStep soit la dépendance ou le déclencheur lui-même),
-        // on réactive la branche pour que l'utilisateur puisse reconsidérer son choix.
-        unskipBranch(targetStep);
+    if (isAdvancing.value) return false;
+    isAdvancing.value = true;
+    try {
+      if (config.onBeforePrevious) {
+        const canProceed = await config.onBeforePrevious(currentStep.value);
+        if (!canProceed) return false;
       }
-      
-      // Sécurité : ne pas descendre en dessous de 1
-      if (targetStep < 1) targetStep = 1;
 
-      currentStep.value = targetStep;
-      await triggerStepEnter(currentStep.value);
-      return true;
+      if (currentStep.value > 1) {
+        let targetStep = currentStep.value - 1;
+        if (targetStep >= 1 && skippedSteps.value.has(targetStep)) {
+          const trigger = reverseDependencies.get(targetStep);
+          if (trigger !== undefined) targetStep = trigger;
+          unskipBranch(targetStep);
+        }
+        if (targetStep < 1) targetStep = 1;
+
+        currentStep.value = targetStep;
+        await triggerStepEnter(currentStep.value);
+        return true;
+      }
+      return false;
+    } finally {
+      isAdvancing.value = false;
     }
-    return false;
   }
 
-  function skipCurrentStep() {
-
-    if (config.onSkip) {
-      config.onSkip(currentStep.value);
+  async function skipCurrentStep() {   // ✅ devient async
+    if (isAdvancing.value) return;
+    isAdvancing.value = true;
+    try {
+      if (config.onSkip) {
+        await config.onSkip(currentStep.value);   // ✅ await
+      }
+      const stepsToSkip = resolveDependencies(currentStep.value);
+      stepsToSkip.forEach(step => skippedSteps.value.add(step));
+      await doGoToNextStep(true);                  // ✅ await + non protégé
+    } finally {
+      isAdvancing.value = false;
     }
-
-    const stepsToSkip = resolveDependencies(currentStep.value);
-    stepsToSkip.forEach(step => skippedSteps.value.add(step));
-    goToNextStep(true); 
   }
 
-  function resetWizard() {
+  async function resetWizard() {
     currentStep.value = 1;
     skippedSteps.value.clear();
-    triggerStepEnter(currentStep.value);
+    await triggerStepEnter(currentStep.value);
   }
 
   // --- 5. Initialisation ---
@@ -194,6 +207,7 @@ export function useGenesisWizard(config: WizardConfig) {
     goToPreviousStep,
     skipCurrentStep,
     resetWizard,
-    invalidateSteps
+    invalidateSteps,
+    isAdvancing
   };
 }

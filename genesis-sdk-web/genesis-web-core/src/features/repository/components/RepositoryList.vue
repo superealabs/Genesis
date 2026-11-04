@@ -1,6 +1,6 @@
 <template>
   <!-- État vide global -->
-  <div v-if="providers.length === 0" class="p-6 text-center text-muted bg-bg-light rounded-lg">
+  <div v-if="providers.length === 0" class="p-6 text-center text-muted mt-12">
     Aucun fournisseur de dépôt disponible.
   </div>
 

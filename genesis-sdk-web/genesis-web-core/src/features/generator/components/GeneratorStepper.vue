@@ -14,7 +14,8 @@
     :is-loading="store.isGenerating"
     :hide-footer="store.isGenerationComplete"
 
-    :show-tutorial-trigger="true" 
+    :show-tutorial-trigger="true"
+    :is-advancing="isAdvancing"
 
 
     @close="handleClose"
@@ -228,6 +229,7 @@ const props = defineProps<{
   visitedSteps?: Set<number>;
   stepLabels?: string[];
   isGenerating?: boolean;
+  isAdvancing?: boolean;
 }>();
 
 const emit = defineEmits<{

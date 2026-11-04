@@ -35,7 +35,17 @@
     "commands": [
       {
         "command": "genesis.helloWorld",
-        "title": "Hello World"
+        "title": "Genesis : Home page"
+      },
+      {
+        "command": "genesis.resetRecent",
+        "title": "Genesis: Réinitialiser les récents",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "genesis.resetConfig",
+        "title": "Genesis: Réinitialiser les configurations",
+        "icon": "$(trash)"
       }
     ],
     "configuration": {
@@ -70,8 +80,68 @@
             "Forcer le mode sombre"
           ],
           "description": "Mode de couleur de l'interface Genesis"
+        },
+        "genesis.recentResetScope": {
+          "type": "string",
+          "default": "all",
+          "enum": [
+            "all",
+            "frameworks",
+            "databases",
+            "frontends"
+          ],
+          "enumDescriptions": [
+            "Réinitialise toutes les catégories de récents",
+            "Réinitialise uniquement les frameworks récents",
+            "Réinitialise uniquement les bases de données récentes",
+            "Réinitialise uniquement les frontends récents"
+          ],
+          "description": "Portée de la réinitialisation des éléments récents"
+        },
+        "genesis.configResetScope": {
+          "type": "string",
+          "default": "all",
+          "enum": [
+            "all",
+            "framework_technical-stack",
+            "framework_advanced-configuration",
+            "generator_generation-options",
+            "frontend_languages-configuration"
+          ],
+          "enumDescriptions": [
+            "Réinitialise toutes les configurations",
+            "Réinitialise uniquement les stacks techniques de frameworks",
+            "Réinitialise uniquement les configurations avancées de frameworks",
+            "Réinitialise uniquement les options de génération",
+            "Réinitialise uniquement les configurations de langues frontend"
+          ],
+          "description": "Portée de la réinitialisation des configurations Genesis"
         }
+
       }
+    },
+    "menus": {
+      "editor/title": [
+        {
+          "command": "genesis.resetRecent",
+          "when": "activeWebviewPanelId == 'genesisWebview'",
+          "group": "navigation"
+        },
+        {
+          "command": "genesis.resetConfig",
+          "when": "activeWebviewPanelId == 'genesisWebview'",
+          "group": "navigation"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "genesis.resetRecent"
+        },
+        { 
+          "command": "genesis.resetConfig", 
+          "when": "true" 
+        }
+      ]
     }
   },
   "scripts": {

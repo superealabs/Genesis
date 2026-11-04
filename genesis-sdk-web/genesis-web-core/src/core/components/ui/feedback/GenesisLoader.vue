@@ -29,8 +29,8 @@
                 xmlns="http://www.w3.org/2000/svg"
                 class="animate-spin"
             >
-                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" class="text-secondary opacity-30" />
-                <path d="M 12 3 A 9 9 0 0 1 21 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="text-accent" />
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2.5" class="text-bg-neutral-genesis opacity-30" />
+                <path d="M 12 3 A 9 9 0 0 1 21 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="text-primary" />
             </svg>
             <div v-if="title || message" class="flex flex-col items-center gap-1 px-6">
                 <span v-if="title" class="text-base font-medium text-text">{{ title }}</span>

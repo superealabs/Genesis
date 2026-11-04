@@ -11,9 +11,9 @@
         <!-- Titre de la section avec compteur -->
         <template #title>
           <span class="text-2xl font-semibold">{{ section.title }}</span>
-          <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border">
+          <!-- <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border">
             {{ section.items.length }}
-          </span>
+          </span> -->
         </template>
 
         <!-- Liste générique (reçoit les éléments via le scoped slot) -->

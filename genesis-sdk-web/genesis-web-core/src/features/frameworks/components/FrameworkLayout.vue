@@ -62,6 +62,7 @@
       :group-by="groupBy"
       :group-options="frameworkGroupOptions"
       :group-labels="dynamicGroupLabels"
+      :isLoading="isLoading"
       @select="(fw, ev) => $emit('select', fw, ev)"
       @info="(fw) => $emit('info', fw)"
       @update:groupBy="$emit('update:groupBy', $event)"
