@@ -37,7 +37,8 @@ const {
     targetSummaryIndex,
     goToStep,
     hasReachedSummary,
-    resetAllConfig
+    resetAllConfig,
+    isAdvancing
 } = useGeneratorVsc();
 
 const store = useGeneratorStore();
@@ -113,6 +114,7 @@ function handleOpenProject() {
         :has-reached-summary="hasReachedSummary"
         :visited-steps="visitedSteps"
         :step-labels="STEP_LABELS"
+        :is-advancing="isAdvancing"
 
         @close="handleClose"
         @previous="goToPreviousStep"

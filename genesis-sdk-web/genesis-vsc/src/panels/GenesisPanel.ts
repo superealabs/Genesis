@@ -3,6 +3,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { GenesisApiService } from '../services/GenesisApiService';
 import { WebviewMessageRouter } from '../services/WebviewMessageRouter';
+import type { RecentResetScope } from '../services/core/recent/RecentStorageService';
+import type { ConfigResetScope } from '../services/core/config/ConfigStorageService';
 
 export class GenesisPanel {
     private static instance: GenesisPanel | undefined;
@@ -143,6 +145,23 @@ export class GenesisPanel {
 
             // ── 2. Messages Métier (Délégués au Routeur) ────────────────────
             await this.messageRouter.route(message);
+        });
+    };
+
+    /**
+     * Notifie la webview qu'un reset de récents a eu lieu pour rafraîchir l'UI.
+     */
+    static notifyRecentReset(scope: RecentResetScope): void {
+        GenesisPanel.instance?.panel.webview.postMessage({
+            type: 'recentReset',
+            payload: { scope }
+        });
+    }
+
+    static notifyConfigReset(scope: ConfigResetScope): void {
+        GenesisPanel.instance?.panel.webview.postMessage({
+            type: 'configReset',
+            payload: { scope }
         });
     }
 }

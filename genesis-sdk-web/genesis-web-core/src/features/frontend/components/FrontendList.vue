@@ -1,6 +1,6 @@
 <template>
   <!-- État vide global -->
-  <div v-if="frontends.length === 0" class="p-6 text-center text-muted bg-bg-light rounded-lg">
+  <div v-if="frontends.length === 0" class="p-6 text-center text-muted mt-12">
     Aucun framework frontend disponible.
   </div>
 

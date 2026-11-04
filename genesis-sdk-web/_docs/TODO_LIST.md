@@ -1,18 +1,6 @@
-COrrection du filtre des framworks.
-
 Champs de chargement pour les éléments qui charge
 
-
 Création des visuels pour les erreurs
-
-Generation
-    CORRIGER LE BOUTON AddALl avec le mode B
-        permet de récupérer la liste de tout les parents/enfants visible même non séléctionné et générer les relations enfants/parents pour chaque élément de la liste parents/enfants
-
-FrontendSelect
-    En MVC, on ne peut passer le nombre le choix de frontend
-    en MVC, désactiver le choix de port
-
 
 Correction de l'interface des recents
 
@@ -22,13 +10,6 @@ Recent Frontend
 
     Si le framework selected n'est pas mvc,
     on récupère la liste de tous les recents qui ne sont pas associé à un framework
-
-
-
-
-
-
-
 
 NOTE IMPORTANTE, on ne manipule que des tableaux d'élément visible
 

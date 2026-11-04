@@ -19,6 +19,13 @@
             />
         </div>
 
+        <GenesisLoaderOverlay
+            :visible="isAdvancing && !isLoading"
+            size="md"
+            title="Validation en cours"
+            message="Vérification des données avant l'étape suivante..."
+        />
+
         <!-- Conteneur principal -->
         <div class="relative flex flex-col flex-1 min-h-0 h-full">
             
@@ -100,6 +107,7 @@ import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisLoading from '@genesis-labs/web-core/core/components/ui/feedback/GenesisLoading.vue';
 import type { PopupSize, PopupPosition } from './popup.types';
+import GenesisLoaderOverlay from '../../ui/feedback/GenesisLoaderOverlay.vue';
 
 
 withDefaults(defineProps<{
@@ -116,6 +124,7 @@ withDefaults(defineProps<{
     visitedSteps?: Set<number>;
     stepLabels?: string[];
     isLoading?: boolean;
+    isAdvancing?: boolean;
     disableNext?: boolean;
     hideFooter?: boolean;
 }>(), {
@@ -127,6 +136,7 @@ withDefaults(defineProps<{
     isSkippable: false,
     showBackToSummary: false,
     isLoading: false,
+    isAdvancing: false,
     disableNext: false,
     hideFooter: false,
 });

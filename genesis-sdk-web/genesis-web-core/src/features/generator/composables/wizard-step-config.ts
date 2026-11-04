@@ -541,11 +541,11 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       try {
         const tableParents = await svc.fetchTablesMetadataParents();
         const tableChilds = await svc.fetchTablesMetadataChilds();
-        const relations = await svc.fetchRelations();
+        // const relations = await svc.fetchRelations();
 
         store.setTablesParents(tableParents);
         store.setTablesChilds(tableChilds);
-        store.setRelations(relations);
+        // store.setRelations(relations);
         store.pruneRelations();
         // store
       } catch (error) {

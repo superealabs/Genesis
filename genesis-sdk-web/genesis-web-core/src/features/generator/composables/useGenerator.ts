@@ -532,6 +532,7 @@ export function useGenerator() {
     totalSteps: wizard.totalSteps,
     isFirstStep: wizard.isFirstStep,
     isLastStep: wizard.isLastStep,
+    isAdvancing: wizard.isAdvancing,
     skippedSteps,
 
     isCurrentStepSkippable,

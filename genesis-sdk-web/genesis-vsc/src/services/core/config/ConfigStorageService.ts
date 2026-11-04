@@ -4,6 +4,12 @@ import type { GenesisConfig, ConfigType, IConfigService } from '@genesis-labs/sh
 
 const STORAGE_KEY = 'genesis_configs';
 
+/**
+ * Portée de réinitialisation des configs.
+ * 'all' = toutes les configs, sinon un ConfigType précis.
+ */
+export type ConfigResetScope = 'all' | ConfigType;
+
 export class ConfigStorageService implements IConfigService {
   constructor(private context: vscode.ExtensionContext) {}
 
@@ -104,5 +110,23 @@ export class ConfigStorageService implements IConfigService {
       }
     }
     return null;
+  }
+
+  /**
+   * Réinitialise les configs.
+   * - sans argument ou scope='all' → supprime TOUTES les configs
+   * - scope=<ConfigType> → supprime uniquement les configs de ce type
+   * @returns le nombre de configs supprimées
+   */
+  async clearConfigs(scope?: ConfigResetScope): Promise<number> {
+    const allConfigs = await this.getAll();
+
+    const remaining = (!scope || scope === 'all')
+      ? []
+      : allConfigs.filter(c => c.configType !== scope);
+
+    const deletedCount = allConfigs.length - remaining.length;
+    await this.context.globalState.update(STORAGE_KEY, remaining);
+    return deletedCount;
   }
 }
