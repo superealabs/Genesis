@@ -120,7 +120,7 @@ public class ColumnMetadata {
         setUiType(frontendLanguage.getInputTypes().get(this.getFrontEndType()));
     }
 
-    private void setUiType(String uiType)
+    public void setUiType(String uiType)
     {
         this.uiType = uiType;
     }

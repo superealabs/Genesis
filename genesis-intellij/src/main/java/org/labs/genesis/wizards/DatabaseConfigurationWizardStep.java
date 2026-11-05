@@ -22,13 +22,19 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
     private final DatabaseConfigurationForm databaseConfigurationForm;
     private final GenerationContextManager generationContextManager;
     private final List<ProjectGenerationContext> listProjectGenerationContexts;
+    private final DataSourceChoiceWizardStep dataSourceChoiceWizardStep;
     private boolean ignoreUpdates = false;
 
-    public DatabaseConfigurationWizardStep(GenerationContextManager generationContextManager, List<ProjectGenerationContext> listProjectGenerationContexts) {
+    public DatabaseConfigurationWizardStep(GenerationContextManager generationContextManager, List<ProjectGenerationContext> listProjectGenerationContexts, DataSourceChoiceWizardStep dataSourceChoiceWizardStep) {
         this.listProjectGenerationContexts = listProjectGenerationContexts;
-        databaseConfigurationForm = new DatabaseConfigurationForm(listProjectGenerationContexts);
+        this.databaseConfigurationForm = new DatabaseConfigurationForm(listProjectGenerationContexts);
         this.generationContextManager = generationContextManager;
+        this.dataSourceChoiceWizardStep = dataSourceChoiceWizardStep;
         listenerAddBase();
+    }
+
+    public DatabaseConfigurationWizardStep(GenerationContextManager generationContextManager, List<ProjectGenerationContext> listProjectGenerationContexts) {
+        this(generationContextManager, listProjectGenerationContexts, null);
     }
     private boolean checkBaseInMultiProject() {
         for (ProjectGenerationContext projectGenerationContext : listProjectGenerationContexts) {
@@ -266,7 +272,9 @@ public class DatabaseConfigurationWizardStep extends ModuleWizardStep {
     @Override
     public boolean isStepVisible() {
         Framework framework = generationContextManager.getContext().getFramework();
+        boolean isDatabase = dataSourceChoiceWizardStep == null || dataSourceChoiceWizardStep.isDatabaseSelected();
         return this.generationContextManager.getContext().getGenerationProcess().isGenerateProjectProcess()
+                && isDatabase
                 && framework != null && framework.getUseDB();
     }
 }

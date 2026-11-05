@@ -25,11 +25,12 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         List<ProjectGenerationContext> listContexts = new ArrayList<>();
         GenerationContextManager manager = new GenerationContextManager(context);
 
+        DataSourceChoiceWizardStep dataSourceChoiceWizardStep = new DataSourceChoiceWizardStep(manager);
         GitConfigurationWizardStep gitConfigurationWizardStep = new GitConfigurationWizardStep(manager);
         DockerConfigurationWizardStep dockerConfigurationWizardStep = new DockerConfigurationWizardStep(manager);
         SpecificConfigurationWizardStep specificConfigurationWizardStep = new SpecificConfigurationWizardStep(manager, listContexts);
-        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(manager, listContexts);
-        SQLRunnerWizardStep sqlRunnerWizardStep = new SQLRunnerWizardStep(manager);
+        DatabaseConfigurationWizardStep databaseConfigurationWizardStep = new DatabaseConfigurationWizardStep(manager, listContexts, dataSourceChoiceWizardStep);
+        ScriptDatabaseConfigurationWizardStep scriptDatabaseConfigurationWizardStep = new ScriptDatabaseConfigurationWizardStep(manager, dataSourceChoiceWizardStep);
         RelationshipConfigurationWizardStep relationshipConfigurationWizardStep = new RelationshipConfigurationWizardStep(manager);
         GenerationOptionWizardStep generationOptionWizardStep = new GenerationOptionWizardStep(manager, listContexts, specificConfigurationWizardStep, relationshipConfigurationWizardStep);
 
@@ -44,12 +45,13 @@ public class GenesisWizardDialog extends AbstractWizard<ModuleWizardStep> {
         InitializationWizardStep initializationWizardStep = new InitializationWizardStep(manager, listContexts, specificConfigurationWizardStep, frontendConfigurationWizardStep);
 
         stepsList.add(firstWizardStep);
+        stepsList.add(dataSourceChoiceWizardStep);
         stepsList.add(ruleToCodeWizardStep);
         stepsList.add(ruleToCodeWizardAIStep);
         stepsList.add(syncProjectLoaderWizardStep);
         stepsList.add(initializationWizardStep);
         stepsList.add(databaseConfigurationWizardStep);
-        stepsList.add(sqlRunnerWizardStep);
+        stepsList.add(scriptDatabaseConfigurationWizardStep);
         stepsList.add(generationOptionWizardStep);
         stepsList.add(relationshipConfigurationWizardStep);
         stepsList.add(frontendConfigurationWizardStep);
