@@ -111,7 +111,7 @@
                 <IconHelp :size="16" />
               </GenesisButtonIcon>
             </div>
-            <div class="flex justify-between w-full">
+            <div class="flex justify-between gap-6 w-full">
               <div class="flex-1 w-full flex flex-col gap-4">
                 <GenesisInput 
                   v-if="!hideLanguageVersion"
@@ -121,7 +121,8 @@
                   @update:model-value="(val) => updateConfig('languageVersion', val)"
                   size="lg" 
                   label="Version du Language" 
-                  placeholder="Sélectionner..." 
+                  placeholder="Sélectionner..."
+                  fill-width 
                 />
 
                 <GenesisInput
@@ -132,7 +133,8 @@
                   @update:model-value="(val) => updateConfig('buildTool', val)"
                   size="lg" 
                   label="Build Tool" 
-                  placeholder="Sélectionner..." 
+                  placeholder="Sélectionner..."
+                  fill-width 
                 />
 
                 <div v-if="showGroupId" class="space-y-1">
@@ -141,7 +143,8 @@
                     @update:model-value="(val) => updateConfig('groupId', val)"
                     size="lg" 
                     label="Group ID" 
-                    placeholder="com.example" 
+                    placeholder="com.example"
+                    fill-width
                   />
                 </div>
 
@@ -153,7 +156,8 @@
                   @update:model-value="(val) => updateConfig('frameworkVersion', val)"
                   size="lg" 
                   label="Version du Framework" 
-                  placeholder="Sélectionner..." 
+                  placeholder="Sélectionner..."
+                  fill-width
                 />
 
               </div>
