@@ -1,6 +1,7 @@
 package org.labs.genesis.config.langage.generator.project;
 
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -108,7 +109,7 @@ public class ProjectMetadataProvider {
 
     public static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database,
             Language language, Framework framework, Map<String, Object> langageConfiguration,
-            Map<String, Object> frameworkConfiguration) {
+            Map<String, Object> frameworkConfiguration, boolean hasPoint) {
         HashMap<String, Object> dependencyFileMap = new HashMap<>();
         dependencyFileMap.putAll(langageConfiguration);
         dependencyFileMap.putAll(frameworkConfiguration);
@@ -130,6 +131,8 @@ public class ProjectMetadataProvider {
                 framework, frameworkConfiguration);
         allDependencies.addAll(additionalCacheProviderDependencies);
         dependencyFileMap.put("isOracleLegacy", isOracleLegacy);
+
+        
         if (isOracleLegacy) {
             HashMap<String, String> oracleLegacyDependency = new HashMap<>();
             oracleLegacyDependency.put("groupId", "org.hibernate.orm");
@@ -143,6 +146,17 @@ public class ProjectMetadataProvider {
         if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
             allDependencies.removeIf(dep -> "Django".equals(dep.get("artifactId")));
         }
+
+        if (framework.getCoreFramework() != null
+                && framework.getId() == Constantes.Spring_REST_API_ID
+                && !hasPoint) {
+
+            allDependencies.removeIf(dep ->
+                    "hibernate-spatial".equals(dep.get("artifactId"))
+                            || "jts-core".equals(dep.get("artifactId"))
+            );
+        }
+
         dependencyFileMap.put("dependencies", allDependencies);
 
         if (database != null && framework.getUseDB()) {
@@ -266,13 +280,13 @@ public class ProjectMetadataProvider {
     public static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName,
             String groupLink, String projectPort, Database database, Credentials credentials,
             @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration,
-            Framework framework, Map<String, Object> frameworkOptions) throws Exception {
+            Framework framework, Map<String, Object> frameworkOptions, boolean hasPoint) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
         System.out.println("Project files edits hashmap");
         combinedMap.putAll(
                 getConfigFileHashMap(projectName, projectPort, database, credentials, language, framework, frameworkOptions));
         combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework,
-                langageConfiguration, frameworkOptions));
+                langageConfiguration, frameworkOptions, hasPoint));
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
         combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework, frameworkOptions));
         combinedMap.putAll(getFrameworkCachingTrueBooleansHashMap(framework, frameworkOptions));
@@ -288,6 +302,19 @@ public class ProjectMetadataProvider {
             }
         }
         combinedMap.put("enableAuth", enableAuth);
+        combinedMap.put("hasPoint", hasPoint);
+
+        if(framework.getId() == Constantes.NET_ID) {
+            if(database.getId() == Constantes.MySQL_ID) {
+                combinedMap.put("topologyProvider", "Pomelo.EntityFrameworkCore.MySql");
+            } else if (database.getId() == Constantes.Oracle_ID) {
+                combinedMap.put("topologyProvider", "Oracle.EntityFrameworkCore");
+            } else if (database.getId() == Constantes.SQL_Server_ID) {
+                combinedMap.put("topologyProvider", "Microsoft.EntityFrameworkCore.SqlServer");
+            } else if (database.getId() == Constantes.PostgreSQL_ID) {
+                combinedMap.put("topologyProvider", "Npgsql.EntityFrameworkCore.PostgreSQL");
+            }
+        }
 
         return combinedMap;
     }

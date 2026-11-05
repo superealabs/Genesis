@@ -50,6 +50,97 @@
           - "apt-get update && apt-get install -y openjdk-${versionLanguage}-jdk maven"
   useGatewaySecurity: false
   conditionalFiles:
+    - fileType: "PointSerializer"
+      fileName: "PointSerializer"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import com.fasterxml.jackson.core.JsonGenerator;
+        import com.fasterxml.jackson.databind.JsonSerializer;
+        import com.fasterxml.jackson.databind.SerializerProvider;
+        import org.locationtech.jts.geom.Point;
+
+        import java.io.IOException;
+
+        public class PointSerializer extends JsonSerializer<Point> {
+
+          @Override
+          public void serialize(
+            Point point,
+            JsonGenerator generator,
+            SerializerProvider provider
+          ) throws IOException {
+
+            if (point == null) {
+              generator.writeNull();
+              return;
+            }
+
+            generator.writeStartObject();
+
+            generator.writeNumberField("latitude", point.getY());
+            generator.writeNumberField("longitude", point.getX());
+
+            generator.writeEndObject();
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+    - fileType: "PointDeserializer"
+      fileName: "PointDeserializer"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import com.fasterxml.jackson.core.JsonParser;
+        import com.fasterxml.jackson.databind.DeserializationContext;
+        import com.fasterxml.jackson.databind.JsonDeserializer;
+        import org.locationtech.jts.geom.Coordinate;
+        import org.locationtech.jts.geom.GeometryFactory;
+        import org.locationtech.jts.geom.Point;
+
+        import java.io.IOException;
+        import java.util.Map;
+
+        public class PointDeserializer extends JsonDeserializer<Point> {
+
+            private static final GeometryFactory GEOMETRY_FACTORY =
+                    new GeometryFactory();
+
+            @Override
+            public Point deserialize(
+                    JsonParser parser,
+                    DeserializationContext context
+            ) throws IOException {
+
+                Map<String, Object> value =
+                        parser.readValueAs(Map.class);
+
+                Object latitudeValue = value.get("latitude");
+                Object longitudeValue = value.get("longitude");
+
+                if (latitudeValue == null || longitudeValue == null) {
+                    throw context.weirdStringException(
+                            value.toString(),
+                            Point.class,
+                            "Un Point doit contenir 'latitude' et 'longitude'"
+                    );
+                }
+
+                double latitude = ((Number) latitudeValue).doubleValue();
+                double longitude = ((Number) longitudeValue).doubleValue();
+
+                Point point = GEOMETRY_FACTORY.createPoint(
+                        new Coordinate(longitude, latitude)
+                );
+
+                // SRID WGS84
+                point.setSRID(4326);
+
+                return point;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
     - fileType: "Git Ignore"
       fileName: ".gitignore"
       extension: ""
@@ -1277,6 +1368,16 @@
       version: "{{removeLine}}"
       scope: "{{removeLine}}"
 
+    - groupId: "org.hibernate.orm"
+      artifactId: "hibernate-spatial"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.locationtech.jts"
+      artifactId: "jts-core"
+      version: "1.20.0"
+      scope: "{{removeLine}}"
+
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-web"
       version: "{{removeLine}}"
@@ -1346,7 +1447,8 @@
       {{tab}}@Id
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
-      {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
+      {{tab}}@JoinColumn(name="${this.columnName}"){{elseIf this.type=Point or this.type=org.locationtech.jts.geom.Point }}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}, columnDefinition = "geography(Point,4326)"){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
       <#{{#if !this.isForeignKey}}/#>{{removeLine}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
@@ -2848,6 +2950,65 @@
           - "apt-get update && apt-get install -y dotnet-sdk-${versionLanguage}"
   useGatewaySecurity: false
   conditionalFiles:
+    - fileType: "PointSerializer"
+      fileName: "PointJsonConverter"
+      extension: "cs"
+      content: |
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using NetTopologySuite.Geometries;
+
+        namespace TestVue.Serialization;
+
+        public class PointJsonConverter : JsonConverter<Point>
+        {
+            public override Point? Read(
+                ref Utf8JsonReader reader,
+                Type typeToConvert,
+                JsonSerializerOptions options)
+            {
+                using var document = JsonDocument.ParseValue(ref reader);
+
+                var root = document.RootElement;
+
+                if (!root.TryGetProperty("latitude", out var latitudeElement) ||
+                    !root.TryGetProperty("longitude", out var longitudeElement))
+                {
+                    throw new JsonException(
+                        "A Point must contain 'latitude' and 'longitude'."
+                    );
+                }
+
+                var latitude = latitudeElement.GetDouble();
+                var longitude = longitudeElement.GetDouble();
+
+                return new GeometryFactory(new PrecisionModel(), 4326)
+                    .CreatePoint(
+                        new Coordinate(longitude, latitude)
+                    );
+            }
+
+            public override void Write(
+                Utf8JsonWriter writer,
+                Point value,
+                JsonSerializerOptions options)
+            {
+                if (value == null)
+                {
+                    writer.WriteNullValue();
+                    return;
+                }
+
+                writer.WriteStartObject();
+
+                writer.WriteNumber("latitude", value.Y);
+                writer.WriteNumber("longitude", value.X);
+
+                writer.WriteEndObject();
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
     - fileType: "Git Ignore"
       fileName: ".gitignore"
       extension: ""
@@ -2931,6 +3092,7 @@
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
         using ${majStart(projectName)}.Services.Interface;
+        {{#if hasPoint}}using TestVue.Serialization;{{/if}}
         
         var builder = WebApplication.CreateBuilder(args);
         
@@ -3012,7 +3174,9 @@
         // Add services to the container.
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
-            options.Use${daoName}(connectionString${addOptions}));
+            {{#if hasPoint}}options.Use${daoName}(connectionString${addOptions},  
+                  ${minStart(daoName)}Options => ${minStart(daoName)}Options.UseNetTopologySuite()));{{else}}
+            options.Use${daoName}(connectionString${addOptions}));{{/if}}
         {{#if useJWT}}
         builder.Services.AddHostedService<SqlSchemaBootstrapper>();
         builder.Services
@@ -3044,7 +3208,12 @@
         {
           // Adding the global exception filter to all controllers
           options.Filters.Add<GlobalExceptionFilter>();
-        });
+        }){{#if hasPoint}}.AddJsonOptions(options =>
+        {
+          options.JsonSerializerOptions.Converters.Add(
+              new PointJsonConverter()
+          );
+        }){{/if}};
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
