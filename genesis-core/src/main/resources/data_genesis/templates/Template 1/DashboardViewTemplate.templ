@@ -1,0 +1,143 @@
+${viewAnnotations}
+
+<section class="dashboard-page">
+
+    {{#each dashboardPages}}
+    <section class="dashboard-section"
+             data-dashboard-page
+             data-dashboard-page-id="${this.id}"
+             data-dashboard-page-index="${this.index}">
+
+        <div class="dashboard-header">
+            <div>
+                <h1 class="page-title">
+                    ${this.title}
+                </h1>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+
+            {{#each this.visualizations}}
+            <article class="dashboard-widget"
+                    data-dashboard-id="${this.id}"
+                    data-dashboard-type="${this.typeLowerCase}"
+                    data-marker-type="${this.markerType}"
+                     data-legend-x="${this.legendX}"
+                     data-legend-y="${this.legendY}"
+                     data-legend-title="${this.legendTitle}"
+                     data-value-prefix="${this.valuePrefix}"
+                     data-value-suffix="${this.valueSuffix}"
+                     data-decimals="${this.decimals}"
+                     data-value-prefix-x="${this.valuePrefixX}"
+                     data-value-suffix-x="${this.valueSuffixX}"
+                     data-decimals-x="${this.decimalsX}"
+                     data-value-prefix-y="${this.valuePrefixY}"
+                     data-value-suffix-y="${this.valueSuffixY}"
+                     data-decimals-y="${this.decimalsY}">
+
+                <div class="dashboard-widget-header">
+                    <h3>${this.title}</h3>
+                </div>
+
+                <div class="dashboard-widget-content">
+
+                     <!-- Métadonnées nécessaires au renderer JS -->
+                    <div class="dashboard-fields" hidden>
+                        {{#each this.fields}}
+                        <span class="dashboard-field"
+                              data-key="${this.key}"
+                              data-column="${this.columnName}"
+                              data-role="${this.role}">
+                        </span>
+                        {{/each}}{{removeLine}}
+                    </div>
+
+                    <!-- KPI -->
+                    {{#if this.type = KPI}}
+                    <div class="dashboard-kpi">
+                        <span class="dashboard-kpi-value" data-dashboard-target>
+                            -
+                        </span>
+                    </div>
+
+                    <!-- TABLE -->
+                    {{elseIf this.type = TABLE}}
+                    <div class="dashboard-table-container">
+                        <table class="dashboard-table">
+                            <thead></thead>
+                            <tbody data-dashboard-target></tbody>
+                        </table>
+                    </div>
+
+                    <!-- MAP -->
+                    {{elseIf this.type = MAP}}
+                    <div class="dashboard-map-container"
+                         data-dashboard-target>
+                    </div>
+
+                    <!-- Tous les graphiques Chart.js -->
+                    {{else}}
+                    <div class="dashboard-chart-container">
+                        <canvas data-dashboard-target></canvas>
+                    </div>
+                    {{/if}}
+
+                    <div class="dashboard-empty"
+                         data-dashboard-empty
+                         hidden>
+                        Aucune donnée disponible
+                    </div>
+
+                    <script type="application/json"
+                            id="dashboard-data-${this.id}"
+                            th:inline="javascript">
+                        /*[[$[thymeleafDollar]{dashboardData['${this.id}']}]]*/ []
+                    </script>
+                </div>
+
+            </article>
+            {{/each}}
+
+        </div>
+
+    </section>
+    {{/each}}
+
+    {{#if hasDashboardPages}}
+    <nav class="dashboard-pagination"
+         data-dashboard-pagination>
+
+        <button type="button"
+                class="dashboard-pagination-button"
+                data-dashboard-page-previous>
+            &laquo;
+        </button>
+
+        {{#each dashboardPages}}
+        <button type="button"
+                class="dashboard-pagination-button"
+                data-dashboard-page-button
+                data-dashboard-page-index="${this.index}">
+            ${this.pageNumber}
+        </button>
+        {{/each}}
+
+        <button type="button"
+                class="dashboard-pagination-button"
+                data-dashboard-page-next>
+            &raquo;
+        </button>
+
+    </nav>
+    {{/if}}
+
+</section>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+<script th:src="@{/js/dashboard.js}"></script>
+
+${viewEnd}

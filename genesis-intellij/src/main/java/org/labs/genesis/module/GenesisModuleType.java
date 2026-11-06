@@ -45,9 +45,8 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
 
         FrontendConfigurationWizardStep frontendConfigurationWizardStep = new FrontendConfigurationWizardStep(generationContextManager, listProjectGenerationContexts);
         InitializationWizardStep initializationWizardStep = new InitializationWizardStep(generationContextManager, listProjectGenerationContexts, specificConfigurationWizardStep, frontendConfigurationWizardStep);
-        DashboardConfigurationWizardStep test = new DashboardConfigurationWizardStep(generationContextManager);
+        DashboardConfigurationWizardStep dashboardConfigurationWizardStep = new DashboardConfigurationWizardStep(generationContextManager);
         return new ModuleWizardStep[]{
-                test,
                 firstWizardStep,
                 ruleToCodeWizardStep,
                 ruleToCodeWizardAIStep,
@@ -58,6 +57,7 @@ final class GenesisModuleType extends ModuleType<GenesisModuleBuilder> {
                 generationOptionWizardStep,
                 relationshipConfigurationWizardStep,
                 frontendConfigurationWizardStep,
+                dashboardConfigurationWizardStep,
                 gitConfigurationWizardStep,
                 specificConfigurationWizardStep,
                 syncGenerationWizardStep,

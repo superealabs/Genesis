@@ -17,7 +17,10 @@ public class StringUtils {
 
 
     public static String minStart(String string) {
-        return string.transform(s -> s.replaceFirst(String.valueOf(s.charAt(0)), String.valueOf(s.charAt(0)).toLowerCase()));
+        if (string == null || string.isEmpty()) {
+            return string;
+        }
+        return Character.toLowerCase(string.charAt(0)) + string.substring(1);
     }
 
 

@@ -61,8 +61,23 @@ public class OptionalNumberEditor extends JPanel {
         }
     }
 
-    public  String getValue() {
-        return  numberField != null ? numberField.getText() : null;
+    public Integer getValue() {
+        if (numberField == null) {
+            return null;
+        }
+
+        String text = numberField.getText().trim();
+
+        if (text.isEmpty()) {
+            return null;
+        }
+
+        try {
+            int value = Integer.parseInt(text);
+            return value >= 0 ? value : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private void styleField(JTextField field) {

@@ -3,6 +3,7 @@ package org.labs.genesis.wizards;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.Messages;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.config.langage.Framework;
 import org.labs.genesis.config.langage.FrameworkMVC;
@@ -88,7 +89,7 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
             ((FrameworkMVC) generationContextManager.getContext().getFramework()).setFrontendLayout(this.frontendLayout);
             ((FrameworkMVC) generationContextManager.getContext().getFramework()).setProjectBranding(this.branding);
 
-            if ( generationContextManager.getContext().getFramework().getId() == 6) {
+            if ( generationContextManager.getContext().getFramework().getId() == Constantes.Django_ID) {
                 generationContextManager.getContext().setViewsTemplate(((FrameworkMVC) generationContextManager.getContext().getFramework()).findViewsTemplateById(2));
             } else {
                 generationContextManager.getContext().setViewsTemplate(((FrameworkMVC) generationContextManager.getContext().getFramework()).findViewsTemplateById(1));
@@ -109,7 +110,7 @@ public class FrontendConfigurationWizardStep extends ModuleWizardStep {
                     ((FrameworkMVC) newProjectGenerationContext.getFramework()).setFrontendLayout(this.frontendLayout);
                     ((FrameworkMVC) newProjectGenerationContext.getFramework()).setProjectBranding(this.branding);
 
-                    if (newProjectGenerationContext.getFramework().getId() == 6) {
+                    if (newProjectGenerationContext.getFramework().getId() == Constantes.Django_ID) {
                         newProjectGenerationContext.setViewsTemplate(((FrameworkMVC) newProjectGenerationContext.getFramework()).findViewsTemplateById(2));
                     } else {
                         newProjectGenerationContext.setViewsTemplate(((FrameworkMVC) newProjectGenerationContext.getFramework()).findViewsTemplateById(1));

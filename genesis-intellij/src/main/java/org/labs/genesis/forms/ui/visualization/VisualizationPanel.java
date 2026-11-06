@@ -3,7 +3,6 @@ package org.labs.genesis.forms.ui.visualization;
 import com.intellij.icons.AllIcons;
 import org.labs.genesis.forms.renderer.chart.*;
 import org.labs.genesis.forms.renderer.map.MapRenderer;
-import org.labs.genesis.forms.renderer.metric.GaugeRenderer;
 import org.labs.genesis.forms.renderer.metric.KpiRenderer;
 import org.labs.genesis.forms.renderer.table.TableRenderer;
 import org.labs.genesis.forms.ui.visualization.configuration.VisualizationConfigurationPanel;
@@ -105,7 +104,10 @@ public class VisualizationPanel extends JPanel {
                                 VisualizationParameter.dimension("xAxis", "X Axis", true),
                                 VisualizationParameter.measure("yAxis", "Y Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
-                                VisualizationParameter.text("legendY", "Legend Y", false)
+                                VisualizationParameter.text("legendY", "Legend Y", false),
+                                VisualizationParameter.text("valuePrefix", "Value Prefix", false),
+                                VisualizationParameter.text("valueSuffix", "Value Suffix", false),
+                                VisualizationParameter.number("decimals", "Decimals", false)
                         )
                 ),
 
@@ -119,10 +121,13 @@ public class VisualizationPanel extends JPanel {
                         HorizontalBarChartRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measure("xAxis", "X Axis", true),
-                                VisualizationParameter.dimension("yAxis", "Y Axis", true),
+                                VisualizationParameter.dimension("xAxis", "Y Axis", true),
+                                VisualizationParameter.measure("yAxis", "X Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
-                                VisualizationParameter.text("legendY", "Legend Y", false)
+                                VisualizationParameter.text("legendY", "Legend Y", false),
+                                VisualizationParameter.text("valuePrefix", "Value Prefix", false),
+                                VisualizationParameter.text("valueSuffix", "Value Suffix", false),
+                                VisualizationParameter.number("decimals", "Decimals", false)
                         )
                 ),
 
@@ -137,7 +142,11 @@ public class VisualizationPanel extends JPanel {
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
                                 VisualizationParameter.measure("value", "Value", true),
-                                VisualizationParameter.dimension("legend", "Legend", true)
+                                VisualizationParameter.dimension("legend", "Legend", true),
+                                VisualizationParameter.text("legendTitle", "Legend Title", false),
+                                VisualizationParameter.text("valuePrefix", "Value Prefix", false),
+                                VisualizationParameter.text("valueSuffix", "Value Suffix", false),
+                                VisualizationParameter.number("decimals", "Decimals", false)
                         )
                 ),
 
@@ -152,7 +161,11 @@ public class VisualizationPanel extends JPanel {
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
                                 VisualizationParameter.measure("value", "Value", true),
-                                VisualizationParameter.dimension("legend", "Legend", true)
+                                VisualizationParameter.dimension("legend", "Legend", true),
+                                VisualizationParameter.text("legendTitle", "Legend Title", false),
+                                VisualizationParameter.text("valuePrefix", "Value Prefix", false),
+                                VisualizationParameter.text("valueSuffix", "Value Suffix", false),
+                                VisualizationParameter.number("decimals", "Decimals", false)
                         )
                 ),
 
@@ -169,21 +182,10 @@ public class VisualizationPanel extends JPanel {
                                 VisualizationParameter.dimension("xAxis", "X Axis", true),
                                 VisualizationParameter.measure("yAxis", "Y Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
-                                VisualizationParameter.text("legendY", "Legend Y", false)
-                        )
-                ),
-
-                // -----------------------------------------------------------------
-                // GAUGE
-                // -----------------------------------------------------------------
-                new VisualizationItem(
-                        "Gauge",
-                        "Single value with min/max range",
-                        "/data_genesis/img/jauge.png",
-                        GaugeRenderer.class,
-                        List.of(
-                                VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measure("value", "Value", true)
+                                VisualizationParameter.text("legendY", "Legend Y", false),
+                                VisualizationParameter.text("valuePrefix", "Value Prefix", false),
+                                VisualizationParameter.text("valueSuffix", "Value Suffix", false),
+                                VisualizationParameter.number("decimals", "Decimals", false)
                         )
                 ),
 
@@ -197,7 +199,10 @@ public class VisualizationPanel extends JPanel {
                         KpiRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measure("value", "Value", true)
+                                VisualizationParameter.measure("value", "Value", true),
+                                VisualizationParameter.text("valuePrefix", "Value Prefix", false),
+                                VisualizationParameter.text("valueSuffix", "Value Suffix", false),
+                                VisualizationParameter.number("decimals", "Decimals", false)
                         )
                 ),
 
@@ -226,8 +231,11 @@ public class VisualizationPanel extends JPanel {
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
                                 VisualizationParameter.text("markerType", "Marker Type", false),
+                                VisualizationParameter.text("coordinateMode", "Coordinate Mode", false),
                                 VisualizationParameter.longitude("longitude", "Longitude", true),
                                 VisualizationParameter.latitude("latitude", "Latitude", true),
+                                VisualizationParameter.geography("geography", "Geographic Column", true),
+                                VisualizationParameter.text("labelColumn", "Label Column", false),
                                 VisualizationParameter.measure("valueColumn", "Value Column", false)
                         )
                 ),
@@ -245,7 +253,13 @@ public class VisualizationPanel extends JPanel {
                                 VisualizationParameter.value("xAxis", "X Axis", true),
                                 VisualizationParameter.value("yAxis", "Y Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
-                                VisualizationParameter.text("legendY", "Legend Y", false)
+                                VisualizationParameter.text("legendY", "Legend Y", false),
+                                VisualizationParameter.text("valuePrefixX", "Value Prefix X", false),
+                                VisualizationParameter.text("valueSuffixX", "Value Suffix X", false),
+                                VisualizationParameter.number("decimalsX", "Decimals X", false),
+                                VisualizationParameter.text("valuePrefixY", "Value Prefix Y", false),
+                                VisualizationParameter.text("valueSuffixY", "Value Suffix Y", false),
+                                VisualizationParameter.number("decimalsY", "Decimals Y", false)
                         )
                 )
         );

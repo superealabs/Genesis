@@ -113,7 +113,6 @@ public class ColumnOrFormulaRow extends JPanel {
          * [ Drop column here ]
          */
         if (columnOnly) {
-            System.out.println("Column only true dont add combo");
             add(modeCombo);
             add(Box.createVerticalStrut(6));
         }

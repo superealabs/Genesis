@@ -6,6 +6,7 @@ import org.labs.genesis.forms.renderer.provider.ChartData;
 
 import javax.swing.*;
 import java.awt.*;
+import java.text.NumberFormat;
 
 public abstract class AbstractChartRenderer implements VisualizationRenderer {
 
@@ -91,5 +92,56 @@ public abstract class AbstractChartRenderer implements VisualizationRenderer {
         int x = (width - fm.stringWidth(message)) / 2;
         int y = height / 2;
         g2.drawString(message, x, y);
+    }
+
+    protected String formatConfiguredValue(double value) {
+        String prefix = getConfigString("valuePrefix", "");
+        String suffix = getConfigString("valueSuffix", "");
+        int decimals = getConfigInteger("decimals", 0);
+        double displayValue = value;
+        String unit = "";
+
+        double absoluteValue = Math.abs(value);
+
+        if (absoluteValue >= 1_000_000_000) {
+            displayValue = value / 1_000_000_000.0;
+            unit = "B";
+        } else if (absoluteValue >= 1_000_000) {
+            displayValue = value / 1_000_000.0;
+            unit = "M";
+        } else if (absoluteValue >= 1_000) {
+            displayValue = value / 1_000.0;
+            unit = "K";
+        }
+
+        NumberFormat formatter = NumberFormat.getNumberInstance();
+
+        int effectiveDecimals = displayValue == Math.rint(displayValue) ? 0 : decimals;
+
+        formatter.setMinimumFractionDigits(effectiveDecimals);
+        formatter.setMaximumFractionDigits(effectiveDecimals);
+
+        return prefix + formatter.format(displayValue) + unit + suffix;
+    }
+
+    protected int getConfigInteger(String key, int defaultValue) {
+        if (config == null) {
+            return defaultValue;
+        }
+        Object value = config.getValue(key);
+
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+
+        if (value != null) {
+            try {
+                return Integer.parseInt(value.toString());
+            } catch (NumberFormatException ignored) {
+                // valeur par défaut
+            }
+        }
+
+        return defaultValue;
     }
 }

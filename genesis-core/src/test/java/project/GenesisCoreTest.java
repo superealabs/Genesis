@@ -566,9 +566,9 @@ public class GenesisCoreTest {
                     List.of("Model", "DAO", "Service", "Controller");
 
             String projectName = "new";
-            String groupLink = "";
+            String groupLink = "org.example";
             String projectPort = "8080";
-            String logLevel = "Information";
+            String logLevel = "INFO";
             String hibernateDdlAuto = "none";
             String projectDescription = "test";
             String frameworkVersion = "3.3.6";

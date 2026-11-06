@@ -44,10 +44,20 @@ class ExportManager {
 
         this.form.querySelectorAll('[data-export-filter="true"]').forEach(input => input.remove());
 
+        const excludedFields = [
+            "sortOrder",
+            "page",
+            "pageSize"
+        ];
+
         const formData = new FormData(this.filtersForm);
 
         for (const [name, value] of formData.entries()) {
             if (name === '__RequestVerificationToken') {
+                continue;
+            }
+
+            if (excludedFields.includes(name)) {
                 continue;
             }
 

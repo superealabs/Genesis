@@ -4,6 +4,7 @@ package frontend;
 import org.junit.jupiter.api.Test;
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.config.langage.FilesEdit;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.model.RelationParameter;
@@ -13,7 +14,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FrontEndTest {
@@ -21,6 +24,146 @@ public class FrontEndTest {
     public void testCollectionYamlData()
     {
         ProjectGenerator projectGenerator = new ProjectGenerator();
+    }
+
+    @Test
+    void dashboardFilesAreConfiguredForEachFrontend() {
+        new ProjectGenerator();
+
+        for (int frameworkId : List.of(
+                Constantes.ANGULAR_ID,
+                Constantes.VUE_JS_ID,
+                Constantes.REACT_ID
+        )) {
+            var framework = ProjectGenerator.frontendFrameworks.get(frameworkId);
+            assertNotNull(framework);
+            assertNotNull(framework.getDashboardFiles());
+            assertTrue(framework.getDashboardFiles().stream()
+                    .anyMatch(file -> file.getFileName().toLowerCase().startsWith("dashboard")));
+            assertTrue(framework.getDashboardFiles().stream()
+                    .allMatch(file -> file.getDestinationPath() != null && !file.getDestinationPath().isBlank()),
+                    "Every dashboard file must have a destination path for frontend " + frameworkId);
+        }
+    }
+
+    @Test
+    void dashboardTemplatesRenderStaticConfiguredPages() throws Exception {
+        new ProjectGenerator();
+        Map<String, Object> metadata = dashboardTemplateMetadata();
+
+        assertStaticDashboardTemplate(Constantes.ANGULAR_ID, "dashboard.component", "html",
+                "Sales overview", "<app-dashboard-visualization", 3, metadata);
+        assertStaticDashboardTemplate(Constantes.VUE_JS_ID, "DashboardView", "vue",
+                "Sales overview", "<DashboardVisualization", 3, metadata);
+        assertStaticDashboardTemplate(Constantes.REACT_ID, "DashboardPage", "tsx",
+                "Sales overview", "<DashboardVisualization", 3, metadata);
+
+        var angularComponent = ProjectGenerator.frontendFrameworks.get(Constantes.ANGULAR_ID)
+                .getDashboardFiles().stream()
+                .filter(file -> "dashboard.component".equals(file.getFileName())
+                        && "ts".equals(file.getExtension()))
+                .findFirst()
+                .orElseThrow();
+        assertTrue(ProjectGenerator.engine.render(angularComponent.getContent(), metadata)
+                .contains("templateUrl: './dashboard.component.html'"));
+
+        for (int frameworkId : List.of(Constantes.ANGULAR_ID, Constantes.VUE_JS_ID, Constantes.REACT_ID)) {
+            var files = ProjectGenerator.frontendFrameworks.get(frameworkId).getDashboardFiles();
+            assertTrue(files.stream().noneMatch(file -> "dashboard-data".equals(file.getFileName())),
+                    "Dashboard page configuration must not be emitted as a runtime data module.");
+            assertTrue(files.stream().anyMatch(file ->
+                            file.getFileName().toLowerCase().contains("visualization")),
+                    "Each frontend must generate its reusable visualization component.");
+            assertNoNestedDashboardDirectives(files);
+        }
+    }
+
+    private void assertStaticDashboardTemplate(
+            int frameworkId,
+            String fileName,
+            String extension,
+            String expectedPageTitle,
+            String expectedVisualizationTag,
+            int expectedVisualizationCount,
+            Map<String, Object> metadata
+    ) throws Exception {
+        var files = ProjectGenerator.frontendFrameworks.get(frameworkId).getDashboardFiles();
+        var dashboardFile = files.stream()
+                .filter(file -> fileName.equals(file.getFileName()) && extension.equals(file.getExtension()))
+                .findFirst()
+                .orElseThrow();
+
+        String rendered = ProjectGenerator.engine.render(dashboardFile.getContent(), metadata);
+
+        assertTrue(rendered.contains(expectedPageTitle), "Configured page title is missing: " + fileName);
+        assertTrue(countOccurrences(rendered, expectedVisualizationTag) == expectedVisualizationCount,
+                "Configured visualization markup was not generated statically: " + fileName);
+        assertTrue(!rendered.contains("{{#"));
+        assertTrue(!rendered.contains("${"));
+        assertTrue(!rendered.contains("dashboardPages.map"));
+        assertTrue(!rendered.contains("dashboard-data"));
+    }
+
+    private Map<String, Object> dashboardTemplateMetadata() {
+        Map<String, Object> salesPage = Map.of(
+                "title", "Sales overview",
+                "titleHtml", "Sales overview",
+                "slug", "sales",
+                "endpointPath", "/dashboard/sales",
+                "angularVisualizationsMarkup", "<app-dashboard-visualization></app-dashboard-visualization>\n"
+                        + "<app-dashboard-visualization></app-dashboard-visualization>",
+                "vueVisualizationsMarkup", "<DashboardVisualization />\n<DashboardVisualization />",
+                "reactVisualizationsMarkup", "<DashboardVisualization />\n<DashboardVisualization />"
+        );
+        Map<String, Object> customerPage = Map.of(
+                "title", "Customers",
+                "titleHtml", "Customers",
+                "slug", "customers",
+                "endpointPath", "/dashboard/customers",
+                "angularVisualizationsMarkup", "<app-dashboard-visualization></app-dashboard-visualization>",
+                "vueVisualizationsMarkup", "<DashboardVisualization />",
+                "reactVisualizationsMarkup", "<DashboardVisualization />"
+        );
+        return Map.of(
+                "dashboardPages", List.of(salesPage, customerPage),
+                "dashboardInitialPageSlug", "sales",
+                "dashboardInitialPageSlugLiteral", "\"sales\"",
+                "dashboardInitialPageEndpointPath", "/dashboard/sales"
+        );
+    }
+
+    private void assertNoNestedDashboardDirectives(List<FilesEdit> dashboardFiles) {
+        java.util.regex.Pattern directive = java.util.regex.Pattern.compile(
+                "\\{\\{#(?:each|for|if)\\b|\\{\\{/(?:each|for|if)\\}\\}"
+        );
+        for (FilesEdit dashboardFile : dashboardFiles) {
+            String content = dashboardFile.getContent();
+            int depth = 0;
+            java.util.regex.Matcher matcher = directive.matcher(content);
+            while (matcher.find()) {
+                if (matcher.group().startsWith("{{#")) {
+                    depth++;
+                    assertTrue(depth <= 1,
+                            "Dashboard templates must not nest Genesis control directives: "
+                                    + dashboardFile.getFileName());
+                } else {
+                    depth--;
+                }
+            }
+            assertTrue(depth == 0,
+                    "Dashboard template has unbalanced Genesis control directives: "
+                            + dashboardFile.getFileName());
+        }
+    }
+
+    private int countOccurrences(String value, String search) {
+        int count = 0;
+        int offset = 0;
+        while ((offset = value.indexOf(search, offset)) >= 0) {
+            count++;
+            offset += search.length();
+        }
+        return count;
     }
 
     @Test

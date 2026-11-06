@@ -16,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.dnd.*;
+import java.util.function.Predicate;
 
 public class ColumnDropField extends JPanel {
 
@@ -35,6 +36,12 @@ public class ColumnDropField extends JPanel {
     private boolean dragOver = false;
     private boolean dropSuccess = false;
     private float dropSuccessAlpha = 0f;
+
+    private Predicate<ColumnData> columnDataValidator = column -> true;
+
+    public void setColumnDataValidator(Predicate<ColumnData> validator) {
+        this.columnDataValidator = validator == null ? column -> true : validator;
+    }
 
     public static final int HEIGHT = 32;
     private static final int RADIUS = 8;
@@ -86,16 +93,28 @@ public class ColumnDropField extends JPanel {
         add(clearButton, BorderLayout.EAST);
 
         installDropTarget();
-        installClickToClear();
+        updateVisualState();
+    }
+
+    private void setColumn(String columnName, boolean notify) {
+        if (columnName == null || columnName.isBlank()) {
+            clearColumn(notify);
+            return;
+        }
+        this.columnName = columnName.trim();
 
         updateVisualState();
+
+        if (notify && columnChangeListener != null) {
+            columnChangeListener.accept(this.columnName);
+        }
     }
 
     public void restoreValue(String value) {
         if (value != null && !value.trim().isEmpty()) {
-            setColumn(value);
+            setColumn(value, false);
         } else {
-            clearColumn();
+            clearColumn(false);
         }
     }
 
@@ -185,6 +204,11 @@ public class ColumnDropField extends JPanel {
                                         DataPanelTree.COLUMN_DATA_FLAVOR
                                 );
 
+                        if (!columnDataValidator.test(columnData)) {
+                            dtde.dropComplete(false);
+                            return;
+                        }
+
                         droppedColumn = columnData.name;
 
                     } else if (dtde.isDataFlavorSupported(
@@ -213,21 +237,6 @@ public class ColumnDropField extends JPanel {
             }
 
         }, true);
-    }
-
-    private String extractColumnName(TransferHandler.TransferSupport support) throws Exception {
-        Transferable transferable = support.getTransferable();
-
-        if (support.isDataFlavorSupported(DataPanelTree.COLUMN_DATA_FLAVOR)) {
-            ColumnData columnData = (ColumnData) transferable.getTransferData(DataPanelTree.COLUMN_DATA_FLAVOR);
-            return columnData.name;
-        }
-
-        if (support.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-            return (String) transferable.getTransferData(DataFlavor.stringFlavor);
-        }
-
-        return null;
     }
 
     private void setDragOver(boolean value) {
@@ -288,43 +297,28 @@ public class ColumnDropField extends JPanel {
         repaint();
     }
 
-    private void installClickToClear() {
-        addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (SwingUtilities.isLeftMouseButton(e)
-                        && e.getClickCount() == 1
-                        && columnName != null
-                        && !columnName.isEmpty()) {
-                    clearColumn();
-                }
-            }
-        });
-    }
-
     public void setColumn(String columnName) {
-        if (columnName == null || columnName.isBlank()) {
-            clearColumn();
-            return;
-        }
-
-        this.columnName = columnName.trim();
-        updateVisualState();
-
-        // Notifié en dernier : tout effet de bord externe (persistance, mise à jour
-        // d'un autre composant) se produit APRÈS que notre propre état visuel est
-        // déjà finalisé et sa validation programmée.
-        if (columnChangeListener != null) {
-            columnChangeListener.accept(this.columnName);
-        }
+        setColumn(columnName, true);
     }
 
     public void clearColumn() {
+        clearColumn(true);
+    }
+
+    private void clearColumn(
+            boolean notify
+    ) {
+
         this.columnName = null;
+
         updateVisualState();
 
-        if (columnChangeListener != null) {
-            columnChangeListener.accept(null);
+        if (notify
+                && columnChangeListener != null) {
+
+            columnChangeListener.accept(
+                    null
+            );
         }
     }
 

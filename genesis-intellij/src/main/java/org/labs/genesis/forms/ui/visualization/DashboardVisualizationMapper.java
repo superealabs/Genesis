@@ -1,0 +1,411 @@
+package org.labs.genesis.forms.ui.visualization;
+
+import org.labs.genesis.config.ProjectGenerationContext;
+import org.labs.genesis.dashboard.model.*;
+import org.labs.genesis.dashboard.model.DashboardEnums.*;
+import org.labs.genesis.forms.ui.visualization.model.*;
+import org.labs.genesis.forms.utils.DashboardColumnLabel;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+
+import java.util.Locale;
+import java.util.Map;
+
+/** Maps the dashboard editor's visualization state to its serializable model. */
+public final class DashboardVisualizationMapper {
+    private DashboardVisualizationMapper() { }
+
+    public static DashboardVisualization map(DashboardVisualComponent component, ProjectGenerationContext context) {
+        DashboardVisualization result = new DashboardVisualization();
+        result.setId(component.getDashboardId());
+        result.setTitle(component.getConfig().getString("title", component.getVisualizationItem().name));
+        result.setType(typeFor(component.getVisualizationItem().name));
+        setMapCoordinateMode(result, component.getConfig());
+        String source = component.getDataSourceName();
+        DashboardSourceType sourceType = resolveSourceType(source, context);
+        result.setDataSource(new DashboardDataSource(source, sourceType));
+        mapFields(result, component.getConfig(), component.getVisualizationItem());
+        mapVisualOptions(result, component.getConfig(), component.getVisualizationItem());
+        if (result.getType() == DashboardVisualizationType.MAP) {
+            addOptionalMapColumn(result, component.getConfig(), "labelColumn");
+        }
+        mapQueryOptions(result, component.getConfig());
+        return result;
+    }
+
+    private static final Map<String, DashboardVisualizationType> KEYWORDS = new LinkedHashMap<>();
+    static {
+        KEYWORDS.put("DONUT", DashboardVisualizationType.DONUT);
+        KEYWORDS.put("PIE", DashboardVisualizationType.PIE);
+        KEYWORDS.put("LINE", DashboardVisualizationType.LINE);
+        KEYWORDS.put("SCATTER", DashboardVisualizationType.SCATTER);
+        KEYWORDS.put("KPI", DashboardVisualizationType.KPI);
+        KEYWORDS.put("MAP", DashboardVisualizationType.MAP);
+    }
+
+    private static DashboardVisualizationType typeFor(String name) {
+        if (name == null || name.isBlank()) {
+            return DashboardVisualizationType.TABLE;
+        }
+
+        String s = name.toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+
+        if (s.contains("BAR")) {
+            if (s.contains("HORIZONTAL")) return DashboardVisualizationType.BAR_HORIZONTAL;
+            if (s.contains("VERTICAL")) return DashboardVisualizationType.BAR_VERTICAL;
+        }
+
+        return KEYWORDS.entrySet().stream()
+                .filter(e -> s.contains(e.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse(DashboardVisualizationType.TABLE);
+    }
+
+    private static DashboardSourceType resolveSourceType(String source, ProjectGenerationContext context) {
+        if (source == null || context == null) {
+            return DashboardSourceType.TABLE;
+        }
+
+        return context.getAllTables()
+                .stream()
+                .filter(table -> table != null && table.getTableName() != null && matchesSource(table.getTableName(), source))
+                .findFirst()
+                .map(table -> Boolean.TRUE.equals(table.getIsView()) ? DashboardSourceType.VIEW : DashboardSourceType.TABLE)
+                .orElse(DashboardSourceType.TABLE);
+    }
+
+    private static boolean matchesSource(String tableName, String sourceName) {
+        if (tableName == null || sourceName == null) {
+            return false;
+        }
+        String table = tableName.toLowerCase(Locale.ROOT);
+        String source = sourceName.toLowerCase(Locale.ROOT);
+        return source.equals(table) || source.endsWith("." + table);
+    }
+
+    private static DashboardFilter mapCondition(VisualizationFilterCondition condition) {
+        if (condition == null || condition.getColumn() == null || condition.getColumn().isBlank()) {
+            return null;
+        }
+        DashboardLogicalOperator relation = condition.getRelationToPrevious() == FilterLogicalOperator.OR
+                        ? DashboardLogicalOperator.OR
+                        : DashboardLogicalOperator.AND;
+        return new DashboardFilter(normalizeColumnReference(condition.getColumn()), condition.getOperator(), condition.getValue(), relation);
+    }
+
+    private static DashboardFilterGroup mapGroup(VisualizationFilterGroup group) {
+        if (group == null) {
+            return null;
+        }
+        DashboardFilterGroup result = new DashboardFilterGroup();
+        result.setOperator(
+                group.getRelation()
+                        == FilterLogicalOperator.OR
+                        ? DashboardLogicalOperator.OR
+                        : DashboardLogicalOperator.AND
+        );
+        for (VisualizationFilterNode child : group.getChildren()) {
+            DashboardFilterNode mapped = mapFilterNode(child);
+            if (mapped != null) {
+                result.addChild(mapped);
+            }
+        }
+        return result;
+    }
+
+    private static DashboardFilterNode mapFilterNode(VisualizationFilterNode node) {
+        if (node instanceof VisualizationFilterCondition condition) {
+            return mapCondition(condition);}
+        if (node instanceof VisualizationFilterGroup group) {
+            return mapGroup(group);
+        }
+        return null;
+    }
+
+    private static void mapFilters(DashboardVisualComponent component, DashboardVisualization result) {
+        Object filtersValue = component.getConfig().getValue("filters");
+        if (!(filtersValue instanceof List<?> filters)) {
+            return;
+        }
+        for (Object item : filters) {
+            if (!(item instanceof VisualizationFilterNode node)) {
+                continue;
+            }
+            DashboardFilterNode mapped = mapFilterNode(node);
+            if (mapped != null) {
+                result.getQueryOptions()
+                        .getFilters()
+                        .add(mapped);
+            }
+        }
+    }
+
+    public static DashboardVisualization map(String source, VisualizationConfig config, VisualizationItem item) {
+        DashboardVisualization result = new DashboardVisualization();
+        result.setTitle(config.getString("title", item.name));
+        result.setType(typeFor(item.name));
+        setMapCoordinateMode(result, config);
+        result.setDataSource(new DashboardDataSource(source, DashboardSourceType.TABLE));
+        mapFields(result, config, item);
+        mapVisualOptions(result, config, item);
+        if (result.getType() == DashboardVisualizationType.MAP) {
+            addOptionalMapColumn(result, config, "labelColumn");
+        }
+        mapQueryOptions(result, config);
+
+        return result;
+    }
+
+    private static void mapFields(DashboardVisualization result, VisualizationConfig config, VisualizationItem item) {
+        for (VisualizationParameter parameter : item.parameters) {
+            QueryRole role = parameter.getRole();
+            if (result.getType() == DashboardVisualizationType.MAP
+                    && result.getCoordinateMode() == DashboardCoordinateMode.GEOGRAPHY
+                    && (role == QueryRole.LATITUDE || role == QueryRole.LONGITUDE)) {
+                continue;
+            }
+            if (result.getType() == DashboardVisualizationType.MAP
+                    && result.getCoordinateMode() != DashboardCoordinateMode.GEOGRAPHY
+                    && role == QueryRole.GEOGRAPHY) {
+                continue;
+            }
+            if (role == null
+                    || role == QueryRole.FILTER
+                    || role == QueryRole.SORT
+                    || role == QueryRole.LIMIT) {
+                continue;
+            }
+            Object value = config.getValue(parameter.getKey());
+            if (value == null) {
+                continue;
+            }
+            if (role == QueryRole.COLUMNS && value instanceof List<?> values) {
+                mapColumns(result, values, config);
+                continue;
+            }
+            if (value.toString().isBlank()) {
+                continue;
+            }
+            DashboardFieldRole dashboardRole = toDashboardRole(role);
+            if (dashboardRole == null) {
+                continue;
+            }
+            DashboardField field = new DashboardField(parameter.getKey(), normalizeColumnReference(value.toString()), dashboardRole);
+            if (dashboardRole == DashboardFieldRole.MEASURE) {
+                field.setStatistic(resolveStatistic(config));
+            }
+            result.getFields().add(field);
+        }
+    }
+
+    private static void setMapCoordinateMode(DashboardVisualization result, VisualizationConfig config) {
+        if (result.getType() != DashboardVisualizationType.MAP) {
+            return;
+        }
+        String mode = config.getString("coordinateMode", "SEPARATE");
+        try {
+            result.setCoordinateMode(DashboardCoordinateMode.valueOf(mode.trim().toUpperCase(Locale.ROOT)));
+        } catch (IllegalArgumentException exception) {
+            result.setCoordinateMode(DashboardCoordinateMode.SEPARATE);
+        }
+    }
+
+    private static void addOptionalMapColumn(DashboardVisualization result, VisualizationConfig config, String key) {
+        Object value = config.getValue(key);
+        if (value == null || value.toString().isBlank()) {
+            return;
+        }
+        result.getFields().add(new DashboardField(key, normalizeColumnReference(value.toString()), DashboardFieldRole.COLUMN));
+    }
+
+    private static void mapColumns(DashboardVisualization result, List<?> values, VisualizationConfig config) {
+        Map<String, String> headers = extractColumnHeaders(config);
+        for (Object value : values) {
+            if (value == null || value.toString().isBlank()) {
+                continue;
+            }
+            String raw = value.toString();
+            String column = normalizeColumnReference(raw);
+            String key = simpleColumnName(column);
+            DashboardField field = new DashboardField(key, column, DashboardFieldRole.COLUMN);
+            String label = resolveColumnHeader(headers, raw, column, key);
+            field.setLabel(DashboardColumnLabel.clean(
+                    label == null || label.isBlank() ? key : label
+            ));
+            result.getFields().add(field);
+        }
+    }
+
+    private static Map<String, String> extractColumnHeaders(VisualizationConfig config) {
+        Map<String, String> headers = new LinkedHashMap<>();
+        if (config == null) {
+            return headers;
+        }
+        Object headersObj = config.getValue("columnsHeaders");
+        if (!(headersObj instanceof Map<?, ?> headersMap)) {
+            return headers;
+        }
+        for (Map.Entry<?, ?> entry : headersMap.entrySet()) {
+            if (!(entry.getKey() instanceof String headerKey) || entry.getValue() == null) {
+                continue;
+            }
+            String headerValue = entry.getValue().toString().trim();
+            if (headerValue.isEmpty()) {
+                continue;
+            }
+            String normalizedKey = normalizeColumnReference(headerKey);
+            String simpleKey = simpleColumnName(normalizedKey);
+            headers.put(headerKey, headerValue);
+            headers.put(normalizedKey, headerValue);
+            headers.put(simpleKey, headerValue);
+        }
+        return headers;
+    }
+
+    private static String resolveColumnHeader(
+            Map<String, String> headers,
+            String raw,
+            String column,
+            String key) {
+        if (headers == null || headers.isEmpty()) {
+            return null;
+        }
+        if (headers.containsKey(raw)) {
+            return headers.get(raw);
+        }
+        if (headers.containsKey(column)) {
+            return headers.get(column);
+        }
+        return headers.get(key);
+    }
+
+    private static String simpleColumnName(String value
+    ) {
+        if (value == null) {
+            return null;
+        }
+        String result = value.trim();
+        int colon = result.lastIndexOf(':');
+        if (colon >= 0) {
+            result = result.substring(colon + 1);
+        }
+        int dot = result.lastIndexOf('.');
+        if (dot >= 0) {
+            result = result.substring(dot + 1);
+        }
+        return result;
+    }
+
+    private static DashboardFieldRole toDashboardRole(QueryRole role) {
+        try {
+            String name = role == QueryRole.COLUMNS ? "COLUMN" : role.name();
+            return DashboardFieldRole.valueOf(name);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private static StatisticType resolveStatistic(VisualizationConfig config) {
+        String aggregation = config.getString("aggregation", "NONE")
+                        .trim()
+                        .toUpperCase(Locale.ROOT)
+                        .replace(' ', '_');
+
+        try {
+            return StatisticType.valueOf(aggregation);
+
+        } catch (IllegalArgumentException e) {
+            return StatisticType.NONE;
+        }
+    }
+
+    private static void mapQueryOptions(DashboardVisualization result, VisualizationConfig config) {
+        Object limit = config.getValue("limit");
+        if (limit instanceof Number number) {
+            result.getQueryOptions().setLimit(number.intValue());
+        }
+        mapSort(config, result);
+        mapFilters(config, result);
+    }
+
+    private static void mapSort(VisualizationConfig config, DashboardVisualization result) {
+        Object columnValue = config.getValue("sortColumn");
+        if (columnValue == null || columnValue.toString().isBlank()) {
+            return;
+        }
+        String directionValue = config.getString("sortDirection", "ASC");
+        DashboardSortDirection direction = "DESC".equalsIgnoreCase(directionValue) ? DashboardSortDirection.DESC : DashboardSortDirection.ASC;
+        result.getQueryOptions()
+                .getSorts()
+                .add(new DashboardSort(normalizeColumnReference(columnValue.toString()), direction));
+    }
+
+    private static void mapFilters(VisualizationConfig config, DashboardVisualization result) {
+        Object filtersValue = config.getValue("filters");
+        if (!(filtersValue instanceof List<?> filters)) {
+            return;
+        }
+        for (Object item : filters) {
+            if (!(item instanceof VisualizationFilterNode node)) {
+                continue;
+            }
+            DashboardFilterNode mapped = mapFilterNode(node);
+            if (mapped != null) {
+                result.getQueryOptions()
+                        .getFilters()
+                        .add(mapped);
+            }
+        }
+    }
+
+    private static String normalizeColumnReference(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String result = value.trim();
+
+        int colon = result.lastIndexOf(':');
+
+        if (colon >= 0) {
+            result = result.substring(colon + 1);
+        }
+
+        return result;
+    }
+
+    private static void mapVisualOptions(DashboardVisualization result, VisualizationConfig config, VisualizationItem item) {
+        if (result == null || config == null || item == null) {
+            return;
+        }
+
+        for (VisualizationParameter parameter : item.parameters) {
+            // Les paramètres qui participent à la requête
+            // ne sont pas des options visuelles.
+            if (parameter.getRole() != null) {
+                continue;
+            }
+
+            String key = parameter.getKey();
+
+            if ("title".equals(key)) {
+                continue;
+            }
+
+            Object value = config.getValue(key);
+
+            if (value == null) {
+                continue;
+            }
+
+            if (value instanceof String text && text.isBlank()) {
+                continue;
+            }
+
+            result.getOptions().put(key, value);
+        }
+    }
+
+}

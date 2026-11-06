@@ -27,6 +27,7 @@ public class Framework {
     private Boolean useFrontendApp = true;
     private Boolean withGroupId;
     private List<FilesEdit> additionalFiles;
+    private List<FilesEdit> dashboardFiles = new ArrayList<>();
     private List<FilesEdit> conditionalFiles;
     private List<ConfigurationMetadata> configurations;
     private List<ConfigurationMetadata> eurekaClientConfigurations;

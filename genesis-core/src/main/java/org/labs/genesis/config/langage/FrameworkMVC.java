@@ -24,6 +24,7 @@ public class FrameworkMVC extends Framework {
     private FrontendDestinationPaths frontendPaths;
     private java.util.List<Project.ProjectFiles> templateEngineFiles;
     private java.util.List<Project.ProjectFolders> templateEngineFolders;
+    private java.util.List<FilesEdit> dashboardFiles = new ArrayList<>();
 
     public void setViewsTemplate() throws IOException {
         this.viewsTemplate = Arrays.stream(FileUtils.fromYaml(ViewsTemplate[].class, Constantes.VIEWS_TEMPLATES_YAML))
@@ -54,8 +55,10 @@ public class FrameworkMVC extends Framework {
         private List list;
         private Create create;
         private Edit edit;
+        private Form form;
         private Detail detail;
         private Error error;
+        private Dashboard dashboard;
         private java.util.List<FilesEdit> templateEngineFilesEdits;
         private java.util.List<Project.ProjectFiles> templateEngineFiles;
         private java.util.List<Project.ProjectFolders> templateEngineFolders;
@@ -69,12 +72,16 @@ public class FrameworkMVC extends Framework {
         private String name;
         private String assetsImportLink;
         private String additionalPageLink;
+        private String baseHref;
         private String viewAnnotations;
         private String pageName;
+        private String pageNameTagHelper;
         private String navLink;
         private String callContent;
         private String logoutLink;
         private String destinationPath;
+        private String dashboardLink;
+        private String pageScripts;
     }
 
     @Getter
@@ -83,6 +90,7 @@ public class FrameworkMVC extends Framework {
     public static class List {
         private String name;
         private String viewAnnotations;
+        private String viewEnd;
         private String inputTagHelper;
         private String inputRadioTagHelper;
         private String inputDateTagHelper;
@@ -90,6 +98,13 @@ public class FrameworkMVC extends Framework {
         private String deleteDataTagHelper;
         private String pageSizeTagHelper;
         private String dataValue;
+        private String dateDataValue;
+        private String timeDataValue;
+        private String timeTzDataValue;
+        private String dateTimeDataValue;
+        private String dateTimeTzDataValue;
+        private String intervalDataValue;
+        private String periodIntervalDataValue;
         private String dataRawValue;
         private String orderSortsTagHelper;
         private String dataForeignValue;
@@ -114,12 +129,23 @@ public class FrameworkMVC extends Framework {
         private String onGoingPageLink;
         private String pageNumberValue;
         private String pageSizeValue;
+        private String pageSizeValueTagHelper;
         private String currentSortValue;
+        private String currentSortValueTagHelper;
         private String totalElementsTagHelper;
         private String activeSortAscCondition;
         private String activeSortDescCondition;
         private String onGoingPagesLoop;
         private String scriptSection;
+        private String pageSizeParamName;
+        private String sortParamName;
+        private String fileDataValue;
+        private String filterMethod;
+        private String filterTrueSelectedTagHelper;
+        private String filterFalseSelectedTagHelper;
+        private String foreignOptionsLoop;
+        private String flashMessageSection;
+        private String arrayDataValue;
     }
 
     @Getter
@@ -129,11 +155,22 @@ public class FrameworkMVC extends Framework {
         private String name;
         private String viewAnnotations;
         private String dataValue;
+        private String dateDataValue;
+        private String timeDataValue;
+        private String timeTzDataValue;
+        private String dateTimeDataValue;
+        private String dateTimeTzDataValue;
+        private String intervalDataValue;
+        private String periodIntervalDataValue;
         private String dataRawValue;
         private String dataForeignValue;
         private String deleteDataTagHelper;
         private String updateLink;
         private String deleteLink;
+        private String additionalImports;
+        private String viewEnd;
+        private String fileDataValue;
+        private String hiddenPkValue;
     }
 
     @Getter
@@ -152,6 +189,7 @@ public class FrameworkMVC extends Framework {
         private String selectTagHelper;
         private String createLink;
         private String scriptSection;
+        private String viewEnd;
     }
 
     @Getter
@@ -166,9 +204,23 @@ public class FrameworkMVC extends Framework {
         private String inputTagHelper;
         private String textAreaTagHelper;
         private String textAreaValidationTagHelper;
+        private String checkedRadioTagHelper;
         private String selectTagHelper;
         private String updateLink;
         private String scriptSection;
+        private String viewEnd;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Form {
+        private Boolean toGenerate;
+        private String name;
+        private String viewAnnotations;
+        private String viewEnd;
+        private String includeTagHelper;
+        private String foreignOptionsLoop;
     }
 
     @Getter
@@ -177,7 +229,19 @@ public class FrameworkMVC extends Framework {
     public static class Error {
         private String name;
         private String viewAnnotations;
+        private String previousLink;
         private String errorMessage;
+        private String viewEnd;
+        private String destinationPath;
+    }
+
+    @Getter
+    @Setter
+    @ToString
+    public static class Dashboard {
+        private String name;
+        private String viewAnnotations;
+        private String viewEnd;
         private String destinationPath;
     }
 }

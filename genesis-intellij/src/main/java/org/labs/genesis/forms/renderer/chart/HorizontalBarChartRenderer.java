@@ -284,7 +284,7 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
             g.setColor(DashboardTheme.BORDER);
             g.drawLine(tickX, axisY, tickX, axisY + 4);
 
-            String text = formatNumber(value);
+            String text = formatConfiguredValue(value);
             int textX = tickX - metrics.stringWidth(text) / 2;
             int textY = axisY + metrics.getAscent() + 6;
             g.setColor(DashboardTheme.TEXT_MUTED);
@@ -420,24 +420,6 @@ public class HorizontalBarChartRenderer extends AbstractChartRenderer {
         } else {
             return 10.0;
         }
-    }
-
-    /**
-     * Formate un nombre pour l'affichage avec des suffixes (K, M, B).
-     */
-    private String formatNumber(double value) {
-        if (value == (long) value) {
-            long longValue = (long) value;
-            if (longValue >= 1_000_000_000) {
-                return String.format("%.1fB", longValue / 1_000_000_000.0);
-            } else if (longValue >= 1_000_000) {
-                return String.format("%.1fM", longValue / 1_000_000.0);
-            } else if (longValue >= 1_000) {
-                return String.format("%.1fK", longValue / 1_000.0);
-            }
-            return Long.toString(longValue);
-        }
-        return String.format(java.util.Locale.US, "%.1f", value);
     }
 
     // ============================== HELPER DATA CLASSES ==============================

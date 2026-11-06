@@ -5,11 +5,20 @@ ${viewAnnotations}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${projectName} | ${pageName}</title>
-    <link rel="stylesheet" href="${assetsImportLink}">
-    {{#if useFaviconLink or hasFavicon}}<link rel="shortcut icon"
-        href="${rootPath}/${faviconUrl}"
-        type="image/x-icon">{{else}}{{removeLine}}{{/if}}
+    ${baseHref}
+    <title ${pageNameTagHelper}>${projectName} | ${pageName}</title>
+    <link rel="stylesheet" ${assetsImportLink}>
+    {{#if useFaviconLink}}
+    <link rel="shortcut icon"
+          href="${faviconUrl}"
+          type="image/x-icon">
+    {{else}}
+    {{#if hasFavicon}}
+    <link rel="shortcut icon"
+          href="${rootPath}/${faviconUrl}"
+          type="image/x-icon">
+    {{else}}{{removeLine}}{{/if}}
+    {{/if}}
 </head>
 
 <body>
@@ -30,13 +39,18 @@ ${viewAnnotations}
         </button>
         {{/if}}
         <div class="project-info">
-            {{#if useLogoLink or hasLogo}}
+            {{#if useLogoLink}}
             <div class="project-logo">
-                <img src="${rootPath}/images${logoUrl}"
-                    alt="logo-${projectName}">
+                <img src="${logoUrl}"
+                     alt="logo-${projectName}">
             </div>
             {{else}}
-            <div class="project-name">${projectName}</div>
+            {{#if hasLogo}}
+            <div class="project-logo">
+                <img src="${rootPath}/images/${logoUrl}"
+                     alt="logo-${projectName}">
+            </div>
+            {{else}}{{removeLine}}{{/if}}
             {{/if}}
         </div>
 
@@ -56,6 +70,11 @@ ${viewAnnotations}
             {{/if}}
 
             <div class="nav-content" id="navContent">
+                {{#if dashboardEnabled}}
+                <a ${dashboardLink}>
+                    <span>Dashboard</span>
+                </a>
+                {{/if}}
                 <div class="project-description"><span data-i18n="entities"></span></div>
                 {{#each entities}}{{#if !this.isView}}
                 <a ${navLink}>
@@ -115,7 +134,7 @@ ${viewAnnotations}
                     </select>
                 </div>
 
-                {{#if useAuthCookie}}<div class="setting-separator"></div>
+                {{#if useAuthCookie or useAuthSession}}<div class="setting-separator"></div>
 
                 <form ${logoutLink} method="post" class="settings-form" id="settingsForm">
                     <button type="submit" class="logout-btn" id="logoutBtn">
@@ -142,6 +161,8 @@ ${viewAnnotations}
 
     <script src="${rootPath}/js/index.js"></script>
     <script src="${rootPath}/js/lang.js"></script>
+
+    ${pageScripts}
 </body>
 
 </html>

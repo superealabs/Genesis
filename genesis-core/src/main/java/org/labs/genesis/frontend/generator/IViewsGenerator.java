@@ -12,4 +12,5 @@ public interface IViewsGenerator {
     String generateMainLayout(FrameworkMVC framework, Map<String, Object> frameworkOptions, Language language, ViewsTemplate viewsTemplate, TableMetadata[] tableMetadata, String destinationFolder, String projectName, String groupLink) throws Exception;
     String generateErrorPage(FrameworkMVC framework, Map<String, Object> frameworkOptions, Language language, ViewsTemplate viewsTemplate, TableMetadata[] tableMetadata, String destinationFolder, String projectName, String groupLink) throws Exception;
     String generateResources(FrameworkMVC framework, Map<String, Object> frameworkOptions, Language language, ViewsTemplate viewsTemplate, TableMetadata[] tableMetadata, String destinationFolder, String projectName, String groupLink) throws Exception;
+    String generateDashboardView(FrameworkMVC framework, Map<String, Object> frameworkOptions, Language language, ViewsTemplate viewsTemplate, Map<String, Object> dashboardMetadata, TableMetadata[] tableMetadata, String destinationFolder, String projectName, String groupLink) throws Exception;
 }
