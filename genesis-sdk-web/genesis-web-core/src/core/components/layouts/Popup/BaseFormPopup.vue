@@ -8,7 +8,7 @@
         @mouseleave="handleOverlayMouseLeave"
     >
         <div
-            class="bg-bg-dark text-text rounded-lg w-full flex flex-col relative"
+            class="bg-bg-dark text-text rounded-lg w-full flex flex-col relative border-b-6 border-neutral-shadow"
             :class="[sizeClasses, { 'pointer-events-auto': !showOverlay }]"
             :style="[draggableStyle, resizeStyle]"
         >
@@ -167,11 +167,53 @@ function handleKeydown(event: KeyboardEvent) {
 
 const paddingClasses = computed(() => PADDING_CLASSES[props.padding]);
 
+
+
+
+// scroll bloquer
+
+let scrollY = 0;              // position de scroll avant verrouillage
+let previousPaddingRight = ''; // padding-right initial du body
+
+function lockScroll() {
+    // Mémorise la position actuelle
+    scrollY = window.scrollY;
+
+    // Calcule la largeur de la scrollbar (0 si overlay sans scrollbar, cas macOS)
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+    // Compense la disparition de la scrollbar pour éviter le saut horizontal
+    previousPaddingRight = document.body.style.paddingRight;
+    if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+
+    // Verrouille
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
+}
+
+function unlockScroll() {
+    // Restaure tous les styles
+    document.body.style.overflow = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.width = '';
+    document.body.style.paddingRight = previousPaddingRight;
+
+    // Restaure la position de scroll
+    window.scrollTo(0, scrollY);
+}
+
 onMounted(() => {
     document.addEventListener('keydown', handleKeydown);
+    lockScroll();   // ⬅️ NOUVEAU
 });
 
 onUnmounted(() => {
     document.removeEventListener('keydown', handleKeydown);
+    unlockScroll(); // ⬅️ NOUVEAU
 });
 </script>

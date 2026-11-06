@@ -184,8 +184,16 @@
                   />
                 </GenesisTutorialItem>
                 <div class="flex gap-2 justify-end">
-                  <GenesisButtonIcon title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
+                  <GenesisButtonIcon title="importer un fichier de configuration" @click="techStackLogic.handleImport">
                     <IconUpload />
+                  </GenesisButtonIcon>
+
+                  <GenesisButtonIcon title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
+                    <IconSave />
+                  </GenesisButtonIcon>
+
+                  <GenesisButtonIcon title="Exporter toutes les configurations" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExportAll">
+                    <IconPackage />
                   </GenesisButtonIcon>
                 </div>
               </div>
@@ -253,17 +261,17 @@
                   :size="'lg'"
                 />
 
-                  <GenesisInput
-                    v-if="!hideHibernateDdlAuto"
-                    :model-value="effectiveHibernateDdlAuto" 
-                    type="select" 
-                    :options="hibernateDdlAutoOptions"
-                    @update:model-value="(val) => updateConfig('hibernateDdlAuto', val)"
-                    label="Hibernate DDL Auto" 
-                    placeholder="none" 
-                    fill-width 
-                    :size="'lg'"
-                  />
+                <GenesisInput
+                  v-if="!hideHibernateDdlAuto"
+                  :model-value="effectiveHibernateDdlAuto" 
+                  type="select" 
+                  :options="hibernateDdlAutoOptions"
+                  @update:model-value="(val) => updateConfig('hibernateDdlAuto', val)"
+                  label="Hibernate DDL Auto" 
+                  placeholder="none" 
+                  fill-width 
+                  :size="'lg'"
+                />
               </div>
 
               <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
@@ -288,11 +296,14 @@
                 </GenesisTutorialItem>
 
                 <div class="flex gap-2 justify-end">
-                  <GenesisButtonIcon title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
+                  <GenesisButtonIcon title="Importer des configurations en fichiers json" @click="advancedLogic.handleImport">
                     <IconUpload />
                   </GenesisButtonIcon>
-                  <GenesisButtonIcon title="Exporter toutes les configurations avancées" @click="advancedLogic.handleExportAll">
+                  <GenesisButtonIcon title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
                     <IconSave />
+                  </GenesisButtonIcon>
+                  <GenesisButtonIcon title="Exporter toutes les configurations avancées" @click="advancedLogic.handleExportAll">
+                    <IconPackage />
                   </GenesisButtonIcon>
                 </div>
               </div>
@@ -302,8 +313,22 @@
       </div>
     </div>
     
-    <div class="w-1/2 h-full shrink-0">
-      <CarrouselPanel :slides="panelSlides" />
+    <div 
+      class="w-1/2 min-w-[280px] shrink-0 flex flex-col items-center justify-center rounded-lg overflow-hidden relative min-h-[300px]" 
+      :class="projectIllustration ? '' : 'border border-secondary border-dashed bg-secondary/10'"
+    >
+      <img 
+        v-if="projectIllustration"
+        :src="projectIllustration" 
+        alt="Project" 
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+      <template v-else>
+        <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-sm font-medium">Aperçu du projet</span>
+      </template>
     </div>
   </main>
 </template>
@@ -324,8 +349,7 @@ import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
 import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
-import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
-import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+// import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 
@@ -334,6 +358,8 @@ import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.v
 import { confirmFrameworkChange } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 import { isNoneOnly } from '../../utils/projectConfigHelpers';
+import IconPackage from '@genesis-labs/web-core/core/components/ui/icons/IconPackage.vue';
+import projectIllustration from '../../assets/project-summary.png'; // Assure-toi que le chemin est bon
 
 
 // ============================================================================
@@ -346,13 +372,11 @@ const emit = defineEmits<{ 'request-folder-path': [] }>();
 const isApplyingConfig = ref(false);
 const isApplyingTechStackConfig = ref(false);
 
-
-
-const panelSlides: CarouselSlide[] = [
-  { color: '#3B82F6', label: 'Slide 1' },
-  { color: '#EF4444', label: 'Slide 2' },
-  { color: '#10B981', label: 'Slide 3' },
-];
+// const panelSlides: CarouselSlide[] = [
+//   { color: '#3B82F6', label: 'Slide 1' },
+//   { color: '#EF4444', label: 'Slide 2' },
+//   { color: '#10B981', label: 'Slide 3' },
+// ];
 
 // deux choix, soit je l'associe à une variable boolean
 // soit c'est la lecture qui ne le lis pas si il est caché
@@ -507,7 +531,9 @@ const advancedLogic = useConfigManagerLogic({
   framework,
   saveConfiguration,
   deleteConfiguration,
-  persistedConfigs
+  persistedConfigs,
+  extractValues: (p) => [p.loggingLevel, p.securityType, p.cacheProvider, p.hibernateDdlAuto ?? ''],
+  onImported: () => syncConfigsToCurrentFramework(false)
 });
 
 const techStackLogic = useConfigManagerLogic({
@@ -539,7 +565,9 @@ const techStackLogic = useConfigManagerLogic({
   framework,
   saveConfiguration,
   deleteConfiguration,
-  persistedConfigs
+  persistedConfigs,
+  extractValues: (p) => [p.languageVersion, p.buildTool, p.groupId, p.frameworkVersion],
+  onImported: () => syncConfigsToCurrentFramework(false)
 });
 
 // ============================================================================

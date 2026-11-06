@@ -13,7 +13,8 @@
             sizeClasses,
             paddingClasses,
             fillWidthClasses,
-            layoutClasses
+            layoutClasses,
+            perspectiveClasses
         ]"
         :disabled="disabled"
         v-bind="$attrs"
@@ -59,7 +60,8 @@ import {
     type ButtonVariant,
     CONTROL_SIZES,
     BUTTON_RIGHT_ICON_POSITIONS,
-    BUTTON_VARIANTS
+    BUTTON_VARIANTS,
+    BUTTON_PERSPECTIVE_SHADOWS
 } from '@genesis-labs/web-core/core/config/ui.config';
 
 interface Props {
@@ -71,6 +73,7 @@ interface Props {
     contentAlign?: 'left' | 'center' | 'right';
     useDefaultText?: boolean;
     useDefaultHover?: boolean;
+    isPerspective?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -81,7 +84,8 @@ const props = withDefaults(defineProps<Props>(), {
     fillWidth: false,
     contentAlign: 'left',
     useDefaultText: true,
-    useDefaultHover: true
+    useDefaultHover: true,
+    isPerspective: false
 });
 
 const slots = useSlots();
@@ -170,6 +174,18 @@ const fillWidthClasses = computed(() =>
 const layoutClasses = computed(() => {
     if (props.shape === 'square') return 'justify-center';
     return '';
+});
+
+// ═══ Perspective (effet de profondeur en bas) ═══
+// - border-b-4 + border-{variant}-shadow → ombre de relief
+// - active:border + active:border-{variant} → écrasement au clic
+const perspectiveClasses = computed(() => {
+    if (!props.isPerspective) return '';
+
+    const shadow = BUTTON_PERSPECTIVE_SHADOWS[props.variant];
+    if (!shadow) return '';   // tertiary / none → pas d'effet
+
+    return `border-b-4 border ${shadow} transition-all duration-200`;
 });
 
 defineOptions({ inheritAttrs: false });

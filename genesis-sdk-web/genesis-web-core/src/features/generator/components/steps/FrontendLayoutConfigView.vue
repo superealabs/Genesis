@@ -125,11 +125,14 @@
                   @select-configuration="languagesLogic.handleSelect"
                 />
               <div class="flex gap-2 justify-end">
-                <GenesisButtonIcon title="Exporter la configuration de langues sélectionnée" :disabled="!languagesConfigManager.selectedConfigId.value" @click="languagesLogic.handleExport">
+                <GenesisButtonIcon title="importer des configurations de langues" @click="languagesLogic.handleImport">
                   <IconUpload />
                 </GenesisButtonIcon>
-                <GenesisButtonIcon title="Exporter toutes les configurations de langues" @click="languagesLogic.handleExportAll">
+                <GenesisButtonIcon title="Exporter la configuration de langues sélectionnée" :disabled="!languagesConfigManager.selectedConfigId.value" @click="languagesLogic.handleExport">
                   <IconSave />
+                </GenesisButtonIcon>
+                <GenesisButtonIcon title="Exporter toutes les configurations de langues" @click="languagesLogic.handleExportAll">
+                  <IconPackage />
                 </GenesisButtonIcon>
               </div>
             </div>
@@ -256,8 +259,27 @@
     </div>
     
     <!-- PARTIE DROITE : CARROUSEL TUTORIEL (Fixe) -->
-    <div class="w-1/2 h-full shrink-0">
-      <CarrouselPanel :slides="panelSlides" />
+    <div 
+      class="w-1/2 min-w-[280px] shrink-0 flex flex-col items-center justify-center rounded-lg overflow-hidden relative min-h-[300px]" 
+      :class="frontendIllustration ? '' : 'border border-secondary border-dashed bg-secondary/10'"
+    >
+      
+      <!-- ✅ 1. Si l'image est présente : elle couvre tout l'espace disponible -->
+      <img 
+        v-if="frontendIllustration"
+        :src="frontendIllustration" 
+        alt="Illustration Frontend" 
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+
+      <!-- ✅ 2. Sinon (v-else), on affiche le placeholder générique (centré par le flex du parent) -->
+      <template v-else>
+        <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-sm font-medium mt-2">Aperçu de l'interface</span>
+      </template>
+
     </div>
 
   </main>
@@ -272,18 +294,20 @@ import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store
 import { useConfigurationManager } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
 import { useConfig } from '@genesis-labs/web-core/core/features/config/composables/useConfig';
 import { useConfigManagerLogic } from '@genesis-labs/web-core/features/generator/composables/useConfigManagerLogic';
-import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial'; // ✅ AJOUT
+import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial'; 
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
-import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue'; // ✅ AJOUT
+import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue'; 
 import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
-import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue'; // ✅ AJOUT
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue'; 
 import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
 import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
-import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue'; // ✅ AJOUT
-import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
-import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue'; 
+// import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
+import frontendIllustration from '../../assets/frontend-summary.png';
+// import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+import IconPackage from '@genesis-labs/web-core/core/components/ui/icons/IconPackage.vue';
 
 // ============================================================================
 // 1. EMITS
@@ -318,11 +342,11 @@ const navbarOptions: { label: string; value: NavbarType }[] = [
   { label: 'Barre supérieure (Top)', value: 'top' }
 ];
 
-const panelSlides: CarouselSlide[] = [
-  { color: '#3B82F6', label: 'Étape 1 : Framework & Port' },
-  { color: '#EF4444', label: 'Étape 2 : Langues & Layout' },
-  { color: '#10B981', label: 'Étape 3 : Charte graphique' },
-];
+// const panelSlides: CarouselSlide[] = [
+//   { color: '#3B82F6', label: 'Étape 1 : Framework & Port' },
+//   { color: '#EF4444', label: 'Étape 2 : Langues & Layout' },
+//   { color: '#10B981', label: 'Étape 3 : Charte graphique' },
+// ];
 
 // État pour l'édition du framework
 const frontendSelectorRef = ref<HTMLElement | null>(null);
@@ -457,7 +481,9 @@ const languagesLogic = useConfigManagerLogic({
   framework: frontend,
   saveConfiguration,
   deleteConfiguration,
-  persistedConfigs
+  persistedConfigs,
+  extractValues: (p) => p.languages,
+  onImported: loadLanguagesConfigurations
 });
 
 

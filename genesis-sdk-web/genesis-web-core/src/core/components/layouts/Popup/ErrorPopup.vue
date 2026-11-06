@@ -13,11 +13,12 @@
 <script setup lang="ts">
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisError from '@genesis-labs/web-core/core/components/ui/feedback/GenesisError.vue';
+import type { WizardError } from '@genesis-labs/web-core/features/generator/types/generator.types';
 import type { PopupPosition, PopupSize } from './popup.types';
 
 withDefaults(defineProps<{
     title?: string;
-    message: string;
+    message: WizardError;      
     stackTrace?: string;
     showStackTrace?: boolean;
     size?: PopupSize;

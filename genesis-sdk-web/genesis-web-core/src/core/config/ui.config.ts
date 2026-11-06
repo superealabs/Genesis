@@ -273,5 +273,14 @@ export const BUTTON_VARIANTS = {
   },
 } as const;
 
+export const BUTTON_PERSPECTIVE_SHADOWS = {
+  accent:    'border-b-accent-shadow border-accent active:border-accent active:border',
+  primary:   'border-b-primary-shadow border-primary active:border-primary active:border',
+  secondary: 'border-b-secondary-shadow border-bg-secondary active:border-bg-secondary active:border',
+  neutral:   'border-b-neutral-shadow border-bg-neutral-genesis active:border-neutral-light-genesis active:border',
+  tertiary:  '',   // pas d'effet perspective
+  none:      '',   // pas d'effet perspective
+} as const;
+
 /** Toutes les variantes acceptées par un bouton : les variantes UI + 'none' */
 export type ButtonVariant = keyof typeof BUTTON_VARIANTS;

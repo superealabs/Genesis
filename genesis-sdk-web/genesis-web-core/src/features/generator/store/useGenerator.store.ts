@@ -2,6 +2,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import type { StepId } from '../composables/wizard-step-config'
+import type { WizardError } from '../types/generator.types';
 
 // Types partagés
 import type { 
@@ -34,7 +35,7 @@ export const useGeneratorStore = defineStore('generator', () => {
   const isInitializing = ref(false);
   const isGenerating = ref(false);
   const isGenerationComplete = ref(false);
-  const wizardError = ref<string | null>(null);
+  const wizardError = ref<WizardError | null>(null);
   const stepperData = ref<GeneratorData>(structuredClone(INITIAL_STATE));
   // Domaine : Étapes explicitement skippées par l'utilisateur (pour l'affichage résumé)
   const skippedSteps = ref<StepId[]>([]);
@@ -104,7 +105,7 @@ export const useGeneratorStore = defineStore('generator', () => {
   // ==========================================================================
   
   // --- Global & Utilitaire ---
-  function setWizardError(message: string) { wizardError.value = message; }
+  function setWizardError(err: WizardError | null) { wizardError.value = err; }
   function clearWizardError() { wizardError.value = null; }
   function setIsGenerating(value: boolean) { isGenerating.value = value; }
   function setConfigFramework(fw: Framework | null) { configFramework.value = fw; }

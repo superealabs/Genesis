@@ -1,11 +1,11 @@
 <!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/display/configuration/GenesisItemConfig.vue -->
 <template>
     <div 
-        class="flex items-center justify-between w-full p-3 rounded-lg transition-all duration-200 group cursor-pointer border-b-4 active:border"
+        class="flex items-center justify-between w-full p-3 rounded-lg transition-all duration-200 group cursor-pointer border-b-4 active:border "
         :class="[
             isSelected 
-                ? 'bg-primary text-primary-text border-primary-shadow' 
-                : (isHidden ? 'bg-bg-dark/50 opacity-75' : 'bg-bg-light border-bg')
+                ? 'bg-primary text-primary-text border-primary-shadow active:border-primary' 
+                : (isHidden ? 'bg-bg-neutral-genesis border-neutral-shadow' : 'bg-bg-light border-bg')
         ]"
         @click="$emit('select')"
     >

@@ -236,8 +236,25 @@
     </div>
 
     <!-- PARTIE DROITE : CARROUSEL TUTORIEL -->
-    <div class="w-1/2 h-full shrink-0">
-      <CarrouselPanel :slides="panelSlides" />
+    <div class="w-1/2 min-w-[280px] shrink-0 flex flex-col items-center justify-center  rounded-lg overflow-hidden relative min-h-[300px]" :class="gitIllustration ? '' : 'border border-secondary border-dashed bg-secondary/10'">
+      
+      <!-- ✅ 1. Si l'image est présente : elle couvre tout l'espace disponible -->
+      <img 
+        v-if="gitIllustration"
+        :src="gitIllustration" 
+        alt="Illustration Git" 
+        class="absolute inset-0 w-full h-full object-cover"
+      />
+
+      <!-- ✅ 2. Sinon (v-else), on affiche le placeholder générique (centré par le flex du parent) -->
+      <template v-else>
+        <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M6 3v12M18 9a3 3 0 100-6 3 3 0 000 6zM6 21a3 3 0 100-6 3 3 0 000 6zM18 9a9 9 0 01-9 9"/>
+        </svg>
+        <span class="text-sm font-medium mt-2">Aperçu des dépôts</span>
+        <span class="text-xs text-muted text-center px-4 mt-1">L'illustration n'est pas disponible.</span>
+      </template>
+
     </div>
 
   </main>
@@ -259,8 +276,9 @@ import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.v
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
-import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
-import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+// import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
+// import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+import gitIllustration from '../../assets/repository-summary.png'
 
 const emit = defineEmits<{ 'test-connection-error': [message: string] }>();
 
@@ -351,11 +369,11 @@ watch(isEditingProvider, (isEditing) => {
 // ============================================================================
 // CONSTANTES (CARROUSEL)
 // ============================================================================
-const panelSlides: CarouselSlide[] = [
-  { color: '#3B82F6', label: 'Étape 1 : Choix du fournisseur' },
-  { color: '#EF4444', label: 'Étape 2 : Configuration Remote' },
-  { color: '#10B981', label: 'Étape 3 : Structure des dépôts' },
-];
+// const panelSlides: CarouselSlide[] = [
+//   { color: '#3B82F6', label: 'Étape 1 : Choix du fournisseur' },
+//   { color: '#EF4444', label: 'Étape 2 : Configuration Remote' },
+//   { color: '#10B981', label: 'Étape 3 : Structure des dépôts' },
+// ];
 
 // ============================================================================
 // ACTIONS
