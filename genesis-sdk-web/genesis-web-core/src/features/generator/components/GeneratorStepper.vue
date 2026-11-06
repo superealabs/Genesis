@@ -182,6 +182,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import type { Framework, FrontendFramework, DatabaseEngineDto, FileRequestPayload } from '@genesis-labs/shared-types';
+import type { WizardError } from '../types/generator.types.ts';
 
 
 // Core Components
@@ -264,7 +265,7 @@ const repoDetailProvider = ref<RepositoryProviderMetadata | null>(null);
 
 
 const showError = ref(false);
-const errorMessage = ref('');
+const errorMessage = ref<WizardError>('');
 const errorStackTrace = ref('');
 const isDevMode = import.meta.env.DEV;
 const isSummaryComplete = ref(false);

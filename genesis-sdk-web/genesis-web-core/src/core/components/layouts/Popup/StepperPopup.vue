@@ -41,6 +41,7 @@
                         variant="secondary"
                         :disabled="currentStep === 1"
                         @click="$emit('previous')"
+                        is-perspective
                     >
                         Précédent
                     </GenesisButton>
@@ -93,6 +94,7 @@
                         @click="$emit('next')" 
                         :variant="'accent'"
                         :disabled="disableNext"
+                        is-perspective
                     >
                         {{ currentStep === totalSteps ? 'Générer' : 'Suivant' }}
                     </GenesisButton>

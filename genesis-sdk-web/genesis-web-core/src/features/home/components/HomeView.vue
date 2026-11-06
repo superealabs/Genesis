@@ -15,7 +15,7 @@
                     class="inline-flex"
                 >
                     <TabList
-                        class="relative inline-flex rounded-full p-1 bg-neutral-genesis/10"
+                        class="relative inline-flex rounded-full p-1 bg-bg-neutral-genesis/50"
                         role="group"
                     >
                         <!-- Indicateur glissant : positionné sur le bouton actif -->
@@ -37,7 +37,7 @@
                                 class="relative z-10 inline-flex items-center justify-center
                                     w-10 h-10 rounded-full
                                     transition-colors duration-200
-                                    focus:outline-none focus-visible:ring-2"
+                                    "
                                 :class="selected ? 'text-text' : 'text-text-muted hover:text-text'"
                             >
                                 <component :is="option.icon" class="w-5 h-5" />
@@ -49,10 +49,10 @@
             </div>
         </header>
 
-        <main id="Hero Section" class="flex flex-col gap-24">
+        <main id="Hero Section" class="flex flex-col gap-20">
 
             <!-- ═══ TITRE CENTRAL ═══ -->
-            <h1 class="text-center text-9xl md:text-8xl font-semibold leading-tight text-text">
+            <h1 class="text-center text-9xl md:text-9xl font-semibold text-text">
                 Welcome into
                 <br/>
                 <span class="text-primary">Genesis</span>
@@ -79,6 +79,7 @@
                             class="self-start"
                             :disabled="isInitializing"
                             @click="handleCreateProject"
+                            is-perspective
                         >
                             <template #leftIcon><IconFolderPlus /></template>
                             {{ isInitializing ? 'Initialisation...' : 'Créer un nouveau projet' }}
@@ -89,7 +90,7 @@
                 <div id="picture" class="w-fit lg:w-2/3 flex items-end gap-4 justify-end">
                     <div id="picture" class="w-full flex items-end gap-4">
                         <!-- Image A : grande -->
-                        <div>
+                        <div class="flex flex-col gap-4">
                             <figure id="pictureA" class="relative overflow-hidden rounded-xl bg-bg-light w-[100%] h-96 aspect-square">
                                 <div
                                     role="img"
@@ -101,7 +102,7 @@
                                 </div>
                             </figure>
                             <div>
-                                Texte
+                                <h3>Select your framework</h3>
                             </div>
                         </div>
 
@@ -118,7 +119,7 @@
                         </figure>
 
                         <!-- Image C : petite, alignée en haut -->
-                        <figure id="pictureC" class="relative overflow-hidden rounded-xl bg-bg-light w-[60%] h-64 self-start aspect-square">
+                        <figure id="pictureC" class="relative overflow-hidden rounded-xl bg-bg-light w-[60%] h-64 self-center aspect-square">
                             <div
                                 role="img"
                                 aria-label="Image C"
@@ -155,11 +156,12 @@ const emit = defineEmits<{
 
 const { initializeNewProject, isInitializing } = useGenerator();
 
-const themeMode = ref<'light' | 'dark'>('dark');
+const themeMode = ref<'light' | 'auto' | 'dark'>('dark');
 
 // Interface seulement pour le moment : aucun thème n'est réellement appliqué
 const options = [
     { value: 'light' as const, icon: IconSun,  ariaLabel: 'Passer en mode clair' },
+    { value: 'auto' as const, icon: IconSun,  ariaLabel: 'Automatique' },
     { value: 'dark'  as const, icon: IconMoon, ariaLabel: 'Passer en mode sombre' },
 ];
 
