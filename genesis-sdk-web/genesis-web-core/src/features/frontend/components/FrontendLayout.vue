@@ -33,6 +33,7 @@
         v-if="frontendGroupOptions && frontendGroupOptions.length > 0"
         triggerVariant="secondary"
         trigger-size="lg"
+        is-perspective
       >
         <template #triggerIcon>
           <IconCategory />

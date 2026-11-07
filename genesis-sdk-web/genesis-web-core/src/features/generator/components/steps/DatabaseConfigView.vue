@@ -33,10 +33,10 @@
         </div>
         
         <div class="pb-0.5">
-          <GenesisButton v-if="!isEditingDatabase" variant="secondary" size="lg" @click="startEditingDatabase">
+          <GenesisButton v-if="!isEditingDatabase" variant="secondary" size="lg" is-perspective @click="startEditingDatabase">
             Modifier
           </GenesisButton>
-          <GenesisButton v-else variant="tertiary" size="lg" @click="cancelEditingDatabase">
+          <GenesisButton v-else variant="tertiary" size="lg" is-perspective @click="cancelEditingDatabase">
             Annuler
           </GenesisButton>
         </div>

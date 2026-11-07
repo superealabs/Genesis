@@ -5,20 +5,22 @@
       <div class="flex items-center justify-between">
         <h4 class="text-sm font-semibold text-text">Modèle de relation</h4>
       </div>
-      <GenesisInput
-        v-model="hasForm"
-        type="boolean"
-        label="Has Form"
-        size="md"
-        one-line
-      />
-      <GenesisInput
-        v-model="isMandatory"
-        type="boolean"
-        label="Mandatory"
-        size="md"
-        one-line
-      />
+      <div class="flex gap-4">
+        <GenesisInput
+          v-model="hasForm"
+          type="boolean"
+          label="Has Form"
+          size="md"
+          one-line
+        />
+        <GenesisInput
+          v-model="isMandatory"
+          type="boolean"
+          label="Mandatory"
+          size="md"
+          one-line
+        />
+      </div>
       <div class="flex gap-2 justify-end">
         <GenesisButton
           variant="secondary"

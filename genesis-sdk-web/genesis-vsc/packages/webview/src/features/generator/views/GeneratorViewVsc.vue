@@ -133,11 +133,11 @@ function handleOpenProject() {
     >
         <template #success-actions>
             <div class="flex gap-3 justify-center w-full max-w-sm">
-                <GenesisButton variant="primary" size="lg" @click="handleOpenProject">
+                <GenesisButton variant="primary" size="lg" is-perspective @click="handleOpenProject">
                     Ouvrir le projet
                 </GenesisButton>
                 
-                <GenesisButton :variant="'neutral'" size="lg" @click="handleClose">
+                <GenesisButton :variant="'neutral'" is-perspective size="lg" @click="handleClose">
                     Fermer
                 </GenesisButton>
             </div>

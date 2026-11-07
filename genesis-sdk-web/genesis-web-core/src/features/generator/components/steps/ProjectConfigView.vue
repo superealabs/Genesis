@@ -5,7 +5,7 @@
       <!-- 1. CONFIGURATION DE BASE -->
       <div class="flex flex-col gap-4">
         <!-- ✅ AJOUT : En-tête avec le déclencheur du tutoriel -->
-        <div class="flex items-center justify-between border-b border-neutral-light-genesis pb-2">
+        <div class="flex items-center justify-between border-b border-bg-neutral-genesis pb-2">
           <h3 class="text-xl font-semibold text-text">
             Configuration du Projet
           </h3>
@@ -40,10 +40,10 @@
             </div>
             
             <div class="pb-0.5">
-              <GenesisButton v-if="!isEditingFramework" variant="secondary" size="lg" @click="startEditingFramework">
+              <GenesisButton v-if="!isEditingFramework" variant="secondary" size="lg" is-perspective @click="startEditingFramework">
                 Modifier
               </GenesisButton>
-              <GenesisButton v-else variant="tertiary" size="lg" @click="cancelEditingFramework">
+              <GenesisButton v-else variant="neutral" size="lg" is-perspective @click="cancelEditingFramework">
                 Annuler
               </GenesisButton>
             </div>
@@ -92,7 +92,7 @@
 
       <!-- 2. CONFIGURATION DU FRAMEWORK (STACK TECHNIQUE) -->
       <div class="flex flex-col gap-4 w-full">
-        <div class="flex items-center justify-between border-b border-neutral-light-genesis pb-2">
+        <div class="flex items-center justify-between border-b border-bg-neutral-genesis pb-2">
           <h3 class="text-xl font-semibold text-text">
             Stack Technique ({{ framework?.name || 'Non sélectionné' }})
           </h3>
@@ -184,15 +184,15 @@
                   />
                 </GenesisTutorialItem>
                 <div class="flex gap-2 justify-end">
-                  <GenesisButtonIcon title="importer un fichier de configuration" @click="techStackLogic.handleImport">
+                  <GenesisButtonIcon is-perspective title="importer un fichier de configuration" @click="techStackLogic.handleImport">
                     <IconUpload />
                   </GenesisButtonIcon>
 
-                  <GenesisButtonIcon title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
+                  <GenesisButtonIcon is-perspective title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
                     <IconSave />
                   </GenesisButtonIcon>
 
-                  <GenesisButtonIcon title="Exporter toutes les configurations" @click="techStackLogic.handleExportAll">
+                  <GenesisButtonIcon is-perspective title="Exporter toutes les configurations" @click="techStackLogic.handleExportAll">
                     <IconPackage />
                   </GenesisButtonIcon>
                 </div>
@@ -296,13 +296,13 @@
                 </GenesisTutorialItem>
 
                 <div class="flex gap-2 justify-end">
-                  <GenesisButtonIcon title="Importer des configurations en fichiers json" @click="advancedLogic.handleImport">
+                  <GenesisButtonIcon is-perspective title="Importer des configurations en fichiers json" @click="advancedLogic.handleImport">
                     <IconUpload />
                   </GenesisButtonIcon>
-                  <GenesisButtonIcon title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
+                  <GenesisButtonIcon is-perspective title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
                     <IconSave />
                   </GenesisButtonIcon>
-                  <GenesisButtonIcon title="Exporter toutes les configurations avancées" @click="advancedLogic.handleExportAll">
+                  <GenesisButtonIcon is-perspective title="Exporter toutes les configurations avancées" @click="advancedLogic.handleExportAll">
                     <IconPackage />
                   </GenesisButtonIcon>
                 </div>

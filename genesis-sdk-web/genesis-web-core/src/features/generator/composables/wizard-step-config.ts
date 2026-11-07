@@ -599,6 +599,11 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
     },
     
     beforeNext: async (store) => {
+      if (!store.pendingFrontendFramework) {
+        store.setWizardError("Veuillez sélectionner un frontend");
+        return false;
+      }
+      
       if (store.pendingFrontendFramework) {
         store.setSelectedFrontendFramework(store.pendingFrontendFramework);
         store.unmarkStepAsSkipped('frontend_select');

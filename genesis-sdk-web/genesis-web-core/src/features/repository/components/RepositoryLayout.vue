@@ -31,6 +31,7 @@
         v-if="providerGroupOptions && providerGroupOptions.length > 0"
         triggerVariant="secondary"
         trigger-size="lg"
+        is-perspective
       >
         <template #triggerIcon>
           <IconCategory />
@@ -135,7 +136,7 @@ export interface RepositoryLayoutProps {
 }
 
 /*const props = */withDefaults(defineProps<RepositoryLayoutProps>(), {
-  title: 'Fournisseurs de Dépôt',
+  title: 'Repository',
   searchPlaceholder: 'Rechercher un fournisseur...',
   showBackButton: false,
   isLoading: false,

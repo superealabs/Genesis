@@ -99,7 +99,7 @@ const props = withDefaults(defineProps<{
     showRename: true,
     showEdit: false,
     showDelete: false,
-    showToggleVisibility: true,
+    showToggleVisibility: false,
     readonly: false
 });
 

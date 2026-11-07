@@ -1,18 +1,18 @@
 <template>
   <div class="flex flex-col gap-3 w-64 shrink-0 justify-center">
-    <GenesisButton :size="'lg'" variant="accent" :disabled="!canAddAll" @click="$emit('addAll')">
+    <GenesisButton isPerspective :size="'lg'" variant="accent" :disabled="!canAddAll" @click="$emit('addAll')">
       <template #leftIcon><IconChevronsRight /></template>
       Add All
     </GenesisButton>
-    <GenesisButton :size="'lg'" variant="secondary" :disabled="!canAdd" @click="$emit('add')">
+    <GenesisButton isPerspective :size="'lg'" variant="secondary" :disabled="!canAdd" @click="$emit('add')">
       <template #leftIcon><IconChevronRight /></template>
       Add
     </GenesisButton>
-    <GenesisButton :size="'lg'" :disabled="!canRemove" @click="$emit('remove')">
+    <GenesisButton isPerspective :size="'lg'" :disabled="!canRemove" @click="$emit('remove')">
       <template #leftIcon><IconChevronLeft /></template>
       Remove
     </GenesisButton>
-    <GenesisButton :size="'lg'" variant="neutral" :disabled="!canRemoveAll" @click="$emit('removeAll')">
+    <GenesisButton isPerspective :size="'lg'" variant="neutral" :disabled="!canRemoveAll" @click="$emit('removeAll')">
       <template #leftIcon><IconChevronsLeft /></template>
       Remove All
     </GenesisButton>

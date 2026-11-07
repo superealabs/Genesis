@@ -9,6 +9,7 @@
             :search-query="searchQuery"
             :can-move-up="canMoveUp"
             :can-move-down="canMoveDown"
+            :show-toggle-visibility="props.showToggleVisibility"
             @update:search-query="(val) => $emit('update:searchQuery', val)"
             @add="$emit('add')"
             @delete="(id) => $emit('delete', id)"
@@ -109,18 +110,20 @@ const props = withDefaults(defineProps<{
     canMoveUp: boolean;
     canMoveDown: boolean;
     selectedItems: string[];
-    // ✅ NOUVELLE PROP : Contrôle la disposition des boutons d'action
+    //  NOUVELLE PROP : Contrôle la disposition des boutons d'action
     viewMode?: 'one-view' | 'two-view';
     canAssign?: boolean;
     canRemove?: boolean;
     canAssignAll?: boolean;    // nouveau (défaut : true)
     canRemoveAll?: boolean;    // nouveau (défaut : true)
+    showToggleVisibility?: boolean;
 }>(), {
-    viewMode: 'one-view', // ✅ Valeur par défaut
+    viewMode: 'one-view', //  Valeur par défaut
     canAssignAll: true,
     canRemoveAll: true,
     canAssign: true,
     canRemove: true,
+    showToggleVisibility: false
 });
 
 const emit = defineEmits<{

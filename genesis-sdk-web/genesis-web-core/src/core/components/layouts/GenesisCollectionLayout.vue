@@ -60,6 +60,7 @@
                                     @click="$emit('openFilter')"
                                     class="shrink-0"
                                     title="Ouvrir les filtres"
+                                    is-perspective
                                 >
                                     <IconFilter />
                                 </GenesisButtonIcon>
@@ -91,6 +92,7 @@
                                     :disabled="!canCompare"
                                     :title="canCompare ? 'Comparer les éléments sélectionnés' : 'Sélectionnez au moins 2 éléments'"
                                     @click="$emit('compare')"
+                                    is-perspective
                                 >
                                     Comparer<!-- <template v-if="compareCount"> ({{ compareCount }})</template> -->
                                 </GenesisButton>

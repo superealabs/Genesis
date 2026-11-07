@@ -93,6 +93,7 @@
                   :can-move-down="configManager.canMoveDown.value"
                   :selected-items="selectedItemsInListRef"
                   :view-mode="'two-view'"
+                  :show-toggle-visibility="true"
 
                   :can-assign="hasSelectedInUnassigned"
                   :can-remove="hasSelectedInAssigned"

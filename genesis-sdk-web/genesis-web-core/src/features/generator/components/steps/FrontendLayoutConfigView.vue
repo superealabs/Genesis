@@ -37,10 +37,10 @@
           </div>
           
           <div class="pb-0.5">
-            <GenesisButton v-if="!isEditingFrontend" variant="secondary" size="lg" @click="startEditingFrontend">
+            <GenesisButton v-if="!isEditingFrontend" variant="secondary" size="lg" is-perspective @click="startEditingFrontend">
               Modifier
             </GenesisButton>
-            <GenesisButton v-else variant="tertiary" size="lg" @click="cancelEditingFrontend">
+            <GenesisButton v-else variant="tertiary" size="lg" is-perspective @click="cancelEditingFrontend">
               Annuler
             </GenesisButton>
           </div>
@@ -125,13 +125,13 @@
                   @select-configuration="languagesLogic.handleSelect"
                 />
               <div class="flex gap-2 justify-end">
-                <GenesisButtonIcon title="importer des configurations de langues" @click="languagesLogic.handleImport">
+                <GenesisButtonIcon is-perspective title="importer des configurations de langues" @click="languagesLogic.handleImport">
                   <IconUpload />
                 </GenesisButtonIcon>
-                <GenesisButtonIcon title="Exporter la configuration de langues sélectionnée" :disabled="!languagesConfigManager.selectedConfigId.value" @click="languagesLogic.handleExport">
+                <GenesisButtonIcon is-perspective title="Exporter la configuration de langues sélectionnée" :disabled="!languagesConfigManager.selectedConfigId.value" @click="languagesLogic.handleExport">
                   <IconSave />
                 </GenesisButtonIcon>
-                <GenesisButtonIcon title="Exporter toutes les configurations de langues" @click="languagesLogic.handleExportAll">
+                <GenesisButtonIcon is-perspective title="Exporter toutes les configurations de langues" @click="languagesLogic.handleExportAll">
                   <IconPackage />
                 </GenesisButtonIcon>
               </div>
