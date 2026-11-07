@@ -31,6 +31,7 @@
         v-if="frameworkGroupOptions && frameworkGroupOptions.length > 0"
         triggerVariant="secondary"
         trigger-size="lg"
+        is-perspective
       >
         <template #triggerIcon>
           <IconCategory />

@@ -143,6 +143,11 @@ export class GenesisPanel {
                 return; // IMPORTANT : on s'arrête ici, on ne passe pas au routeur
             }
 
+            if (message.type === 'SET_THEME_MODE') {
+                await this.handleSetThemeMode(message.payload);
+                return;
+            }
+
             // ── 2. Messages Métier (Délégués au Routeur) ────────────────────
             await this.messageRouter.route(message);
         });
@@ -162,6 +167,32 @@ export class GenesisPanel {
         GenesisPanel.instance?.panel.webview.postMessage({
             type: 'configReset',
             payload: { scope }
+        });
+    }
+
+    private async handleSetThemeMode(payload: { colorMode?: 'light' | 'dark' | 'auto' }): Promise<void> {
+        const colorMode = payload?.colorMode;
+
+        // Validation
+        if (colorMode !== 'light' && colorMode !== 'dark' && colorMode !== 'auto') {
+            console.warn('[Genesis] SET_THEME_MODE : colorMode invalide', colorMode);
+            return;
+        }
+
+        const config = vscode.workspace.getConfiguration('genesis');
+        const current = config.get<string>('colorMode');
+
+        // Évite un write inutile
+        if (current !== colorMode) {
+            await config.update('colorMode', colorMode, vscode.ConfigurationTarget.Global);
+        }
+
+        // ✅ Confirmation DIRECTE à la webview
+        //    (ne dépend pas de watchConfiguration, qui peut ne pas se déclencher
+        //    si la valeur est identique)
+        this.panel.webview.postMessage({
+            type: 'themeChanged',
+            payload: this.getThemeConfig()
         });
     }
 }

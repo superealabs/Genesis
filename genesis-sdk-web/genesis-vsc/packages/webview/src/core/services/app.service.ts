@@ -1,7 +1,8 @@
 // ✅ 1. Import de l'INSTANCE singleton (et non de la classe)
 import { useAppStore } from '../store/useApp.store';
-import { useThemeStore } from '../store/useTheme.store';
+import { useThemeStore, watchVsCodeTheme } from '../store/useTheme.store';
 import { vscodeService } from './vscode.service'; 
+
 
 export class AppService {
     // ✅ 2. Utilise l'instance singleton par défaut. 
@@ -42,6 +43,9 @@ export class AppService {
             })
         );
 
+        // Suivre les changements de thème VS Code (mode 'auto' uniquement)
+        this.cleanups.push(watchVsCodeTheme());
+
         // 2. INPUT : Signaler à l'extension que la webview est prête
         this.loadingStartTime = Date.now();
         this.vscode.sendMessage('ready');
@@ -50,6 +54,10 @@ export class AppService {
     dispose(): void {
         this.cleanups.forEach(cleanup => cleanup());
         this.cleanups = [];
+    }
+
+    setThemeMode(colorMode: 'light' | 'auto' | 'dark') {
+        this.vscode.sendMessage('SET_THEME_MODE', { colorMode });
     }
 }
 
