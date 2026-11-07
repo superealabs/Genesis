@@ -63,7 +63,6 @@
    ═══════════════════════════════════════════════════════════ */
 
 /* Genesis SOMBRE (auto ET forcé) */
-body.theme-genesis.vscode-dark,
 body.theme-genesis.genesis-dark {
     --color-bg-light:    hsl(175, 100%, 10%);
     --color-bg:          hsl(175, 100%, 7%);
@@ -93,7 +92,6 @@ body.theme-genesis.genesis-dark {
 }
 
 /* Genesis CLAIR (auto ET forcé) */
-body.theme-genesis.vscode-light,
 body.theme-genesis.genesis-light {
     --color-bg-light:    hsl(140, 100%, 90%);
     --color-bg:          hsl(140, 58%, 80%);
@@ -190,7 +188,6 @@ body.theme-vscode.vscode-light.genesis-dark {
    ═══════════════════════════════════════════════════════════ */
 
 /* Mono SOMBRE (auto ET forcé) */
-body.theme-mono.vscode-dark,
 body.theme-mono.genesis-dark {
     --color-bg-light:    hsl(0, 0%, 15%);
     --color-bg:          hsl(0, 0%, 10%);
@@ -206,7 +203,6 @@ body.theme-mono.genesis-dark {
 }
 
 /* Mono CLAIR (auto ET forcé) */
-body.theme-mono.vscode-light,
 body.theme-mono.genesis-light {
     --color-bg-light:    hsl(0, 0%, 100%);
     --color-bg:          hsl(0, 0%, 95%);

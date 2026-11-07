@@ -33,6 +33,7 @@
                 @click="handleAssignAll"
                 :justify-between="true"
                 title="Assigner toutes les entités visibles à cette configuration"
+                is-perspective
             >
                 <template v-if="viewMode === 'two-view'" #rightIcon>
                     <IconChevronsRight />
@@ -48,6 +49,7 @@
                 @click="handleAssign"
                 :justify-between="true"
                 title="Assigner les éléments sélectionnés à cette configuration"
+                is-perspective
             >
                 <template v-if="viewMode === 'two-view'" #rightIcon>
                     <IconChevronRight />
@@ -62,6 +64,7 @@
                 @click="handleRemove"
                 :justify-between="true"
                 title="Retirer les éléments sélectionnés de cette configuration"
+                is-perspective
             >
                 <template v-if="viewMode === 'two-view'" #leftIcon>
                     <IconChevronLeft />
@@ -77,6 +80,7 @@
                 @click="handleRemoveAll"
                 :justify-between="true"
                 title="Retirer toutes les entités visibles de cette configuration"
+                is-perspective
             >
                 <template v-if="viewMode === 'two-view'" #leftIcon>
                     <IconChevronsLeft />

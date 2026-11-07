@@ -19,6 +19,10 @@ export function useApp() {
         appService.dispose();
     }
 
+    function setThemeMode(colorMode: 'light' | 'auto' | 'dark') {
+        appService.setThemeMode(colorMode);
+    }
+
     return {
         // Lecture du store (readonly)
         apiStatus: appStore.apiStatus,
@@ -27,6 +31,9 @@ export function useApp() {
         // Actions exposées à la vue
         resetApi: appStore.resetApi,
         initialize,
-        dispose
+        dispose,
+        setThemeMode,
+        colorMode: themeStore.colorMode,               // computed<ColorMode>
+        resolvedColorMode: themeStore.resolvedColorMode,  // computed<'light'|'dark'|'high-contrast'>
     };
 }

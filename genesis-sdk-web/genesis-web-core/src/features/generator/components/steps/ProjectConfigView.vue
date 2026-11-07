@@ -192,7 +192,7 @@
                     <IconSave />
                   </GenesisButtonIcon>
 
-                  <GenesisButtonIcon title="Exporter toutes les configurations" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExportAll">
+                  <GenesisButtonIcon title="Exporter toutes les configurations" @click="techStackLogic.handleExportAll">
                     <IconPackage />
                   </GenesisButtonIcon>
                 </div>

@@ -37,6 +37,7 @@
             :use-default-text="false"
             :class="triggerClass"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
+            :is-perspective="props.isPerspective"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
               <slot name="triggerIcon" />
@@ -62,6 +63,7 @@
             :use-default-text="false"
             :class="triggerClass"
             @mousedown="(e) => handleTriggerMouseDown(e, open)"
+            :is-perspective="props.isPerspective"
           >
             <template v-if="$slots.triggerIcon" #leftIcon>
               <slot name="triggerIcon" />
@@ -145,6 +147,7 @@ const props = withDefaults(defineProps<{
   label?: string;
   isMandatory?: boolean;
   forceDown?: boolean;
+  isPerspective?: boolean;
 }>(), {
   align: 'right',
   dropdownSize: 'lg',
@@ -160,7 +163,8 @@ const props = withDefaults(defineProps<{
   openAtHover: false,
   label: '',
   isMandatory: false,
-  forceDown: false
+  forceDown: false,
+  isPerspective: false
 });
 
 const emit = defineEmits<{ close: [] }>();

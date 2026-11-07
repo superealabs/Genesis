@@ -15,13 +15,13 @@
                     class="inline-flex"
                 >
                     <TabList
-                        class="relative inline-flex rounded-full p-1 bg-bg-neutral-genesis/50"
+                        class="relative inline-flex rounded-lg p-1 bg-bg-neutral-genesis/50 border-b-4 border-neutral-shadow/50"
                         role="group"
                     >
                         <!-- Indicateur glissant : positionné sur le bouton actif -->
                         <span
                             aria-hidden="true"
-                            class="absolute top-1 bottom-1 rounded-full bg-bg-neutral-genesis
+                            class="absolute top-1 bottom-1 rounded-lg bg-primary text-primary-text
                                 transition-transform duration-300 ease-out"
                             :style="indicatorStyle"
                         />
@@ -37,8 +37,9 @@
                                 class="relative z-10 inline-flex items-center justify-center
                                     w-10 h-10 rounded-full
                                     transition-colors duration-200
+                                    focus:outline-none
                                     "
-                                :class="selected ? 'text-text' : 'text-text-muted hover:text-text'"
+                                :class="selected ? 'text-primary-text' : 'text-text-muted hover:text-text'"
                             >
                                 <component :is="option.icon" class="w-5 h-5" />
                                 <span class="sr-only">{{ option.ariaLabel }}</span>
@@ -137,41 +138,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 // import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 import IconFolderPlus from '@genesis-labs/web-core/core/components/ui/icons/IconFolderPlus.vue';
 // import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 import IconSun from '@genesis-labs/web-core/core/components/ui/icons/IconSun.vue';
+import IconCog from '@genesis-labs/web-core/core/components/ui/icons/IconCog.vue';
 import IconMoon from '@genesis-labs/web-core/core/components/ui/icons/IconMoon.vue';
 // import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { TabGroup, TabList, Tab } from '@headlessui/vue';
 
+const props = withDefaults(defineProps<{
+    colorMode?: 'light' | 'auto' | 'dark';
+}>(), {
+    colorMode: 'dark',
+});
+
 const emit = defineEmits<{
     'open-generator': [];
     'navigate': [routeName: string];
+    'theme': [mode: 'light' | 'auto' | 'dark'];
 }>();
 
 const { initializeNewProject, isInitializing } = useGenerator();
 
-const themeMode = ref<'light' | 'auto' | 'dark'>('dark');
 
 // Interface seulement pour le moment : aucun thème n'est réellement appliqué
 const options = [
     { value: 'light' as const, icon: IconSun,  ariaLabel: 'Passer en mode clair' },
-    { value: 'auto' as const, icon: IconSun,  ariaLabel: 'Automatique' },
+    { value: 'auto' as const, icon: IconCog,  ariaLabel: 'Automatique' },
     { value: 'dark'  as const, icon: IconMoon, ariaLabel: 'Passer en mode sombre' },
 ];
 
 const selectedIndex = computed(() =>
-    Math.max(0, options.findIndex(o => o.value === themeMode.value))
+    Math.max(0, options.findIndex(o => o.value === props.colorMode))
 );
 
 function onChange(index: number) {
     const option = options[index];
-    if (option) themeMode.value = option.value;
+    if (!option) return;
+    emit('theme', option.value);   // plus de mutation locale
 }
 
 // Largeur d'un bouton = w-10 (40px) + gap éventuel ; ici pas de gap → 40px
