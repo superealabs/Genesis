@@ -31,6 +31,7 @@
         v-if="databaseGroupOptions && databaseGroupOptions.length > 0"
         triggerVariant="secondary"
         trigger-size="lg"
+        is-perspective
       >
         <template #triggerIcon>
           <IconCategory />

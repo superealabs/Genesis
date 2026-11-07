@@ -123,6 +123,8 @@
       v-else-if="currentStepId === 'repository_select'"
       v-bind="repositoryLayoutProps"
       @back="emit('close')"
+      @update:mode="handleChangeRepository"
+      @update:display-mode="setDisplayModeRepository"
       @select-replace="handleReplaceSelectionRepo"
       @close-replace="cancelReplaceRepo"
       @select="handleSelectWrapperRepo"
@@ -261,7 +263,7 @@ const frameworkGroupBy = ref<keyof Framework | null>(null);
 
 const feDetailFramework = ref<FrontendFramework | null>(null);
 const dbDetailEngine = ref<DatabaseEngineDto | null>(null);
-const repoDetailProvider = ref<RepositoryProviderMetadata | null>(null);
+// const repoDetailProvider = ref<RepositoryProviderMetadata | null>(null);
 
 
 const showError = ref(false);
@@ -331,7 +333,10 @@ const {
   handleReplaceSelection: handleReplaceSelectionRepo,
   cancelReplace: cancelReplaceRepo,
   closeDetail: closeDetailRepo,
-  handleInfo: handleInfoRepo
+  handleInfo: handleInfoRepo,
+  detailProvider: repoDetailProvider,
+  handleModeChange : handleChangeRepository,
+  setDisplayMode : setDisplayModeRepository
 } = useWizardRepository((provider: RepositoryProviderMetadata) => {
   emit('select-repository', provider);
 });

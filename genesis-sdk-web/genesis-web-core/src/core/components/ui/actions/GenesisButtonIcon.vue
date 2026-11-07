@@ -7,6 +7,7 @@
         :use-default-hover="!hoverHimself"
         :class="{ 'hover:[&_svg]:text-text transition-colors': hoverHimself }"
         v-bind="$attrs"
+        :is-perspective="props.isPerspective"
     >
         <template #leftIcon>
             <slot />
@@ -31,14 +32,16 @@ interface Props {
      * @default false
      */
     hoverHimself?: boolean;
+    isPerspective?: boolean;
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     disabled: false,
     variant: 'neutral',
     shape: 'square',
     size: 'md',
-    hoverHimself: false
+    hoverHimself: false,
+    isPerspective: false
 });
 
 defineOptions({ inheritAttrs: false });

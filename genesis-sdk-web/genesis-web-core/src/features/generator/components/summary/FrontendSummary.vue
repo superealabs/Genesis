@@ -34,18 +34,34 @@
           <dl
             v-for="group in featureGroups"
             :key="group.id"
-            class="grid gap-x-10 gap-y-5"
+            class="grid gap-x-10 gap-y-6"
             :class="group.gridClass"
           >
             <div v-for="field in group.fields" :key="field.label" class="flex flex-col gap-1 min-w-0">
               <dt class="text-xs font-semibold uppercase tracking-wider text-muted">{{ field.label }}</dt>
-              <dd class="flex items-center gap-2 text-text min-w-0" :class="group.valueClass">
-                <span
-                  v-if="field.swatch"
-                  class="w-4 h-4 rounded-full shrink-0"
-                  :style="{ backgroundColor: field.swatch }"
-                />
-                <span class="break-words min-w-0">{{ field.value }}</span>
+              <dd class="flex flex-col gap-2 text-text min-w-0" :class="group.valueClass">
+                
+                <!-- ✅ PRÉVISUALISATION : Affichée au-dessus de la valeur si elle existe -->
+                <div 
+                  v-if="field.previewUrl" 
+                  class="bg-bg-secondary/30 rounded-lg border border-bg-neutral-genesis flex items-center justify-center h-16 w-16 shrink-0 overflow-hidden"
+                >
+                  <img 
+                    :src="field.previewUrl" 
+                    :alt="field.label" 
+                    class="max-h-full max-w-full object-contain p-1"
+                  />
+                </div>
+
+                <!-- Valeur texte (et swatch pour les couleurs) -->
+                <div class="flex items-center gap-2 min-w-0">
+                  <span
+                    v-if="field.swatch"
+                    class="w-4 h-4 rounded-full shrink-0 border border-bg-neutral-genesis"
+                    :style="{ backgroundColor: field.swatch }"
+                  />
+                  <span class="break-words min-w-0">{{ field.value }}</span>
+                </div>
               </dd>
             </div>
           </dl>
@@ -89,7 +105,7 @@ import { useFrontendStore } from '@genesis-labs/web-core/features/frontend/store
 // ✅ IMPORT DE L'ILLUSTRATION FRONTEND
 import frontendIllustration from '../../assets/frontend-summary.png';
 
-const { stepperData, skippedSteps } = useGenerator();
+const { stepperData, skippedSteps, frontendAssetContents } = useGenerator();
 const frontendStore = useFrontendStore();
 
 const frontend = computed(() => stepperData.value.frontend);
@@ -109,7 +125,25 @@ const NAVBAR_LABELS: Record<string, string> = {
   top: 'Barre supérieure',
 };
 
-interface FeatureField { label: string; value: string; swatch?: string }
+const logoPreviewUrl = computed(() => {
+  const content = frontendAssetContents.value.logoContent;
+  const mimeType = frontendAssetContents.value.logoMimeType || 'image/png';
+  return content ? `data:${mimeType};base64,${content}` : null;
+});
+
+const faviconPreviewUrl = computed(() => {
+  const content = frontendAssetContents.value.faviconContent;
+  const mimeType = frontendAssetContents.value.faviconMimeType || 'image/x-icon';
+  return content ? `data:${mimeType};base64,${content}` : null;
+});
+
+
+interface FeatureField { 
+  label: string; 
+  value: string; 
+  swatch?: string;
+  previewUrl?: string;
+}
 interface FeatureGroup { id: string; gridClass: string; valueClass: string; fields: FeatureField[] }
 
 // Même mécanique que ProjectSummary / DatabaseSummary :
@@ -143,8 +177,16 @@ const featureGroups = computed<FeatureGroup[]>(() => {
       gridClass: 'grid-cols-2',
       valueClass: 'text-sm',
       fields: [
-        { label: 'Logo',    value: l.logoPath    ? getFileName(l.logoPath)    : 'Non défini' },
-        { label: 'Favicon', value: l.faviconPath ? getFileName(l.faviconPath) : 'Non défini' },
+        { 
+          label: 'Logo',    
+          value: l.logoPath ? getFileName(l.logoPath)    : 'Non défini',
+          previewUrl: logoPreviewUrl.value || undefined
+        },
+        { 
+          label: 'Favicon', 
+          value: l.faviconPath ? getFileName(l.faviconPath) : 'Non défini',
+          previewUrl: faviconPreviewUrl.value || undefined
+        },
       ],
     },
   ];

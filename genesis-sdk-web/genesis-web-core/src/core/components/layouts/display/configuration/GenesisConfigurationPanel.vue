@@ -34,7 +34,8 @@
                             :name="config.name"
                             :is-hidden="config.isHidden"
                             :is-selected="selectedConfigId === config.id"
-                            :show-delete="false" 
+                            :show-delete="false"
+                            :show-toggle-visibility="props.showToggleVisibility"
                             :readonly="readonly"
                             @select="handleSelect(config.id)"
                             @rename="(newName) => $emit('rename', config.id, newName)" 
@@ -58,18 +59,18 @@
                     class="flex flex-col gap-2 flex-shrink-0 justify-between pt-1"
                 >
                     <div class="flex flex-col gap-2">
-                        <GenesisButtonIcon size="lg" title="Ajouter une configuration" variant="secondary" @click="handleAdd">
+                        <GenesisButtonIcon size="lg" title="Ajouter une configuration" variant="secondary" is-perspective @click="handleAdd">
                             <IconPlus />
                         </GenesisButtonIcon>
-                        <GenesisButtonIcon size="lg" title="Supprimer la configuration sélectionnée" :disabled="!selectedConfigId" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleDelete">
+                        <GenesisButtonIcon size="lg" title="Supprimer la configuration sélectionnée" :disabled="!selectedConfigId" class="disabled:opacity-50 disabled:cursor-not-allowed" is-perspective @click="handleDelete">
                             <IconTrashAlt />
                         </GenesisButtonIcon>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <GenesisButtonIcon size="lg" title="Monter la configuration" :disabled="!canMoveUp" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleMoveUp">
+                        <GenesisButtonIcon size="lg" title="Monter la configuration" :disabled="!canMoveUp" class="disabled:opacity-50 disabled:cursor-not-allowed" is-perspective @click="handleMoveUp">
                             <IconChevronUp />
                         </GenesisButtonIcon>
-                        <GenesisButtonIcon size="lg" title="Descendre la configuration" :disabled="!canMoveDown" class="disabled:opacity-50 disabled:cursor-not-allowed" @click="handleMoveDown">
+                        <GenesisButtonIcon size="lg" title="Descendre la configuration" :disabled="!canMoveDown" class="disabled:opacity-50 disabled:cursor-not-allowed" is-perspective @click="handleMoveDown">
                             <IconChevronDown />
                         </GenesisButtonIcon>
                     </div>
@@ -103,8 +104,10 @@ const props = withDefaults(defineProps<{
     readonly?: boolean;
     tutorialId?: string;
     includeSubTutorial?: boolean;
+    showToggleVisibility?: boolean;
 }>(), {
-    includeSubTutorial: false
+    includeSubTutorial: false,
+    showToggleVisibility: false
 });
 
 const emit = defineEmits<{
