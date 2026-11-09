@@ -104,11 +104,12 @@
           </div>
 
           <!-- Panneau de gestion des configurations de Langues -->
-           <GenesisTutorialItem id="lang-config-panel">
-            <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-              <!-- ✅ ÉTAPE 2 : Genesis Configuration Panel -->
-              
-                <GenesisConfigurationPanel
+            <GenesisTutorialItem id="lang-config-panel">
+              <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
+                <GenesisConfigurationManageData
+                  tutorial-id="lang-config-panel"
+                  actions-tutorial-id="lang-config-io"
+                  :include-sub-tutorial="true"
                   :configurations="languagesConfigManager.configurations.value"
                   :selected-config-id="languagesConfigManager.selectedConfigId.value"
                   :filtered-configs="languagesConfigManager.filteredConfigs.value"
@@ -123,20 +124,12 @@
                   @move-up="languagesConfigManager.moveUp"
                   @move-down="languagesConfigManager.moveDown"
                   @select-configuration="languagesLogic.handleSelect"
+                  @import="languagesLogic.handleImport"
+                  @export="languagesLogic.handleExport"
+                  @export-all="languagesLogic.handleExportAll"
                 />
-              <div class="flex gap-2 justify-end">
-                <GenesisButtonIcon is-perspective title="importer des configurations de langues" @click="languagesLogic.handleImport">
-                  <IconUpload />
-                </GenesisButtonIcon>
-                <GenesisButtonIcon is-perspective title="Exporter la configuration de langues sélectionnée" :disabled="!languagesConfigManager.selectedConfigId.value" @click="languagesLogic.handleExport">
-                  <IconSave />
-                </GenesisButtonIcon>
-                <GenesisButtonIcon is-perspective title="Exporter toutes les configurations de langues" @click="languagesLogic.handleExportAll">
-                  <IconPackage />
-                </GenesisButtonIcon>
               </div>
-            </div>
-          </GenesisTutorialItem>
+            </GenesisTutorialItem>
         </div>
       </div>
 
@@ -299,15 +292,13 @@ import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutoria
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue'; 
-import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
+
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue'; 
-import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
-import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue'; 
 // import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 import frontendIllustration from '../../assets/frontend-summary.png';
 // import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
-import IconPackage from '@genesis-labs/web-core/core/components/ui/icons/IconPackage.vue';
+import GenesisConfigurationManageData from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationManageData.vue';
 
 // ============================================================================
 // 1. EMITS
@@ -381,7 +372,8 @@ const faviconPreviewUrl = computed(() => {
 const tutorial = useGenesisTutorial('frontend-layout-config', {
   'languages': [
     { id: 'lang-search', text: 'Recherchez et ajoutez les langues que votre application doit supporter.' },
-    { id: 'lang-config-panel', text: 'Gérez, sauvegardez et réutilisez vos configurations de langues favorites ici.' }
+    { id: 'lang-config-panel', text: 'Gérez, sauvegardez et réutilisez vos configurations de langues favorites ici.' },
+    { id: 'lang-config-io', text: 'Importez, exportez ou exportez toutes vos configurations de langues.' },
   ],
   'charte': [
     { id: 'charte-navbar', text: 'Choisissez le type de navigation (barre latérale ou supérieure) pour votre application.' },

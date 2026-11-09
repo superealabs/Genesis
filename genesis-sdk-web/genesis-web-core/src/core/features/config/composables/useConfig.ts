@@ -155,6 +155,7 @@ export function useConfig() {
         store.clearError();
         try {
             const data = await svc.getAll('generator_generation-options');
+            data.forEach(c => store.addOrUpdateConfiguration(c)); // expose les configs à l'export
             return data;
         } catch (err) {
             store.setError((err as Error).message || 'Erreur lors du chargement des options de génération.');
