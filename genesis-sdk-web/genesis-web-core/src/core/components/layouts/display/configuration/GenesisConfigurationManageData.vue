@@ -85,6 +85,7 @@ import GenesisConfigurationActions from './GenesisConfigurationActions.vue';
   showImport: true,
   showExport: true,
   showExportAll: true,
+  canExportConfig: undefined,
   includeSubTutorial: false,
 });
 
