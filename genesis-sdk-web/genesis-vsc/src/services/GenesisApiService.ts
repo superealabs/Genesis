@@ -24,7 +24,7 @@ export class GenesisApiService {
             const logPath = path.join(logDir, 'genesis-api.log');
             const logFd = fs.openSync(logPath, 'a');
 
-            this.process = spawn('java', [
+            this.process = spawn(this.resolveJavaCommand(), [
                 '-jar', jarPath,
                 `--server.port=${this.port}`,
                 `--server.address=127.0.0.1`,
@@ -36,8 +36,9 @@ export class GenesisApiService {
 
             logger.log('Genesis Generator Service', `Project set on port : ${this.port}`, true);
 
-            // ⚠️ Fermer le fd côté Node quand le process termine (le fd est déjà utilisé par le process)
-            this.process.on('exit', (code) => {
+            const proc = this.process;
+
+            proc.on('exit', (code) => {
                 console.log(`[Genesis API] Processus terminé (code ${code})`);
                 try { fs.closeSync(logFd); } catch { /* already closed */ }
                 this.process = null;
@@ -45,7 +46,20 @@ export class GenesisApiService {
                 this.ready = false;
             });
 
-            await this.waitForApi();
+            const spawnFailure = new Promise<never>((_, reject) => {
+                proc.once('error', (e: NodeJS.ErrnoException) => reject(new Error(
+                    e.code === 'ENOENT'
+                        ? 'Java introuvable. Installez un JDK 17+ ou définissez le réglage genesis.javaHome.'
+                        : `Échec du lancement de Java : ${e.message}`
+                )));
+                proc.once('exit', (code) => reject(new Error(
+                    `L'API s'est arrêtée au démarrage (code ${code}). Voir ${logPath}`
+                )));
+            });
+            spawnFailure.catch(() => {});
+
+            await Promise.race([this.waitForApi(), spawnFailure]);
+
             createAxiosInstance(this.port!);
             this.ready = true;
         } catch (err) {
@@ -114,5 +128,23 @@ export class GenesisApiService {
             };
             check();
         });
+    }
+
+    private resolveJavaCommand(): string {
+        const javaHome = process.env.JAVA_HOME
+            ?? vscode.workspace.getConfiguration('genesis').get<string>('javaHome');
+        if (javaHome) {
+            return path.join(javaHome, 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
+        }
+        if (process.platform === 'darwin') {
+            // Candidats usuels sur Mac quand le PATH du shell n'est pas hérité
+            const candidates = [
+                '/opt/homebrew/opt/openjdk/bin/java',
+                '/usr/local/opt/openjdk/bin/java',
+            ];
+            const found = candidates.find(c => fs.existsSync(c));
+            if (found) return found;
+        }
+        return 'java';
     }
 }

@@ -40,14 +40,15 @@ export interface TableMetadataDto {
 export type ComponentType = 'model' | 'dao' | 'service' | 'controller';
 
 
-// ✅ AJOUTÉ : Type 2 - Le lien temporaire UI entre une config et des entités
+//  AJOUTÉ : Type 2 - Le lien temporaire UI entre une config et des entités
 export interface GenerationAssociatedToConfig {
   configId: string | number;
   associatedTables: string[];
   associatedViews: string[];
 }
 
-// ✅ AJOUTÉ : Type 3 - Le payload final propre envoyé au backend
+//  AJOUTÉ : Type 3 - Le payload final propre envoyé au backend
+
 export interface GenerationParameter {
   profileName: string;
   selectedTables: string[];

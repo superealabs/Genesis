@@ -1,10 +1,11 @@
 {
-  "name": "genesis",
-  "displayName": "genesis",
+  "name": "Genesis",
+  "displayName": "Genesis",
   "description": "Genesis Extension",
   "version": "0.0.1",
   "icon": "resources/genesis-icon.png",
   "license": "Apache-2.0",
+  "publisher": "GenesisDevelopper",
   "repository": {
     "type": "git",
     "url": "https://github.com/superealabs/Genesis"
@@ -51,6 +52,12 @@
     "configuration": {
       "title": "Genesis",
       "properties": {
+        "genesis.javaHome": {
+          "type": "string",
+          "default": "",
+          "description": "Chemin du JDK utilisé pour lancer l'API Genesis (dossier contenant bin/java). Laissez vide pour utiliser JAVA_HOME ou le java du PATH."
+        },
+
         "genesis.theme": {
           "type": "string",
           "default": "genesis",

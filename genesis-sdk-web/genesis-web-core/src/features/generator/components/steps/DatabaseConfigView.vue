@@ -67,7 +67,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         
         <!-- MODIFIÉ : Prend 2 colonnes sur écran moyen+ si le moteur n'est ni Postgres ni SQL Server -->
-        <div :class="database.engine == 'mysql' ? 'md:col-span-2' : 'md:col-span-1'">
+        <div :class="database.engine == 'MySQL' ? 'md:col-span-2' : 'md:col-span-1'">
           <GenesisInput
             v-model="database.databaseName"
             label="Database Name"
@@ -78,7 +78,7 @@
           />
         </div>
 
-        <div v-if="database.engine === 'oracle'" class="md:col-span-1">
+        <div v-if="database.engine === 'Oracle'" class="md:col-span-1">
           <GenesisInput
             v-model="database.sid"
             label="SID (Oracle)"
@@ -171,7 +171,7 @@
       <div class="flex flex-col gap-2 mt-2">
         <!-- ✅ MODIFIÉ : Visible uniquement pour MySQL -->
         <GenesisInput
-          v-if="database.engine === 'mysql'"
+          v-if="database.engine === 'MySQL'"
           v-model="database.allowPublicKeyRetrieval"
           label="Allow public key retrieval"
           type="boolean"

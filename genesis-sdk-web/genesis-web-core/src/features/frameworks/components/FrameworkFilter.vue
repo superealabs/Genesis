@@ -156,6 +156,9 @@ function resetFilters() {
         coreFrameworks: createNeutralState(availableCoreFrameworks.value),
         integrations: createNeutralState(integrationOptions.map(o => o.key))
     };
+
+    emitFilters();
+    emit('close');
 }
 
 

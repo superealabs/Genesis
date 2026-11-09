@@ -8,7 +8,7 @@
     <!-- Conteneur : hauteur extérieure = échelle unique (CONTROL_SIZES), padding compris dedans -->
     <TabList
       ref="listRef"
-      class="relative inline-flex rounded-md gap-1 bg-bg-neutral-genesis/50 border-b-4 border-neutral-shadow/50"
+      class="relative inline-flex rounded-md gap-1 bg-bg-light border-b-4 border-neutral-shadow/50"
       :class="[tokens.box, paddingClasses]"
       role="group"
     >

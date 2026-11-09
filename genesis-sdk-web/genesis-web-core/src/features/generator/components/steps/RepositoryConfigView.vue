@@ -216,22 +216,6 @@
             </div>
           </GenesisTutorialItem>
         </div>
-
-        <!-- 4. TEST DE CONNEXION (Hors tutoriel pour ne pas interrompre le flux) -->
-        <div class="flex flex-col md:flex-row items-end gap-2 pt-4">
-          <div class="flex-1"></div>
-          <GenesisButton
-            variant="secondary" 
-            content-align="center"
-            :disabled="isTesting || !repoConfig?.useRemote"
-            size="lg"
-            @click="handleTestConnection"
-            class="w-full md:w-auto"
-          >
-            <span v-if="isTesting">Test en cours...</span>
-            <span v-else>Test Connexion</span>
-          </GenesisButton>
-        </div>
       </div>
     </div>
 
@@ -264,9 +248,9 @@
 import { computed, ref, watch } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useRepositoryStore } from '@genesis-labs/web-core/features/repository/store/useRepository.store';
-import { REPOSITORY_SERVICE_KEY } from '@genesis-labs/web-core/features/repository/manifest';
-import { inject } from 'vue';
-import type { IRepositoryService } from '@genesis-labs/shared-types';
+// import { REPOSITORY_SERVICE_KEY } from '@genesis-labs/web-core/features/repository/manifest';
+// import { inject } from 'vue';
+// import type { IRepositoryService } from '@genesis-labs/shared-types';
 
 // ✅ AJOUTS POUR LE TUTORIEL
 import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
@@ -280,7 +264,7 @@ import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/Gen
 // import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 import gitIllustration from '../../assets/repository-summary.png'
 
-const emit = defineEmits<{ 'test-connection-error': [message: string] }>();
+// const emit = defineEmits<{ 'test-connection-error': [message: string] }>();
 
 const { 
   stepperData, 
@@ -290,10 +274,10 @@ const {
 } = useGenerator();
 
 const repositoryStore = useRepositoryStore();
-const repoSvc = inject(REPOSITORY_SERVICE_KEY) as IRepositoryService;
+// const repoSvc = inject(REPOSITORY_SERVICE_KEY) as IRepositoryService;
 
 const repoConfig = computed(() => stepperData.value.repositoryConfig);
-const isTesting = ref(false);
+// const isTesting = ref(false);
 
 // ============================================================================
 // CONFIGURATION DU TUTORIEL
@@ -378,20 +362,20 @@ watch(isEditingProvider, (isEditing) => {
 // ============================================================================
 // ACTIONS
 // ============================================================================
-async function handleTestConnection() {
-  if (!repoConfig.value) return;
-  isTesting.value = true;
-  try {
-    const result = await repoSvc.testConnection(repoConfig.value);
-    if (!result.success) {
-      emit('test-connection-error', result.message);
-    } else {
-      console.log('Connexion réussie :', result.message);
-    }
-  } catch (error) {
-    emit('test-connection-error', 'Erreur inattendue lors du test de connexion.');
-  } finally {
-    isTesting.value = false;
-  }
-}
+// async function handleTestConnection() {
+//   if (!repoConfig.value) return;
+//   isTesting.value = true;
+//   try {
+//     const result = await repoSvc.testConnection(repoConfig.value);
+//     if (!result.success) {
+//       emit('test-connection-error', result.message);
+//     } else {
+//       console.log('Connexion réussie :', result.message);
+//     }
+//   } catch (error) {
+//     emit('test-connection-error', 'Erreur inattendue lors du test de connexion.');
+//   } finally {
+//     isTesting.value = false;
+//   }
+// }
 </script>
