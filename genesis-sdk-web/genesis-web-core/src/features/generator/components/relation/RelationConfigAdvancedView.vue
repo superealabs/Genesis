@@ -21,29 +21,37 @@
     </GenesisTutorialItem>
 
     <!-- Colonne centre -->
-    <AdvancedRelationCenterActions
-        class="max-w-2/5 scroll-auto h-full"
-        :can-add="canAdd"
-        :can-add-all="canAddAll"
-        :can-remove="canRemove"
-        :can-remove-all="canRemoveAll"
-        @add="handleAdd"
-        @add-all="handleAddAll"
-        @remove="handleRemove"
-        @remove-all="handleRemoveAll"
-    />
+    <GenesisTutorialItem id="relation-advanced-center">
+      <AdvancedRelationCenterActions
+          class="max-w-2/5 scroll-auto h-full"
+          :can-add="canAdd"
+          :can-add-all="canAddAll"
+          :can-remove="canRemove"
+          :can-remove-all="canRemoveAll"
+          tutorial-id="relation-advanced-center"
+          :include-sub-tutorial="true"
+          @add="handleAdd"
+          @add-all="handleAddAll"
+          @remove="handleRemove"
+          @remove-all="handleRemoveAll"
+      />
+    </GenesisTutorialItem>
 
     <!-- Colonne droite -->
-    <AdvancedRelationRightPanel
-        class="w-2/5 min-w-0 scroll-auto h-full"
-        v-model:has-form="hasForm"
-        v-model:is-mandatory="isMandatory"
-        :relations="getRelations"
-        :selected-relations="selectedRelations"
-        @update:selected-relations="selectedRelations = $event"
-        @assign="handleAssign"
-        @assign-all="handleAssignAll"
-    />
+    <GenesisTutorialItem id="relation-advanced-right">
+      <AdvancedRelationRightPanel
+          class="w-2/5 min-w-0 scroll-auto h-full"
+          v-model:has-form="hasForm"
+          v-model:is-mandatory="isMandatory"
+          :relations="getRelations"
+          :selected-relations="selectedRelations"
+          tutorial-id="relation-advanced-right"
+          :include-sub-tutorial="true"
+          @update:selected-relations="selectedRelations = $event"
+          @assign="handleAssign"
+          @assign-all="handleAssignAll"
+      />
+    </GenesisTutorialItem>
 
     <!-- Warning des doublons -->
     <WarningPopup
@@ -175,11 +183,27 @@ const tutorial = useGenesisTutorial('relation-config-advanced', {
       id: 'relation-advanced-left-targeted',
       text: 'Choisissez la table de départ, le sens de la relation, puis cochez les entités cibles.',
     },
+    {
+      id: 'relation-advanced-center',
+      text: 'Actions disponibles pour ajouter ou retirer des relations.',
+    },
+    {
+      id: 'relation-advanced-right',
+      text: 'Modèle de relation et liste des relations configurées.',
+    },
   ],
   'mass': [
     {
       id: 'relation-advanced-left-mass',
       text: 'Sélectionnez en masse les entités de départ, puis ajoutez leurs relations.',
+    },
+    {
+      id: 'relation-advanced-center',
+      text: 'Actions disponibles pour ajouter ou retirer des relations.',
+    },
+    {
+      id: 'relation-advanced-right',
+      text: 'Modèle de relation et liste des relations configurées.',
     },
   ],
 });
