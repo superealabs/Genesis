@@ -33,7 +33,7 @@ public final class DashboardFrontendMetadataProvider {
             Map<String, Object> page = pages.get(pageIndex);
             page.put("endpointPath", "/dashboard/" + page.get("slug"));
             String title = String.valueOf(page.get("title"));
-            page.put("titleHtml", htmlEscape(title.isBlank() ? "Dashboard " + (pageIndex + 1) : title));
+            page.put("titleHtml", title.isBlank() ? "Dashboard " + (pageIndex + 1) : title);
         }
         metadata.put("dashboardEnabled", !pages.isEmpty());
         metadata.put("dashboardPages", pages);
@@ -116,9 +116,8 @@ public final class DashboardFrontendMetadataProvider {
                     Map<String, Integer> layout = gridLayout(visualization);
                     generatedVisualization.put("gridLayout", layout);
                     generatedVisualization.put("layoutJson", jsonLiteral(layout));
-                    generatedVisualization.put("layoutJsonHtml", htmlEscape(jsonLiteral(layout)));
                     generatedVisualization.put("options", visualization.get("options"));
-                    generatedVisualization.put("titleHtml", htmlEscape(String.valueOf(visualization.get("title"))));
+                    generatedVisualization.put("titleHtml", String.valueOf(visualization.get("title")));
 
                     List<Map<String, Object>> fields =
                             (List<Map<String, Object>>) visualization.get("fields");
@@ -135,9 +134,7 @@ public final class DashboardFrontendMetadataProvider {
                     }
                     generatedVisualization.put("fields", runtimeFields);
                     generatedVisualization.put("fieldsJson", jsonLiteral(runtimeFields));
-                    generatedVisualization.put("fieldsJsonHtml", htmlEscape(String.valueOf(generatedVisualization.get("fieldsJson"))));
                     generatedVisualization.put("optionsJson", jsonLiteral(visualization.get("options")));
-                    generatedVisualization.put("optionsJsonHtml", htmlEscape(String.valueOf(generatedVisualization.get("optionsJson"))));
                     generatedVisualizations.add(generatedVisualization);
                 }
             }
@@ -157,10 +154,13 @@ public final class DashboardFrontendMetadataProvider {
         for (Map<String, Object> visualization : visualizations) {
             markup.append("<app-dashboard-visualization\n")
                     .append("  title=\"").append(visualization.get("titleHtml")).append("\"\n")
-                    .append("  type=\"").append(htmlEscape(String.valueOf(visualization.get("type")))).append("\"\n")
-                    .append("  fieldsJson=\"").append(visualization.get("fieldsJsonHtml")).append("\"\n")
-                    .append("  optionsJson=\"").append(visualization.get("optionsJsonHtml")).append("\"\n")
-                    .append("  layoutJson=\"").append(visualization.get("layoutJsonHtml")).append("\"\n")
+                    .append("  type=\"").append(String.valueOf(visualization.get("type"))).append("\"\n")
+                    .append("  fieldsJson='").append(
+                            String.valueOf(visualization.get("fieldsJson"))).append("'\n")
+                    .append("  optionsJson='").append(
+                            String.valueOf(visualization.get("optionsJson"))).append("'\n")
+                    .append("  layoutJson='").append(
+                            String.valueOf(visualization.get("layoutJson"))).append("'\n")
                     .append("  visualizationId=\"dashboard-")
                     .append(visualization.get("pageSlug")).append("-")
                     .append(visualization.get("graphSlug")).append("\"\n")
@@ -178,13 +178,16 @@ public final class DashboardFrontendMetadataProvider {
         for (Map<String, Object> visualization : visualizations) {
             markup.append("<DashboardVisualization\n")
                     .append("  title=\"").append(visualization.get("titleHtml")).append("\"\n")
-                    .append("  type=\"").append(htmlEscape(String.valueOf(visualization.get("type")))).append("\"\n")
+                    .append("  type=\"").append(String.valueOf(visualization.get("type"))).append("\"\n")
                     .append("  graph-slug=\"").append(visualization.get("graphSlug")).append("\"\n")
                     .append("  visualization-id=\"dashboard-").append(visualization.get("pageSlug"))
                     .append("-").append(visualization.get("graphSlug")).append("\"\n")
-                    .append("  :fields=\"").append(visualization.get("fieldsJsonHtml")).append("\"\n")
-                    .append("  :options=\"").append(visualization.get("optionsJsonHtml")).append("\"\n")
-                    .append("  :layout=\"").append(visualization.get("layoutJsonHtml")).append("\"\n")
+                    .append("  :fields='").append(
+                            String.valueOf(visualization.get("fieldsJson"))).append("'\n")
+                    .append("  :options='").append(
+                            String.valueOf(visualization.get("optionsJson"))).append("'\n")
+                    .append("  :layout='").append(
+                            String.valueOf(visualization.get("layoutJson"))).append("'\n")
                     .append("  :rows=\"pageData['").append(visualization.get("pageSlug"))
                     .append("']?.['").append(visualization.get("graphSlug")).append("'] ?? []\"\n")
                     .append("  :active=\"activePage === '").append(visualization.get("pageSlug"))
@@ -276,14 +279,6 @@ public final class DashboardFrontendMetadataProvider {
                     exception
             );
         }
-    }
-
-    private static String htmlEscape(String value) {
-        return value.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace("\"", "&quot;")
-                .replace("'", "&#39;");
     }
 
     private static String uniqueSlug(String value, Set<String> used) {

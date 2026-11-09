@@ -47,6 +47,71 @@ class DashboardQueryBuilderTest {
         assertEquals(DashboardQuerySelection.CoordinateAxis.LONGITUDE, plan.getSelections().get(1).getCoordinateAxis());
     }
 
+    @Test
+    void shouldResolveJoinPathsAcrossThreeRelationshipsAndQualifiedTableNames() {
+        org.labs.genesis.connexion.model.TableMetadata orders =
+                joinTable("orders", foreignKey("profile_id", "profiles"));
+        org.labs.genesis.connexion.model.TableMetadata profiles =
+                joinTable("profiles", foreignKey("department_id", "departments"));
+        org.labs.genesis.connexion.model.TableMetadata departments =
+                joinTable("departments", foreignKey("country_id", "countries"));
+        org.labs.genesis.connexion.model.TableMetadata countries =
+                joinTable("countries", column("name"));
+
+        DashboardVisualization table = new DashboardVisualization();
+        table.setType(DashboardVisualizationType.TABLE);
+        table.setDataSource(new DashboardDataSource("orders", DashboardSourceType.TABLE));
+        table.getFields().add(new DashboardField(
+                "countryName",
+                "public.countries.name",
+                DashboardFieldRole.COLUMN
+        ));
+
+        DashboardQueryPlan plan = DashboardQueryBuilder.build(
+                table,
+                orders,
+                java.util.List.of(orders, profiles, departments, countries)
+        );
+
+        assertEquals(3, plan.getJoins().size());
+        assertEquals(
+                java.util.List.of("profiles", "departments", "countries"),
+                plan.getJoins().stream()
+                        .map(org.labs.genesis.dashboard.query.DashboardJoin::getTable)
+                        .toList()
+        );
+    }
+
+    private static org.labs.genesis.connexion.model.TableMetadata joinTable(
+            String tableName,
+            org.labs.genesis.connexion.model.ColumnMetadata... columns
+    ) {
+        org.labs.genesis.connexion.model.TableMetadata table =
+                new org.labs.genesis.connexion.model.TableMetadata();
+        table.setTableName(tableName);
+        table.setColumns(columns);
+        return table;
+    }
+
+    private static org.labs.genesis.connexion.model.ColumnMetadata foreignKey(
+            String columnName,
+            String referencedTable
+    ) {
+        org.labs.genesis.connexion.model.ColumnMetadata column = column(columnName);
+        column.setForeign(true);
+        column.setReferencedTable(referencedTable);
+        column.setReferencedPrimaryKeyColumn("id");
+        return column;
+    }
+
+    private static org.labs.genesis.connexion.model.ColumnMetadata column(String name) {
+        org.labs.genesis.connexion.model.ColumnMetadata column =
+                new org.labs.genesis.connexion.model.ColumnMetadata();
+        column.setName(name);
+        column.setReferencedColumn(name);
+        return column;
+    }
+
     private static org.labs.genesis.connexion.model.TableMetadata table(String name) {
         org.labs.genesis.connexion.model.TableMetadata table = new org.labs.genesis.connexion.model.TableMetadata();
         table.setTableName(name);

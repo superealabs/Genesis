@@ -15,6 +15,7 @@ import org.labs.genesis.forms.renderer.provider.TableData;
 import org.labs.genesis.forms.renderer.table.TableRenderer;
 import org.labs.genesis.forms.theme.DashboardTheme;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
+import org.labs.genesis.forms.ui.visualization.model.VisualizationFilterCondition;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 import org.labs.genesis.forms.utils.CursorUtils;
@@ -24,6 +25,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.util.List;
+import java.util.Objects;
 
 @Getter
 @Setter
@@ -126,6 +128,8 @@ public class DashboardVisualComponent extends JPanel {
             String key,
             Object value
     ) {
+        Object previousValue = config.getValue(key);
+        boolean valueChanged = !Objects.deepEquals(previousValue, value);
         config.setValue(key, value);
 
         if ("title".equals(key)) {
@@ -145,11 +149,100 @@ public class DashboardVisualComponent extends JPanel {
             repaint();
         }
 
+        if (valueChanged && "markerType".equals(key)) {
+            updateMapMarkerType();
+        }
+
         renderer.updateConfig(config);
 
-        refreshDataIfNeeded();
+        if (valueChanged && affectsQuery(key)) {
+            refreshDataIfNeeded();
+        }
 
         updateDisplayState();
+    }
+
+    private boolean affectsQuery(String key) {
+        if (key == null) {
+            return false;
+        }
+
+        if ("table".equals(key)
+                || "dataSource".equals(key)
+                || "columns".equals(key)
+                || "coordinateMode".equals(key)
+                || "limit".equals(key)
+                || "aggregation".equals(key)
+                || "sortColumn".equals(key)
+                || "sortDirection".equals(key)
+                || "filters".equals(key)) {
+            return true;
+        }
+
+        if (key.endsWith(".limit")
+                || key.endsWith(".sort")
+                || key.endsWith(".filter")) {
+            return true;
+        }
+
+        VisualizationParameter parameter = visualizationItem.getParameter(key);
+        return parameter != null && parameter.hasQueryRole();
+    }
+
+    private boolean filtersEqual(Object first, Object second) {
+        if (first == second) {
+            return true;
+        }
+        if (!(first instanceof List<?> firstFilters)
+                || !(second instanceof List<?> secondFilters)
+                || firstFilters.size() != secondFilters.size()) {
+            return Objects.deepEquals(first, second);
+        }
+
+        for (int i = 0; i < firstFilters.size(); i++) {
+            Object firstFilter = firstFilters.get(i);
+            Object secondFilter = secondFilters.get(i);
+            if (firstFilter instanceof VisualizationFilterCondition firstCondition
+                    && secondFilter instanceof VisualizationFilterCondition secondCondition) {
+                if (!Objects.equals(firstCondition.getColumn(), secondCondition.getColumn())
+                        || !Objects.equals(firstCondition.getOperator(), secondCondition.getOperator())
+                        || !Objects.equals(firstCondition.getValue(), secondCondition.getValue())
+                        || !Objects.equals(firstCondition.getRelationToPrevious(),
+                        secondCondition.getRelationToPrevious())) {
+                    return false;
+                }
+            } else if (!Objects.deepEquals(firstFilter, secondFilter)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void updateMapMarkerType() {
+        Object data = config.getValue(MapData.CONFIG_KEY);
+        if (!(data instanceof MapData mapData)) {
+            return;
+        }
+
+        String markerType = "PIN".equalsIgnoreCase(config.getString("markerType", "PIN"))
+                ? "PIN"
+                : "BUBBLE";
+        List<MapData.MapPoint> points = mapData.points().stream()
+                .map(point -> new MapData.MapPoint(
+                        point.label(),
+                        markerType,
+                        point.latitude(),
+                        point.longitude(),
+                        point.value()))
+                .toList();
+
+        config.setValue(
+                MapData.CONFIG_KEY,
+                new MapData(
+                        points,
+                        "PIN".equals(markerType) ? MapData.MapMode.PIN : MapData.MapMode.BUBBLE
+                )
+        );
     }
 
     public void setTitle(String title) {
@@ -1300,6 +1393,13 @@ public class DashboardVisualComponent extends JPanel {
     }
 
     public void updateGlobalConfig(Object limit, String aggregation, String sortColumn, String sortDirection, Object filters) {
+        boolean queryChanged =
+                !Objects.deepEquals(config.getValue("limit"), limit)
+                        || !Objects.deepEquals(config.getValue("aggregation"), aggregation)
+                        || !Objects.deepEquals(config.getValue("sortColumn"), sortColumn)
+                        || !Objects.deepEquals(config.getValue("sortDirection"), sortDirection)
+                        || !filtersEqual(config.getValue("filters"), filters);
+
         config.setValue("limit", limit);
         config.setValue("aggregation", aggregation);
         config.setValue("sortColumn", sortColumn);
@@ -1308,7 +1408,9 @@ public class DashboardVisualComponent extends JPanel {
 
         renderer.updateConfig(config);
 
-        refreshDataIfNeeded();
+        if (queryChanged) {
+            refreshDataIfNeeded();
+        }
 
         updateDisplayState();
     }

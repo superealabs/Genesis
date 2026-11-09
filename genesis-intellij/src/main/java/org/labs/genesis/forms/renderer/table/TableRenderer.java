@@ -15,7 +15,9 @@ import java.awt.*;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 
 public class TableRenderer implements VisualizationRenderer {
@@ -41,6 +43,7 @@ public class TableRenderer implements VisualizationRenderer {
     private JPanel rootPanel;
     private JTable table;
     private JScrollPane scrollPane;
+    private Map<String, String> columnHeaders = new HashMap<>();
 
     @Override
     public JComponent createComponent() {
@@ -112,6 +115,7 @@ public class TableRenderer implements VisualizationRenderer {
         }
 
         title = config.getString("title");
+        columnHeaders = normalizeHeaders(config.getValue("columnsHeaders"));
 
         if (table != null) {
             SwingUtilities.invokeLater(
@@ -174,12 +178,45 @@ public class TableRenderer implements VisualizationRenderer {
                 new String[columns.size()];
 
         for (int i = 0; i < columns.size(); i++) {
-
-            result[i] =
-                    cleanColumnName(columns.get(i));
+            String column = columns.get(i);
+            String header = columnHeaders.get(normalizeHeaderKey(column));
+            result[i] = header != null && !header.isBlank() && !header.equals(column)
+                    ? header
+                    : cleanColumnName(column);
         }
 
         return result;
+    }
+
+    private Map<String, String> normalizeHeaders(Object configuredHeaders) {
+        if (!(configuredHeaders instanceof Map<?, ?> headers)) {
+            return new HashMap<>();
+        }
+
+        Map<String, String> normalized = new HashMap<>();
+        for (Map.Entry<?, ?> entry : headers.entrySet()) {
+            if (entry.getKey() instanceof String key && entry.getValue() instanceof String value) {
+                normalized.put(normalizeHeaderKey(key), value);
+            }
+        }
+        return normalized;
+    }
+
+    private String normalizeHeaderKey(String column) {
+        if (column == null) {
+            return "";
+        }
+
+        String key = column.trim();
+        int colon = key.lastIndexOf(':');
+        if (colon >= 0) {
+            key = key.substring(colon + 1);
+        }
+        int dot = key.lastIndexOf('.');
+        if (dot >= 0) {
+            key = key.substring(dot + 1);
+        }
+        return key;
     }
 
     private Object[][] buildTableData(String[] columnNames) {
@@ -269,11 +306,11 @@ public class TableRenderer implements VisualizationRenderer {
         column = column.trim();
 
         if (column.startsWith("COLUMN:")) {
-            column = column.substring("COLUMN:".length());
+            column = column.substring("COLUMN:".length()).trim();
         }
 
         if (column.startsWith("FORMULA:")) {
-            column = column.substring("FORMULA:".length());
+            column = column.substring("FORMULA:".length()).trim();
         }
 
         int lastDot = column.lastIndexOf('.');
