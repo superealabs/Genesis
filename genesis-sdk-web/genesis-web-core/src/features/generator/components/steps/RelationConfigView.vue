@@ -3,6 +3,7 @@
     <div class="flex items-center justify-between px-6 pt-6 pb-3 shrink-0 border-b border-bg-neutral-genesis">
       <!-- ✅ Titre avec bouton tutoriel à gauche -->
       <div class="flex items-center gap-2">
+        <h3 class="text-xl font-semibold text-text">Configuration des Relations</h3>
         <GenesisButtonIcon
           variant="neutral"
           size="sm"
@@ -11,7 +12,6 @@
         >
           <IconHelp />
         </GenesisButtonIcon>
-        <h3 class="text-xl font-semibold text-text">Configuration des Relations</h3>
       </div>
 
       <GenesisSegmentedControl
