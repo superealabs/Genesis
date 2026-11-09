@@ -5969,31 +5969,7 @@
       {{#if isView}}@Immutable{{else}}{{removeLine}}{{/if}}
       @Table(name="${tableName}")
     modelFieldContent: |
-      {{tab}}{{#each fields}}
-      {{tab}}{{#if this.isPrimaryKey and this.isForeignKey}}
-      {{tab}}@Id
-      {{tab}}@ManyToOne(fetch = FetchType.LAZY)
-      {{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{elseIf this.isIntAndPrimaryKey}}
-      {{tab}}@Id
-      {{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY)
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isManualPrimaryKey}}
-      {{tab}}@Id
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
-      {{tab}}@ManyToOne(fetch = FetchType.LAZY)
-      {{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{else}}
-      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
-      {{#if !this.isForeignKey}}{{removeLine}}
-      {{tab}}{{#each this.attributeTypeAnnotations}}
-      {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}{{/if}}
-      {{#if this.type = byte[]}}
-      {{else}}
-      {{tab}}{{#each this.validationAnnotations}}
-      {{tab}}${this}
-      {{tab}}{{/each}}{{removeLine}}
-      {{/if}}
-      {{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{/if}}
-      {{tab}}{{/each}}
+      {{#each fields}}{{#if this.isPrimaryKey and this.isForeignKey}}{{tab}}@Id{{newline}}{{tab}}@ManyToOne(fetch = FetchType.LAZY){{newline}}{{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{newline}}{{elseIf this.isIntAndPrimaryKey}}{{tab}}@Id{{newline}}{{tab}}@GeneratedValue(strategy=GenerationType.IDENTITY){{newline}}{{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{newline}}{{elseIf this.isManualPrimaryKey}}{{tab}}@Id{{newline}}{{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{newline}}{{elseIf this.isForeignKey}}{{tab}}@ManyToOne(fetch = FetchType.LAZY){{newline}}{{tab}}@JoinColumn(name="${this.columnName}", nullable = ${this.isNullable}){{newline}}{{else}}{{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{newline}}{{/if}}{{#if !this.isForeignKey}}{{#each this.attributeTypeAnnotations}}{{#if this != }}{{tab}}${this}{{newline}}{{/if}}{{/each}}{{/if}}{{#if this.type = byte[]}}{{else}}{{#each this.validationAnnotations}}{{#if this != }}{{tab}}${this}{{newline}}{{/if}}{{/each}}{{/if}}{{tab}}private ${this.type} ${this.name};{{#if !@last}}{{newline}}{{newline}}{{/if}}{{/each}}
     modelGetterSetter: "{{removeLine}}"
     modelConstructors: "{{removeLine}}"
     modelSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/models"
@@ -6373,31 +6349,29 @@
     controllerName: "${majStart(className)}Controller"
     controllerFieldContent: |
       {{tab}}private final ${majStart(className)}Service ${minStart(className)}Service;
-      {{#each foreignTypes}}
-      {{tab}}private final ${majStart(this.type)}Service ${minStart(this.type)}Service;
-      {{/each}}{{removeLine}}
+      {{tab}}{{#each foreignTypes}}private final ${majStart(this.type)}Service ${minStart(this.type)}Service;{{newline}}{{tab}}{{/each}}{{removeLine}}
       {{tab}}private final CsvExportService csvExportService;
     controllerConstructors: |
-      {{tab}}public ${majStart(className)}Controller(${majStart(className)}Service ${minStart(className)}Service, CsvExportService csvExportService{{#each foreignTypes}}, ${majStart(this.type)}Service ${minStart(this.type)}Service{{/each}}) {
+      {{tab}}public ${majStart(className)}Controller(
+      {{tab}}        ${majStart(className)}Service ${minStart(className)}Service,
+      {{tab}}        CsvExportService csvExportService{{#each foreignTypes}},
+      {{tab}}        ${majStart(this.type)}Service ${minStart(this.type)}Service{{/each}}
+      {{tab}}) {
       {{tab}}    this.${minStart(className)}Service = ${minStart(className)}Service;
       {{tab}}    this.csvExportService = csvExportService;
-      {{tab}}    {{#each foreignTypes}}
-      {{tab}}    this.${minStart(this.type)}Service = ${minStart(this.type)}Service;
-      {{tab}}    {{/each}}{{removeLine}}
+      {{#each foreignTypes}}{{tab}}    this.${minStart(this.type)}Service = ${minStart(this.type)}Service;{{newline}}{{/each}}{{removeLine}}
       {{tab}}}
     controllerMethodContent: |
-      {{#if hasJsonFields}}
-      {{tab}}@InitBinder
+      {{#if hasJsonFields}}{{tab}}@InitBinder
       {{tab}}public void initBinder(WebDataBinder binder) {
-      {{#each jsonFields}}
-      {{tab}}    binder.registerCustomEditor(
+      {{#each jsonFields}}{{tab}}    binder.registerCustomEditor(
       {{tab}}            String.class,
       {{tab}}            "${this.name}",
       {{tab}}            new StringTrimmerEditor(true)
       {{tab}}    );
-      {{/each}}
+      {{/each}}{{removeLine}}
       {{tab}}}
-      {{tab}}
+
       {{else}}{{removeLine}}{{/if}}
       {{tab}}@GetMapping
       {{tab}}public String list${majStart(classNameLink)}(
@@ -6405,7 +6379,8 @@
       {{tab}}        @RequestParam(defaultValue = "0") int page,
       {{tab}}        @RequestParam(defaultValue = "10") int pageSize,
       {{tab}}        @RequestParam(defaultValue = "${defaultSortColumn},asc") String sortOrder,
-      {{tab}}        Model model) {
+      {{tab}}        Model model
+      {{tab}}) {
       {{tab}}    Sort sort = WebUtils.createSortObject(sortOrder);
       {{tab}}    Pageable pageable = PageRequest.of(page, pageSize, sort);
       {{tab}}    Page<${majStart(className)}> ${minStart(className)}Page =
@@ -6413,20 +6388,23 @@
       {{tab}}    model.addAttribute("${minStart(className)}s", ${minStart(className)}Page.getContent());
       {{tab}}    model.addAttribute("${minStart(className)}Page", ${minStart(className)}Page);
       {{tab}}    model.addAttribute("${minStart(className)}Search", search);
-      {{#each foreignOptionTypes}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
-      {{/each}}
+      {{#each foreignOptionTypes}}{{#if @first}}{{newline}}{{newline}}{{/if}}{{tab}}    model.addAttribute(
+      {{tab}}            "${minStart(this.type)}Options",
+      {{tab}}            ${minStart(this.type)}Service
+      {{tab}}                    .getAll${majStart(this.type)}(Pageable.unpaged())
+      {{tab}}                    .getContent()
+      {{tab}}    );{{newline}}{{newline}}{{/each}}{{removeLine}}
       {{tab}}    model.addAttribute("currentPage", page);
       {{tab}}    model.addAttribute("pageSize", pageSize);
       {{tab}}    model.addAttribute("sortOrder", sortOrder);
       {{tab}}    model.addAttribute("pageTitle", "Liste des ${minStart(className)}s");
-      {{tab}}
+
       {{tab}}    if (!${minStart(className)}Page.hasContent()) {
       {{tab}}        model.addAttribute("noDataMessage", "Aucun ${minStart(className)} trouvé.");
       {{tab}}    }
       {{tab}}    return "${minStart(className)}/list";
       {{tab}}}
-      {{tab}}
+
       {{tab}}@PostMapping("/export")
       {{tab}}public ResponseEntity<byte[]> export${majStart(className)}(
       {{tab}}        @ModelAttribute("${minStart(className)}Search") ${majStart(className)}Search search,
@@ -6434,124 +6412,104 @@
       {{tab}}        String sortOrder) {
       {{tab}}    try {
       {{tab}}        Sort sort = WebUtils.createSortObject(sortOrder);
-      {{tab}}        List<${majStart(className)}> data = ${minStart(className)}Service
-      {{tab}}                        .getAll${majStart(className)}(sort, search);
-      {{tab}}
+      {{tab}}        List<${majStart(className)}> data = ${minStart(className)}Service.getAll${majStart(className)}(sort, search);
+
       {{tab}}        List<String> headers = Arrays.asList(
-      {{#each fields}}
-      {{tab}}                        "{{#if this.isForeignKey}}${this.type}{{else}}${majStart(this.name)}{{/if}}"{{#if @last}}{{else}},{{/if}}
-      {{/each}}
-      {{tab}}                );
-      {{tab}}
+      {{#each fields}}{{tab}}                "{{#if this.isForeignKey}}${this.type}{{else}}${majStart(this.name)}{{/if}}"{{#if @last}}{{else}},{{/if}}{{newline}}{{/each}}{{removeLine}}
+      {{tab}}        );
+
       {{tab}}        List<Map<String, Object>> rows =
-      {{tab}}                data.stream()
-      {{tab}}                        .map(item -> {Map<String, Object> row = new LinkedHashMap<>();
-      {{#each fields}}
-      {{#if this.isForeignKey}}
-      {{tab}}                            row.put("${this.type}",item.get${majStart(this.name)}() != null
-      {{tab}}                                            ? item.get${majStart(this.name)}()
-      {{tab}}                                                    .get${majStart(this.displayColumn)}() : "");
-      {{else}}
-      {{tab}}                            row.put("${majStart(this.name)}", item.get${majStart(this.name)}());
-      {{/if}}
-      {{/each}}
+      {{tab}}                data.stream().map(item -> {
+      {{tab}}                            Map<String, Object> row = new LinkedHashMap<>();
+
+      {{#each fields}}{{#if this.isForeignKey}}
+      {{tab}}                            row.put("${this.type}", item.get${majStart(this.name)}() != null ? item.get${majStart(this.name)}().get${majStart(this.displayColumn)}(): "");
+      {{else}}{{tab}}                            row.put("${majStart(this.name)}", item.get${majStart(this.name)}());
+      {{/if}}{{newline}}{{/each}}{{removeLine}}
       {{tab}}                            return row;
       {{tab}}                        })
       {{tab}}                        .toList();
       {{tab}}        byte[] csv = csvExportService.export(headers, rows);
-      {{tab}}
+
       {{tab}}        return ResponseEntity.ok()
       {{tab}}                .contentType(MediaType.parseMediaType("text/csv;charset=UTF-8"))
       {{tab}}                .header(
       {{tab}}                        HttpHeaders.CONTENT_DISPOSITION,
       {{tab}}                        ContentDisposition
       {{tab}}                                .attachment()
-      {{tab}}                                .filename(
-      {{tab}}                                        "${majStart(className)}.csv",
-      {{tab}}                                        StandardCharsets.UTF_8
-      {{tab}}                                )
+      {{tab}}                                .filename("${majStart(className)}.csv", StandardCharsets.UTF_8)
       {{tab}}                                .build()
       {{tab}}                                .toString()
       {{tab}}                )
       {{tab}}                .body(csv);
-      {{tab}}
+
       {{tab}}    } catch (Exception ex) {
       {{tab}}        throw new InternalServerErrorException("Erreur lors de l'export CSV de ${formatReadableLowerCase(className)}", ex);
       {{tab}}    }
       {{tab}}}
-      {{#if hasCompositePrimaryKey}}
-      {{tab}}@GetMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}")
+
+      {{#if hasCompositePrimaryKey}}{{tab}}@GetMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}")
       {{tab}}public String view${majStart(className)}(
       {{tab}}        Model model{{#each compositePkFields}},
       {{tab}}        @PathVariable("${this.name}") ${this.type} ${this.name}{{/each}}) {
       {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
       {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(id);
-      {{else}}
-      {{tab}}@GetMapping("/{id}")
+      {{else}}{{tab}}@GetMapping("/{id}")
       {{tab}}public String view${majStart(className)}(@PathVariable("id") ${pkColumnType} ${pkColumn}, Model model) {
       {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
-      {{/if}}
-      {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
+      {{/if}}{{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
       {{tab}}    model.addAttribute("pageTitle", "Détail ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/view";
       {{tab}}}
-      {{tab}}
-      {{#each writableController}}
-      {{tab}}@GetMapping("/create")
+      {{#each writableController}}{{newline}}{{newline}}{{tab}}@GetMapping("/create")
       {{tab}}public String showCreateForm(Model model) {
       {{tab}}    model.addAttribute("${minStart(className)}", new ${majStart(className)}());
-      {{#each foreignOptionTypes}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
-      {{/each}}
+      {{#each foreignOptionTypes}}{{#if @first}}{{newline}}{{newline}}{{/if}}{{tab}}    model.addAttribute(
+      {{tab}}            "${minStart(this.type)}Options",
+      {{tab}}            ${minStart(this.type)}Service
+      {{tab}}                    .getAll${majStart(this.type)}(Pageable.unpaged())
+      {{tab}}                    .getContent()
+      {{tab}}    );{{newline}}{{newline}}{{/each}}{{removeLine}}
       {{tab}}    model.addAttribute("pageTitle", "Créer ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/create";
       {{tab}}}
-      {{tab}}
+
       {{tab}}@PostMapping("/create")
       {{tab}}public String create${majStart(className)}(
       {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
       {{tab}}        BindingResult bindingResult,
-      {{#each fileFields}}
-      {{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,
-      {{/each}}
+      {{#each fileFields}}{{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,{{newline}}{{/each}}{{removeLine}}
       {{tab}}        Model model,
-      {{tab}}        RedirectAttributes redirectAttributes) {
-      {{#each fieldsFK}}
-      {{#if this.isNullable}}
-        {{else}}
-      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() == null
-      {{tab}}            || ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{tab}}        RedirectAttributes redirectAttributes
+      {{tab}}) {
+      {{#each fieldsFK}}{{tab}}    if (${minStart(className)}.get${majStart(this.name)}() == null || ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
       {{tab}}        bindingResult.rejectValue(
       {{tab}}                "${minStart(this.name)}.${minStart(this.referencedPrimaryKeyColumn)}",
       {{tab}}                "NotNull",
       {{tab}}                "Ce champ est obligatoire."
       {{tab}}        );
       {{tab}}    }
-      {{/if}}
       {{/each}}{{removeLine}}
-      {{#each fileFields}}
-      {{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
+      {{#each fileFields}}{{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
       {{tab}}        ${minStart(className)}.set${majStart(this.name)}(FileUtils.toBytes(${minStart(this.name)}File));
       {{tab}}    }
-      {{#if this.isNullable}}
-      {{else}}
-      {{tab}}    else {
+      {{#if this.isNullable}}{{else}}{{tab}}    else {
       {{tab}}        bindingResult.rejectValue("${minStart(this.name)}", "NotNull", "Ce fichier est obligatoire."
       {{tab}}        );
       {{tab}}    }
-      {{/if}}
-      {{/each}}{{removeLine}}
+      {{/if}}{{/each}}{{removeLine}}
       {{tab}}    if (bindingResult.hasErrors()) {
       {{tab}}        model.addAttribute("pageTitle", "Créer ${minStart(className)}");
-      {{#each foreignOptionTypes}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
-      {{/each}}
+      {{#each foreignOptionTypes}}{{#if @first}}{{newline}}{{newline}}{{/if}}{{tab}}        model.addAttribute(
+      {{tab}}                "${minStart(this.type)}Options",
+      {{tab}}                ${minStart(this.type)}Service
+      {{tab}}                        .getAll${majStart(this.type)}(Pageable.unpaged())
+      {{tab}}                        .getContent()
+      {{tab}}        );{{newline}}{{newline}}{{/each}}{{removeLine}}
       {{tab}}        return "${minStart(className)}/create";
       {{tab}}    }
-      {{#each fieldsFK}}
-      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
-      {{#if this.isNullable}}
-      {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
+      {{#each fieldsFK}}{{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#if this.isNullable}}{{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
       {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
       {{tab}}        } else {
       {{tab}}            ${minStart(className)}.set${majStart(this.name)}(
@@ -6560,24 +6518,19 @@
       {{tab}}                    )
       {{tab}}            );
       {{tab}}        }
-      {{else}}
-      {{tab}}        ${minStart(className)}.set${majStart(this.name)}(
+      {{else}}{{tab}}        ${minStart(className)}.set${majStart(this.name)}(
       {{tab}}                ${minStart(this.type)}Service.get${majStart(this.type)}ById(
       {{tab}}                        ${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}()
       {{tab}}                )
       {{tab}}        );
-      {{/if}}
-      {{tab}}    }
+      {{/if}}{{tab}}    }
       {{/each}}{{removeLine}}
       {{tab}}    ${minStart(className)}Service.create${majStart(className)}(${minStart(className)});
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} créé avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{/each}}
-      {{tab}}
-        {{#each writableController}}
-      {{#if hasCompositePrimaryKey}}
-      {{tab}}@GetMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}/edit")
+      {{/each}}{{removeLine}}
+      {{#each writableController}}{{newline}}{{newline}}{{#if hasCompositePrimaryKey}}{{tab}}@GetMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}/edit")
       {{tab}}public String showEditForm(
       {{tab}}        Model model{{#each compositePkFields}},
       {{tab}}        @PathVariable("${this.name}") ${this.type} ${this.name}{{/each}}) {
@@ -6588,48 +6541,47 @@
       {{tab}}    ${majStart(className)} ${minStart(className)} =
       {{tab}}            ${minStart(className)}Service.get${majStart(className)}ById(id);
       {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
-      {{#each foreignOptionTypes}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
-      {{/each}}
+      {{#each foreignOptionTypes}}{{#if @first}}{{newline}}{{newline}}{{/if}}{{tab}}    model.addAttribute(
+      {{tab}}            "${minStart(this.type)}Options",
+      {{tab}}            ${minStart(this.type)}Service
+      {{tab}}                    .getAll${majStart(this.type)}(Pageable.unpaged())
+      {{tab}}                    .getContent()
+      {{tab}}    );{{newline}}{{newline}}{{/each}}{{removeLine}}
       {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/edit";
       {{tab}}}
-      {{else}}
-      {{tab}}@GetMapping("/{id}/edit")
+      {{else}}{{tab}}@GetMapping("/{id}/edit")
       {{tab}}public String showEditForm(
       {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
-      {{tab}}        Model model) {
+      {{tab}}        Model model
+      {{tab}}) {
       {{tab}}    ${majStart(className)} ${minStart(className)} =
       {{tab}}            ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
       {{tab}}    model.addAttribute("${minStart(className)}", ${minStart(className)});
-      {{#each foreignOptionTypes}}
-      {{tab}}    model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
-      {{/each}}
+      {{#each foreignOptionTypes}}{{#if @first}}{{newline}}{{newline}}{{/if}}{{tab}}    model.addAttribute(
+      {{tab}}            "${minStart(this.type)}Options",
+      {{tab}}            ${minStart(this.type)}Service
+      {{tab}}                    .getAll${majStart(this.type)}(Pageable.unpaged())
+      {{tab}}                    .getContent()
+      {{tab}}    );{{newline}}{{newline}}{{/each}}{{removeLine}}
       {{tab}}    model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
       {{tab}}    return "${minStart(className)}/edit";
       {{tab}}}
-      {{/if}}
-      {{/each}}
-      {{tab}}
-      {{#each writableController}}
-      {{#if hasCompositePrimaryKey}}
-      {{tab}}@PostMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}/edit")
+      {{/if}}{{/each}}{{removeLine}}
+      {{#each writableController}}{{newline}}{{newline}}{{#if hasCompositePrimaryKey}}{{tab}}@PostMapping("{{#each compositePkFields}}/{${this.name}}{{/each}}/edit")
       {{tab}}public String update${majStart(className)}(
-      {{tab}}        {{#each compositePkFields}}@PathVariable("${this.name}") ${this.type} ${this.name},
-      {{tab}}        {{/each}}
+      {{#each compositePkFields}}{{tab}}        @PathVariable("${this.name}") ${this.type} ${this.name},
+      {{/each}}{{removeLine}}
       {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
       {{tab}}        BindingResult bindingResult,
-      {{#each fileFields}}
-      {{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,
-      {{/each}}
+      {{#each fileFields}}{{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,{{newline}}{{/each}}{{removeLine}}
       {{tab}}        Model model,
-      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}        RedirectAttributes redirectAttributes
+      {{tab}}) {
       {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
-      {{#each fileFields}}
-      {{#if @first}}
+      {{#each fileFields}}{{#if @first}}
       {{tab}}    ${majStart(className)} existing${majStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(id);
-      {{/if}}
-      {{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
+      {{/if}}{{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
       {{tab}}        ${minStart(className)}.set${majStart(this.name)}(FileUtils.toBytes(${minStart(this.name)}File));
       {{tab}}    } else {
       {{tab}}        ${minStart(className)}.set${majStart(this.name)}(existing${majStart(className)}.get${majStart(this.name)}());
@@ -6637,13 +6589,15 @@
       {{/each}}{{removeLine}}
       {{tab}}    if (bindingResult.hasErrors()) {
       {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
-      {{#each foreignOptionTypes}}
-      {{tab}}        model.addAttribute("${minStart(this.type)}Options", ${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
-      {{/each}}
+      {{#each foreignOptionTypes}}{{#if @first}}{{newline}}{{newline}}{{/if}}{{tab}}        model.addAttribute(
+      {{tab}}                "${minStart(this.type)}Options",
+      {{tab}}                ${minStart(this.type)}Service
+      {{tab}}                        .getAll${majStart(this.type)}(Pageable.unpaged())
+      {{tab}}                        .getContent()
+      {{tab}}        );{{newline}}{{newline}}{{/each}}{{removeLine}}
       {{tab}}        return "${minStart(className)}/edit";
       {{tab}}    }
-      {{#each fieldsFK}}
-      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#each fieldsFK}}{{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
       {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
       {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
       {{tab}}        } else {
@@ -6659,22 +6613,19 @@
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{else}}
-      {{tab}}@PostMapping("/{id}/edit")
+      {{else}}{{tab}}@PostMapping("/{id}/edit")
       {{tab}}public String update${majStart(className)}(
       {{tab}}        @PathVariable("id") ${pkColumnType} ${pkColumn},
       {{tab}}        @Valid @ModelAttribute("${minStart(className)}") ${majStart(className)} ${minStart(className)},
       {{tab}}        BindingResult bindingResult,
-      {{#each fileFields}}
-      {{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,
-      {{/each}}
+      {{#each fileFields}}{{tab}}        @RequestParam(value = "${minStart(this.name)}File", required = false) MultipartFile ${minStart(this.name)}File,
+      {{/each}}{{removeLine}}
       {{tab}}        Model model,
-      {{tab}}        RedirectAttributes redirectAttributes) {
-      {{#each fileFields}}
-      {{#if @first}}
+      {{tab}}        RedirectAttributes redirectAttributes
+      {{tab}}) {
+      {{#each fileFields}}{{#if @first}}
       {{tab}}    ${majStart(className)} existing${majStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
-      {{/if}}
-      {{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
+      {{/if}}{{tab}}    if (${minStart(this.name)}File != null && !${minStart(this.name)}File.isEmpty()) {
       {{tab}}        ${minStart(className)}.set${majStart(this.name)}(FileUtils.toBytes(${minStart(this.name)}File));
       {{tab}}    } else {
       {{tab}}        ${minStart(className)}.set${majStart(this.name)}(existing${majStart(className)}.get${majStart(this.name)}());
@@ -6682,13 +6633,15 @@
       {{/each}}{{removeLine}}
       {{tab}}    if (bindingResult.hasErrors()) {
       {{tab}}        model.addAttribute("pageTitle", "Modifier ${minStart(className)}");
-      {{#each foreignOptionTypes}}
-      {{tab}}        model.addAttribute("${minStart(this.type)}Options",${minStart(this.type)}Service.getAll${majStart(this.type)}(Pageable.unpaged()).getContent());
-      {{/each}}
+      {{#each foreignOptionTypes}}{{#if @first}}{{newline}}{{newline}}{{/if}}{{tab}}        model.addAttribute(
+      {{tab}}                "${minStart(this.type)}Options",
+      {{tab}}                ${minStart(this.type)}Service
+      {{tab}}                        .getAll${majStart(this.type)}(Pageable.unpaged())
+      {{tab}}                        .getContent()
+      {{tab}}        );{{newline}}{{newline}}{{/each}}{{removeLine}}
       {{tab}}        return "${minStart(className)}/edit";
       {{tab}}    }
-      {{#each fieldsFK}}
-      {{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
+      {{#each fieldsFK}}{{tab}}    if (${minStart(className)}.get${majStart(this.name)}() != null) {
       {{tab}}        if (${minStart(className)}.get${majStart(this.name)}().get${majStart(this.referencedPrimaryKeyColumn)}() == null) {
       {{tab}}            ${minStart(className)}.set${majStart(this.name)}(null);
       {{tab}}        } else {
@@ -6704,27 +6657,16 @@
       {{tab}}    redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} modifié avec succès.");
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{/if}}
-      {{/each}}
-      {{tab}}
-      {{#each fileFields}}
-      {{tab}}@GetMapping("/files/${minStart(this.name)}/preview")
+      {{/if}}{{/each}}{{removeLine}}
+      {{#each fileFields}}{{newline}}{{newline}}{{tab}}@GetMapping("/files/${minStart(this.name)}/preview")
       {{tab}}public ResponseEntity<byte[]> preview${majStart(this.name)}(
-      {{#if ../hasCompositePrimaryKey}}
-      {{#each ../compositePkFields}}
-      {{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name}{{#if @last}}{{else}},{{/if}}
-      {{/each}}
-      {{else}}
-      {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn}
-      {{/if}}
-      {{tab}}) {
-      {{#if ../hasCompositePrimaryKey}}
-      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each ../compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{#if ../hasCompositePrimaryKey}}{{#each ../compositePkFields}}{{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name}{{#if @last}}{{else}},{{/if}}{{newline}}{{/each}}{{removeLine}}
+      {{else}}{{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn}
+      {{/if}}{{tab}}) {
+      {{#if ../hasCompositePrimaryKey}}{{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each ../compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
       {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(id);
-      {{else}}
-      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
-      {{/if}}
-      {{tab}}    byte[] content = ${minStart(className)}.get${majStart(this.name)}();
+      {{else}}{{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{/if}}{{tab}}    byte[] content = ${minStart(className)}.get${majStart(this.name)}();
       {{tab}}    if (content == null || content.length == 0) {
       {{tab}}        return ResponseEntity.notFound().build();
       {{tab}}    }
@@ -6740,26 +6682,16 @@
       {{tab}}            )
       {{tab}}            .body(content);
       {{tab}}}
-      {{tab}}
-      {{/each}}
-      {{#each fileFields}}
-      {{tab}}@GetMapping("/files/${minStart(this.name)}/download")
+      {{/each}}{{removeLine}}
+      {{#each fileFields}}{{newline}}{{newline}}{{tab}}@GetMapping("/files/${minStart(this.name)}/download")
       {{tab}}public ResponseEntity<byte[]> download${majStart(this.name)}(
-      {{#if ../hasCompositePrimaryKey}}
-      {{#each ../compositePkFields}}
-      {{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name}{{#if @last}}{{else}},{{/if}}
-      {{/each}}
-      {{else}}
-      {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn}
-      {{/if}}
-      {{tab}}) {
-      {{#if ../hasCompositePrimaryKey}}
-      {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each ../compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
+      {{#if ../hasCompositePrimaryKey}}{{#each ../compositePkFields}}{{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name}{{#if @last}}{{else}},{{/if}}{{newline}}{{/each}}{{removeLine}}
+      {{else}}{{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn}
+      {{/if}}{{tab}}) {
+      {{#if ../hasCompositePrimaryKey}}{{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each ../compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
       {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(id);
-      {{else}}
-      {{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
-      {{/if}}
-      {{tab}}    byte[] content = ${minStart(className)}.get${majStart(this.name)}();
+      {{else}}{{tab}}    ${majStart(className)} ${minStart(className)} = ${minStart(className)}Service.get${majStart(className)}ById(${pkColumn});
+      {{/if}}{{tab}}    byte[] content = ${minStart(className)}.get${majStart(this.name)}();
       {{tab}}    if (content == null || content.length == 0) {
       {{tab}}        return ResponseEntity.notFound().build();
       {{tab}}    }
@@ -6776,16 +6708,13 @@
       {{tab}}            )
       {{tab}}            .body(content);
       {{tab}}}
-      {{tab}}
-      {{/each}}
-        {{#each writableController}}
-      {{#if hasCompositePrimaryKey}}
-      {{tab}}@PostMapping("/delete")
+      {{/each}}{{removeLine}}
+      {{#each writableController}}{{newline}}{{newline}}{{#if hasCompositePrimaryKey}}{{tab}}@PostMapping("/delete")
       {{tab}}public String delete${majStart(className)}(
-      {{#each compositePkFields}}
-      {{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name},
-      {{/each}}
-      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{#each compositePkFields}}{{tab}}        @RequestParam("${this.name}") ${this.type} ${this.name},
+      {{/each}}{{removeLine}}
+      {{tab}}        RedirectAttributes redirectAttributes
+      {{tab}}) {
       {{tab}}    ${majStart(className)}Id id = new ${majStart(className)}Id({{#each compositePkFields}}${this.name}{{#if @last}}{{else}}, {{/if}}{{/each}});
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Service.delete${majStart(className)}(id);
@@ -6793,24 +6722,24 @@
       {{tab}}    } catch (DataIntegrityViolationException ex) {
       {{tab}}        redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
       {{tab}}    }
+
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{else}}
-      {{tab}}@PostMapping("/delete")
+      {{else}}{{tab}}@PostMapping("/delete")
       {{tab}}public String delete${majStart(className)}(
       {{tab}}        @RequestParam("${pkColumn}") ${pkColumnType} ${pkColumn},
-      {{tab}}        RedirectAttributes redirectAttributes) {
+      {{tab}}        RedirectAttributes redirectAttributes
+      {{tab}}) {
       {{tab}}    try {
       {{tab}}        ${minStart(className)}Service.delete${majStart(className)}(${pkColumn});
       {{tab}}        redirectAttributes.addFlashAttribute("successMessage", "${majStart(className)} supprimé avec succès.");
       {{tab}}    } catch (DataIntegrityViolationException ex) {
-      {{tab}}        redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données."
-      {{tab}}        );
+      {{tab}}        redirectAttributes.addFlashAttribute("errorMessage", "Impossible de supprimer cet élément car il est utilisé par d'autres données.");
       {{tab}}    }
+
       {{tab}}    return "redirect:/${minStart(className)}";
       {{tab}}}
-      {{/if}}
-      {{/each}}
+      {{/if}}{{/each}}{{removeLine}}
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
     controllerPackage: "${groupLink}.${lowerCase(projectName)}.controllers;"
     controllerAdditionalFiles: [ ]

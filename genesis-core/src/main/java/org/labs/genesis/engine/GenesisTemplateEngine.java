@@ -259,7 +259,12 @@ public class GenesisTemplateEngine {
             loopVariables.put(IS_LOOP_LAST_INDEX, (i == loopList.size() - 1));
 
             // Recursive rendering for nested structures
-            String renderedContent = render(loopContent, loopVariables).stripLeading();
+            String renderedContent = render(loopContent, loopVariables);
+            if (renderedContent.startsWith("\r\n")) {
+                renderedContent = renderedContent.substring(2);
+            } else if (renderedContent.startsWith("\n")) {
+                renderedContent = renderedContent.substring(1);
+            }
             loopResult.append(renderedContent);
         }
 

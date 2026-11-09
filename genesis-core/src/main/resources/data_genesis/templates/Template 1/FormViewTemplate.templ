@@ -41,7 +41,7 @@ ${validationSection}
 
 {{#each fieldsFK}}
 <div class="form-group">
-    <label for="${this.columnNameField}">${this.columnNameField}
+    <label for="${this.columnNameField}">${this.type}
         {{#if this.isRequired}}<span class="required-sign">*</span>{{else}}{{removeLine}}{{/if}}
     </label>
 
@@ -71,7 +71,7 @@ ${validationSection}
 
     <script>
         $('#${this.columnNameField}').select2({
-            placeholder: "${this.columnNameField}",
+            placeholder: "${this.type}",
             allowClear: true,
             width: '100%'
         });
