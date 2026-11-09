@@ -100,6 +100,10 @@
                   :can-assign-all="unassignedItems.length > 0"
                   :can-remove-all="assignedItems.length > 0"
 
+                  panel-tutorial-id="generation-profile-configuration-list"
+                  actions-tutorial-id="generation-profile-actions"
+                  :include-sub-tutorial="true"
+
                   @update:search-query="(val) => configManager.searchQuery.value = val"
                   @add="handleAddConfig"
                   @delete="handleDeleteConfig"
@@ -264,6 +268,11 @@ const tutorial = useGenesisTutorial('generation-config', {
     { 
       id: 'generation-profile-configuration-list', 
       text: 'Créez ou sélectionnez un profil de génération au centre, puis configurez ses composants.' 
+    },
+    // ✅ NEW : ancre pour les boutons Assign / Remove du selector
+    { 
+      id: 'generation-profile-actions', 
+      text: 'Actions disponibles pour assigner ou retirer des entités au profil sélectionné.' 
     },
     { 
       id: 'generation-profiles-configuration-settings', 

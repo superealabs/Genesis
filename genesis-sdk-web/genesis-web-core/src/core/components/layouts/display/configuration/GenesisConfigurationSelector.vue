@@ -10,6 +10,8 @@
             :can-move-up="canMoveUp"
             :can-move-down="canMoveDown"
             :show-toggle-visibility="props.showToggleVisibility"
+            :tutorial-id="props.panelTutorialId"
+            :include-sub-tutorial="props.includeSubTutorial"
             @update:search-query="(val) => $emit('update:searchQuery', val)"
             @add="$emit('add')"
             @delete="(id) => $emit('delete', id)"
@@ -22,73 +24,85 @@
         />
 
         <!-- ═══ PARTIE 2 : Ligne d'actions Assign / Remove ═══ -->
-        <div 
-            class="flex"
-            :class="viewMode === 'two-view' ? 'flex-col gap-4 w-full' : 'items-center justify-start gap-3'"
-        >
-            <!-- 👇 Assign All (au-dessus de Assign) -->
-            <GenesisButton
-                :variant="'accent'"
-                :size="viewMode === 'two-view' ? 'lg' : 'sm'"
-                :disabled="!selectedConfigId || !canAssignAll"
-                @click="handleAssignAll"
-                :justify-between="true"
-                title="Assigner toutes les entités visibles à cette configuration"
-                is-perspective
+        <!-- ✅ Wrapper englobant (étape 'actions') -->
+        <GenesisTutorialItem :id="sub('actions')">
+            <div 
+                class="flex"
+                :class="viewMode === 'two-view' ? 'flex-col gap-4 w-full' : 'items-center justify-start gap-3'"
             >
-                <template v-if="viewMode === 'two-view'" #rightIcon>
-                    <IconChevronsRight />
-                </template>
-                Assign All
-            </GenesisButton>
+                <!-- ✅ Bouton Assign All -->
+                <GenesisTutorialItem :id="sub('assignAll')">
+                    <GenesisButton
+                        :variant="'accent'"
+                        :size="viewMode === 'two-view' ? 'lg' : 'sm'"
+                        :disabled="!selectedConfigId || !canAssignAll"
+                        @click="handleAssignAll"
+                        :justify-between="true"
+                        title="Assigner toutes les entités visibles à cette configuration"
+                        is-perspective
+                    >
+                        <template v-if="viewMode === 'two-view'" #rightIcon>
+                            <IconChevronsRight />
+                        </template>
+                        Assign All
+                    </GenesisButton>
+                </GenesisTutorialItem>
 
-            <!-- Assign (existant) -->
-            <GenesisButton
-                variant="secondary"
-                :size="viewMode === 'two-view' ? 'lg' : 'sm'"
-                :disabled="!selectedConfigId || !canAssign"
-                @click="handleAssign"
-                :justify-between="true"
-                title="Assigner les éléments sélectionnés à cette configuration"
-                is-perspective
-            >
-                <template v-if="viewMode === 'two-view'" #rightIcon>
-                    <IconChevronRight />
-                </template>
-                Assign
-            </GenesisButton>
+                <!-- ✅ Bouton Assign -->
+                <GenesisTutorialItem :id="sub('assign')">
+                    <GenesisButton
+                        variant="secondary"
+                        :size="viewMode === 'two-view' ? 'lg' : 'sm'"
+                        :disabled="!selectedConfigId || !canAssign"
+                        @click="handleAssign"
+                        :justify-between="true"
+                        title="Assigner les éléments sélectionnés à cette configuration"
+                        is-perspective
+                    >
+                        <template v-if="viewMode === 'two-view'" #rightIcon>
+                            <IconChevronRight />
+                        </template>
+                        Assign
+                    </GenesisButton>
+                </GenesisTutorialItem>
 
-            <!-- Remove (existant) -->
-            <GenesisButton
-                :size="viewMode === 'two-view' ? 'lg' : 'sm'"
-                :disabled="!selectedConfigId || !canRemove"
-                @click="handleRemove"
-                :justify-between="true"
-                title="Retirer les éléments sélectionnés de cette configuration"
-                is-perspective
-            >
-                <template v-if="viewMode === 'two-view'" #leftIcon>
-                    <IconChevronLeft />
-                </template>
-                Remove
-            </GenesisButton>
+                <!-- ✅ Bouton Remove -->
+                <GenesisTutorialItem :id="sub('remove')">
+                    <GenesisButton
+                        :size="viewMode === 'two-view' ? 'lg' : 'sm'"
+                        :disabled="!selectedConfigId || !canRemove"
+                        @click="handleRemove"
+                        :justify-between="true"
+                        title="Retirer les éléments sélectionnés de cette configuration"
+                        is-perspective
+                    >
+                        <template v-if="viewMode === 'two-view'" #leftIcon>
+                            <IconChevronLeft />
+                        </template>
+                        Remove
+                    </GenesisButton>
+                </GenesisTutorialItem>
 
-            <!-- 👇 Remove All (en dessous de Remove) -->
-            <GenesisButton
-                variant="neutral"
-                :size="viewMode === 'two-view' ? 'lg' : 'sm'"
-                :disabled="!selectedConfigId || !canRemoveAll"
-                @click="handleRemoveAll"
-                :justify-between="true"
-                title="Retirer toutes les entités visibles de cette configuration"
-                is-perspective
-            >
-                <template v-if="viewMode === 'two-view'" #leftIcon>
-                    <IconChevronsLeft />
-                </template>
-                Remove All
-            </GenesisButton>
-        </div>
+                <!-- ✅ Bouton Remove All -->
+                <GenesisTutorialItem :id="sub('removeAll')">
+                    <GenesisButton
+                        variant="neutral"
+                        :size="viewMode === 'two-view' ? 'lg' : 'sm'"
+                        :disabled="!selectedConfigId || !canRemoveAll"
+                        @click="handleRemoveAll"
+                        :justify-between="true"
+                        title="Retirer toutes les entités visibles de cette configuration"
+                        is-perspective
+                    >
+                        <template v-if="viewMode === 'two-view'" #leftIcon>
+                            <IconChevronsLeft />
+                        </template>
+                        Remove All
+                    </GenesisButton>
+                </GenesisTutorialItem>
+
+            </div>
+        </GenesisTutorialItem>
 
     </div>
 </template>
@@ -102,6 +116,10 @@ import IconChevronRight from '../../../ui/icons/IconChevronRight.vue';
 import IconChevronsLeft from '../../../ui/icons/IconChevronsLeft.vue';
 import IconChevronsRight from '../../../ui/icons/IconChevronsRight.vue';
 
+// ✅ Tutoriel
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
+import { useTutorialGroup } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
+
 const props = withDefaults(defineProps<{
     configurations: ConfigurationItem[];
     selectedConfigId: string | number | null;
@@ -110,20 +128,31 @@ const props = withDefaults(defineProps<{
     canMoveUp: boolean;
     canMoveDown: boolean;
     selectedItems: string[];
-    //  NOUVELLE PROP : Contrôle la disposition des boutons d'action
     viewMode?: 'one-view' | 'two-view';
     canAssign?: boolean;
     canRemove?: boolean;
-    canAssignAll?: boolean;    // nouveau (défaut : true)
-    canRemoveAll?: boolean;    // nouveau (défaut : true)
+    canAssignAll?: boolean;
+    canRemoveAll?: boolean;
     showToggleVisibility?: boolean;
+
+    // ✅ Ancrages tutoriel (deux canaux distincts)
+    /** Ancrage pour GenesisConfigurationPanel (sous-étapes search/list/actions) */
+    panelTutorialId?: string;
+    /** Ancrage pour les boutons Assign / Remove / Assign All / Remove All */
+    actionsTutorialId?: string;
+    /** Active/désactive tous les sous-tutoriels du selector */
+    includeSubTutorial?: boolean;
+
+    // ✅ Textes personnalisables (fallback par défaut ci-dessous)
+    tutorialTexts?: Partial<Record<'actions' | 'assignAll' | 'assign' | 'remove' | 'removeAll', string>>;
 }>(), {
-    viewMode: 'one-view', //  Valeur par défaut
+    viewMode: 'one-view',
     canAssignAll: true,
     canRemoveAll: true,
     canAssign: true,
     canRemove: true,
-    showToggleVisibility: false
+    showToggleVisibility: false,
+    includeSubTutorial: false,
 });
 
 const emit = defineEmits<{
@@ -167,4 +196,26 @@ function handleRemoveAll() {
         emit('removeAll', props.selectedConfigId);
     }
 }
+
+// ═══ TUTORIEL : sous-étapes des actions ═══
+
+const DEFAULT_ACTION_STEPS = {
+    actions:    'Actions disponibles pour assigner ou retirer des entités au profil sélectionné.',
+    assignAll:  'Assigne toutes les entités visibles au profil sélectionné.',
+    assign:     'Assigne uniquement les entités sélectionnées au profil.',
+    remove:     'Retire les entités sélectionnées du profil actif.',
+    removeAll:  'Retire toutes les entités visibles du profil actif.',
+} as const;
+
+const { sub } = useTutorialGroup({
+    anchorId: () => props.actionsTutorialId,
+    include: () => props.includeSubTutorial,
+    steps: [
+        { key: 'actions',    text: props.tutorialTexts?.actions    ?? DEFAULT_ACTION_STEPS.actions    },
+        { key: 'assignAll',  text: props.tutorialTexts?.assignAll  ?? DEFAULT_ACTION_STEPS.assignAll  },
+        { key: 'assign',     text: props.tutorialTexts?.assign     ?? DEFAULT_ACTION_STEPS.assign     },
+        { key: 'remove',     text: props.tutorialTexts?.remove     ?? DEFAULT_ACTION_STEPS.remove     },
+        { key: 'removeAll',  text: props.tutorialTexts?.removeAll  ?? DEFAULT_ACTION_STEPS.removeAll  },
+    ],
+});
 </script>
