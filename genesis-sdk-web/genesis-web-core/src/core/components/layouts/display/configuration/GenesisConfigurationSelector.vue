@@ -2,7 +2,7 @@
     <div class="flex flex-col gap-3 w-full">
         
         <!-- ═══ PARTIE 1 : Le Panneau de Configuration (Générique) ═══ -->
-        <GenesisConfigurationPanel
+        <GenesisConfigurationManageData
             :configurations="configurations"
             :selected-config-id="selectedConfigId"
             :filtered-configs="filteredConfigs"
@@ -11,7 +11,8 @@
             :can-move-down="canMoveDown"
             :show-toggle-visibility="props.showToggleVisibility"
             :tutorial-id="props.panelTutorialId"
-            :include-sub-tutorial="props.includeSubTutorial"
+            :actions-tutorial-id="props.actionsDataTutorialId"
+            :include-sub-tutorial="false"
             @update:search-query="(val) => $emit('update:searchQuery', val)"
             @add="$emit('add')"
             @delete="(id) => $emit('delete', id)"
@@ -21,6 +22,9 @@
             @move-up="(id) => $emit('moveUp', id)"
             @move-down="(id) => $emit('moveDown', id)"
             @select-configuration="(id) => $emit('selectConfiguration', id)"
+            @import="$emit('import')"
+            @export="$emit('export')"
+            @export-all="$emit('exportAll')"
         />
 
         <!-- ═══ PARTIE 2 : Ligne d'actions Assign / Remove ═══ -->
@@ -109,7 +113,8 @@
 
 <script setup lang="ts">
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
-import GenesisConfigurationPanel from './GenesisConfigurationPanel.vue';
+// import GenesisConfigurationPanel from './GenesisConfigurationPanel.vue';
+import GenesisConfigurationManageData from './GenesisConfigurationManageData.vue';
 import type { ConfigurationItem } from '@genesis-labs/web-core/core/composables/ux/useConfigurationManager';
 import IconChevronLeft from '../../../ui/icons/IconChevronLeft.vue';
 import IconChevronRight from '../../../ui/icons/IconChevronRight.vue';
@@ -140,6 +145,7 @@ const props = withDefaults(defineProps<{
     panelTutorialId?: string;
     /** Ancrage pour les boutons Assign / Remove / Assign All / Remove All */
     actionsTutorialId?: string;
+    actionsDataTutorialId?: string;
     /** Active/désactive tous les sous-tutoriels du selector */
     includeSubTutorial?: boolean;
 
@@ -169,6 +175,9 @@ const emit = defineEmits<{
     remove: [configId: string | number, items: string[]];
     assignAll: [configId: string | number];
     removeAll: [configId: string | number];
+    import: [];
+    export: [];
+    exportAll: [];
 }>();
 
 // ═══ HANDLERS D'ASSOCIATION ═══

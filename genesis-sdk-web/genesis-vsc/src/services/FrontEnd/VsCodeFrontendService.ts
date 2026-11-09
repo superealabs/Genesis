@@ -31,7 +31,7 @@ export const MOCK_PROGRAMMING_LANGUAGES: FrontendProgrammingLanguage[] = [
 ];
 
 //  NOUVEAU : Mock pour les types de Navbar
-export const MOCK_NAVBAR_TYPES: string[] = ['side', 'top'];
+export const MOCK_NAVBAR_TYPES: string[] = ['side' /* , 'top' */];
 
 export class VsCodeFrontendService implements IFrontendService {
     

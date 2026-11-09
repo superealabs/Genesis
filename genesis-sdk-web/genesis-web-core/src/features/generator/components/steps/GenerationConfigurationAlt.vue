@@ -3,7 +3,7 @@
   <main class="flex flex-col h-full p-6 overflow-hidden">
     
     <!-- ✅ EN-TÊTE AVEC LE DÉCLENCHEUR UNIQUE DU TUTORIEL -->
-    <div class="flex items-center justify-between pb-3 mb-4 flex-shrink-0">
+    <div class="flex items-center gap-2 pb-3 mb-4 flex-shrink-0">
       <h3 class="text-xl font-semibold text-text">
         Configuration de la Génération
       </h3>
@@ -102,7 +102,12 @@
 
                   panel-tutorial-id="generation-profile-configuration-list"
                   actions-tutorial-id="generation-profile-actions"
+                  actions-data-tutorial-id="generation-profile-io"
                   :include-sub-tutorial="true"
+
+                  @import="configIoLogic.handleImport"
+                  @export="configIoLogic.handleExport"
+                  @export-all="configIoLogic.handleExportAll"
 
                   @update:search-query="(val) => configManager.searchQuery.value = val"
                   @add="handleAddConfig"
@@ -230,6 +235,7 @@ import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.v
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue'; // ✅ AJOUT
 import GenesisEntityTable from '@genesis-labs/web-core/core/components/layouts/display/table/GenesisEntityTable.vue';
+import { useConfigManagerLogic } from '@genesis-labs/web-core/features/generator/composables/useConfigManagerLogic';
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
@@ -247,7 +253,7 @@ const activeFilterLeft = ref<'all' | 'table' | 'view'>('all');
 const searchQueryAssigned = ref('');
 const activeFilterRight = ref<'all' | 'table' | 'view'>('all');
 
-const { loadGenerationOptionsConfigurations, saveConfiguration, deleteConfiguration } = useConfig();
+const { loadGenerationOptionsConfigurations, saveConfiguration, deleteConfiguration, configurations: persistedConfigs } = useConfig();
 
 // ============================================================================
 // 2. CONSTANTES & HIÉRARCHIE
@@ -274,6 +280,10 @@ const tutorial = useGenesisTutorial('generation-config', {
       id: 'generation-profile-actions', 
       text: 'Actions disponibles pour assigner ou retirer des entités au profil sélectionné.' 
     },
+    { 
+      id: 'generation-profile-io', 
+      text: 'Importez, exportez un profil, ou exportez tous les profils d\'un coup.' 
+    }, 
     { 
       id: 'generation-profiles-configuration-settings', 
       text: 'Créez ou sélectionnez un profil de génération au centre, puis configurez ses composants.' 
@@ -567,6 +577,31 @@ async function syncGenerationConfigs() {
     configManager.selectConfiguration(configManager.configurations.value[0].id);
   }
 }
+
+
+// ═══ Câblage Import/Export via useConfigManagerLogic ═══
+const configIoLogic = useConfigManagerLogic({
+  manager: configManager,
+  configType: 'generator_generation-options',
+  defaultValues: [],
+  getCurrentValues: () => [],                    // pas utilisé dans notre cas (handleAdd non branché)
+  buildPayload: (values) => ({
+    components: (values ?? []) as ComponentType[],
+  }),
+  fileNamePrefix: 'generation_options',
+  watchSource: () => [],                          // pas d'auto-save : on gère persistConfig manuellement
+  applyValues: () => { /* no-op */ },            // pas utilisé (handleSelect non branché)
+  isApplyingRef: ref(false),                      // ref factice pour le watch (non utilisé)
+  framework: ref(null),                          // pas de framework lié (config générique)
+  saveConfiguration,
+  deleteConfiguration,
+  persistedConfigs,                              // ← nécessite d'ajouter persistedConfigs au destructure de useConfig()
+  extractValues: (payload) =>
+    Array.isArray((payload as GeneratorGenerationOptionsPayload)?.components)
+      ? ((payload as GeneratorGenerationOptionsPayload).components as string[])
+      : [],
+  onImported: () => syncGenerationConfigs(),     // rafraîchit la liste après import
+});
 
 onMounted(async () => {
   isLoading.value = true;

@@ -105,6 +105,7 @@ const props = withDefaults(defineProps<{
     tutorialId?: string;
     includeSubTutorial?: boolean;
     showToggleVisibility?: boolean;
+    tutorialTexts?: Partial<Record<'search' | 'list' | 'actions', string>>;
 }>(), {
     includeSubTutorial: false,
     showToggleVisibility: false
@@ -146,16 +147,20 @@ onMounted(async () => {
 
 const maxSize = () => window.innerHeight * 0.85; 
 
-const PANEL_STEPS = [
-    { key: 'search',  text: 'Filtrez vos configurations par nom.' },
-    { key: 'list',    text: 'Sélectionnez, renommez ou masquez une configuration.' },
-    { key: 'actions', text: 'Ajoutez, supprimez ou réordonnez vos configurations.' },
-];
+const DEFAULT_PANEL_STEPS = {
+    search:  'Filtrez vos configurations par nom.',
+    list:    'Sélectionnez, renommez ou masquez une configuration.',
+    actions: 'Ajoutez, supprimez ou réordonnez vos configurations.',
+} as const;
 
 const { sub } = useTutorialGroup({
     anchorId: () => props.tutorialId,
     include: () => props.includeSubTutorial,
-    steps: PANEL_STEPS
+    steps: [
+        { key: 'search',  text: props.tutorialTexts?.search  ?? DEFAULT_PANEL_STEPS.search  },
+        { key: 'list',    text: props.tutorialTexts?.list    ?? DEFAULT_PANEL_STEPS.list    },
+        { key: 'actions', text: props.tutorialTexts?.actions ?? DEFAULT_PANEL_STEPS.actions },
+    ],
 });
 </script>
 

@@ -163,9 +163,9 @@
               </div>
 
               <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-                <GenesisTutorialItem id="tutorial-tech-stack-config">
-                  <GenesisConfigurationPanel
-                    :tutorial-id="'tutorial-tech-stack-config'"
+                  <GenesisConfigurationManageData
+                    tutorial-id="tutorial-tech-stack-config"
+                    actions-tutorial-id="tutorial-tech-stack-io"
                     :include-sub-tutorial="true"
                     :configurations="techStackConfigManager.configurations.value"
                     :selected-config-id="techStackConfigManager.selectedConfigId.value"
@@ -181,21 +181,10 @@
                     @move-up="techStackConfigManager.moveUp"
                     @move-down="techStackConfigManager.moveDown"
                     @select-configuration="techStackLogic.handleSelect"
+                    @import="techStackLogic.handleImport"
+                    @export="techStackLogic.handleExport"
+                    @export-all="techStackLogic.handleExportAll"
                   />
-                </GenesisTutorialItem>
-                <div class="flex gap-2 justify-end">
-                  <GenesisButtonIcon is-perspective title="importer un fichier de configuration" @click="techStackLogic.handleImport">
-                    <IconUpload />
-                  </GenesisButtonIcon>
-
-                  <GenesisButtonIcon is-perspective title="Exporter la configuration stack technique sélectionnée" :disabled="!techStackConfigManager.selectedConfigId.value" @click="techStackLogic.handleExport">
-                    <IconSave />
-                  </GenesisButtonIcon>
-
-                  <GenesisButtonIcon is-perspective title="Exporter toutes les configurations" @click="techStackLogic.handleExportAll">
-                    <IconPackage />
-                  </GenesisButtonIcon>
-                </div>
               </div>
             </div>
 
@@ -275,37 +264,28 @@
               </div>
 
               <div class="w-full lg:w-[350px] flex flex-col gap-4 flex-shrink-0">
-                <GenesisTutorialItem id="tutorial-advanced-config">
-                  <GenesisConfigurationPanel
-                    :tutorial-id="'tutorial-advanced-config'"
-                    :configurations="configManager.configurations.value"
-                    :selected-config-id="configManager.selectedConfigId.value"
-                    :filtered-configs="configManager.filteredConfigs.value"
-                    :search-query="configManager.searchQuery.value"
-                    :can-move-up="configManager.canMoveUp.value"
-                    :can-move-down="configManager.canMoveDown.value"
-                    @update:search-query="(val) => configManager.searchQuery.value = val"
-                    @add="advancedLogic.handleAdd"
-                    @delete="advancedLogic.handleDelete"
-                    @rename="advancedLogic.handleRename"
-                    @toggle-visibility="configManager.toggleVisibility"
-                    @move-up="configManager.moveUp"
-                    @move-down="configManager.moveDown"
-                    @select-configuration="advancedLogic.handleSelect"
-                  />
-                </GenesisTutorialItem>
-
-                <div class="flex gap-2 justify-end">
-                  <GenesisButtonIcon is-perspective title="Importer des configurations en fichiers json" @click="advancedLogic.handleImport">
-                    <IconUpload />
-                  </GenesisButtonIcon>
-                  <GenesisButtonIcon is-perspective title="Exporter la configuration avancée sélectionnée" :disabled="!configManager.selectedConfigId.value" @click="advancedLogic.handleExport">
-                    <IconSave />
-                  </GenesisButtonIcon>
-                  <GenesisButtonIcon is-perspective title="Exporter toutes les configurations avancées" @click="advancedLogic.handleExportAll">
-                    <IconPackage />
-                  </GenesisButtonIcon>
-                </div>
+                <GenesisConfigurationManageData
+                  tutorial-id="tutorial-advanced-config"
+                  actions-tutorial-id="tutorial-advanced-io"
+                  :include-sub-tutorial="false"
+                  :configurations="configManager.configurations.value"
+                  :selected-config-id="configManager.selectedConfigId.value"
+                  :filtered-configs="configManager.filteredConfigs.value"
+                  :search-query="configManager.searchQuery.value"
+                  :can-move-up="configManager.canMoveUp.value"
+                  :can-move-down="configManager.canMoveDown.value"
+                  @update:search-query="(val) => configManager.searchQuery.value = val"
+                  @add="advancedLogic.handleAdd"
+                  @delete="advancedLogic.handleDelete"
+                  @rename="advancedLogic.handleRename"
+                  @toggle-visibility="configManager.toggleVisibility"
+                  @move-up="configManager.moveUp"
+                  @move-down="configManager.moveDown"
+                  @select-configuration="advancedLogic.handleSelect"
+                  @import="advancedLogic.handleImport"
+                  @export="advancedLogic.handleExport"
+                  @export-all="advancedLogic.handleExportAll"
+                />
               </div>
             </div>
           </div>
@@ -344,23 +324,19 @@ import { useConfigManagerLogic } from '@genesis-labs/web-core/features/generator
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisDisclosure from '@genesis-labs/web-core/core/components/layouts/GenesisDisclosure.vue';
-import GenesisConfigurationPanel from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationPanel.vue';
+
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
-import IconSave from '@genesis-labs/web-core/core/components/ui/icons/IconSave.vue';
-import IconUpload from '@genesis-labs/web-core/core/components/ui/icons/IconUpload.vue';
 // import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
-import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 
 import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
 
 import { confirmFrameworkChange } from '@genesis-labs/web-core/features/generator/composables/wizard-step-config';
 import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
 import { isNoneOnly } from '../../utils/projectConfigHelpers';
-import IconPackage from '@genesis-labs/web-core/core/components/ui/icons/IconPackage.vue';
 import projectIllustration from '../../assets/project-summary.png'; // Assure-toi que le chemin est bon
-
+import GenesisConfigurationManageData from '@genesis-labs/web-core/core/components/layouts/display/configuration/GenesisConfigurationManageData.vue';
 
 // ============================================================================
 // 1. EMITS & CONSTANTES
@@ -383,10 +359,12 @@ const isApplyingTechStackConfig = ref(false);
 
 const tutorial = useGenesisTutorial('project-config', {
   'tech-stack': [
-    { id: 'tutorial-tech-stack-config', text: 'Enregistrez ici vos stacks techniques favorites pour les réutiliser.' }
+    { id: 'tutorial-tech-stack-config', text: 'Enregistrez ici vos stacks techniques favorites pour les réutiliser.' },
+    { id: 'tutorial-tech-stack-io',     text: 'Importez, exportez ou exportez toutes vos stacks techniques.' },  // ✅ NEW
   ],
   'advanced': [
-    { id: 'tutorial-advanced-config', text: 'Même principe pour la configuration avancée du backend.' }
+    { id: 'tutorial-advanced-config', text: 'Même principe pour la configuration avancée du backend.' },
+    { id: 'tutorial-advanced-io',     text: 'Importez, exportez ou exportez toutes vos configurations avancées.' },  // ✅ NEW
   ]
 });
 
