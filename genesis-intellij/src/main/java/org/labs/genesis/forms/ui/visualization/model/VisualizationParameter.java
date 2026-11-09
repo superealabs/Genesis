@@ -369,6 +369,21 @@ public class VisualizationParameter {
         );
     }
 
+    public static VisualizationParameter geography(
+            String key,
+            String label,
+            boolean required
+    ) {
+        return new VisualizationParameter(
+                key,
+                label,
+                VisualizationParameterType.DB_COLUMN,
+                "COLUMN",
+                required,
+                QueryRole.GEOGRAPHY
+        );
+    }
+
     // -------------------------------------------------------------------------
     // Internal query constructors
     // -------------------------------------------------------------------------
@@ -443,5 +458,5 @@ public class VisualizationParameter {
     public boolean isFormulaMode() {
         return "FORMULA".equals(mode);
     }
-    
+
 }

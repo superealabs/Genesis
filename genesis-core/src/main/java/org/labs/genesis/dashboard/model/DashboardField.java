@@ -12,6 +12,8 @@ import org.labs.genesis.dashboard.model.DashboardEnums.StatisticType;
 public class DashboardField {
     private String key;
     private String columnName;
+    /** Display header for table columns (from Swing columnsHeaders). */
+    private String label;
     private DashboardFieldRole role;
     private StatisticType statistic;
 

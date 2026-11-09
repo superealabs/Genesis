@@ -22,7 +22,13 @@ public final class DashboardEnums {
         VALUE,
         COLUMN,
         LATITUDE,
-        LONGITUDE
+        LONGITUDE,
+        GEOGRAPHY
+    }
+
+    public enum DashboardCoordinateMode {
+        SEPARATE,
+        GEOGRAPHY
     }
 
     public enum DashboardSortDirection {

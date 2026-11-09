@@ -31,6 +31,11 @@ public final class DashboardMetadataValidator {
                 return false;
             }
 
+            if (field.getRole() == DashboardEnums.DashboardFieldRole.GEOGRAPHY
+                    && !column.isGeographic()) {
+                return false;
+            }
+
             if (field.getStatistic() != null && !DashboardStatisticRules.supports(column, field.getStatistic())) {
                 return false;
             }

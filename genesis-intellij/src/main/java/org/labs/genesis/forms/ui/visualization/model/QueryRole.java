@@ -9,5 +9,6 @@ public enum QueryRole {
     SORT,
     FILTER,
     LATITUDE,
-    LONGITUDE
+    LONGITUDE,
+    GEOGRAPHY
 }

@@ -11,6 +11,43 @@
   isGateway: false
   useGatewaySecurity: false
   conditionalFiles:
+    - fileType: "PointSerializer"
+      fileName: "PointSerializer"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.config;
+
+        import com.fasterxml.jackson.core.JsonGenerator;
+        import com.fasterxml.jackson.databind.JsonSerializer;
+        import com.fasterxml.jackson.databind.SerializerProvider;
+        import org.locationtech.jts.geom.Point;
+
+        import java.io.IOException;
+
+        public class PointSerializer extends JsonSerializer<Point> {
+
+          @Override
+          public void serialize(
+            Point point,
+            JsonGenerator generator,
+            SerializerProvider provider
+          ) throws IOException {
+
+            if (point == null) {
+              generator.writeNull();
+              return;
+            }
+
+            generator.writeStartObject();
+
+            generator.writeNumberField("latitude", point.getY());
+            generator.writeNumberField("longitude", point.getX());
+
+            generator.writeEndObject();
+          }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/config"
+
     - fileType: "Git Ignore"
       fileName: ".gitignore"
       extension: ""
@@ -1163,6 +1200,134 @@
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/config"
 
+  dashboardFiles:
+    - fileType: "DashboardRepository"
+      fileName: "DashboardRepository"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.repositories;
+
+        import jakarta.persistence.EntityManager;
+        import jakarta.persistence.PersistenceContext;
+        import jakarta.persistence.Query;
+        import org.springframework.stereotype.Repository;
+
+        import java.util.ArrayList;
+        import java.util.LinkedHashMap;
+        import java.util.List;
+        import java.util.Map;
+
+        @Repository
+        public class DashboardRepository {
+            @PersistenceContext
+            private EntityManager entityManager;
+
+            public List<Map<String, Object>> executeQuery(
+                    String sql,
+                    List<Object> parameters,
+                    List<String> aliases,
+                    Integer limit) {
+                Query query = entityManager.createNativeQuery(sql);
+                for (int index = 0; index < parameters.size(); index++) {
+                    query.setParameter(index + 1, parameters.get(index));
+                }
+                if (limit != null && limit > 0) {
+                    query.setMaxResults(limit);
+                }
+                List<Map<String, Object>> rows = new ArrayList<>();
+                for (Object result : query.getResultList()) {
+                    Object[] values = result instanceof Object[]
+                            ? (Object[]) result
+                            : new Object[]{result};
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    for (int index = 0; index < values.length; index++) {
+                        String alias = index < aliases.size() ? aliases.get(index) : "value" + index;
+                        row.put(alias, values[index]);
+                    }
+                    rows.add(row);
+                }
+                return rows;
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/repositories"
+
+    - fileType: "DashboardService"
+      fileName: "DashboardService"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.services;
+
+        import ${groupLink}.${lowerCase(projectName)}.repositories.DashboardRepository;
+        import org.springframework.stereotype.Service;
+        import org.springframework.transaction.annotation.Transactional;
+
+        import java.util.LinkedHashMap;
+        import java.util.List;
+        import java.util.Map;
+
+        @Service
+        @Transactional(readOnly = true)
+        public class DashboardService {
+            private final DashboardRepository dashboardRepository;
+
+            public DashboardService(DashboardRepository dashboardRepository) {
+                this.dashboardRepository = dashboardRepository;
+            }
+
+            {{#each dashboardPages}}
+            public Map<String, List<Map<String, Object>>> ${this.methodName}() {
+                Map<String, List<Map<String, Object>>> data = new LinkedHashMap<>();
+                {{#each this.visualizations}}
+                data.put(
+                    "${this.graphSlug}",
+                    dashboardRepository.executeQuery(
+                        ${this.sqlJava},
+                        ${this.parametersJava},
+                        ${this.aliasesJava},
+                        ${this.limitJava}
+                    )
+                );
+                {{/each}}
+                return data;
+            }
+            {{/each}}
+
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/services"
+
+    - fileType: "DashboardController"
+      fileName: "DashboardController"
+      extension: "java"
+      content: |
+        package ${groupLink}.${lowerCase(projectName)}.controllers;
+
+        import ${groupLink}.${lowerCase(projectName)}.services.DashboardService;
+        import org.springframework.http.ResponseEntity;
+        import org.springframework.web.bind.annotation.GetMapping;
+        import org.springframework.web.bind.annotation.RequestMapping;
+        import org.springframework.web.bind.annotation.RestController;
+
+        import java.util.List;
+        import java.util.Map;
+
+        @RestController
+        @RequestMapping("/dashboard")
+        public class DashboardController {
+            private final DashboardService dashboardService;
+
+            public DashboardController(DashboardService dashboardService) {
+                this.dashboardService = dashboardService;
+            }
+
+            {{#each dashboardPages}}
+            @GetMapping("/${this.slug}")
+            public ResponseEntity<Map<String, List<Map<String, Object>>>> ${this.methodName}() {
+                return ResponseEntity.ok(dashboardService.${this.methodName}());
+            }
+            {{/each}}
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/java/${groupLinkPath}/${lowerCase(projectName)}/controllers"
+
   configurations:
     - name: "Logging Level"
       variableName: "loggingLevel"
@@ -1218,6 +1383,16 @@
     - groupId: "org.springframework.boot"
       artifactId: "spring-boot-starter-data-jpa"
       version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.hibernate.orm"
+      artifactId: "hibernate-spatial"
+      version: "{{removeLine}}"
+      scope: "{{removeLine}}"
+
+    - groupId: "org.locationtech.jts"
+      artifactId: "jts-core"
+      version: "1.20.0"
       scope: "{{removeLine}}"
 
     - groupId: "org.springframework.boot"
@@ -1289,7 +1464,8 @@
       {{tab}}@Id
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{elseIf this.isForeignKey}}
       {{tab}}@ManyToOne
-      {{tab}}@JoinColumn(name="${this.columnName}"){{else}}
+      {{tab}}@JoinColumn(name="${this.columnName}"){{elseIf this.type=Point or this.type=org.locationtech.jts.geom.Point }}
+      {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}, columnDefinition = "geography(Point,4326)"){{else}}
       {{tab}}@Column(name="${this.columnName}", unique = ${this.isUnique}, nullable = ${this.isNullable}){{/if}}
       <#{{#if !this.isForeignKey}}/#>{{removeLine}}
       {{tab}}{{#each this.attributeTypeAnnotations}}
@@ -2760,6 +2936,65 @@
   isGateway: false
   useGatewaySecurity: false
   conditionalFiles:
+    - fileType: "PointSerializer"
+      fileName: "PointJsonConverter"
+      extension: "cs"
+      content: |
+        using System.Text.Json;
+        using System.Text.Json.Serialization;
+        using NetTopologySuite.Geometries;
+
+        namespace TestVue.Serialization;
+
+        public class PointJsonConverter : JsonConverter<Point>
+        {
+            public override Point? Read(
+                ref Utf8JsonReader reader,
+                Type typeToConvert,
+                JsonSerializerOptions options)
+            {
+                using var document = JsonDocument.ParseValue(ref reader);
+
+                var root = document.RootElement;
+
+                if (!root.TryGetProperty("latitude", out var latitudeElement) ||
+                    !root.TryGetProperty("longitude", out var longitudeElement))
+                {
+                    throw new JsonException(
+                        "A Point must contain 'latitude' and 'longitude'."
+                    );
+                }
+
+                var latitude = latitudeElement.GetDouble();
+                var longitude = longitudeElement.GetDouble();
+
+                return new GeometryFactory(new PrecisionModel(), 4326)
+                    .CreatePoint(
+                        new Coordinate(longitude, latitude)
+                    );
+            }
+
+            public override void Write(
+                Utf8JsonWriter writer,
+                Point value,
+                JsonSerializerOptions options)
+            {
+                if (value == null)
+                {
+                    writer.WriteNullValue();
+                    return;
+                }
+
+                writer.WriteStartObject();
+
+                writer.WriteNumber("latitude", value.Y);
+                writer.WriteNumber("longitude", value.X);
+
+                writer.WriteEndObject();
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Serialization"
+
     - fileType: "Git Ignore"
       fileName: ".gitignore"
       extension: ""
@@ -2822,6 +3057,7 @@
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
         using ${majStart(projectName)}.Services.Interface;
+        {{#if hasPoint}}using TestVue.Serialization;{{/if}}
         
         var builder = WebApplication.CreateBuilder(args);
         
@@ -2903,7 +3139,9 @@
         // Add services to the container.
         var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
         builder.Services.AddDbContext<${majStart(projectName)}Context>(options =>
-            options.Use${daoName}(connectionString${addOptions}));
+            {{#if hasPoint}}options.Use${daoName}(connectionString${addOptions},  
+                  ${minStart(daoName)}Options => ${minStart(daoName)}Options.UseNetTopologySuite()));{{else}}
+            options.Use${daoName}(connectionString${addOptions}));{{/if}}
         {{#if useJWT}}
         builder.Services.AddHostedService<SqlSchemaBootstrapper>();
         builder.Services
@@ -2935,7 +3173,12 @@
         {
           // Adding the global exception filter to all controllers
           options.Filters.Add<GlobalExceptionFilter>();
-        });
+        }){{#if hasPoint}}.AddJsonOptions(options =>
+        {
+          options.JsonSerializerOptions.Converters.Add(
+              new PointJsonConverter()
+          );
+        }){{/if}};
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
@@ -6336,6 +6579,111 @@
     controllerSavePath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
     controllerPackage: "${majStart(projectName)}.Controllers"
     controllerAdditionalFiles: [ ]
+  dashboardFiles:
+    - fileType: "DashboardController"
+      fileName: "DashboardController"
+      extension: "cs"
+      content: |
+        using System.Data;
+        using System.Data.Common;
+        using Microsoft.AspNetCore.Mvc;
+        using Microsoft.EntityFrameworkCore;
+        using ${majStart(projectName)}.Data;
+        {{#if useJWT}}using Microsoft.AspNetCore.Authorization;{{/if}}
+
+        namespace ${majStart(projectName)}.Controllers;
+
+        [ApiController]
+        [Route("dashboard")]
+        [Produces("application/json")]
+        [ApiExplorerSettings(GroupName = "v1")]
+        public class DashboardController : ControllerBase
+        {
+            private readonly ${majStart(projectName)}Context _context;
+
+            public DashboardController(${majStart(projectName)}Context context)
+            {
+                _context = context;
+            }
+
+            {{#each dashboardPages}}
+            [HttpGet("${this.slug}")]
+            {{#if useJWT}}[Authorize]{{else}}{{removeLine}}{{/if}}
+            public async Task<IActionResult> ${this.methodName}(CancellationToken cancellationToken)
+            {
+                var data = new Dictionary<string, List<Dictionary<string, object?>>>();
+                {{#each this.visualizations}}
+                data["${this.graphSlug}"] = await ExecuteQueryAsync(
+                    ${this.sqlCs},
+                    ${this.parametersCs},
+                    ${this.aliasesCs},
+                    ${this.limitCs},
+                    "${this.parameterPrefix}",
+                    cancellationToken);
+                {{/each}}
+                return Ok(data);
+            }
+            {{/each}}
+
+            private async Task<List<Dictionary<string, object?>>> ExecuteQueryAsync(
+                string sql,
+                object?[] parameters,
+                string[] aliases,
+                int? limit,
+                string parameterPrefix,
+                CancellationToken cancellationToken)
+            {
+                var connection = _context.Database.GetDbConnection();
+                var openedHere = connection.State != ConnectionState.Open;
+                if (openedHere)
+                {
+                    await connection.OpenAsync(cancellationToken);
+                }
+
+                try
+                {
+                    await using var command = connection.CreateCommand();
+                    command.CommandText = sql;
+                    for (var index = 0; index < parameters.Length; index++)
+                    {
+                        var parameter = command.CreateParameter();
+                        parameter.ParameterName = parameterPrefix == ":"
+                            ? "p" + index
+                            : parameterPrefix + "p" + index;
+                        parameter.Value = parameters[index] ?? DBNull.Value;
+                        command.Parameters.Add(parameter);
+                    }
+
+                    await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                    var rows = new List<Dictionary<string, object?>>();
+                    while ((limit is not > 0 || rows.Count < limit.Value) &&
+                           await reader.ReadAsync(cancellationToken))
+                    {
+                        var row = new Dictionary<string, object?>();
+                        for (var index = 0; index < reader.FieldCount; index++)
+                        {
+                            var alias = index < aliases.Length && !string.IsNullOrWhiteSpace(aliases[index])
+                                ? aliases[index]
+                                : reader.GetName(index);
+                            row[string.IsNullOrWhiteSpace(alias) ? "value" + index : alias] =
+                                await reader.IsDBNullAsync(index, cancellationToken)
+                                    ? null
+                                    : reader.GetValue(index);
+                        }
+                        rows.Add(row);
+                    }
+                    return rows;
+                }
+                finally
+                {
+                    if (openedHere)
+                    {
+                        await connection.CloseAsync();
+                    }
+                }
+            }
+        }
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/${majStart(projectName)}/Controllers"
   mereFiles: []
   filleFiles: []
 

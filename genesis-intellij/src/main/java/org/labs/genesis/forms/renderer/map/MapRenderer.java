@@ -144,7 +144,7 @@ public class MapRenderer extends AbstractComponentRenderer {
         if (config == null) {
             return null;
         }
-        
+
         Object value = config.getValue(MapData.CONFIG_KEY);
 
         return value instanceof MapData mapData ? mapData : null;
@@ -224,7 +224,7 @@ public class MapRenderer extends AbstractComponentRenderer {
     private String createLeafletHtml() {
         MapData data = getMapData();
         String pointsJson = toJson(data);
-
+        System.out.println(data + " " + pointsJson);
         String template = """
             <!DOCTYPE html>
             <html>

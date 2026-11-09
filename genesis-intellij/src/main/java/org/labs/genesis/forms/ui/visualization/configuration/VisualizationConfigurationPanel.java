@@ -90,12 +90,28 @@ public class VisualizationConfigurationPanel extends JPanel {
         JComponent markerTypeEditor = editorMap.get("markerType");
         JPanel valueColumnRow = rowMap.get("valueColumn");
 
+        JComponent coordinateModeEditor = editorMap.get("coordinateMode");
+        if (coordinateModeEditor instanceof JComboBox<?> modeCombo) {
+            String mode = String.valueOf(modeCombo.getSelectedItem());
+            boolean geography = "GEOGRAPHY".equalsIgnoreCase(mode);
+            setVisible("latitude", !geography);
+            setVisible("longitude", !geography);
+            setVisible("geography", geography);
+        }
+
         if (markerTypeEditor instanceof JComboBox<?> markerTypeCombo && valueColumnRow != null) {
             String selectedType = (String) markerTypeCombo.getSelectedItem();
             boolean isBuffer = "buffer".equalsIgnoreCase(selectedType);
             valueColumnRow.setVisible(isBuffer);
             contentPanel.revalidate();
             contentPanel.repaint();
+        }
+    }
+
+    private void setVisible(String key, boolean visible) {
+        JPanel row = rowMap.get(key);
+        if (row != null) {
+            row.setVisible(visible);
         }
     }
 
@@ -120,6 +136,18 @@ public class VisualizationConfigurationPanel extends JPanel {
             }
             markerTypeCombo.addActionListener(e -> {
                 targetComponent.updateConfig(key, markerTypeCombo.getSelectedItem());
+                updateConditionalVisibility();
+            });
+            return;
+        }
+
+        if ("coordinateMode".equals(key) && editor instanceof JComboBox<?> modeCombo) {
+            String existingMode = targetComponent.getConfigValue(key);
+            if (existingMode != null) {
+                modeCombo.setSelectedItem(existingMode);
+            }
+            modeCombo.addActionListener(e -> {
+                targetComponent.updateConfig(key, modeCombo.getSelectedItem());
                 updateConditionalVisibility();
             });
             return;
@@ -423,11 +451,16 @@ public class VisualizationConfigurationPanel extends JPanel {
         if ("markerType".equals(parameter.getKey()) && parameter.getType() == VisualizationParameterType.TEXT) {
             return createMarkerTypeEditor();
         }
+        if ("coordinateMode".equals(parameter.getKey())) {
+            JComboBox<String> combo = new JComboBox<>(new String[]{"SEPARATE", "GEOGRAPHY"});
+            styleCombo(combo);
+            return combo;
+        }
 
         return switch (parameter.getType()) {
             case TEXT -> createTextEditor();
             case NUMBER -> createNumberEditor(parameter.getKey());
-            case DB_COLUMN -> createColumnEditor();
+            case DB_COLUMN -> createColumnEditor(parameter);
             case FORMULA -> createFormulaEditor();
             case DB_COLUMN_OR_FORMULA -> createColumnOrFormulaEditor(parameter);
             case SORT -> createSortEditor();
@@ -466,8 +499,13 @@ public class VisualizationConfigurationPanel extends JPanel {
         return spinner;
     }
 
-    private JComponent createColumnEditor() {
-        return new ColumnDropField();
+    private JComponent createColumnEditor(VisualizationParameter parameter) {
+        ColumnDropField field = new ColumnDropField();
+        if (parameter.getRole() == QueryRole.GEOGRAPHY) {
+            field.setColumnDataValidator(column -> column != null && column.isGeographic);
+            field.setToolTipText("Drop a geographic column here");
+        }
+        return field;
     }
 
     private JComponent createFormulaEditor() {

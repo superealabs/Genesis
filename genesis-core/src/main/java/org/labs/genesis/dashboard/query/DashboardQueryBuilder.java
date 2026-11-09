@@ -1,5 +1,9 @@
 package org.labs.genesis.dashboard.query;
 
+import org.labs.genesis.dashboard.model.DashboardField;
+import org.labs.genesis.dashboard.model.DashboardVisualization;
+import org.labs.genesis.dashboard.model.DashboardEnums.DashboardCoordinateMode;
+import org.labs.genesis.dashboard.model.DashboardEnums.DashboardFieldRole;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.dashboard.model.*;
 import org.labs.genesis.dashboard.rules.DashboardVisualizationRules;
@@ -13,42 +17,187 @@ public final class DashboardQueryBuilder {
     private DashboardQueryBuilder() {
     }
 
-    public static DashboardQueryPlan build(DashboardVisualization visualization) {
-        validate(visualization);
-        return createPlan(visualization);
-    }
-
     public static DashboardQueryPlan build(DashboardVisualization visualization, TableMetadata sourceTable, List<TableMetadata> availableTables) {
         validate(visualization);
         if (!DashboardMetadataValidator.isValid(visualization, sourceTable, availableTables)) {
             throw new IllegalArgumentException("Invalid dashboard metadata");
         }
-        DashboardQueryPlan plan = createPlan(visualization);
+        DashboardQueryPlan plan = createPlan(visualization, sourceTable, availableTables);
+        if (sourceTable.getDatabase() != null) {
+            plan.setDatabaseName(sourceTable.getDatabase().getName());
+        }
         normalizeFilterValues(plan, sourceTable, availableTables);
         plan.getJoins().addAll(DashboardJoinResolver.resolve(visualization, sourceTable, availableTables));
         return plan;
     }
 
-    private static DashboardQueryPlan createPlan(DashboardVisualization visualization) {
+    private static DashboardQueryPlan createPlan(
+            DashboardVisualization visualization,
+            TableMetadata sourceTable,
+            List<TableMetadata> availableTables
+    ) {
         DashboardQueryPlan plan = new DashboardQueryPlan();
         plan.setSource(visualization.getDataSource());
-        plan.setOptions(visualization.getQueryOptions());
+        plan.setOptions(copyQueryOptions(visualization.getQueryOptions()));
         for (DashboardField field : visualization.getFields()) {
-            plan.getSelections().add(createSelection(field));
+            if (visualization.getType() == org.labs.genesis.dashboard.model.DashboardEnums.DashboardVisualizationType.MAP
+                    && visualization.getCoordinateMode() == DashboardCoordinateMode.GEOGRAPHY
+                    && field.getRole() == DashboardFieldRole.GEOGRAPHY) {
+                plan.getSelections().add(createCoordinateSelection(
+                        field,
+                        DashboardQuerySelection.CoordinateAxis.LATITUDE,
+                        sourceTable,
+                        availableTables
+                ));
+                plan.getSelections().add(createCoordinateSelection(
+                        field,
+                        DashboardQuerySelection.CoordinateAxis.LONGITUDE,
+                        sourceTable,
+                        availableTables
+                ));
+            } else {
+                plan.getSelections().add(createSelection(field, sourceTable, availableTables));
+            }
         }
         buildGroupBy(plan);
 
         return plan;
     }
 
-    private static DashboardQuerySelection createSelection(DashboardField field) {
-        return new DashboardQuerySelection(
+    private static DashboardQuerySelection createCoordinateSelection(
+            DashboardField field,
+            DashboardQuerySelection.CoordinateAxis axis,
+            TableMetadata sourceTable,
+            List<TableMetadata> availableTables
+    ) {
+        DashboardQuerySelection selection = createSelection(field, sourceTable, availableTables);
+        selection.setAlias(axis == DashboardQuerySelection.CoordinateAxis.LATITUDE ? "latitude" : "longitude");
+        selection.setCoordinateAxis(axis);
+        return selection;
+    }
+
+    private static DashboardQuerySelection createSelection(
+            DashboardField field,
+            TableMetadata sourceTable,
+            List<TableMetadata> availableTables
+    ) {
+        DashboardQuerySelection selection = new DashboardQuerySelection(
                 field.getKey(),
                 field.getColumnName(),
                 field.getKey(),
                 field.getRole(),
                 DashboardStatisticResolver.resolve(field)
         );
+        selection.setNativeColumnType(nativeColumnType(sourceTable, availableTables, field.getColumnName()));
+        return selection;
+    }
+
+    private static String nativeColumnType(
+            TableMetadata sourceTable,
+            List<TableMetadata> availableTables,
+            String columnName
+    ) {
+        if (sourceTable == null || columnName == null) {
+            return null;
+        }
+        String reference = columnName.trim();
+        if (reference.regionMatches(true, 0, "COLUMN:", 0, "COLUMN:".length())) {
+            reference = reference.substring("COLUMN:".length()).trim();
+        }
+
+        TableMetadata table = sourceTable;
+        int dot = reference.lastIndexOf('.');
+        if (dot >= 0) {
+            String tableReference = normalizeIdentifier(reference.substring(0, dot));
+            reference = reference.substring(dot + 1);
+            table = availableTables == null ? null : availableTables.stream()
+                    .filter(candidate -> candidate != null && candidate.getTableName() != null)
+                    .filter(candidate -> matchesTableReference(tableReference, candidate.getTableName()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (table == null || table.getColumns() == null) {
+            return null;
+        }
+
+        String simpleName = normalizeIdentifier(reference);
+        return java.util.Arrays.stream(table.getColumns())
+                .filter(column -> column != null)
+                .filter(column -> simpleName.equalsIgnoreCase(column.getReferencedColumn())
+                        || simpleName.equalsIgnoreCase(column.getName()))
+                .map(org.labs.genesis.connexion.model.ColumnMetadata::getColumnType)
+                .filter(type -> type != null)
+                .findFirst()
+                .orElse(null);
+    }
+
+    private static boolean matchesTableReference(String reference, String tableName) {
+        String normalizedReference = normalizeIdentifier(reference);
+        String normalizedTable = normalizeIdentifier(tableName);
+        return normalizedReference.equalsIgnoreCase(normalizedTable)
+                || normalizedReference.toLowerCase(java.util.Locale.ROOT)
+                .endsWith("." + normalizedTable.toLowerCase(java.util.Locale.ROOT))
+                || normalizedTable.toLowerCase(java.util.Locale.ROOT)
+                .endsWith("." + normalizedReference.toLowerCase(java.util.Locale.ROOT))
+                || lastIdentifier(normalizedReference).equalsIgnoreCase(lastIdentifier(normalizedTable));
+    }
+
+    private static String normalizeIdentifier(String value) {
+        return value.replace("`", "").replace("\"", "").replace("[", "").replace("]", "").trim();
+    }
+
+    private static String lastIdentifier(String value) {
+        int dot = value.lastIndexOf('.');
+        return dot < 0 ? value : value.substring(dot + 1);
+    }
+
+    private static DashboardQueryOptions copyQueryOptions(DashboardQueryOptions options) {
+        if (options == null) {
+            return null;
+        }
+
+        DashboardQueryOptions copy = new DashboardQueryOptions();
+        copy.setLimit(options.getLimit());
+        if (options.getSorts() != null) {
+            List<DashboardSort> sorts = new java.util.ArrayList<>();
+            for (DashboardSort sort : options.getSorts()) {
+                sorts.add(sort == null ? null : new DashboardSort(sort.getColumnName(), sort.getDirection()));
+            }
+            copy.setSorts(sorts);
+        }
+        if (options.getFilters() != null) {
+            List<DashboardFilterNode> filters = new java.util.ArrayList<>();
+            for (DashboardFilterNode filter : options.getFilters()) {
+                filters.add(copyFilterNode(filter));
+            }
+            copy.setFilters(filters);
+        }
+        return copy;
+    }
+
+    private static DashboardFilterNode copyFilterNode(DashboardFilterNode node) {
+        if (node instanceof DashboardFilter filter) {
+            return new DashboardFilter(
+                    filter.getColumnName(),
+                    filter.getOperator(),
+                    filter.getValue(),
+                    filter.getRelationToPrevious()
+            );
+        }
+        if (node instanceof DashboardFilterGroup group) {
+            DashboardFilterGroup copy = new DashboardFilterGroup();
+            copy.setOperator(group.getOperator());
+            copy.setRelationToPrevious(group.getRelationToPrevious());
+            if (group.getChildren() != null) {
+                List<DashboardFilterNode> children = new java.util.ArrayList<>();
+                for (DashboardFilterNode child : group.getChildren()) {
+                    children.add(copyFilterNode(child));
+                }
+                copy.setChildren(children);
+            }
+            return copy;
+        }
+        return node;
     }
 
     private static void buildGroupBy(DashboardQueryPlan plan) {
@@ -208,7 +357,7 @@ public final class DashboardQueryBuilder {
             throw new IllegalArgumentException("Invalid dashboard metadata");
         }
 
-        return createPlan(visualization);
+        return createPlan(visualization, table, List.of(table));
     }
 
     public static DashboardQueryPlan buildRowCount(DashboardDataSource source, String alias) {

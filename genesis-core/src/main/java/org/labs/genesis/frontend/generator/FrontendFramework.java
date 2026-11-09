@@ -22,6 +22,7 @@ public class FrontendFramework
     private List<FilesEdit> additionalFiles;
     private List<FilesEdit> conditionalFiles;
     private List<FilesEdit> authenticationFiles;
+    private List<FilesEdit> dashboardFiles;
     private List<Component> components;
     private ServiceComponent serviceComponent;
     private ModelComponent modelComponent;

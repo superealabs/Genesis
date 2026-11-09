@@ -121,8 +121,8 @@ public class VisualizationPanel extends JPanel {
                         HorizontalBarChartRenderer.class,
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
-                                VisualizationParameter.measure("xAxis", "X Axis", true),
-                                VisualizationParameter.dimension("yAxis", "Y Axis", true),
+                                VisualizationParameter.dimension("xAxis", "Y Axis", true),
+                                VisualizationParameter.measure("yAxis", "X Axis", true),
                                 VisualizationParameter.text("legendX", "Legend X", false),
                                 VisualizationParameter.text("legendY", "Legend Y", false),
                                 VisualizationParameter.text("valuePrefix", "Value Prefix", false),
@@ -231,8 +231,10 @@ public class VisualizationPanel extends JPanel {
                         List.of(
                                 VisualizationParameter.text("title", "Title", false),
                                 VisualizationParameter.text("markerType", "Marker Type", false),
+                                VisualizationParameter.text("coordinateMode", "Coordinate Mode", false),
                                 VisualizationParameter.longitude("longitude", "Longitude", true),
                                 VisualizationParameter.latitude("latitude", "Latitude", true),
+                                VisualizationParameter.geography("geography", "Geographic Column", true),
                                 VisualizationParameter.text("labelColumn", "Label Column", false),
                                 VisualizationParameter.measure("valueColumn", "Value Column", false)
                         )

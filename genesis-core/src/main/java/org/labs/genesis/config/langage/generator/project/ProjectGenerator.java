@@ -11,6 +11,7 @@ import org.labs.genesis.config.langage.generator.indicator.NoOpProgressReporter;
 import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.sync.builder.GenesisContextBuilder;
 import org.labs.genesis.config.langage.generator.sync.models.GenesisContextModel;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.frontend.generator.ViewsGenerator;
 import org.labs.genesis.connexion.Credentials;
@@ -30,6 +31,9 @@ import org.labs.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,7 +45,10 @@ import static org.labs.genesis.config.langage.generator.project.ProjectMetadataP
 
 import org.labs.genesis.dashboard.generation.DashboardGenerationModelBuilder;
 import org.labs.genesis.dashboard.generation.model.DashboardGenerationModel;
+import org.labs.genesis.dashboard.technology.frontend.metadata.DashboardFrontendMetadataProvider;
 import org.labs.genesis.dashboard.technology.springmvc.metadata.SpringMvcDashboardMetadataProvider;
+import org.labs.genesis.dashboard.technology.springapi.metadata.SpringApiDashboardMetadataProvider;
+import org.labs.genesis.dashboard.technology.dotnetapi.metadata.DotNetApiDashboardMetadataProvider;
 
 public class ProjectGenerator {
 
@@ -258,6 +265,7 @@ public class ProjectGenerator {
             return;
         }
         HashMap<String, Object> finalRenderData = FrameworkFrontendMetadataProvider.getGlobalComponentsHashMap(entities, context);
+        generateFrontendDashboardFiles(context, frontendFramework, entities, finalRenderData);
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = context.getFramework().getSelectedSecurityByName(securityType);
         indicator.setFraction(0.73);
@@ -282,6 +290,61 @@ public class ProjectGenerator {
         indicator.setText2("generating frontend ressources");
         IFrontendGenerator frontendGenerator = new FontendGenerator(ProjectGenerator.engine);
         frontendGenerator.generateRessources(context, entities);
+    }
+
+    private void generateFrontendDashboardFiles(
+            ProjectGenerationContext context,
+            FrontendFramework frontendFramework,
+            List<TableMetadata> entities,
+            HashMap<String, Object> renderData) throws Exception {
+        int backendFrameworkId = context.getFramework().getId();
+        boolean dashboardApiSupported = backendFrameworkId == Constantes.NET_ID
+                || backendFrameworkId == Constantes.Spring_REST_API_ID;
+        if (!dashboardApiSupported || !isDashboardEnabled(context)) {
+            renderData.put("dashboardEnabled", false);
+            return;
+        }
+
+        List<TableMetadata> availableTables = resolveDashboardTables(context, entities);
+        DashboardGenerationModel dashboard =
+                DashboardGenerationModelBuilder.build(context.getDashboardConfiguration(), availableTables);
+        HashMap<String, Object> dashboardMetadata =
+                DashboardFrontendMetadataProvider.getDashboardHashMap(dashboard);
+        renderData.putAll(dashboardMetadata);
+        if (!Boolean.TRUE.equals(dashboardMetadata.get("dashboardEnabled"))) {
+            return;
+        }
+
+        List<FilesEdit> dashboardFiles = new ArrayList<>();
+        if (frontendFramework.getDashboardFiles() != null) {
+            dashboardFiles.addAll(frontendFramework.getDashboardFiles());
+        }
+
+        FilesEdit visualizationHelper = new FilesEdit();
+        visualizationHelper.setFileType("Dashboard Visualization Helpers");
+        visualizationHelper.setFileName("dashboard-visualizations");
+        visualizationHelper.setExtension("ts");
+        String frontendDestination = String.valueOf(renderData.get("destinationFolder"));
+        String dashboardDirectory = switch (String.valueOf(frontendFramework.getCoreFramework())) {
+            case "Angular" -> "/src/app/features/dashboard";
+            case "VueJs" -> "/src/views/dashboard";
+            default -> "/src/pages/dashboard";
+        };
+        visualizationHelper.setDestinationPath(frontendDestination + dashboardDirectory);
+        visualizationHelper.setContent(readDashboardVisualizationHelpers());
+        dashboardFiles.add(visualizationHelper);
+
+        renderFilesEdits(dashboardFiles, renderData);
+    }
+
+    private String readDashboardVisualizationHelpers() throws IOException {
+        try (var input = ProjectGenerator.class.getResourceAsStream(
+                "/data_genesis/frontend/dashboard-visualizations.ts")) {
+            if (input == null) {
+                throw new IOException("Dashboard visualization helper resource is missing");
+            }
+            return new String(input.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
     }
 
     private void generateViewsFiles (ProjectGenerationContext context, ViewsTemplate viewsTemplate) throws Exception {
@@ -311,6 +374,13 @@ public class ProjectGenerator {
         if (!context.isGenerateProjectStructure()){
             return;
         }
+
+        boolean hasPoint = entities != null
+                && entities.stream()
+                .filter(entity -> entity.getColumns() != null)
+                .flatMap(entity -> Arrays.stream(entity.getColumns()))
+                .anyMatch(ColumnMetadata::isGeographic);
+
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
@@ -329,7 +399,8 @@ public class ProjectGenerator {
                 context.getProjectDescription(),
                 context.getLanguageConfiguration(),
                 context.getFramework(),
-                context.getFrameworkConfiguration()
+                context.getFrameworkConfiguration(),
+                hasPoint
         );
         System.out.println("Generating PROJECT FILESSS 2");
 
@@ -351,6 +422,22 @@ public class ProjectGenerator {
             projectFilesEditsHashMap.put("adminRoutesSection", Collections.singletonList(adminRoutesSection));
         } else {
             projectFilesEditsHashMap.put("adminRoutesSection", Collections.emptyList());
+        }
+
+        if(hasPoint) {
+            FilesEdit serializer = context.getFramework().getConditionalFiles().stream()
+                    .filter(file -> "PointSerializer".equals(file.getFileType()))
+                    .findFirst()
+                    .orElse(null);
+
+            if(serializer != null) {
+                String destination = engine.simpleRender(serializer.getDestinationPath(), projectFilesEditsHashMap);
+                String content = serializer.getContent() == null ? "" : serializer.getContent();
+                Path serializerTarget = Paths.get(destination, serializer.getFileName() + "." + serializer.getExtension());
+                FileUtils.createFileStructure(destination);
+                Files.writeString(serializerTarget, engine.render(content, projectFilesEditsHashMap));
+                System.out.println(serializer + " @@" + destination);
+            }
         }
 
         if (context.getFramework().getUseDB()) {
@@ -402,6 +489,10 @@ public class ProjectGenerator {
 
         if (context.getFramework() instanceof FrameworkMVC mvcFramework) {
             generateDashboardFiles(context, mvcFramework, entities, projectFilesEditsHashMap, indicator);
+        } else if (context.getFramework().getId() == Constantes.Spring_REST_API_ID) {
+            generateSpringApiDashboardFiles(context, entities, projectFilesEditsHashMap, indicator);
+        } else if (context.getFramework().getId() == Constantes.NET_ID) {
+            generateDotNetApiDashboardFiles(context, entities, projectFilesEditsHashMap, indicator);
         }
 
         String securityType = (String) context.getFrameworkConfiguration().get("securityType");
@@ -487,6 +578,50 @@ public class ProjectGenerator {
         HashMap<String, Object> dashboardHashMap = new HashMap<>(projectFilesEditsHashMap);
         dashboardHashMap.putAll(SpringMvcDashboardMetadataProvider.getDashboardHashMap(dashboardModel));
         indicator.setText2("generation dashboard files");
+        renderFilesEdits(dashboardFiles, dashboardHashMap);
+    }
+
+    private void generateSpringApiDashboardFiles(ProjectGenerationContext context, List<TableMetadata> entities, HashMap<String, Object> projectFilesEditsHashMap, ProgressReporter indicator) throws Exception {
+        if (!isDashboardEnabled(context)) {
+            return;
+        }
+
+        List<FilesEdit> dashboardFiles = context.getFramework().getDashboardFiles();
+        if (dashboardFiles == null || dashboardFiles.isEmpty()) {
+            return;
+        }
+
+        List<TableMetadata> availableTables = resolveDashboardTables(context, entities);
+        DashboardGenerationModel dashboardModel = DashboardGenerationModelBuilder.build(context.getDashboardConfiguration(), availableTables);
+        if (!dashboardModel.isEnabled() || dashboardModel.isEmpty()) {
+            return;
+        }
+
+        HashMap<String, Object> dashboardHashMap = new HashMap<>(projectFilesEditsHashMap);
+        dashboardHashMap.putAll(SpringApiDashboardMetadataProvider.getDashboardHashMap(dashboardModel));
+        indicator.setText2("generation Spring API dashboard files");
+        renderFilesEdits(dashboardFiles, dashboardHashMap);
+    }
+
+    private void generateDotNetApiDashboardFiles(ProjectGenerationContext context, List<TableMetadata> entities, HashMap<String, Object> projectFilesEditsHashMap, ProgressReporter indicator) throws Exception {
+        if (!isDashboardEnabled(context)) {
+            return;
+        }
+
+        List<FilesEdit> dashboardFiles = context.getFramework().getDashboardFiles();
+        if (dashboardFiles == null || dashboardFiles.isEmpty()) {
+            return;
+        }
+
+        List<TableMetadata> availableTables = resolveDashboardTables(context, entities);
+        DashboardGenerationModel dashboardModel = DashboardGenerationModelBuilder.build(context.getDashboardConfiguration(), availableTables);
+        if (!dashboardModel.isEnabled() || dashboardModel.isEmpty()) {
+            return;
+        }
+
+        HashMap<String, Object> dashboardHashMap = new HashMap<>(projectFilesEditsHashMap);
+        dashboardHashMap.putAll(DotNetApiDashboardMetadataProvider.getDashboardHashMap(dashboardModel));
+        indicator.setText2("generation .NET API dashboard files");
         renderFilesEdits(dashboardFiles, dashboardHashMap);
     }
 

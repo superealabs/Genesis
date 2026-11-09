@@ -54,6 +54,9 @@ public final class JooqDashboardQueryRenderer implements DashboardQueryRenderer<
     }
 
     private Field<?> renderSelection(DashboardQuerySelection selection, String defaultTable) {
+        if (selection.getCoordinateAxis() != null) {
+            return renderCoordinate(selection, defaultTable);
+        }
         if (selection.getStatisticExpression() != null) {
             return renderStatistic(selection.getStatisticExpression(), defaultTable);
         }
@@ -66,6 +69,41 @@ public final class JooqDashboardQueryRenderer implements DashboardQueryRenderer<
             return field.as(selection.getAlias());
         }
         return field;
+    }
+
+    private Field<?> renderCoordinate(DashboardQuerySelection selection, String defaultTable) {
+        FieldReference reference = FieldReference.parse(selection.getColumnName(), defaultTable);
+        if (reference == null) {
+            throw new IllegalArgumentException("Invalid geographic column");
+        }
+        Field<?> geographic = qualified(reference);
+        boolean latitude = selection.getCoordinateAxis() == DashboardQuerySelection.CoordinateAxis.LATITUDE;
+        Field<Double> extracted;
+        switch (databaseType()) {
+            case POSTGRESQL -> {
+                Field<?> geometry = geographic;
+                if ("geography".equalsIgnoreCase(selection.getNativeColumnType())) {
+                    geometry = DSL.field("({0})::geometry", Object.class, geographic);
+                }
+                extracted = DSL.function(latitude ? "ST_Y" : "ST_X", Double.class, geometry);
+            }
+            case MYSQL, MARIADB -> extracted = DSL.function(latitude ? "ST_Y" : "ST_X", Double.class, geographic);
+            case SQL_SERVER -> {
+                boolean geography = "geography".equalsIgnoreCase(selection.getNativeColumnType());
+                extracted = DSL.field(
+                        "{0}." + (geography ? (latitude ? "Lat" : "Long") : (latitude ? "STY" : "STX") + (geography ? "" : "()")),
+                        Double.class,
+                        geographic
+                );
+            }
+            case ORACLE -> extracted = DSL.field(
+                    "{0}.SDO_POINT." + (selection.getCoordinateAxis() == DashboardQuerySelection.CoordinateAxis.LATITUDE ? "Y" : "X"),
+                    Double.class,
+                    geographic
+            );
+            default -> throw new IllegalArgumentException("Geographic Map coordinates are not supported for this database engine");
+        }
+        return extracted.as(selection.getAlias());
     }
 
     private Field<?> renderStatistic(DashboardStatisticExpression expression, String defaultTable) {

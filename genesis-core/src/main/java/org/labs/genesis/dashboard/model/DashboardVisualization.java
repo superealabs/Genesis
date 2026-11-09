@@ -1,6 +1,7 @@
 package org.labs.genesis.dashboard.model;
 
 import org.labs.genesis.dashboard.model.DashboardEnums.DashboardVisualizationType;
+import org.labs.genesis.dashboard.model.DashboardEnums.DashboardCoordinateMode;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,8 @@ public class DashboardVisualization {
     private String id;
     private String title;
     private DashboardVisualizationType type;
+    /** Null preserves the legacy two-column map configuration. */
+    private DashboardCoordinateMode coordinateMode;
     private DashboardDataSource dataSource;
     private DashboardLayout layout;
     private List<DashboardField> fields = new ArrayList<>();

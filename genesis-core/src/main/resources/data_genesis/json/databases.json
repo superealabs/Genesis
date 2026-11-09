@@ -77,7 +77,9 @@
       "LONGBLOB": "bytea",
       "VARBINARY": "bytea",
       "BINARY": "bytea",
-      "JSON": "string"
+      "JSON": "string",
+      "POINT": "geography",
+      "GEOMETRY": "geography"
     },
     "excludeSchemas": [
       "information_schema",
@@ -170,7 +172,9 @@
       "inet": "inet",
       "cidr": "string",
       "macaddr": "string",
-      "xml": "string"
+      "xml": "string",
+      "geography": "geography",
+      "geometry": "geography"
     },
     "excludeSchemas": [
       "information_schema",
@@ -250,8 +254,8 @@
       "cursor": "string",
       "table": "string",
       "hierarchyid": "string",
-      "geometry": "string",
-      "geography": "string"
+      "geometry": "geography",
+      "geography": "geography"
     },
     "excludeSchemas": [
       "sys",
@@ -314,8 +318,9 @@
       "INTERVAL": "interval",
       "INTERVAL YEAR TO MONTH": "intervalYearMonth",
       "INTERVAL DAY TO SECOND": "interval",
-      "GEOMETRY": "string",
-      "GEOGRAPHY": "string",
+      "GEOMETRY": "geography",
+      "GEOGRAPHY": "geography",
+      "SDO_GEOMETRY": "geography",
       "DATE": "date",
       "DATETIME": "datetime",
       "DATETIME2": "timestamp",

@@ -4,6 +4,7 @@ import org.labs.genesis.config.ProjectGenerationContext;
 import org.labs.genesis.dashboard.model.*;
 import org.labs.genesis.dashboard.model.DashboardEnums.*;
 import org.labs.genesis.forms.ui.visualization.model.*;
+import org.labs.genesis.forms.utils.DashboardColumnLabel;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -20,6 +21,7 @@ public final class DashboardVisualizationMapper {
         result.setId(component.getDashboardId());
         result.setTitle(component.getConfig().getString("title", component.getVisualizationItem().name));
         result.setType(typeFor(component.getVisualizationItem().name));
+        setMapCoordinateMode(result, component.getConfig());
         String source = component.getDataSourceName();
         DashboardSourceType sourceType = resolveSourceType(source, context);
         result.setDataSource(new DashboardDataSource(source, sourceType));
@@ -144,6 +146,7 @@ public final class DashboardVisualizationMapper {
         DashboardVisualization result = new DashboardVisualization();
         result.setTitle(config.getString("title", item.name));
         result.setType(typeFor(item.name));
+        setMapCoordinateMode(result, config);
         result.setDataSource(new DashboardDataSource(source, DashboardSourceType.TABLE));
         mapFields(result, config, item);
         mapVisualOptions(result, config, item);
@@ -158,6 +161,16 @@ public final class DashboardVisualizationMapper {
     private static void mapFields(DashboardVisualization result, VisualizationConfig config, VisualizationItem item) {
         for (VisualizationParameter parameter : item.parameters) {
             QueryRole role = parameter.getRole();
+            if (result.getType() == DashboardVisualizationType.MAP
+                    && result.getCoordinateMode() == DashboardCoordinateMode.GEOGRAPHY
+                    && (role == QueryRole.LATITUDE || role == QueryRole.LONGITUDE)) {
+                continue;
+            }
+            if (result.getType() == DashboardVisualizationType.MAP
+                    && result.getCoordinateMode() != DashboardCoordinateMode.GEOGRAPHY
+                    && role == QueryRole.GEOGRAPHY) {
+                continue;
+            }
             if (role == null
                     || role == QueryRole.FILTER
                     || role == QueryRole.SORT
@@ -169,7 +182,7 @@ public final class DashboardVisualizationMapper {
                 continue;
             }
             if (role == QueryRole.COLUMNS && value instanceof List<?> values) {
-                mapColumns(result, values);
+                mapColumns(result, values, config);
                 continue;
             }
             if (value.toString().isBlank()) {
@@ -187,6 +200,18 @@ public final class DashboardVisualizationMapper {
         }
     }
 
+    private static void setMapCoordinateMode(DashboardVisualization result, VisualizationConfig config) {
+        if (result.getType() != DashboardVisualizationType.MAP) {
+            return;
+        }
+        String mode = config.getString("coordinateMode", "SEPARATE");
+        try {
+            result.setCoordinateMode(DashboardCoordinateMode.valueOf(mode.trim().toUpperCase(Locale.ROOT)));
+        } catch (IllegalArgumentException exception) {
+            result.setCoordinateMode(DashboardCoordinateMode.SEPARATE);
+        }
+    }
+
     private static void addOptionalMapColumn(DashboardVisualization result, VisualizationConfig config, String key) {
         Object value = config.getValue(key);
         if (value == null || value.toString().isBlank()) {
@@ -195,15 +220,65 @@ public final class DashboardVisualizationMapper {
         result.getFields().add(new DashboardField(key, normalizeColumnReference(value.toString()), DashboardFieldRole.COLUMN));
     }
 
-    private static void mapColumns(DashboardVisualization result, List<?> values) {
+    private static void mapColumns(DashboardVisualization result, List<?> values, VisualizationConfig config) {
+        Map<String, String> headers = extractColumnHeaders(config);
         for (Object value : values) {
             if (value == null || value.toString().isBlank()) {
                 continue;
             }
-            String column = normalizeColumnReference(value.toString());
+            String raw = value.toString();
+            String column = normalizeColumnReference(raw);
             String key = simpleColumnName(column);
-            result.getFields().add(new DashboardField(key, column, DashboardFieldRole.COLUMN));
+            DashboardField field = new DashboardField(key, column, DashboardFieldRole.COLUMN);
+            String label = resolveColumnHeader(headers, raw, column, key);
+            field.setLabel(DashboardColumnLabel.clean(
+                    label == null || label.isBlank() ? key : label
+            ));
+            result.getFields().add(field);
         }
+    }
+
+    private static Map<String, String> extractColumnHeaders(VisualizationConfig config) {
+        Map<String, String> headers = new LinkedHashMap<>();
+        if (config == null) {
+            return headers;
+        }
+        Object headersObj = config.getValue("columnsHeaders");
+        if (!(headersObj instanceof Map<?, ?> headersMap)) {
+            return headers;
+        }
+        for (Map.Entry<?, ?> entry : headersMap.entrySet()) {
+            if (!(entry.getKey() instanceof String headerKey) || entry.getValue() == null) {
+                continue;
+            }
+            String headerValue = entry.getValue().toString().trim();
+            if (headerValue.isEmpty()) {
+                continue;
+            }
+            String normalizedKey = normalizeColumnReference(headerKey);
+            String simpleKey = simpleColumnName(normalizedKey);
+            headers.put(headerKey, headerValue);
+            headers.put(normalizedKey, headerValue);
+            headers.put(simpleKey, headerValue);
+        }
+        return headers;
+    }
+
+    private static String resolveColumnHeader(
+            Map<String, String> headers,
+            String raw,
+            String column,
+            String key) {
+        if (headers == null || headers.isEmpty()) {
+            return null;
+        }
+        if (headers.containsKey(raw)) {
+            return headers.get(raw);
+        }
+        if (headers.containsKey(column)) {
+            return headers.get(column);
+        }
+        return headers.get(key);
     }
 
     private static String simpleColumnName(String value

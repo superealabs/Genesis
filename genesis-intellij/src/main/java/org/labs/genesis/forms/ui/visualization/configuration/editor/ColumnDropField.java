@@ -16,6 +16,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.dnd.*;
+import java.util.function.Predicate;
 
 public class ColumnDropField extends JPanel {
 
@@ -35,6 +36,12 @@ public class ColumnDropField extends JPanel {
     private boolean dragOver = false;
     private boolean dropSuccess = false;
     private float dropSuccessAlpha = 0f;
+
+    private Predicate<ColumnData> columnDataValidator = column -> true;
+
+    public void setColumnDataValidator(Predicate<ColumnData> validator) {
+        this.columnDataValidator = validator == null ? column -> true : validator;
+    }
 
     public static final int HEIGHT = 32;
     private static final int RADIUS = 8;
@@ -196,6 +203,11 @@ public class ColumnDropField extends JPanel {
                                 (ColumnData) transferable.getTransferData(
                                         DataPanelTree.COLUMN_DATA_FLAVOR
                                 );
+
+                        if (!columnDataValidator.test(columnData)) {
+                            dtde.dropComplete(false);
+                            return;
+                        }
 
                         droppedColumn = columnData.name;
 

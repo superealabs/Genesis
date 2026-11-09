@@ -285,7 +285,7 @@
 
                 String header = headers.get(columnKey);
                 headerField.setText(
-                        header != null ? header : ""
+                        header != null && !header.equals(columnKey) ? header : ""
                 );
             }
         }
@@ -331,8 +331,9 @@
                 String header = headerField.getText().trim();
 
                 if (columnName != null && !columnName.isBlank()) {
-                    // Si l'en-tête est vide, utiliser le nom de colonne
-                    result.put(columnName, header.isEmpty() ? columnName : header);
+                    if (!header.isEmpty()) {
+                        result.put(columnName, header);
+                    }
                 }
             }
 

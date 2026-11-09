@@ -190,6 +190,7 @@ public final class SpringMvcDashboardMetadataProvider {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("key", valueOrEmpty(field.getKey()));
             metadata.put("columnName", valueOrEmpty(field.getColumnName()));
+            metadata.put("label", valueOrEmpty(field.getLabel()));
             metadata.put("role", field.getRole() == null ? "" : field.getRole().name());
             metadata.put("statistic", field.getStatistic() == null ? "" : field.getStatistic().name());
             result.add(metadata);

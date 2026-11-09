@@ -557,6 +557,283 @@
         Thumbs.db
       destinationPath: "${destinationFolder}/"
 
+  dashboardFiles:
+    - fileType: "Dashboard View"
+      fileName: "dashboard.component"
+      extension: "ts"
+      content: |
+        import { CommonModule } from '@angular/common';
+        import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+        import { HttpClient } from '@angular/common/http';
+        import { firstValueFrom } from 'rxjs';
+        import { environment } from '../../../environments/environment';
+        import { DashboardVisualizationComponent } from './dashboard-visualization.component';
+
+        type DashboardResponse = Record<string, Array<Record<string, unknown>>>;
+
+        @Component({
+          selector: 'app-dashboard',
+          standalone: true,
+          imports: [CommonModule, DashboardVisualizationComponent],
+          templateUrl: './dashboard.component.html',
+          styleUrls: ['./dashboard.component.css']
+        })
+        export class DashboardComponent implements OnInit, OnDestroy {
+          activePage = ${dashboardInitialPageSlugLiteral};
+          pageData: Record<string, DashboardResponse> = {};
+          loadingPages: Record<string, boolean> = {};
+          pageErrors: Record<string, string> = {};
+          private disposed = false;
+
+          constructor(
+            private readonly http: HttpClient,
+            private readonly changeDetector: ChangeDetectorRef
+          ) {}
+
+          ngOnInit(): void {
+            void this.selectPage(${dashboardInitialPageSlugLiteral}, '${dashboardInitialPageEndpointPath}');
+          }
+
+          rows(pageSlug: string, graphSlug: string): Array<Record<string, unknown>> {
+            return this.pageData[pageSlug]?.[graphSlug] ?? [];
+          }
+
+          async selectPage(pageSlug: string, endpointPath: string): Promise<void> {
+            this.activePage = pageSlug;
+            if (this.pageData[pageSlug]) return;
+            this.loadingPages[pageSlug] = true;
+            this.pageErrors[pageSlug] = '';
+            try {
+              const result = await firstValueFrom(
+                this.http.get<DashboardResponse>(environment.apiUrl + endpointPath)
+              );
+              if (this.disposed) return;
+              if (!result || typeof result !== 'object' || Array.isArray(result)) {
+                throw new Error('The dashboard API returned an invalid response.');
+              }
+              this.pageData[pageSlug] = result;
+            } catch (error: unknown) {
+              if (!this.disposed) {
+                this.pageErrors[pageSlug] = error instanceof Error ? error.message : String(error);
+              }
+            } finally {
+              if (!this.disposed) {
+                this.loadingPages[pageSlug] = false;
+                this.changeDetector.detectChanges();
+              }
+            }
+          }
+
+          ngOnDestroy(): void { this.disposed = true; }
+        }
+      destinationPath: "${destinationFolder}/src/app/features/dashboard"
+    - fileType: "Dashboard Template"
+      fileName: "dashboard.component"
+      extension: "html"
+      content: |
+        <div class="genesis-dashboard dashboard-view">
+          <nav class="genesis-dashboard__tabs" aria-label="Dashboard pages">
+            {{#each dashboardPages}}
+            <button type="button" class="genesis-dashboard__tab"
+              [attr.aria-current]="activePage === '${this.slug}' ? 'page' : null"
+              (click)="selectPage('${this.slug}', '${this.endpointPath}')">${this.titleHtml}</button>
+            {{/each}}
+          </nav>
+          {{#each dashboardPages}}
+          <section [hidden]="activePage !== '${this.slug}'">
+            <h1>${this.titleHtml}</h1>
+            <p *ngIf="loadingPages['${this.slug}']" class="genesis-dashboard__loading">Loading dashboard data…</p>
+            <p *ngIf="pageErrors['${this.slug}']" class="genesis-dashboard__error" role="alert">{{ pageErrors['${this.slug}'] }}</p>
+            <div class="genesis-dashboard__grid">
+              ${this.angularVisualizationsMarkup}
+            </div>
+          </section>
+          {{/each}}
+        </div>
+      destinationPath: "${destinationFolder}/src/app/features/dashboard"
+    - fileType: "Dashboard Styles"
+      fileName: "dashboard.component"
+      extension: "css"
+      content: |
+        .dashboard-view{display:block;min-height:20rem}
+        .genesis-dashboard{font-family:inherit;color:inherit;container-type:inline-size}
+        .genesis-dashboard__tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1rem}
+        .genesis-dashboard__tab{border:1px solid #d1d5db;border-radius:.5rem;background:#fff;padding:.5rem .85rem;cursor:pointer}
+        .genesis-dashboard__tab[aria-current=page]{background:#2563eb;color:#fff;border-color:#2563eb}
+        .genesis-dashboard__grid{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));grid-auto-rows:max(2rem,4.166667cqw)}
+        .genesis-dashboard__widget{box-sizing:border-box;min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:.75rem;padding:1rem;box-shadow:0 1px 3px #00000012;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+        .genesis-dashboard__widget-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+        .genesis-dashboard__widget h2{font-size:1rem;font-weight:600;margin:0 0 1rem}
+        .genesis-dashboard__chart{flex:1 1 auto;min-height:180px;position:relative}
+        .genesis-dashboard__kpi{flex:1 1 auto;min-height:5rem;display:flex;align-items:center;font-size:2rem;font-weight:700}
+        .genesis-dashboard__map{flex:1 1 auto;min-height:220px;border-radius:.5rem}
+        .genesis-dashboard__table-wrap{flex:1 1 auto;min-height:0;max-height:100%;overflow:auto;max-width:100%}
+        .genesis-dashboard__table{width:100%;border-collapse:separate;border-spacing:0;text-align:left;table-layout:fixed}
+        .genesis-dashboard__table th{position:sticky;top:0;z-index:1;font-weight:600;background:#f9fafb;box-shadow:inset 0 -1px 0 #e5e7eb}
+        .genesis-dashboard__table th,.genesis-dashboard__table td{padding:.55rem .65rem;border-bottom:1px solid #e5e7eb;overflow-wrap:anywhere;word-break:break-word}
+        .genesis-dashboard__empty,.genesis-dashboard__error{padding:1rem;color:#6b7280}
+        .genesis-dashboard__error{color:#b91c1c}
+        @media(max-width:700px){.genesis-dashboard__widget{grid-column:1/-1!important;grid-row:auto!important;min-height:12rem}}
+        .genesis-dashboard__loading{padding:1rem;color:#6b7280}
+        @media(max-width:700px){.genesis-dashboard__grid{grid-template-columns:minmax(0,1fr);grid-auto-rows:auto}.genesis-dashboard__widget{grid-column:1/-1!important;grid-row:auto!important;min-height:12rem}}
+      destinationPath: "${destinationFolder}/src/app/features/dashboard"
+    - fileType: "Dashboard Visualization"
+      fileName: "dashboard-visualization.component"
+      extension: "ts"
+      content: |
+        import { AfterViewChecked, ChangeDetectorRef, Component, ElementRef, Input, OnChanges, OnDestroy, ViewChild } from '@angular/core';
+        import { CommonModule } from '@angular/common';
+        import {
+          dashboardVisualizationMessage,
+          formatDashboardValue,
+          initializeDashboardVisualization,
+          resizeDashboardVisualization,
+          type DashboardField
+        } from './dashboard-visualizations';
+
+        type DashboardRow = Record<string, unknown>;
+        type DashboardLayout = { x: number; y: number; width: number; height: number } | null;
+
+        @Component({
+          selector: 'app-dashboard-visualization',
+          standalone: true,
+          imports: [CommonModule],
+          templateUrl: './dashboard-visualization.component.html',
+          styleUrls: ['./dashboard-visualization.component.css']
+        })
+        export class DashboardVisualizationComponent implements AfterViewChecked, OnChanges, OnDestroy {
+          @Input() title = '';
+          @Input() type = '';
+          @Input() visualizationId = '';
+          @Input() active = false;
+          @Input() rows: DashboardRow[] = [];
+          @Input() set fieldsJson(value: string) { this.fields = JSON.parse(value) as DashboardField[]; }
+          @Input() set optionsJson(value: string) { this.options = JSON.parse(value) as Record<string, unknown>; }
+          @Input() set layoutJson(value: string) { this.layout = JSON.parse(value) as DashboardLayout; }
+          @ViewChild('visualizationTarget') private target?: ElementRef<HTMLElement>;
+          fields: DashboardField[] = [];
+          options: Record<string, unknown> = {};
+          layout: DashboardLayout = null;
+          error = '';
+          private cleanup?: () => void;
+          private initializing = false;
+          private resizePending = false;
+          private disposed = false;
+          private generation = 0;
+
+          constructor(private readonly changeDetector: ChangeDetectorRef) {}
+
+          get message(): string | null {
+            return dashboardVisualizationMessage(this.type, this.rows, this.fields);
+          }
+
+          get columnFields(): DashboardField[] {
+            return this.fields.filter(field => field.role === 'COLUMN');
+          }
+
+          get kpiValue(): string {
+            const measure = this.fields.find(field => field.role === 'MEASURE');
+            return formatDashboardValue(measure ? this.rows[0]?.[measure.key] : null, this.options);
+          }
+
+          get gridStyle(): Record<string, string> {
+            return this.layout && this.layout.x >= 0 && this.layout.y >= 0
+              && this.layout.width > 0 && this.layout.height > 0
+              ? {
+                  'grid-column': (this.layout.x + 1) + ' / span ' + this.layout.width,
+                  'grid-row': (this.layout.y + 1) + ' / span ' + this.layout.height
+                }
+              : { 'grid-column': 'span 12', 'grid-row': 'span 6' };
+          }
+
+          ngOnChanges(): void {
+            this.generation++;
+            this.cleanup?.();
+            this.cleanup = undefined;
+            this.initializing = false;
+            this.error = '';
+            this.resizePending = this.active && this.type.toUpperCase() === 'MAP';
+          }
+
+          ngAfterViewChecked(): void {
+            if (this.resizePending) {
+              resizeDashboardVisualization(this.visualizationId);
+              this.resizePending = false;
+            }
+            const type = this.type.toUpperCase();
+            if (this.disposed || !this.active || this.initializing || this.cleanup || this.message
+              || !this.target || !['MAP', 'BAR_VERTICAL', 'BAR_HORIZONTAL', 'LINE', 'PIE', 'DONUT', 'SCATTER'].includes(type)) {
+              return;
+            }
+            const generation = this.generation;
+            this.initializing = true;
+            void initializeDashboardVisualization(
+              this.target.nativeElement, type, this.rows, this.fields, this.options
+            ).then(cleanup => {
+              if (this.disposed || generation !== this.generation) cleanup();
+              else this.cleanup = cleanup;
+            }).catch((cause: unknown) => {
+              if (!this.disposed && generation === this.generation) {
+                this.error = cause instanceof Error ? cause.message : String(cause);
+                this.changeDetector.markForCheck();
+              }
+            }).finally(() => {
+              if (generation === this.generation) this.initializing = false;
+            });
+          }
+
+          ngOnDestroy(): void {
+            this.disposed = true;
+            this.generation++;
+            this.cleanup?.();
+          }
+        }
+      destinationPath: "${destinationFolder}/src/app/features/dashboard"
+    - fileType: "Dashboard Visualization Template"
+      fileName: "dashboard-visualization.component"
+      extension: "html"
+      content: |
+        <article class="genesis-dashboard__widget" [ngStyle]="gridStyle">
+          <h2>{{ title || type || 'Visualization' }}</h2>
+          <div class="genesis-dashboard__widget-body">
+            <p *ngIf="message as text" class="genesis-dashboard__empty">{{ text }}</p>
+            <ng-container *ngIf="!message">
+              <div *ngIf="type.toUpperCase() === 'KPI'" class="genesis-dashboard__kpi">{{ kpiValue }}</div>
+              <div *ngIf="type.toUpperCase() === 'TABLE'" class="genesis-dashboard__table-wrap">
+                <table class="genesis-dashboard__table">
+                  <thead><tr><th *ngFor="let field of columnFields">{{ field.label || field.columnName || field.key }}</th></tr></thead>
+                  <tbody><tr *ngFor="let row of rows"><td *ngFor="let field of columnFields">{{ row[field.key] == null ? '' : row[field.key] }}</td></tr></tbody>
+                </table>
+              </div>
+              <div *ngIf="type.toUpperCase() === 'MAP'" #visualizationTarget [id]="visualizationId" class="genesis-dashboard__map"></div>
+              <div *ngIf="['BAR_VERTICAL', 'BAR_HORIZONTAL', 'LINE', 'PIE', 'DONUT', 'SCATTER'].includes(type.toUpperCase())" class="genesis-dashboard__chart">
+                <canvas #visualizationTarget [id]="visualizationId"></canvas>
+              </div>
+              <p *ngIf="!['KPI', 'TABLE', 'MAP', 'BAR_VERTICAL', 'BAR_HORIZONTAL', 'LINE', 'PIE', 'DONUT', 'SCATTER'].includes(type.toUpperCase())" class="genesis-dashboard__empty">Unsupported visualization type: {{ type }}</p>
+            </ng-container>
+            <p *ngIf="error" class="genesis-dashboard__error" role="alert">{{ error }}</p>
+          </div>
+        </article>
+      destinationPath: "${destinationFolder}/src/app/features/dashboard"
+    - fileType: "Dashboard Visualization Styles"
+      fileName: "dashboard-visualization.component"
+      extension: "css"
+      content: |
+        :host{display:contents}
+        .genesis-dashboard__widget{box-sizing:border-box;min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:.75rem;padding:1rem;box-shadow:0 1px 3px #00000012;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+        .genesis-dashboard__widget-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+        .genesis-dashboard__widget h2{font-size:1rem;font-weight:600;margin:0 0 1rem}
+        .genesis-dashboard__chart{flex:1 1 auto;min-height:180px;position:relative}
+        .genesis-dashboard__kpi{flex:1 1 auto;min-height:5rem;display:flex;align-items:center;font-size:2rem;font-weight:700}
+        .genesis-dashboard__map{flex:1 1 auto;min-height:220px;border-radius:.5rem}
+        .genesis-dashboard__table-wrap{flex:1 1 auto;min-height:0;max-height:100%;overflow:auto;max-width:100%}
+        .genesis-dashboard__table{width:100%;border-collapse:separate;border-spacing:0;text-align:left;table-layout:fixed}
+        .genesis-dashboard__table th{position:sticky;top:0;z-index:1;font-weight:600;background:#f9fafb;box-shadow:inset 0 -1px 0 #e5e7eb}
+        .genesis-dashboard__table th,.genesis-dashboard__table td{padding:.55rem .65rem;border-bottom:1px solid #e5e7eb;overflow-wrap:anywhere;word-break:break-word}
+        .genesis-dashboard__empty,.genesis-dashboard__error{padding:1rem;color:#6b7280}
+        .genesis-dashboard__error{color:#b91c1c}
+      destinationPath: "${destinationFolder}/src/app/features/dashboard"
+
   additionalFiles:
     - fileType: "Language file"
       fileName: "language.service"
@@ -784,7 +1061,8 @@
       extension: "ts"
       content: |
         import { Routes } from '@angular/router';
-        import { WelcomeComponent } from './shared/welcome/welcome.component';
+        {{#if !dashboardEnabled}}import { WelcomeComponent } from './shared/welcome/welcome.component';{{/if}}
+        {{#if dashboardEnabled}}import { DashboardComponent } from './features/dashboard/dashboard.component';{{/if}}
 
         {{#each entities}}{{removeLine}}
         import { ${minStart(this.className)}Routes } from './features/${toKebabCase(this.className)}/${toKebabCase(this.className)}.routes'
@@ -792,14 +1070,19 @@
         {{#if useJWT}}import { loginRoutes } from './features/authentication/authentication.route'{{/if}}
 
         export const routes: Routes = [
+          {{#if dashboardEnabled}}
+          { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+          { path: 'dashboard', component: DashboardComponent },
+          {{else}}
           {
                 path: '',
                 component: WelcomeComponent,
           },
+          {{/if}}
           {{#if useJWT}}...loginRoutes{{/if}}
           {{#each entities}}{{removeLine}}
-          ...${minStart(this.className)}Routes
-          {{#if !@last}},{{/if}}{{/each}}{{removeLine}}
+          ...${minStart(this.className)}Routes,
+          {{/each}}{{removeLine}}
         ];
       destinationPath: "${destinationFolder}/src/app/"
     - fileType: "App-files"
@@ -2007,6 +2290,242 @@
         .DS_Store
         Thumbs.db
       destinationPath: "${destinationFolder}/"
+
+  dashboardFiles:
+    - fileType: "Dashboard View"
+      fileName: "DashboardView"
+      extension: "vue"
+      content: |
+        <template>
+          <div class="genesis-dashboard dashboard-view">
+            <nav class="genesis-dashboard__tabs" aria-label="Dashboard pages">
+              {{#each dashboardPages}}
+              <button type="button" class="genesis-dashboard__tab"
+                :aria-current="activePage === '${this.slug}' ? 'page' : undefined"
+                @click="selectPage('${this.slug}', '${this.endpointPath}')">${this.titleHtml}</button>
+              {{/each}}
+            </nav>
+            {{#each dashboardPages}}
+            <section v-show="activePage === '${this.slug}'">
+              <h1>${this.titleHtml}</h1>
+              <p v-if="loadingPages['${this.slug}']" class="genesis-dashboard__loading">Loading dashboard data…</p>
+              <p v-if="pageErrors['${this.slug}']" class="genesis-dashboard__error" role="alert">{{ pageErrors['${this.slug}'] }}</p>
+              <div class="genesis-dashboard__grid">
+                ${this.vueVisualizationsMarkup}
+              </div>
+            </section>
+            {{/each}}
+          </div>
+        </template>
+
+        <script setup lang="ts">
+        import { onBeforeUnmount, onMounted, ref } from 'vue'
+        import api from '@/services/api'
+        import DashboardVisualization from './DashboardVisualization.vue'
+
+        type DashboardResponse = Record<string, Array<Record<string, unknown>>>
+
+        const activePage = ref(${dashboardInitialPageSlugLiteral})
+        const pageData = ref<Record<string, DashboardResponse>>({})
+        const loadingPages = ref<Record<string, boolean>>({})
+        const pageErrors = ref<Record<string, string>>({})
+        const dashboardApi = api<DashboardResponse>()
+        let disposed = false
+
+        async function selectPage(pageSlug: string, endpointPath: string): Promise<void> {
+          activePage.value = pageSlug
+          if (pageData.value[pageSlug]) return
+          loadingPages.value = { ...loadingPages.value, [pageSlug]: true }
+          pageErrors.value = { ...pageErrors.value, [pageSlug]: '' }
+          try {
+            const result = await dashboardApi.GET_RAW(endpointPath)
+            if (disposed) return
+            if (!result || typeof result !== 'object' || Array.isArray(result)) {
+              throw new Error('The dashboard API returned an invalid response.')
+            }
+            pageData.value = { ...pageData.value, [pageSlug]: result }
+          } catch (cause: unknown) {
+            if (!disposed) {
+              pageErrors.value = {
+                ...pageErrors.value,
+                [pageSlug]: cause instanceof Error ? cause.message : String(cause)
+              }
+            }
+          } finally {
+            if (!disposed) {
+              loadingPages.value = { ...loadingPages.value, [pageSlug]: false }
+            }
+          }
+        }
+
+        onMounted(() => {
+          void selectPage(${dashboardInitialPageSlugLiteral}, '${dashboardInitialPageEndpointPath}')
+        })
+
+        onBeforeUnmount(() => { disposed = true })
+        </script>
+
+        <style scoped>
+        .dashboard-view{display:block;min-height:20rem}
+        .genesis-dashboard{font-family:inherit;color:inherit;container-type:inline-size}
+        .genesis-dashboard__tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1rem}
+        .genesis-dashboard__tab{border:1px solid #d1d5db;border-radius:.5rem;background:#fff;padding:.5rem .85rem;cursor:pointer}
+        .genesis-dashboard__tab[aria-current=page]{background:#2563eb;color:#fff;border-color:#2563eb}
+        .genesis-dashboard__grid{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));grid-auto-rows:max(2rem,4.166667cqw)}
+        .genesis-dashboard__widget{box-sizing:border-box;min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:.75rem;padding:1rem;box-shadow:0 1px 3px #00000012;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+        .genesis-dashboard__widget-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+        .genesis-dashboard__widget h2{font-size:1rem;font-weight:600;margin:0 0 1rem}
+        .genesis-dashboard__chart{flex:1 1 auto;min-height:180px;position:relative}
+        .genesis-dashboard__kpi{flex:1 1 auto;min-height:5rem;display:flex;align-items:center;font-size:2rem;font-weight:700}
+        .genesis-dashboard__map{flex:1 1 auto;min-height:220px;border-radius:.5rem}
+        .genesis-dashboard__table-wrap{flex:1 1 auto;min-height:0;max-height:100%;overflow:auto;max-width:100%}
+        .genesis-dashboard__table{width:100%;border-collapse:separate;border-spacing:0;text-align:left;table-layout:fixed}
+        .genesis-dashboard__table th{position:sticky;top:0;z-index:1;font-weight:600;background:#f9fafb;box-shadow:inset 0 -1px 0 #e5e7eb}
+        .genesis-dashboard__table th,.genesis-dashboard__table td{padding:.55rem .65rem;border-bottom:1px solid #e5e7eb;overflow-wrap:anywhere;word-break:break-word}
+        .genesis-dashboard__empty,.genesis-dashboard__error{padding:1rem;color:#6b7280}
+        .genesis-dashboard__error{color:#b91c1c}
+        .genesis-dashboard__loading{padding:1rem;color:#6b7280}
+        @media(max-width:700px){.genesis-dashboard__grid{grid-template-columns:minmax(0,1fr);grid-auto-rows:auto}.genesis-dashboard__widget{grid-column:1/-1!important;grid-row:auto!important;min-height:12rem}}
+        </style>
+
+      destinationPath: "${destinationFolder}/src/views/dashboard"
+    - fileType: "Dashboard Visualization"
+      fileName: "DashboardVisualization"
+      extension: "vue"
+      content: |
+        <template>
+          <article class="genesis-dashboard__widget" :style="gridStyle">
+            <h2>{{ title || type || 'Visualization' }}</h2>
+            <div class="genesis-dashboard__widget-body">
+              <p v-if="message" class="genesis-dashboard__empty">{{ message }}</p>
+              <template v-else-if="type.toUpperCase() === 'KPI'">
+                <div class="genesis-dashboard__kpi">{{ kpiValue }}</div>
+              </template>
+              <template v-else-if="type.toUpperCase() === 'TABLE'">
+                <div class="genesis-dashboard__table-wrap">
+                  <table class="genesis-dashboard__table">
+                    <thead><tr><th v-for="field in fields.filter(item => item.role === 'COLUMN')" :key="field.key">{{ field.label || field.columnName || field.key }}</th></tr></thead>
+                    <tbody><tr v-for="(row, rowIndex) in rows" :key="rowIndex">
+                      <td v-for="field in fields.filter(item => item.role === 'COLUMN')" :key="field.key">{{ row[field.key] == null ? '' : row[field.key] }}</td>
+                    </tr></tbody>
+                  </table>
+                </div>
+              </template>
+              <div v-else-if="type.toUpperCase() === 'MAP'" :id="visualizationId" ref="mapTarget" class="genesis-dashboard__map"></div>
+              <div v-else-if="isChart" class="genesis-dashboard__chart">
+                <canvas :id="visualizationId" ref="chartTarget"></canvas>
+              </div>
+              <p v-else class="genesis-dashboard__empty">Unsupported visualization type: {{ type }}</p>
+              <p v-if="error" class="genesis-dashboard__error" role="alert">{{ error }}</p>
+            </div>
+          </article>
+        </template>
+
+        <script setup lang="ts">
+        import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+        import {
+          dashboardVisualizationMessage,
+          formatDashboardValue,
+          initializeDashboardVisualization,
+          resizeDashboardVisualization,
+          type DashboardField
+        } from './dashboard-visualizations'
+
+        type DashboardRow = Record<string, unknown>
+        type DashboardLayout = { x: number; y: number; width: number; height: number } | null
+
+        const props = defineProps<{
+          title: string
+          type: string
+          graphSlug: string
+          visualizationId: string
+          fields: DashboardField[]
+          options: Record<string, unknown>
+          layout: DashboardLayout
+          rows: DashboardRow[]
+          active: boolean
+        }>()
+
+        const chartTarget = ref<HTMLCanvasElement | null>(null)
+        const mapTarget = ref<HTMLDivElement | null>(null)
+        const error = ref('')
+        let cleanup: (() => void) | undefined
+        let generation = 0
+        let disposed = false
+
+        const message = computed(() => dashboardVisualizationMessage(props.type, props.rows, props.fields))
+        const isChart = computed(() => ['BAR_VERTICAL', 'BAR_HORIZONTAL', 'LINE', 'PIE', 'DONUT', 'SCATTER'].includes(props.type.toUpperCase()))
+        const kpiValue = computed(() => {
+          const measure = props.fields.find(field => field.role === 'MEASURE')
+          return formatDashboardValue(measure ? props.rows[0]?.[measure.key] : null, props.options)
+        })
+        const gridStyle = computed(() => {
+          const layout = props.layout
+          return layout && layout.x >= 0 && layout.y >= 0 && layout.width > 0 && layout.height > 0
+            ? {
+              gridColumn: (layout.x + 1) + ' / span ' + layout.width,
+              gridRow: (layout.y + 1) + ' / span ' + layout.height
+            }
+            : { gridColumn: 'span 12', gridRow: 'span 6' }
+        })
+
+        async function initialize(): Promise<void> {
+          const currentGeneration = ++generation
+          cleanup?.()
+          cleanup = undefined
+          error.value = ''
+          if (!props.active || message.value || (!isChart.value && props.type.toUpperCase() !== 'MAP')) return
+
+          await nextTick()
+          const target = props.type.toUpperCase() === 'MAP' ? mapTarget.value : chartTarget.value
+          if (!target || disposed) return
+          try {
+            const stop = await initializeDashboardVisualization(
+              target, props.type, props.rows, props.fields, props.options
+            )
+            if (disposed || currentGeneration !== generation) stop()
+            else cleanup = stop
+          } catch (cause: unknown) {
+            if (!disposed && currentGeneration === generation) {
+              error.value = cause instanceof Error ? cause.message : String(cause)
+            }
+          }
+        }
+
+        watch(
+          () => [props.rows, props.type, props.fields, props.options, props.active],
+          () => { void initialize() },
+          { deep: true, immediate: true }
+        )
+        watch(() => props.active, async active => {
+          if (active && props.type.toUpperCase() === 'MAP') {
+            await nextTick()
+            resizeDashboardVisualization(props.visualizationId)
+          }
+        })
+        onBeforeUnmount(() => {
+          disposed = true
+          generation++
+          cleanup?.()
+        })
+        </script>
+
+        <style scoped>
+        .genesis-dashboard__widget{box-sizing:border-box;min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:.75rem;padding:1rem;box-shadow:0 1px 3px #00000012;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+        .genesis-dashboard__widget-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+        .genesis-dashboard__widget h2{font-size:1rem;font-weight:600;margin:0 0 1rem}
+        .genesis-dashboard__chart{flex:1 1 auto;min-height:180px;position:relative}
+        .genesis-dashboard__kpi{flex:1 1 auto;min-height:5rem;display:flex;align-items:center;font-size:2rem;font-weight:700}
+        .genesis-dashboard__map{flex:1 1 auto;min-height:220px;border-radius:.5rem}
+        .genesis-dashboard__table-wrap{flex:1 1 auto;min-height:0;max-height:100%;overflow:auto;max-width:100%}
+        .genesis-dashboard__table{width:100%;border-collapse:separate;border-spacing:0;text-align:left;table-layout:fixed}
+        .genesis-dashboard__table th{position:sticky;top:0;z-index:1;font-weight:600;background:#f9fafb;box-shadow:inset 0 -1px 0 #e5e7eb}
+        .genesis-dashboard__table th,.genesis-dashboard__table td{padding:.55rem .65rem;border-bottom:1px solid #e5e7eb;overflow-wrap:anywhere;word-break:break-word}
+        .genesis-dashboard__empty,.genesis-dashboard__error{padding:1rem;color:#6b7280}
+        .genesis-dashboard__error{color:#b91c1c}
+        </style>
+      destinationPath: "${destinationFolder}/src/views/dashboard"
+
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/src/assets/images"
@@ -3639,12 +4158,27 @@
              return request({ ...config, method: 'patch', url, data })
           }
 
+          const GET_RAW = async <R>(url: string): Promise<R> => {
+            const config: AxiosRequestConfig = { method: 'get', url }{{#if useJWT}}
+            config.headers = { ...config.headers, ...authentication.getAuthorizationHeader() }{{/if}}
+            try {
+              const response = await instance.request<R>(config)
+              return response.data
+            } catch (error: unknown) {
+              if ((error as AxiosError).response?.status === 401) {
+                {{#if useJWT}}authentication.logout(){{else}}throw error{{/if}}
+              }
+              throw error
+            }
+          }
+
           return {
             GET,
             POST,
             PUT,
             DELETE,
             PATCH,
+            GET_RAW,
           }
         }
       destinationPath: "${destinationFolder}/src/services"
@@ -4011,7 +4545,8 @@
         import HomeView from '@/views/HomeView.vue'
         import SettingsView from '@/views/settings/SettingsView.vue'
         import NotFoundView from '@/views/error/NotFoundView.vue'
-        import MainLayout from '@/layouts/MainLayout.vue'{{#if useJWT}}
+        import MainLayout from '@/layouts/MainLayout.vue'{{#if dashboardEnabled}}
+        import DashboardView from '@/views/dashboard/DashboardView.vue'{{/if}}{{#if useJWT}}
         import AuthLayout from '@/layouts/AuthLayout.vue'
         import authRoutes from './authRoutes'{{/if}}
         {{#each entities}}
@@ -4019,15 +4554,26 @@
         {{/each}}{{removeLine}}
         
         const routes: Array<RouteRecordRaw> = [
-          {
+          {{#if dashboardEnabled}}{
+            path: '/',
+            redirect: '/dashboard',
+          },{{else}}{
             path: '/',
             redirect: '/home',
-          },
+          },{{/if}}
           {
             path: '/',
             component: MainLayout,
             children: [
-              { path: 'home', name: 'home', component: HomeView{{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },
+              {{#if dashboardEnabled && useJWT}}
+              { path: 'dashboard', name: 'dashboard', component: DashboardView, meta: { requiresAuth: true } },
+              {{elseIf dashboardEnabled}}
+              { path: 'dashboard', name: 'dashboard', component: DashboardView },
+              {{elseIf useJWT}}
+              { path: 'home', name: 'home', component: HomeView, meta: { requiresAuth: true } },
+              {{else}}
+              { path: 'home', name: 'home', component: HomeView },
+              {{/if}}
               { path: 'settings', name: 'settings', component: SettingsView{{#if useJWT}}, meta: { requiresAuth: true }{{/if}} },{{#if useJWT}}
               {
                 path: 'profile',
@@ -7744,6 +8290,231 @@
         .DS_Store
         Thumbs.db
       destinationPath: "${destinationFolder}/"
+
+  dashboardFiles:
+    - fileType: "Dashboard Page"
+      fileName: "DashboardPage"
+      extension: "tsx"
+      content: |
+        import { useEffect, useRef, useState } from 'react';
+        import { getRaw } from '@/services/api';
+        import DashboardVisualization from './DashboardVisualization';
+        import './dashboard.css';
+
+        type DashboardResponse = Record<string, Array<Record<string, unknown>>>;
+
+        export default function DashboardPage() {
+          const [activePage, setActivePage] = useState('${dashboardInitialPageSlug}');
+          const [pageData, setPageData] = useState<Record<string, DashboardResponse>>({});
+          const [loadingPages, setLoadingPages] = useState<Record<string, boolean>>({});
+          const [pageErrors, setPageErrors] = useState<Record<string, string>>({});
+          const disposed = useRef(false);
+
+          const selectPage = async (pageSlug: string, endpointPath: string): Promise<void> => {
+            setActivePage(pageSlug);
+            if (pageData[pageSlug]) return;
+            setLoadingPages(previous => ({ ...previous, [pageSlug]: true }));
+            setPageErrors(previous => ({ ...previous, [pageSlug]: '' }));
+            try {
+              const result = await getRaw<DashboardResponse>(endpointPath);
+              if (disposed.current) return;
+              if (!result || typeof result !== 'object' || Array.isArray(result)) {
+                throw new Error('The dashboard API returned an invalid response.');
+              }
+              setPageData(previous => ({ ...previous, [pageSlug]: result }));
+            } catch (cause: unknown) {
+              if (!disposed.current) {
+                setPageErrors(previous => ({
+                  ...previous,
+                  [pageSlug]: cause instanceof Error ? cause.message : String(cause)
+                }));
+              }
+            } finally {
+              if (!disposed.current) {
+                setLoadingPages(previous => ({ ...previous, [pageSlug]: false }));
+              }
+            }
+          };
+
+          useEffect(() => {
+            disposed.current = false;
+            void selectPage('${dashboardInitialPageSlug}', '${dashboardInitialPageEndpointPath}');
+            return () => { disposed.current = true; };
+          }, []);
+
+          return (
+            <div className="genesis-dashboard dashboard-view">
+              <nav className="genesis-dashboard__tabs" aria-label="Dashboard pages">
+                {{#each dashboardPages}}
+                  <button
+                    type="button"
+                    className="genesis-dashboard__tab"
+                    aria-current={activePage === '${this.slug}' ? 'page' : undefined}
+                    onClick={() => void selectPage('${this.slug}', '${this.endpointPath}')}
+                  >${this.titleHtml}</button>
+                {{/each}}
+              </nav>
+              {{#each dashboardPages}}
+                <section hidden={activePage !== '${this.slug}'}>
+                  <h1>${this.titleHtml}</h1>
+                  {loadingPages['${this.slug}'] && <p className="genesis-dashboard__loading">Loading dashboard data…</p>}
+                  {pageErrors['${this.slug}'] && <p className="genesis-dashboard__error" role="alert">{pageErrors['${this.slug}']}</p>}
+                  <div className="genesis-dashboard__grid">
+                    ${this.reactVisualizationsMarkup}
+                  </div>
+                </section>
+              {{/each}}
+            </div>
+          );
+        }
+
+      destinationPath: "${destinationFolder}/src/pages/dashboard"
+    - fileType: "Dashboard Visualization"
+      fileName: "DashboardVisualization"
+      extension: "tsx"
+      content: |
+        import { useEffect, useMemo, useRef, useState } from 'react';
+        import {
+          dashboardVisualizationMessage,
+          formatDashboardValue,
+          initializeDashboardVisualization,
+          resizeDashboardVisualization,
+          type DashboardField
+        } from './dashboard-visualizations';
+
+        type DashboardRow = Record<string, unknown>;
+        type DashboardLayout = { x: number; y: number; width: number; height: number } | null;
+
+        interface DashboardVisualizationProps {
+          title: string;
+          type: string;
+          visualizationId: string;
+          fields: DashboardField[];
+          options: Record<string, unknown>;
+          layout: DashboardLayout;
+          rows: DashboardRow[];
+          loaded: boolean;
+          active: boolean;
+        }
+
+        export default function DashboardVisualization({
+          title, type, visualizationId, fields, options, layout, rows, loaded, active
+        }: DashboardVisualizationProps) {
+          const chartTarget = useRef<HTMLCanvasElement>(null);
+          const mapTarget = useRef<HTMLDivElement>(null);
+          const fieldsRef = useRef(fields);
+          const optionsRef = useRef(options);
+          fieldsRef.current = fields;
+          optionsRef.current = options;
+          const fieldsSignature = JSON.stringify(fields);
+          const optionsSignature = JSON.stringify(options);
+          const [error, setError] = useState('');
+          const message = useMemo(
+            () => loaded ? dashboardVisualizationMessage(type, rows, fields) : null,
+            [fields, loaded, rows, type]
+          );
+          const normalizedType = type.toUpperCase();
+          const isChart = ['BAR_VERTICAL', 'BAR_HORIZONTAL', 'LINE', 'PIE', 'DONUT', 'SCATTER'].includes(normalizedType);
+          const measure = fields.find(field => field.role === 'MEASURE');
+          const kpiValue = formatDashboardValue(measure ? rows[0]?.[measure.key] : null, options);
+          const style = layout && layout.x >= 0 && layout.y >= 0 && layout.width > 0 && layout.height > 0
+            ? {
+              gridColumn: (layout.x + 1) + ' / span ' + layout.width,
+              gridRow: (layout.y + 1) + ' / span ' + layout.height
+            }
+            : { gridColumn: 'span 12', gridRow: 'span 6' };
+
+          useEffect(() => {
+            if (active && normalizedType === 'MAP') resizeDashboardVisualization(visualizationId);
+          }, [active, normalizedType, visualizationId]);
+
+          useEffect(() => {
+            let cancelled = false;
+            let cleanup: (() => void) | undefined;
+            setError('');
+            if (!loaded || !active || message || (!isChart && normalizedType !== 'MAP')) {
+              return () => { cancelled = true; };
+            }
+
+            const target = normalizedType === 'MAP' ? mapTarget.current : chartTarget.current;
+            if (!target) return () => { cancelled = true; };
+            void initializeDashboardVisualization(
+              target, normalizedType, rows, fieldsRef.current, optionsRef.current
+            )
+              .then(stop => {
+                if (cancelled) stop();
+                else cleanup = stop;
+              })
+              .catch((cause: unknown) => {
+                if (!cancelled) setError(cause instanceof Error ? cause.message : String(cause));
+              });
+            return () => {
+              cancelled = true;
+              cleanup?.();
+            };
+          }, [active, fieldsSignature, isChart, loaded, message, normalizedType, optionsSignature, rows]);
+
+          return (
+            <article className="genesis-dashboard__widget" style={style}>
+              <h2>{title || type || 'Visualization'}</h2>
+              <div className="genesis-dashboard__widget-body">
+                {!loaded ? null : message ? (
+                  <p className="genesis-dashboard__empty">{message}</p>
+                ) : normalizedType === 'KPI' ? (
+                  <div className="genesis-dashboard__kpi">{kpiValue}</div>
+                ) : normalizedType === 'TABLE' ? (
+                  <div className="genesis-dashboard__table-wrap">
+                    <table className="genesis-dashboard__table">
+                      <thead><tr>{fields.filter(field => field.role === 'COLUMN').map(field => (
+                        <th key={field.key}>{field.label || field.columnName || field.key}</th>
+                      ))}</tr></thead>
+                      <tbody>{rows.map((row, rowIndex) => (
+                        <tr key={rowIndex}>{fields.filter(field => field.role === 'COLUMN').map(field => (
+                          <td key={field.key}>{row[field.key] == null ? '' : String(row[field.key])}</td>
+                        ))}</tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                ) : normalizedType === 'MAP' ? (
+                  <div id={visualizationId} ref={mapTarget} className="genesis-dashboard__map" />
+                ) : isChart ? (
+                  <div className="genesis-dashboard__chart"><canvas ref={chartTarget} id={visualizationId} /></div>
+                ) : (
+                  <p className="genesis-dashboard__empty">Unsupported visualization type: {type}</p>
+                )}
+                {error && <p className="genesis-dashboard__error" role="alert">{error}</p>}
+              </div>
+            </article>
+          );
+        }
+
+      destinationPath: "${destinationFolder}/src/pages/dashboard"
+    - fileType: "Dashboard Styles"
+      fileName: "dashboard"
+      extension: "css"
+      content: |
+        .dashboard-view{display:block;min-height:20rem}
+        .genesis-dashboard{font-family:inherit;color:inherit;container-type:inline-size}
+        .genesis-dashboard__tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:0 0 1rem}
+        .genesis-dashboard__tab{border:1px solid #d1d5db;border-radius:.5rem;background:#fff;padding:.5rem .85rem;cursor:pointer}
+        .genesis-dashboard__tab[aria-current=page]{background:#2563eb;color:#fff;border-color:#2563eb}
+        .genesis-dashboard__grid{display:grid;grid-template-columns:repeat(24,minmax(0,1fr));grid-auto-rows:max(2rem,4.166667cqw)}
+        .genesis-dashboard__widget{box-sizing:border-box;min-width:0;background:#fff;border:1px solid #e5e7eb;border-radius:.75rem;padding:1rem;box-shadow:0 1px 3px #00000012;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+        .genesis-dashboard__widget-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+        .genesis-dashboard__widget h2{font-size:1rem;font-weight:600;margin:0 0 1rem}
+        .genesis-dashboard__chart{flex:1 1 auto;min-height:180px;position:relative}
+        .genesis-dashboard__kpi{flex:1 1 auto;min-height:5rem;display:flex;align-items:center;font-size:2rem;font-weight:700}
+        .genesis-dashboard__map{flex:1 1 auto;min-height:220px;border-radius:.5rem}
+        .genesis-dashboard__table-wrap{flex:1 1 auto;min-height:0;max-height:100%;overflow:auto;max-width:100%}
+        .genesis-dashboard__table{width:100%;border-collapse:separate;border-spacing:0;text-align:left;table-layout:fixed}
+        .genesis-dashboard__table th{position:sticky;top:0;z-index:1;font-weight:600;background:#f9fafb;box-shadow:inset 0 -1px 0 #e5e7eb}
+        .genesis-dashboard__table th,.genesis-dashboard__table td{padding:.55rem .65rem;border-bottom:1px solid #e5e7eb;overflow-wrap:anywhere;word-break:break-word}
+        .genesis-dashboard__empty,.genesis-dashboard__error{padding:1rem;color:#6b7280}
+        .genesis-dashboard__error{color:#b91c1c}
+        .genesis-dashboard__loading{padding:1rem;color:#6b7280}
+        @media(max-width:700px){.genesis-dashboard__grid{grid-template-columns:minmax(0,1fr);grid-auto-rows:auto}.genesis-dashboard__widget{grid-column:1/-1!important;grid-row:auto!important;min-height:12rem}}
+      destinationPath: "${destinationFolder}/src/pages/dashboard"
+
   frontendPaths:
     faviconPath: "${destinationFolder}/public"
     logoPath: "${destinationFolder}/public"
@@ -8302,6 +9073,7 @@
         import Register from '@/pages/auth/Register';
         import Profile from '@/pages/auth/Profile';
         import ChangePassword from '@/pages/auth/ChangePassword';
+        {{#if dashboardEnabled}}import DashboardPage from '@/pages/dashboard/DashboardPage';{{/if}}
         {{#each routes}}
         import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
         {{/each}}
@@ -8320,7 +9092,7 @@
                 children: [
                     {
                         path: '/',
-                        element: <Navigate to="{{#each routes}}{{#if @first}}${this.routerLink}{{/if}}{{/each}}" replace />,
+                        element: <Navigate to="{{#if dashboardEnabled}}dashboard{{else}}{{#each routes}}{{#if @first}}${this.routerLink}{{/if}}{{/each}}{{/if}}" replace />,
                     },
                     {
                         path: '/',
@@ -8334,6 +9106,12 @@
                                 path: '/change-password',
                                 element: <ChangePassword />,
                             },
+                            {{#if dashboardEnabled}}
+                            {
+                              path: 'dashboard',
+                              element: <DashboardPage />,
+                            },
+                            {{/if}}
                             {{#each routes}}
                             {
                               path: '${this.routerLink}',
@@ -8427,8 +9205,20 @@
             };
         }
 
+        export async function getRaw<T>(endpoint: string): Promise<T> {
+            const { data } = await axios.get<T>(`$[API_BASE]$[endpoint]`);
+            return data;
+        }
+
         export async function create<T>(endpoint: string, payload: Omit<T, 'id'>) {
             const { data } = await axios.post<ApiResponse<T>>(`$[API_BASE]$[endpoint]`, payload);
+            return data;
+        }
+        
+        export async function getRaw<T>(endpoint: string): Promise<T> {
+            const { data } = await axios.get<T>(
+            `${API_BASE}${endpoint}`,
+            );
             return data;
         }
 
@@ -8690,17 +9480,17 @@
 
         function getFlagEmoji(langCode: string): string {
             const languageFlags: Record<string, string> = {
-                en: '🇬🇧',
-                fr: '🇫🇷',
-                es: '🇪🇸',
-                de: '🇩🇪',
-                it: '🇮🇹',
-                pt: '🇵🇹',
-                'pt-BR': '🇧🇷',
-                zh: '🇨🇳',
-                ja: '🇯🇵',
+                en: '\u{1F1EC}\u{1F1E7}',
+                fr: '\u{1F1EB}\u{1F1F7}',
+                es: '\u{1F1EA}\u{1F1F8}',
+                de: '\u{1F1E9}\u{1F1EA}',
+                it: '\u{1F1EE}\u{1F1F9}',
+                pt: '\u{1F1F5}\u{1F1F9}',
+                'pt-BR': '\u{1F1E7}\u{1F1F7}',
+                zh: '\u{1F1E8}\u{1F1F3}',
+                ja: '\u{1F1EF}\u{1F1F5}',
             };
-            return languageFlags[langCode] || languageFlags[langCode.split('-')[0]] || '🏳️';
+            return languageFlags[langCode] || languageFlags[langCode.split('-')[0]] || '\u{1F3F3}\u{FE0F}';
         }
       destinationPath: "${destinationFolder}/src/components/SettingsMenu"
   additionalFiles:
@@ -8718,9 +9508,16 @@
       extension: "tsx"
       content: |
         import { NavItem } from '@/types/navigation';
-        import { List, Add } from '@mui/icons-material';
+        import { List, Add{{#if dashboardEnabled}}, Dashboard{{/if}} } from '@mui/icons-material';
 
         export const navItems: NavItem[] = [
+            {{#if dashboardEnabled}}
+            {
+                label: 'Dashboard',
+                icon: <Dashboard />,
+                path: '/dashboard',
+            },
+            {{/if}}
             {{#each entities}}
             {
                 label: '${formatReadable(this.className)}',
@@ -8749,7 +9546,8 @@
       content: |
         // src/router.tsx
         import RootLayout from './layouts/RootLayout';
-        import { createBrowserRouter } from 'react-router-dom';
+        import { createBrowserRouter{{#if dashboardEnabled}}, Navigate{{/if}} } from 'react-router-dom';
+        {{#if dashboardEnabled}}import DashboardPage from '@/pages/dashboard/DashboardPage';{{/if}}
         {{#each routes}}
         import ${this.componentSelector} from "${this.componentImportWithoutExtension}";
         {{/each}}
@@ -8759,6 +9557,16 @@
                 path: '/',
                 element: <RootLayout/>,
                 children: [
+                    {{#if dashboardEnabled}}
+                    {
+                      index: true,
+                      element: <Navigate to="dashboard" replace />,
+                    },
+                    {
+                      path: 'dashboard',
+                      element: <DashboardPage />,
+                    },
+                    {{/if}}
                     {{#each routes}}
                     {
                       path: '${this.routerLink}',

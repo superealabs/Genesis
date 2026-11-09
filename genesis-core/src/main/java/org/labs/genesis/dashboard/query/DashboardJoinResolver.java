@@ -20,7 +20,11 @@ public final class DashboardJoinResolver {
         if (visualization == null || sourceTable == null || availableTables == null) {
             return List.of();
         }
-        Set<String> requiredTables = collectRequiredTables(visualization, sourceTable.getTableName());
+        Set<String> requiredTables = collectRequiredTables(
+                visualization,
+                sourceTable.getTableName(),
+                availableTables
+        );
         requiredTables.removeIf(
                 table -> table.equalsIgnoreCase(sourceTable.getTableName())
         );
@@ -48,49 +52,91 @@ public final class DashboardJoinResolver {
         return joins;
     }
 
-    private static Set<String> collectRequiredTables(DashboardVisualization visualization, String defaultTable) {
+    private static Set<String> collectRequiredTables(
+            DashboardVisualization visualization,
+            String defaultTable,
+            List<TableMetadata> availableTables
+    ) {
         Set<String> tables = new LinkedHashSet<>();
         visualization.getFields()
                 .forEach(field ->
-                        addTableFromReference(field.getColumnName(), defaultTable, tables)
+                        addTableFromReference(field.getColumnName(), defaultTable, availableTables, tables)
                 );
         if (visualization.getQueryOptions() != null) {
             for (DashboardSort sort : visualization.getQueryOptions().getSorts()) {
-                addTableFromReference(sort.getColumnName(), defaultTable, tables);
+                addTableFromReference(sort.getColumnName(), defaultTable, availableTables, tables);
             }
             for (DashboardFilterNode filter : visualization.getQueryOptions().getFilters()) {
-                collectFilterTables(filter, defaultTable, tables);
+                collectFilterTables(filter, defaultTable, availableTables, tables);
             }
         }
 
         return tables;
     }
 
-    private static void collectFilterTables(DashboardFilterNode node, String defaultTable, Set<String> tables
+    private static void collectFilterTables(
+            DashboardFilterNode node,
+            String defaultTable,
+            List<TableMetadata> availableTables,
+            Set<String> tables
     ) {
         if (node instanceof DashboardFilter filter) {
-            addTableFromReference(filter.getColumnName(), defaultTable, tables);
+            addTableFromReference(filter.getColumnName(), defaultTable, availableTables, tables);
             return;
         }
 
         if (node instanceof DashboardFilterGroup group) {
             for (DashboardFilterNode child : group.getChildren()) {
-                collectFilterTables(child, defaultTable, tables);
+                collectFilterTables(child, defaultTable, availableTables, tables);
             }
         }
     }
 
-    private static void addTableFromReference(String value, String defaultTable, Set<String> tables) {
+    private static void addTableFromReference(
+            String value,
+            String defaultTable,
+            List<TableMetadata> availableTables,
+            Set<String> tables
+    ) {
         if (value == null || value.isBlank()) {
             return;
         }
         String normalized = stripAggregation(value);
-        int dot = normalized.indexOf('.');
+        int dot = normalized.lastIndexOf('.');
         if (dot > 0) {
-            tables.add(normalized.substring(0, dot));
+            String tableReference = normalized.substring(0, dot);
+            tables.add(resolveTableName(tableReference, availableTables));
         } else {
             tables.add(defaultTable);
         }
+    }
+
+    private static String resolveTableName(String tableReference, List<TableMetadata> tables) {
+        String normalizedReference = normalizeQualifiedName(tableReference);
+        for (TableMetadata table : tables) {
+            if (table == null || table.getTableName() == null) {
+                continue;
+            }
+            String normalizedTableName = normalizeQualifiedName(table.getTableName());
+            if (normalizedReference.equalsIgnoreCase(normalizedTableName)
+                    || normalizedReference.toLowerCase(Locale.ROOT)
+                    .endsWith("." + normalizedTableName.toLowerCase(Locale.ROOT))
+                    || normalizedTableName.toLowerCase(Locale.ROOT)
+                    .endsWith("." + normalizedReference.toLowerCase(Locale.ROOT))
+                    || lastNamePart(normalizedReference).equalsIgnoreCase(lastNamePart(normalizedTableName))) {
+                return table.getTableName();
+            }
+        }
+        return normalizedReference;
+    }
+
+    private static String normalizeQualifiedName(String value) {
+        return value.replace("`", "").replace("\"", "").replace("[", "").replace("]", "").trim();
+    }
+
+    private static String lastNamePart(String value) {
+        int dot = value.lastIndexOf('.');
+        return dot < 0 ? value : value.substring(dot + 1);
     }
 
     private static String stripAggregation(String value) {
@@ -99,8 +145,12 @@ public final class DashboardJoinResolver {
             int open = result.indexOf('(');
             int close = result.lastIndexOf(')');
             if (open >= 0 && close > open) {
-                return result.substring(open + 1, close).trim();
+                result = result.substring(open + 1, close).trim();
             }
+        }
+
+        if (result.regionMatches(true, 0, "COLUMN:", 0, "COLUMN:".length())) {
+            result = result.substring("COLUMN:".length()).trim();
         }
 
         return result;

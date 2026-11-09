@@ -146,7 +146,7 @@ public class VisualizationItem {
         }
 
         return parameters.stream()
-                .filter(VisualizationParameter::isRequired)
+                .filter(param -> isRequiredForConfig(param, config))
                 .allMatch(param -> {
                     Object value = config.getValue(param.getKey());
                     if (value == null) return false;
@@ -154,6 +154,27 @@ public class VisualizationItem {
                     if (value instanceof List && ((List<?>) value).isEmpty()) return false;
                     return true;
                 });
+    }
+
+    /**
+     * Required parameters may depend on the selected coordinate mode of Map.
+     * Latitude and longitude remain required for legacy configurations, while
+     * the geographic column is required in geographic mode.
+     */
+    public boolean isRequiredForConfig(VisualizationParameter parameter, VisualizationConfig config) {
+        if (parameter == null || !parameter.isRequired()) {
+            return false;
+        }
+        if (!"Map".equalsIgnoreCase(name)) {
+            return true;
+        }
+
+        String mode = config == null ? null : config.getString("coordinateMode", "SEPARATE");
+        boolean geographic = "GEOGRAPHY".equalsIgnoreCase(mode);
+        if (geographic) {
+            return "geography".equals(parameter.getKey());
+        }
+        return !"geography".equals(parameter.getKey());
     }
 
     /**

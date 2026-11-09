@@ -12,6 +12,7 @@ import org.labs.genesis.forms.ui.visualization.model.VisualizationConfig;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +55,8 @@ public class DataProvider {
                         commonPlan
                 );
 
+        System.out.println("[DataProvider] Map SQL: " + query);
+
         Result<?> result = executeDashboardQuery(connection, dsl, query, commonPlan, item.name);
 
         return convertMapResult(
@@ -80,6 +83,14 @@ public class DataProvider {
                 config,
                 "longitude"
         );
+
+        boolean geographicMode = "GEOGRAPHY".equalsIgnoreCase(
+                getString(config, "coordinateMode", "SEPARATE")
+        );
+        if (geographicMode) {
+            latitudeColumn = "latitude";
+            longitudeColumn = "longitude";
+        }
 
         String valueColumn = getOptionalColumnValue(
                 config,
@@ -143,26 +154,30 @@ public class DataProvider {
 
         Field<?> latitudeField = findResultField(
                 result,
-                latitudeColumn
+                latitudeColumn,
+                "latitude"
         );
 
         Field<?> longitudeField = findResultField(
                 result,
-                longitudeColumn
+                longitudeColumn,
+                "longitude"
         );
 
         Field<?> valueField = valueColumn == null
                 ? null
                 : findResultField(
                 result,
-                valueColumn
+                valueColumn,
+                "valueColumn"
         );
 
         Field<?> labelField = labelColumn == null
                 ? null
                 : findResultField(
                 result,
-                labelColumn
+                labelColumn,
+                "labelColumn"
         );
 
         if (latitudeField == null) {
@@ -324,6 +339,27 @@ public class DataProvider {
         }
 
         return "BUBBLE";
+    }
+
+    private Field<?> findResultField(
+            Result<?> result,
+            String columnName,
+            String... aliases
+    ) {
+
+        Field<?> field = findResultField(result, columnName);
+        if (field != null || aliases == null) {
+            return field;
+        }
+
+        for (String alias : aliases) {
+            field = findResultField(result, alias);
+            if (field != null) {
+                return field;
+            }
+        }
+
+        return null;
     }
 
     private Field<?> findResultField(
@@ -651,6 +687,10 @@ public class DataProvider {
                         commonPlan
                 );
 
+        System.out.println(
+                "[DataProvider] Chart SQL: " + query
+        );
+
         Result<?> result = executeDashboardQuery(connection, dsl, query, commonPlan, item.name);
 
         return convertChartResult(
@@ -685,73 +725,25 @@ public class DataProvider {
                         commonPlan
                 );
 
+        System.out.println(
+                "[DataProvider] Table SQL: " + query
+        );
+
         Result<?> result = executeDashboardQuery(connection, dsl, query, commonPlan, item.name);
 
-        return convertTableResult(
-                result,
-                config
-        );
+        return convertTableResult(result);
     }
 
     // =========================================================================
     // TABLE RESULT
     // =========================================================================
 
-    private TableData convertTableResult(
-            Result<?> result,
-            VisualizationConfig config
-    ) {
+    private TableData convertTableResult(Result<?> result) {
         List<String> columns = new ArrayList<>();
         List<List<Object>> rows = new ArrayList<>();
 
-        Map<String, String> configuredHeaders = null;
-        Object headersObj = config.getValue("columnsHeaders");
-
-        if (headersObj instanceof Map<?, ?> map) {
-
-            configuredHeaders = new HashMap<>();
-
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-
-                if (entry.getKey() instanceof String key
-                        && entry.getValue() instanceof String value) {
-
-                    if (key.contains(":")) {
-                        key = key.substring(
-                                key.lastIndexOf(":") + 1
-                        );
-                    }
-
-                    if (key.contains(".")) {
-                        key = key.substring(
-                                key.lastIndexOf(".") + 1
-                        );
-                    }
-
-                    configuredHeaders.put(
-                            key,
-                            value
-                    );
-                }
-            }
-        }
-
         for (Field<?> field : result.fields()) {
-
-            String fieldName =
-                    field.getName();
-
-            if (configuredHeaders != null
-                    && configuredHeaders.containsKey(fieldName)) {
-
-                columns.add(
-                        configuredHeaders.get(fieldName)
-                );
-
-            } else {
-
-                columns.add(fieldName);
-            }
+            columns.add(field.getName());
         }
 
         for (Record record : result) {
@@ -775,7 +767,7 @@ public class DataProvider {
                 rows
         );
     }
-
+    
     // =========================================================================
     // CHART RESULT
     // =========================================================================
@@ -997,6 +989,45 @@ public class DataProvider {
         }
 
         return value;
+    }
+
+    // =========================================================================
+    // LIMIT
+    // =========================================================================
+
+    private Integer getLimit(
+            VisualizationConfig config
+    ) {
+
+        Object value =
+                config.getValue("limit");
+
+        if (value == null) {
+            return null;
+        }
+
+        if (value instanceof Number number) {
+
+            return number.intValue();
+        }
+
+        try {
+
+            String stringValue =
+                    value.toString().trim();
+
+            if (stringValue.isEmpty()) {
+                return null;
+            }
+
+            return Integer.parseInt(
+                    stringValue
+            );
+
+        } catch (NumberFormatException e) {
+
+            return null;
+        }
     }
 
     // =========================================================================

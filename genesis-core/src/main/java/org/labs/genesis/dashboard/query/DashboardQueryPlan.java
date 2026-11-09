@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class DashboardQueryPlan {
     private DashboardDataSource source;
+    private String databaseName;
     private List<DashboardQuerySelection> selections = new ArrayList<>();
     private List<String> groupBy = new ArrayList<>();
     private DashboardQueryOptions options = new DashboardQueryOptions();

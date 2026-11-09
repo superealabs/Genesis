@@ -41,7 +41,7 @@ class DashboardIntegrationTest {
         chart.getFields().add(dimension);
         chart.getFields().add(measure);
 
-        DashboardQueryPlan plan = DashboardQueryBuilder.build(chart, vente);
+        DashboardQueryPlan plan = DashboardQueryBuilder.build(chart, vente, java.util.List.of(vente));
         assertEquals("vente", plan.getSource().getName());
         assertEquals(2, plan.getSelections().size());
         assertEquals("produit", plan.getGroupBy().get(0));
