@@ -1,13 +1,6 @@
 <template>
   <div class="flex gap-8 flex-1 min-h-0 overflow-hidden px-6 pb-6">
     <div class="flex-1 min-h-0 overflow-y-auto space-y-6 custom-scrollbar pr-3">
-      <!-- Bouton tuto -->
-      <div class="flex justify-end">
-        <GenesisButtonIcon variant="neutral" size="sm" @click="tutorial.restart('main')" title="Lancer le tutoriel">
-          <IconHelp />
-        </GenesisButtonIcon>
-      </div>
-
         <div class="flex flex-col gap-3">
           <h3 class="text-sm font-semibold text-text">Ajouter une relation</h3>
 
@@ -116,7 +109,7 @@ import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/Genes
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions/GenesisButtonIcon.vue';
 import IconPlus from '@genesis-labs/web-core/core/components/ui/icons/IconPlus.vue';
-import IconHelp from '@genesis-labs/web-core/core/components/ui/icons/IconHelp.vue';
+
 // import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 // import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 
@@ -273,4 +266,7 @@ function handleUpdateRelation(relation: RelationParameter, field: 'hasForm' | 'm
 // ============================================================================
 // Note : le chargement initial (parents, childs, relations) est fait
 // dans `relations.onEnter` (wizard-step-config.ts). Pas besoin de le refaire ici.
+defineExpose({
+  restart: () => tutorial.restart('main')
+});
 </script>

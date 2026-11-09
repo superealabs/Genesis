@@ -1,20 +1,24 @@
 <template>
   <div class="flex gap-6 flex-1 min-h-0 overflow-hidden px-6 pb-6">
-    <!-- Colonne gauche -->
-    <AdvancedRelationLeftPanel
-        class="w-1/5 min-w-0 scroll-auto h-full"
-        v-model:mode="mode"
-        v-model:mass-selection="massSelection"
-        :is-child-first="isChildFirst"
-        :anchor="anchor"
-        :targets="targets"
-        :parents="tablesParents"
-        :childs="tablesChilds"
-        @update:is-child-first="setDirection"
-        @update:anchor="setAnchor"
-        @update:targets="setTargets"
-        @update:visible-mass-ids="visibleMassIds = $event"
-    />
+    <!-- Colonne gauche : wrapper tutorial englobant (ancre dynamique selon le mode) -->
+    <GenesisTutorialItem :id="leftPanelTutorialId">
+      <AdvancedRelationLeftPanel
+          class="w-1/5 min-w-0 scroll-auto h-full"
+          v-model:mode="mode"
+          v-model:mass-selection="massSelection"
+          :is-child-first="isChildFirst"
+          :anchor="anchor"
+          :targets="targets"
+          :parents="tablesParents"
+          :childs="tablesChilds"
+          :tutorial-id="leftPanelTutorialId"
+          :include-sub-tutorial="true"
+          @update:is-child-first="setDirection"
+          @update:anchor="setAnchor"
+          @update:targets="setTargets"
+          @update:visible-mass-ids="visibleMassIds = $event"
+      />
+    </GenesisTutorialItem>
 
     <!-- Colonne centre -->
     <AdvancedRelationCenterActions
@@ -41,7 +45,7 @@
         @assign-all="handleAssignAll"
     />
 
-    <!-- Warning des doublons (custom slot) -->
+    <!-- Warning des doublons -->
     <WarningPopup
       v-if="duplicateWarning.show"
       title="Relations déjà existantes"
@@ -81,6 +85,7 @@ import type { RelationParameter } from '@genesis-labs/shared-types';
 
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { useRelationBuilder } from './composables/useRelationBuilder.ts';
+import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
 
 import AdvancedRelationLeftPanel from './AdvancedRelationLeftPanel.vue';
 import AdvancedRelationCenterActions from './AdvancedRelationCenterActions.vue';
@@ -88,12 +93,12 @@ import AdvancedRelationRightPanel from './AdvancedRelationRightPanel.vue';
 
 import WarningPopup from '@genesis-labs/web-core/core/components/layouts/Popup/WarningPopup.vue';
 import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 
 // ============================================================================
 // PROPS
 // ============================================================================
 const props = withDefaults(defineProps<{
-  /** Demander confirmation quand des doublons sont détectés */
   confirmOnDuplicate?: boolean;
 }>(), {
   confirmOnDuplicate: true,
@@ -118,7 +123,6 @@ const {
   getChildrenOf, getParentsOf,
 } = useGenerator();
 
-// État PARTAGÉ avec RelationConfigSimpleView (sens, ancre, cibles + chargements API)
 const {
   isChildFirst,
   anchor,
@@ -130,33 +134,22 @@ const {
 } = useRelationBuilder();
 
 // ============================================================================
-// ÉTAT LOCAL (propre à Advanced)
+// ÉTAT LOCAL
 // ============================================================================
-
-// ── Mode & sélection de masse ────────────────────────────────────────────
 const mode = ref<'A' | 'B'>('A');
-
-/** Mode B : tables cochées (parents si ParentFirst, enfants si ChildFirst) */
 const massSelection = ref<string[]>([]);
-/** Mode B : éléments visibles (après recherche), cochés ou non — pour "Add All" */
 const visibleMassIds = ref<string[]>([]);
 
-// Mode B croise avec les listes COMPLÈTES : on vide l'ancre (→ rechargement complet)
 watch(mode, (m) => {
   massSelection.value = [];
   if (m === 'B') resetSelection();
 });
-// Changement de sens : la sélection de masse n'a plus de sens
 watch(isChildFirst, () => { massSelection.value = []; });
 
-// ── Modèle de relation ──────────────────────────────────────────────────
 const hasForm = ref(false);
 const isMandatory = ref(false);
-
-// ── Sélection dans la liste de droite ────────────────────────────────────
 const selectedRelations = ref<string[]>([]);
 
-// ── Warning des doublons ────────────────────────────────────────────────
 const duplicateWarning = ref<{
   show: boolean;
   duplicates: RelationParameter[];
@@ -167,45 +160,87 @@ const duplicateWarning = ref<{
 });
 
 // ============================================================================
-// COMPUTEDS DE DISPONIBILITÉ DES BOUTONS
+// TUTORIEL
 // ============================================================================
+/**
+ * Sections par mode :
+ *  - 'targeted' = Mode A (Ciblé)
+ *  - 'mass'     = Mode B (Masse)
+ * Chaque section a SON PROPRE ancrage left-panel, pour éviter les collisions
+ * de useTutorialGroup (un groupe fixe par ancrage).
+ */
+const tutorial = useGenesisTutorial('relation-config-advanced', {
+  'targeted': [
+    {
+      id: 'relation-advanced-left-targeted',
+      text: 'Choisissez la table de départ, le sens de la relation, puis cochez les entités cibles.',
+    },
+  ],
+  'mass': [
+    {
+      id: 'relation-advanced-left-mass',
+      text: 'Sélectionnez en masse les entités de départ, puis ajoutez leurs relations.',
+    },
+  ],
+});
 
-/** "Add" actif si des entités sont sélectionnées à gauche. */
+/** Ancrage du wrapper panel gauche, dépendant du mode courant */
+const leftPanelTutorialId = computed(() =>
+  mode.value === 'A'
+    ? 'relation-advanced-left-targeted'
+    : 'relation-advanced-left-mass'
+);
+
+/** Section de tutoriel correspondant au mode courant */
+const currentSection = computed(() =>
+  mode.value === 'A' ? 'targeted' : 'mass'
+);
+
+// ✅ Relance auto du tutoriel au basculement Ciblé <-> Masse
+// (uniquement si un tutoriel est déjà actif sur cet écran — sinon no-op silencieux)
+watch(mode, () => {
+  if (tutorial && 'restart' in tutorial) {
+    // On relance la section du nouveau mode ; si le tutoriel global est éteint,
+    // restart() le rallume — c'est voulu.
+    // tutorial.restart(currentSection.value);
+  }
+});
+
+/**
+ * Contrat commun exposé au parent (`RelationConfigView`) — déclenche le tutoriel
+ * de la section correspondant au mode courant.
+ */
+defineExpose({
+  restart: () => tutorial.restart(currentSection.value),
+});
+
+// ============================================================================
+// COMPUTEDS DE DISPONIBILITÉ
+// ============================================================================
 const canAdd = computed(() => {
   if (mode.value === 'A') return !!anchor.value && targets.value.length > 0;
   return massSelection.value.length > 0;
 });
 
-/** "Add All" : mode A = ancre choisie + liste liée non vide ; mode B = comme "Add". */
 const canAddAll = computed(() => {
   if (mode.value === 'A') {
     const linked = isChildFirst.value ? tablesParents.value : tablesChilds.value;
     return !!anchor.value && linked.length > 0;
   }
-
   return visibleMassIds.value.length > 0;
 });
 
-/** "Remove" actif si au moins une relation cochée à droite. */
 const canRemove = computed(() => selectedRelations.value.length > 0);
-
-/** "Remove All" actif si au moins une relation existe. */
 const canRemoveAll = computed(() => getRelations.value.length > 0);
 
 // ============================================================================
-// LOGIQUE MÉTIER
+// LOGIQUE MÉTIER (inchangée)
 // ============================================================================
-
-/**
- * Construit la liste des relations à ajouter.
- * @param all true = "Add All" (tous les enfants/parents possibles, pas seulement cochés)
- */
 async function computeRelationsToAdd(all: boolean): Promise<RelationParameter[]> {
   const toRelation = (parentTable: string, childTable: string): RelationParameter => ({
     parentTable, childTable, mandatory: isMandatory.value, hasForm: hasForm.value,
   });
 
-  // ── MODE A : inchangé (la liste est déjà celle de l'ancre) ──
   if (mode.value === 'A') {
     if (!anchor.value) return [];
     if (!isChildFirst.value) {
@@ -216,11 +251,6 @@ async function computeRelationsToAdd(all: boolean): Promise<RelationParameter[]>
     return parentNames.map(parent => toRelation(parent, anchor.value));
   }
 
-  // ── MODE B : chaque table a ses PROPRES enfants/parents (récupérés via l'API) ──
-  // Add = tables cochées ; Add All = toutes les tables visibles.
-  // Appels SÉQUENTIELS : getChildrenOf/getParentsOf s'appuient sur un état partagé ; lancés en parallèle,
-  // tous les appels lisent le résultat du dernier et un seul parent "gagne".
-  // On fige le sens et la liste avant les `await` (la sélection peut changer pendant les appels).
   const childFirst = isChildFirst.value;
   const sources = [...(all ? visibleMassIds.value : massSelection.value)];
   const result: RelationParameter[] = [];
@@ -237,24 +267,16 @@ async function computeRelationsToAdd(all: boolean): Promise<RelationParameter[]>
   return result;
 }
 
-
 const relationKey = (r: RelationParameter) => `${r.parentTable}::${r.childTable}`;
 
-/** Applique le modèle du panneau de droite (Has Form / Mandatory) à une relation. */
 function applyModel(rel: RelationParameter) {
   rel.hasForm = hasForm.value;
   rel.mandatory = isMandatory.value;
 }
 
-/**
- * Ajoute les relations, en filtrant les doublons.
- * Si `confirmOnDuplicate` est activé et qu'il y a des doublons,
- * affiche un WarningPopup et attend la confirmation.
- */
 async function addRelations(candidates: RelationParameter[]): Promise<void> {
   if (candidates.length === 0) return;
 
-  // Déduplique en interne (au cas où la même paire apparaîtrait plusieurs fois)
   const seen = new Set<string>();
   const uniqueCandidates = candidates.filter(r => {
     const key = `${r.parentTable}::${r.childTable}`;
@@ -264,10 +286,8 @@ async function addRelations(candidates: RelationParameter[]): Promise<void> {
   });
 
   const existingByKey = new Map(getRelations.value.map(r => [relationKey(r), r]));
-
   const newOnes = uniqueCandidates.filter(r => !existingByKey.has(relationKey(r)));
 
-  // Doublons dont les valeurs diffèrent du modèle → à mettre à jour (identiques : rien à faire)
   const toUpdate = uniqueCandidates
     .map(r => existingByKey.get(relationKey(r)))
     .filter((existing): existing is RelationParameter =>
@@ -275,7 +295,6 @@ async function addRelations(candidates: RelationParameter[]): Promise<void> {
       (!!existing.hasForm !== hasForm.value || !!existing.mandatory !== isMandatory.value)
     );
 
-  // Confirmation utilisateur avant d'écraser
   if (toUpdate.length > 0 && props.confirmOnDuplicate) {
     const ok = await new Promise<boolean>((resolve) => {
       duplicateWarning.value = { show: true, duplicates: toUpdate, resolve };
@@ -283,7 +302,6 @@ async function addRelations(candidates: RelationParameter[]): Promise<void> {
     if (!ok) return;
   }
 
-  // MAJ DE LA VALEUR DES DOUBLONS
   toUpdate.forEach(applyModel);
   newOnes.forEach(r => addRelation(r));
 }
@@ -291,21 +309,17 @@ async function addRelations(candidates: RelationParameter[]): Promise<void> {
 // ============================================================================
 // ACTIONS UTILISATEUR
 // ============================================================================
-
 async function handleAdd()    { await addRelations(await computeRelationsToAdd(false)); }
 async function handleAddAll() { await addRelations(await computeRelationsToAdd(true)); }
 
 function handleRemove() {
   const toRemove = new Set(selectedRelations.value);
-
-  // Itère à l'envers pour éviter les décalages d'index pendant le splice
   for (let i = getRelations.value.length - 1; i >= 0; i--) {
     const rel = getRelations.value[i];
     if (toRemove.has(`${rel.parentTable}::${rel.childTable}`)) {
       removeRelation(i);
     }
   }
-
   selectedRelations.value = [];
 }
 
@@ -333,10 +347,6 @@ function handleAssignAll() {
     rel.mandatory = isMandatory.value;
   });
 }
-
-// ============================================================================
-// WARNING DES DOUBLONS
-// ============================================================================
 
 function resolveDuplicateWarning(ok: boolean) {
   duplicateWarning.value.resolve?.(ok);

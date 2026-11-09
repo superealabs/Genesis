@@ -15,39 +15,48 @@
     <!-- Mode A : 1 ancre + N cibles -->
     <template v-if="internalMode === 'A'">
         <div class="flex gap-2 items-end">
-            <GenesisInput
-                v-model="internalAnchor"
-                type="select"
-                :options="anchorOptions"
-                :label="isChildFirst ? 'Table Enfant' : 'Table Parent'"
-                placeholder="Sélectionner..."
-                size="lg"
-                fill-width
-                class="flex-1"
-            />
-            <GenesisSegmentedControl
-                v-model="internalDirection"
-                :options="[
-                { label: 'Parent', value: 'parent' },
-                { label: 'Enfant', value: 'enfant' }
-                ]"
-                size="lg"
-            />
+            <!-- ÉTAPE : Dropdown ancre -->
+            <GenesisTutorialItem :id="subTargeted('anchor')">
+                <GenesisInput
+                    v-model="internalAnchor"
+                    type="select"
+                    :options="anchorOptions"
+                    :label="isChildFirst ? 'Table Enfant' : 'Table Parent'"
+                    placeholder="Sélectionner..."
+                    size="lg"
+                    fill-width
+                    class="flex-1"
+                />
+            </GenesisTutorialItem>
+
+            <!-- ÉTAPE : Segmented parent/enfant -->
+            <GenesisTutorialItem :id="subTargeted('direction')">
+                <GenesisSegmentedControl
+                    v-model="internalDirection"
+                    :options="[
+                    { label: 'Parent', value: 'parent' },
+                    { label: 'Enfant', value: 'enfant' }
+                    ]"
+                    size="lg"
+                />
+            </GenesisTutorialItem>
         </div>
 
-      <!-- Recherche + liste checkbox des enfants/parents liés à l'ancre -->
+      <!-- Recherche + liste checkbox -->
       <div class="flex gap-2">
-        <GenesisInput
-          v-model="searchA"
-          type="text"
-          placeholder="Rechercher..."
-          size="md"
-          fill-width
-        >
-            <template #left>
-                <IconSearch :size="16" class="text-text-muted" />
-            </template>
-        </GenesisInput>
+        <GenesisTutorialItem :id="subTargeted('searchbar-targets-table')">
+          <GenesisInput
+            v-model="searchA"
+            type="text"
+            placeholder="Rechercher..."
+            size="md"
+            fill-width
+          >
+              <template #left>
+                  <IconSearch :size="16" class="text-text-muted" />
+              </template>
+          </GenesisInput>
+        </GenesisTutorialItem>
       </div>
       <div v-if="visibleCountA > 0" class="flex justify-end shrink-0">
         <button
@@ -59,39 +68,50 @@
         </button>
       </div>
       <div class="shrink-0">
-        <GenesisEntityTable
-          is-editable
-          :items="modeAItems"
-          :selected-items="targets"
-          @update:selected-items="emit('update:targets', $event)"
-        />
+        <!-- ÉTAPE : GenesisEntityTable -->
+        <GenesisTutorialItem :id="subTargeted('targets-table')">
+          <GenesisEntityTable
+            is-editable
+            :items="modeAItems"
+            :selected-items="targets"
+            @update:selected-items="emit('update:targets', $event)"
+          />
+        </GenesisTutorialItem>
       </div>
     </template>
 
     <!-- Mode B -->
     <template v-else>
         <div class="flex gap-2 items-center">
-            <GenesisInput
-                v-model="searchB"
-                type="text"
-                placeholder="Rechercher..."
-                size="lg"
-                fill-width
-                class="flex-1"
-            >
-                <template #left>
-                    <IconSearch :size="16" class="text-text-muted" />
-                </template>
-            </GenesisInput>
-            <GenesisSegmentedControl
-                v-model="internalDirection"
-                :options="[
-                { label: 'Parent', value: 'parent' },
-                { label: 'Enfant', value: 'enfant' }
-                ]"
-                size="lg"
-            />
+            <!-- ÉTAPE : barre de recherche -->
+            <GenesisTutorialItem :id="subMass('searchbar-mass-table')">
+                <GenesisInput
+                    v-model="searchB"
+                    type="text"
+                    placeholder="Rechercher..."
+                    size="lg"
+                    fill-width
+                    class="flex-1"
+                >
+                    <template #left>
+                        <IconSearch :size="16" class="text-text-muted" />
+                    </template>
+                </GenesisInput>
+            </GenesisTutorialItem>
+
+            <!-- ÉTAPE : segmented direction -->
+            <GenesisTutorialItem :id="subMass('direction')">
+                <GenesisSegmentedControl
+                    v-model="internalDirection"
+                    :options="[
+                    { label: 'Parent', value: 'parent' },
+                    { label: 'Enfant', value: 'enfant' }
+                    ]"
+                    size="lg"
+                />
+            </GenesisTutorialItem>
         </div>
+
         <div v-if="visibleCountB > 0" class="flex justify-end shrink-0">
           <button
             type="button"
@@ -101,13 +121,17 @@
             {{ allSelectedB ? 'Tout désélectionner' : 'Tout sélectionner' }}
           </button>
         </div>
+
         <div class="shrink-0">
-            <GenesisEntityTable
-            is-editable
-            :items="modeBItems"
-            :selected-items="massSelection"
-            @update:selected-items="emit('update:massSelection', $event)"
-            />
+            <!-- ÉTAPE : table de masse -->
+            <GenesisTutorialItem :id="subMass('mass-table')">
+                <GenesisEntityTable
+                is-editable
+                :items="modeBItems"
+                :selected-items="massSelection"
+                @update:selected-items="emit('update:massSelection', $event)"
+                />
+            </GenesisTutorialItem>
         </div>
     </template>
   </div>
@@ -123,21 +147,28 @@ import GenesisEntityTable from '@genesis-labs/web-core/core/components/layouts/d
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
 import { useSelectVisible } from './composables/useSelectVisible';
 
+// ✅ Tutoriel
+import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
+import { useTutorialGroup } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
+
 // ============================================================================
 // PROPS & EMITS
 // ============================================================================
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   parents: TableMetadataDto[];
   childs: TableMetadataDto[];
   isChildFirst: boolean;
   mode: 'A' | 'B';
-  /** Mode A : table choisie en premier (parent si ParentFirst, enfant si ChildFirst) — PARTAGÉ avec la vue Simple */
   anchor: string;
-  /** Mode A : tables cochées de l'autre côté — PARTAGÉ avec la vue Simple */
   targets: string[];
-  /** Mode B : tables cochées (parents si ParentFirst, enfants si ChildFirst) — local à Advanced */
   massSelection: string[];
-}>();
+
+  // ✅ Tutoriel
+  tutorialId?: string;
+  includeSubTutorial?: boolean;
+}>(), {
+  includeSubTutorial: false,
+});
 
 const emit = defineEmits<{
   'update:mode': [value: 'A' | 'B'];
@@ -147,6 +178,43 @@ const emit = defineEmits<{
   'update:massSelection': [value: string[]];
   'update:visibleMassIds': [value: string[]];
 }>();
+
+// ============================================================================
+// TUTORIEL — deux groupes, un par mode
+// ============================================================================
+/**
+ * Le parent fournit UN SEUL `tutorialId` (dynamique selon son propre mode).
+ * On crée DEUX groupes indépendants, chacun activé uniquement quand le mode
+ * correspondant est courant :
+ *   - `subTargeted` → actif si mode === 'A' (Ciblé)
+ *   - `subMass`     → actif si mode === 'B' (Masse)
+ *
+ * Les ancrages produits :
+ *   relation-advanced-left-targeted/*  (4 étapes)
+ *   relation-advanced-left-mass/*      (3 étapes)
+ *
+ * Aucune collision : chaque groupe a son propre préfixe d'ancrage.
+ */
+const { sub: subTargeted } = useTutorialGroup({
+  anchorId: () => (props.mode === 'A' ? props.tutorialId : undefined),
+  include: () => props.includeSubTutorial,
+  steps: [
+    { key: 'anchor',                  text: 'Choisissez la table de départ (parent si ParentFirst, enfant si ChildFirst).' },
+    { key: 'direction',               text: 'Basculez le sens de la relation : Parent → Enfant ou Enfant → Parent.' },
+    { key: 'searchbar-targets-table', text: 'Filtrez les entités cibles par nom.' },
+    { key: 'targets-table',           text: 'Cochez les entités cibles à relier à la table de départ.' },
+  ],
+});
+
+const { sub: subMass } = useTutorialGroup({
+  anchorId: () => (props.mode === 'B' ? props.tutorialId : undefined),
+  include: () => props.includeSubTutorial,
+  steps: [
+    { key: 'searchbar-mass-table', text: 'Recherchez une table à inclure dans la sélection de masse.' },
+    { key: 'direction',            text: 'Choisissez le sens : Parent → Enfant ou Enfant → Parent.' },
+    { key: 'mass-table',           text: 'Cochez les tables sources dont vous voulez ajouter les relations en masse.' },
+  ],
+});
 
 // ============================================================================
 // ÉTAT LOCAL (recherche)
@@ -178,7 +246,6 @@ function filterByQuery(source: TableMetadataDto[], query: string): TableMetadata
   return q ? source.filter(t => t.tableName.toLowerCase().includes(q)) : source;
 }
 
-/** Options du select (mode A) : parents ou enfants selon isChildFirst. */
 const anchorOptions = computed(() => {
   const source = props.isChildFirst ? props.childs : props.parents;
   return source.map(t => ({
@@ -187,22 +254,17 @@ const anchorOptions = computed(() => {
   }));
 });
 
-/**
- * Liste cible (mode A) : enfants du parent choisi (ParentFirst) ou parents de l'enfant choisi (ChildFirst).
- * Pas d'ancre → pas de liste.
- */
 const modeAItems = computed<TableMetadataDto[]>(() => {
   if (!props.anchor) return [];
   return filterByQuery(props.isChildFirst ? props.parents : props.childs, searchA.value);
 });
 
-/** Liste du mode B (parents si ParentFirst, enfants si ChildFirst). */
 const modeBItems = computed<TableMetadataDto[]>(() =>
   filterByQuery(props.isChildFirst ? props.childs : props.parents, searchB.value)
 );
 
 // ============================================================================
-// SELECT ALL (éléments visibles uniquement)
+// SELECT ALL
 // ============================================================================
 const {
   visibleCount: visibleCountA,
@@ -224,7 +286,6 @@ const {
   (ids) => emit('update:massSelection', ids),
 );
 
-// Remonte les éléments visibles du mode B (utilisés par "Add All")
 watch(
   () => modeBItems.value.map(t => t.tableName),
   (ids) => emit('update:visibleMassIds', ids),
