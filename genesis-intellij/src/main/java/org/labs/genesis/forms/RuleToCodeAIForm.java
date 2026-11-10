@@ -68,6 +68,18 @@ public class RuleToCodeAIForm {
         });
     }
 
+    private Path getNormalizedProjectPath() {
+        String pathProject = context.getDestinationFolder();
+        if (pathProject == null || pathProject.trim().isEmpty()) {
+            throw new IllegalStateException("Destination folder is not set in context.");
+        }
+        Path path = Paths.get(pathProject).toAbsolutePath().normalize();
+        if (path.getFileName() != null && "null".equals(path.getFileName().toString())) {
+            path = path.getParent();
+        }
+        return path;
+    }
+
     private void generateCodeFromLLM() {
         getGenerateCodeButton().addActionListener(e -> {
             try {
@@ -82,8 +94,7 @@ public class RuleToCodeAIForm {
 
                 String yamlContent = context.getProjectDescription();
                 String selectedAI = (String) aiOptionsComboBox.getSelectedItem();
-                String pathProject = context.getDestinationFolder();
-                Path path = Paths.get(pathProject);
+                Path path = getNormalizedProjectPath();
                 meta = yamlData.extractGroupAndArtifact(path, framework.getId());
 
                 LlmApiConfig llmApiConfig = (LlmApiConfig) this.listLlmApiConfigsComboBox.getSelectedItem();
@@ -127,20 +138,10 @@ public class RuleToCodeAIForm {
                     Framework framework = context.getFramework();
                     List<CodeBlock> blocks = codeInjector.splitCode(codeGenerated, framework.getId());
 
-                    String pathProject = context.getDestinationFolder();
-                    Path path = Paths.get(pathProject).toAbsolutePath().normalize();
+                    Path path = getNormalizedProjectPath();
+                    String basePath = path.getParent() != null ? path.getParent().toString() : path.toString();
+                    String projectName = path.getFileName() != null ? path.getFileName().toString() : "";
 
-                    if (path.getFileName() != null && path.getFileName().toString().equals("null")) {
-                        path = path.getParent();
-                    }
-
-                    String basePath = path.getParent().toString();
-                    String projectName = path.getFileName().toString();
-
-
-                    System.out.println("Blocs code\n" + blocks);
-                    System.out.println("Base path\n" + basePath);
-                    System.out.println("Project name\n" + projectName);
                     codeInjector.injectBlocks(blocks, basePath, framework.getId(), projectName);
 
                     Messages.showInfoMessage(
@@ -168,18 +169,9 @@ public class RuleToCodeAIForm {
                     Framework framework = context.getFramework();
                     List<CodeBlock> blocks = codeInjector.splitCode(codeGenerated, framework.getId());
 
-                    String pathProject = context.getDestinationFolder();
-                    Path path = Paths.get(pathProject).toAbsolutePath().normalize();
-
-                    if (path.getFileName() != null && path.getFileName().toString().equals("null")) {
-                        path = path.getParent();
-                    }
-
-                    String basePath = path.getParent().toString();
-                    String projectName = path.getFileName().toString();
-
-
-                    System.out.println("Blocs code\n" + blocks);
+                    Path path = getNormalizedProjectPath();
+                    String basePath = path.getParent() != null ? path.getParent().toString() : path.toString();
+                    String projectName = path.getFileName() != null ? path.getFileName().toString() : "";
 
                     codeInjector.deleteBlocks(blocks, basePath, framework.getId(), projectName);
                     Messages.showInfoMessage(
