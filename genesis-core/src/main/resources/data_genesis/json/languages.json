@@ -49,7 +49,8 @@
       "tinyint": "short",
       "byte[]": "byte[]",
       "list[string]": "java.util.List<String>",
-      "float": "Float"
+      "float": "Float",
+      "geography": "org.locationtech.jts.geom.Point"
     },
     "attributeTypeAnnotations": {
       "Integer": [],
@@ -76,7 +77,11 @@
       "java.net.InetAddress": [],
       "short": [],
       "java.util.List<String>": [],
-      "Float": []
+      "Float": [],
+      "org.locationtech.jts.geom.Point" : [
+        "@com.fasterxml.jackson.databind.annotation.JsonSerialize(using = ${groupLink}.${lowerCase(projectName)}.config.PointSerializer.class)",
+        "@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = ${groupLink}.${lowerCase(projectName)}.config.PointDeserializer.class)"
+      ]
     },
     "mockData": {
       "datetime": "java.time.LocalDateTime.now()",
@@ -257,7 +262,8 @@
       "xml": "string",
       "float": "float",
       "list[string]": "List<string>",
-      "timestamp[]": "DateTime[]"
+      "timestamp[]": "DateTime[]",
+      "geography": "NetTopologySuite.Geometries.Point"
     },
     "attributeTypeAnnotations": {},
     "mockData": {

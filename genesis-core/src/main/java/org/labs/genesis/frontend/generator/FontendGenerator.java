@@ -31,14 +31,19 @@ public class FontendGenerator implements IFrontendGenerator{
     }
 
     @Override
-    public String generateComponent(String securityType, Database database, FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
+    public String generateComponent(String securityType, Database database, FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly) throws Exception {
+        return generateComponent(securityType, database, language, frontendFramework, tableMetadata, destinationFolder, projectName, generateComponentOnly, null);
+    }
+
+    @Override
+    public String generateComponent(String securityType, Database database,FrontendLanguage language, FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly, java.util.Map<String, java.util.Map<String, org.labs.genesis.config.form.FieldConfiguration>> formConfiguration)throws Exception {
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the frontend framework '" +
                     frontendFramework.getName() + "' (required language ID: '" + frontendFramework.getLanguageId() + "').");
         }
         String templateArchitecture = loadTemplate(frontendFramework);
-        HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
+        HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, formConfiguration);
         metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
         for(Component component:frontendFramework.getComponents()) {
             if(tableMetadata.getIsView() && !component.getGenerateForView())
@@ -95,6 +100,11 @@ public class FontendGenerator implements IFrontendGenerator{
 
     @Override
     public String generateService(String securityType, Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly)throws Exception {
+        return generateService(securityType, database, language, frontendFramework, tableMetadata, destinationFolder, projectName, generateComponentOnly, null);
+    }
+
+    @Override
+    public String generateService(String securityType, Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly, java.util.Map<String, java.util.Map<String, org.labs.genesis.config.form.FieldConfiguration>> formConfiguration)throws Exception {
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
                     "' (provided ID: " + language.getId() + ") is not compatible with the frontend framework '" +
@@ -108,7 +118,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
         String structure = engine.simpleRender(templateArchitecture, metadataPrimary);
 
-        HashMap<String,Object> metadataForFinalRender= FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
+        HashMap<String,Object> metadataForFinalRender= FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, formConfiguration);
         metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
         String finalStringForService = engine.render(structure,metadataForFinalRender);
         finalStringForService=engine.simpleRenderAlt(finalStringForService,metadataForFinalRender);
@@ -130,6 +140,11 @@ public class FontendGenerator implements IFrontendGenerator{
 
     @Override
     public String generateModel(String securityType, Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly) throws Exception{
+        return generateModel(securityType, database, language, frontendFramework, tableMetadata, destinationFolder, projectName, generateComponentOnly, null);
+    }
+
+    @Override
+    public String generateModel(String securityType, Database database,FrontendLanguage language,FrontendFramework frontendFramework, TableMetadata tableMetadata, String destinationFolder, String projectName, boolean generateComponentOnly, java.util.Map<String, java.util.Map<String, org.labs.genesis.config.form.FieldConfiguration>> formConfiguration) throws Exception{
 
         if(language.getId()!=frontendFramework.getLanguageId()){
             throw new RuntimeException("Incompatibility detected: the language '" + language.getName() +
@@ -143,7 +158,7 @@ public class FontendGenerator implements IFrontendGenerator{
 
         HashMap<String, Object> metadataPrimary = FrameworkFrontendMetadataProvider.getModelHashMap(modelComponent, language, tableMetadata);
         structure = engine.simpleRender(structure,metadataPrimary);
-        HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName);
+        HashMap<String, Object> metadataForFinalRender = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, destinationFolder, projectName, formConfiguration);
         metadataForFinalRender.putAll(FrameworkFrontendMetadataProvider.getHashMapForSecurity(securityType));
 
         String finalStringForModel = engine.render(structure,metadataForFinalRender);

@@ -1,7 +1,14 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 .form-group {
   margin-bottom: 15px;
   display: flex;
   flex-direction: column;
+  position: relative;
+  width: 100%;
 }
 
 label {
@@ -48,4 +55,125 @@ label {
 .form-control.ng-invalid.ng-dirty {
   border-color: #dc3545;
   box-shadow: 0 0 5px rgba(220,53,69,0.5);
+}
+
+.phone-control,
+.quantity-control,
+.currency-control {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.phone-control,
+.quantity-control {
+  gap: 0.5rem;
+}
+
+.phone-country {
+  flex: 0 0 auto;
+  width: min(48%, 13rem);
+}
+
+.phone-number,
+.quantity-input,
+.currency-input {
+  min-width: 0;
+  flex: 1;
+}
+
+.quantity-button {
+  width: 2.75rem;
+  flex: 0 0 2.75rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.quantity-button:hover {
+  background: #f3f4f6;
+}
+
+.currency-control {
+  position: relative;
+}
+
+.currency-input {
+  padding-right: 4.5rem;
+}
+
+.currency-code {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6b7280;
+  pointer-events: none;
+}
+
+.range-value {
+  align-self: flex-end;
+  font-size: 0.875rem;
+}
+
+.color-control {
+  width: 3.5rem;
+  height: 2.5rem;
+  padding: 0.25rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.json-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.json-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.json-editor-actions button {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.json-editor-input {
+  min-height: 10rem;
+  font-family: monospace;
+  resize: vertical;
+}
+
+.map-field {
+  width: 100%;
+  min-height: 320px;
+  height: 320px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.map-field .leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 6px;
+}
+
+:host ::ng-deep .ck-editor {
+  width: 100%;
+}
+
+:host ::ng-deep .ck-editor__editable_inline {
+  min-height: 180px;
+  max-height: 260px;
+  overflow: auto;
 }
