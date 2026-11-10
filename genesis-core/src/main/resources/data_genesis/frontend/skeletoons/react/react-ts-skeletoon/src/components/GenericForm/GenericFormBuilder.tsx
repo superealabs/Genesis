@@ -1,5 +1,5 @@
 // src/components/GenericForm/GenericFormBuilder.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     TextField,
     MenuItem,
@@ -12,9 +12,12 @@ import {
     Paper,
     Typography,
     Button,
-    FormHelperText
+    FormHelperText,
+    Dialog,
+    DialogContent,
+    IconButton
 } from '@mui/material';
-import { Add, Save, ArrowBack } from '@mui/icons-material'; // 👈 NOUVEAU
+import { Add, Save, ArrowBack, DeleteOutline, Download, Close } from '@mui/icons-material'; // 👈 NOUVEAU
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
 import { Link as RouterLink, useNavigate } from 'react-router-dom'; // 👈 AJOUT useNavigate
@@ -28,14 +31,17 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { TimePicker } from "@mui/x-date-pickers";
 import { parseTimeString } from '@/utils/timeParser';
 import { formatTimeTz, parseTimeTz } from "@/utils/timeTzParser";
-import { fileToBase64, bytesToUrl } from "@/utils/imageUtil";
+import { buildFileSource, downloadFile, fileToBase64, getFileSize, getFileTypeLabel, getGeneratedFileName, isImageContent } from "@/utils/file-utils";
 import { DurationInput } from "@/components/Input/DurationInput";
+import ConfiguredField, { ConfiguredFieldConfig } from "@/components/GenericForm/ConfiguredField";
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
+import { use } from 'i18next';
 
-interface FormFieldConfig {
+interface FormFieldConfig extends ConfiguredFieldConfig {
+    type: string;
     label: string;
-    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select' | 'interval'  | 'Uint8Array';
+    type: 'text' | 'number' | 'Date' | 'datetime' | 'time' | 'timeTz' | 'checkbox' | 'select' | 'interval' | 'Uint8Array' | 'file';
     required?: boolean;
     readonly?: boolean;
     options?: readonly { readonly value: string | number; readonly label: string }[];
@@ -76,13 +82,36 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                                           }: Props<T>) {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
-    const [formData, setFormData] = useState<Partial<T>>(initialData || {});
+    const [formData, setFormData] = useState<Partial<T>>(() => {
+        const defaults: Partial<T> = { ...(initialData || {}) };
+        Object.entries(fields).forEach(([key, config]) => {
+            if (defaults[key as keyof T] === undefined && config.component === 'color') {
+                defaults[key as keyof T] = '#000000' as T[keyof T];
+            }
+        });
+        return defaults;
+    });
     const [foreignOptions, setForeignOptions] = useState<
         Record<string, { value: string | number; label: string }[]>
     >({});
     const [loading, setLoading] = useState(false);
     const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
     const { t } = useTranslation();
+    const [preview, setPreview] = useState<{ source: string; alt: string } | null>(null);
+    const [downloadedFile, setDownloadedFile] = useState<string | null>(null);
+    const downloadFeedbackTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => () => {
+        if (downloadFeedbackTimeout.current) clearTimeout(downloadFeedbackTimeout.current);
+    }, []);
+
+    const handleDownload = (content: unknown) => {
+        const fileName = getGeneratedFileName(content);
+        downloadFile(content, fileName);
+        setDownloadedFile(fileName);
+        if (downloadFeedbackTimeout.current) clearTimeout(downloadFeedbackTimeout.current);
+        downloadFeedbackTimeout.current = setTimeout(() => setDownloadedFile(null), 1600);
+    };
 
     useEffect(() => {
         const loadForeignKeys = async () => {
@@ -117,9 +146,14 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         if (initialData) {
             const preloaded: Partial<T> = {};
             Object.entries(fields).forEach(([key, config]) => {
+
                 const value = initialData[key as keyof T];
                 if (config.foreignKey && value && typeof value === 'object') {
                     preloaded[key as keyof T] = (value as any)[config.foreignKey.valueKey];
+                } else if (config.component === 'json-editor' && value && typeof value === 'object') {
+                    preloaded[key as keyof T] = JSON.stringify(value, null, 2) as T[keyof T];
+                } else if (value === undefined && config.component === 'color') {
+                    preloaded[key as keyof T] = '#000000' as T[keyof T];
                 } else {
                     preloaded[key as keyof T] = value;
                 }
@@ -135,10 +169,32 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         setFormData((prev) => ({ ...prev, [key]: value }));
     };
 
+    const handleChangeMany = (values: Record<string, any>) => {
+        setFormData((prev) => ({ ...prev, ...values }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setFieldErrors({});
+
+        const jsonErrors: Record<string, string> = {};
+        Object.entries(fields).forEach(([key, config]) => {
+
+            const value = formData[key as keyof T];
+            if (config.component === 'json-editor' && value != null && value !== '') {
+                try {
+                    JSON.parse(String(value));
+                } catch {
+                    jsonErrors[key] = 'Enter valid JSON';
+                }
+            }
+        });
+        if (Object.keys(jsonErrors).length > 0) {
+            setFieldErrors(jsonErrors);
+            return;
+        }
+
+        setLoading(true);
 
         let payload: any = { ...formData };
         Object.entries(fields).forEach(([key, config]) => {
@@ -148,8 +204,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
         });
         Object.keys(payload).forEach(key => {
             if (payload[key] === ''
-                    || payload[key] === null
-                    || payload[key] === undefined) {
+                    || payload[key] === undefined
+                    || (payload[key] === null && !['Uint8Array', 'file'].includes(fields[key]?.type))) {
                 delete payload[key];
             }
         });
@@ -268,6 +324,8 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                             }}
                         >
                             {Object.entries(fields).map(([key, config]) => {
+                                if (config.component === 'none') return;
+
                                 const value = formData[key as keyof T] ?? '';
                                 const options = foreignOptions[key] || [...(config.options || [])];
 
@@ -384,10 +442,11 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                 error={Boolean(fieldErrors[key])}
                                                 helperText={fieldErrors[key] ?? ' '}
                                             />
-                                        ) : config.type === 'Uint8Array' ? (
+                                        ) : config.type === 'Uint8Array' || config.type === 'file' ? (
                                             <>
                                                 <input
                                                     type="file"
+                                                    accept={config.accept}
                                                     onChange={(e) => handleChange(key, e.target.files?.[0] ?? null)}
                                                 />
                                                 <img
@@ -397,9 +456,43 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                                                         maxWidth: "200px",
                                                         maxHeight: "200px",
                                                         objectFit: "contain"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0] ?? null;
+                                                        e.target.value = '';
+                                                        void handleChange(key, file);
                                                     }}
                                                 />
+                                                {value ? (
+                                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1, flexWrap: 'wrap' }}>
+                                                        {isImageContent(value) ? (
+                                                            <Button type="button" onClick={() => setPreview({ source: buildFileSource(value), alt: getGeneratedFileName(value) })} sx={{ p: 0, minWidth: 0 }} aria-label={`Prévisualiser ${getGeneratedFileName(value)}`}>
+                                                                <img src={buildFileSource(value)} alt={getGeneratedFileName(value)} style={{ maxWidth: 200, maxHeight: 140, objectFit: 'contain' }} />
+                                                            </Button>
+                                                        ) : (
+                                                            <>
+                                                                <Typography variant="body2"><strong>{getFileTypeLabel(value)}</strong> {getGeneratedFileName(value)} ({getFileSize(value)})</Typography>
+                                                            </>
+                                                        )}
+                                                        {isImageContent(value) && <Typography variant="caption" color="text.secondary">{getFileSize(value)}</Typography>}
+                                                        <Button type="button" size="small" startIcon={<Download />} onClick={() => handleDownload(value)}>
+                                                            {downloadedFile === getGeneratedFileName(value) ? 'Téléchargement…' : t('messages.common.download', { defaultValue: 'Télécharger' })}
+                                                        </Button>
+                                                        <Button type="button" size="small" color="error" startIcon={<DeleteOutline />} onClick={() => setFormData((prev) => ({ ...prev, [key]: null }))}>
+                                                            {t('messages.common.deleteFile', { defaultValue: 'Supprimer le fichier' })}
+                                                        </Button>
+                                                    </Box>
+                                                ) : null}
                                             </>
+                                        ) : config.component ? (
+                                            <ConfiguredField
+                                                name={key}
+                                                config={config}
+                                                value={value}
+                                                values={formData}
+                                                onChange={handleChange}
+                                                onChangeMany={handleChangeMany}
+                                                error={fieldErrors[key]}
+                                            />
                                         )  : (
                                             <TextField
                                                 fullWidth
@@ -450,6 +543,14 @@ export default function GenericFormBuilder<T extends Record<string, any>>({
                     </form>
                 </Paper>
             </Box>
+            <Dialog open={Boolean(preview)} onClose={() => setPreview(null)} maxWidth={false}>
+                <DialogContent sx={{ p: 2, bgcolor: 'black', position: 'relative', display: 'grid', placeItems: 'center' }}>
+                    <IconButton aria-label="Fermer l'aperçu" onClick={() => setPreview(null)} sx={{ position: 'absolute', top: 8, right: 8, color: 'white', zIndex: 1 }}>
+                        <Close />
+                    </IconButton>
+                    {preview && <img src={preview.source} alt={preview.alt} style={{ maxWidth: '90vw', maxHeight: '90vh', objectFit: 'contain' }} />}
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

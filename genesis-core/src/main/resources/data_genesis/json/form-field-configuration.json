@@ -1,0 +1,167 @@
+{
+  "types": {
+    "number": {
+      "components": [
+        "number",
+        "range",
+        "quantity",
+        "currency",
+        "map"
+      ]
+    },
+
+    "text": {
+      "components": [
+        "text",
+        "textarea",
+        "ckeditor",
+        "email",
+        "phone",
+        "password",
+        "color"
+      ]
+    },
+
+    "binary": {
+      "components": [
+        "file"
+      ]
+    },
+
+    "json": {
+      "components": [
+        "text",
+        "json-editor",
+        "textarea"
+      ]
+    }
+  },
+
+  "components": {
+    "number": {
+      "configuration": {
+        "fields": [
+          {
+            "name": "min",
+            "type": "number"
+          },
+          {
+            "name": "max",
+            "type": "number"
+          },
+          {
+            "name": "step",
+            "type": "number"
+          }
+        ]
+      }
+    },
+
+    "range": {
+      "configuration": {
+        "fields": [
+          {
+            "name": "min",
+            "type": "number"
+          },
+          {
+            "name": "max",
+            "type": "number"
+          },
+          {
+            "name": "step",
+            "type": "number"
+          }
+        ]
+      }
+    },
+
+    "quantity": {
+      "configuration": {
+        "fields": [
+          {
+            "name": "min",
+            "type": "number"
+          },
+          {
+            "name": "max",
+            "type": "number"
+          },
+          {
+            "name": "step",
+            "type": "number"
+          }
+        ]
+      }
+    },
+
+    "currency": {
+      "configuration": {
+        "fields": [
+          {
+            "name": "currency",
+            "type": "select",
+            "options": [
+              "EUR",
+              "USD",
+              "GBP",
+              "MGA"
+            ]
+          },
+          {
+            "name": "min",
+            "type": "number"
+          },
+          {
+            "name": "max",
+            "type": "number"
+          },
+          {
+            "name": "step",
+            "type": "number"
+          }
+        ]
+      }
+    },
+
+    "file": {
+      "configuration": {
+        "fields": [
+          {
+            "name": "accept",
+            "type": "multi-select",
+            "options": [
+              ".jpg",
+              ".jpeg",
+              ".png",
+              ".gif",
+              ".pdf",
+              ".csv",
+              ".txt",
+              ".doc",
+              ".docx",
+              ".xls",
+              ".xlsx",
+              ".zip"
+            ]
+          }
+        ]
+      }
+    },
+
+    "map": {
+      "configuration": {
+        "fields": [
+          {
+            "name": "latitude",
+            "type": "column"
+          },
+          {
+            "name": "longitude",
+            "type": "column"
+          }
+        ]
+      }
+    }
+  }
+}

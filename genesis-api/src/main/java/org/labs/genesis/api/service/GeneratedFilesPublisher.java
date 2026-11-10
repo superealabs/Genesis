@@ -13,7 +13,7 @@ public class GeneratedFilesPublisher {
 
     public PublicationResult publish(Path stagingDirectory, Path targetDirectory) throws IOException {
         Path staging = stagingDirectory.toRealPath(LinkOption.NOFOLLOW_LINKS);
-        Path target = targetDirectory.toAbsolutePath().normalize();
+        Path target = Files.exists(targetDirectory) ? targetDirectory.toRealPath() : targetDirectory.toAbsolutePath().normalize();
 
         if (!Files.isDirectory(staging, LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(staging)) {
             throw new IOException("Répertoire temporaire invalide");

@@ -6,7 +6,7 @@
   <grid id="27dc6"
         binding="mainPanel"
         layout-manager="GridLayoutManager"
-        row-count="12"
+        row-count="20"
         column-count="4"
         same-size-horizontally="false"
         same-size-vertically="false"
@@ -16,7 +16,7 @@
     <margin top="20" left="20" bottom="20" right="20"/>
 
     <constraints>
-      <xy x="20" y="20" width="650" height="500"/>
+      <xy x="20" y="20" width="650" height="700"/>
     </constraints>
 
     <properties/>
@@ -343,6 +343,7 @@
         <properties>
           <visible value="false"/>
         </properties>
+
       </component>
 
 
@@ -492,16 +493,45 @@
 
       </component>
 
+      <!-- ===================================================== -->
+      <!-- PRIVATE REPOSITORY -->
+      <!-- ===================================================== -->
+
+      <component id="privateRepository"
+                 class="javax.swing.JCheckBox"
+                 binding="privateRepositoryCheckBox"
+                 default-binding="true">
+
+        <constraints>
+          <grid row="10"
+                column="0"
+                row-span="1"
+                col-span="4"
+                vsize-policy="0"
+                hsize-policy="3"
+                anchor="8"
+                fill="0"
+                indent="2"
+                use-parent-layout="false"/>
+        </constraints>
+
+        <properties>
+          <text value="Private repository"/>
+          <selected value="false"/>
+          visible value="false"/>
+        </properties>
+      </component>
 
       <!-- ===================================================== -->
       <!-- SPACER -->
       <!-- ===================================================== -->
 
       <vspacer id="spacer">
+
         <constraints>
           <grid row="10"
                 column="0"
-                row-span="1"
+                row-span="2"
                 col-span="4"
                 vsize-policy="6"
                 hsize-policy="1"
@@ -510,6 +540,7 @@
                 indent="0"
                 use-parent-layout="false"/>
         </constraints>
+
       </vspacer>
 
     </children>

@@ -1,6 +1,5 @@
 package org.labs.genesis.config.langage.generator.ruleToCode;
 
-
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,10 +22,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 public class YamlData {
 
-    //Method extract group id and project name in the framework
-    public String[] extractGroupAndArtifact(Path projectDir , int frameworkId) throws Exception {
-        //Spring boot option
-        if ( frameworkId == 1 ) {
+    // Method extract group id and project name in the framework
+    public String[] extractGroupAndArtifact(Path projectDir, int frameworkId) throws Exception {
+        // Spring boot option
+        if (frameworkId == 1) {
             Path pom = projectDir.resolve("pom.xml");
             Path gradle = projectDir.resolve("build.gradle");
             Path gradleKts = projectDir.resolve("build.gradle.kts");
@@ -54,7 +53,7 @@ public class YamlData {
                         }
                     }
                 }
-                return new String[]{groupId, artifactId};
+                return new String[] { groupId, artifactId };
             } else if (Files.exists(gradle) || Files.exists(gradleKts)) {
                 // ----- Gradle -----
                 Path gradleFile = Files.exists(gradle) ? gradle : gradleKts;
@@ -66,12 +65,16 @@ public class YamlData {
                         .orElse("unknown");
 
                 String artifactId = projectDir.getFileName().toString();
-                return new String[]{groupId, artifactId};
+                return new String[] { groupId, artifactId };
             } else {
-                throw new Exception("Error no pom.xml and build.gradle in the project" + projectDir);
+                return new String[] { "org.example", projectDir.getFileName().toString() };
             }
         }
-        return null ;
+        if (frameworkId == 2) {
+            String projectName = projectDir.getFileName() != null ? projectDir.getFileName().toString() : "";
+            return new String[] { "", projectName };
+        }
+        return null;
     }
 
     public String getProjectName(Path projectDir) {
@@ -101,25 +104,45 @@ public class YamlData {
         return stringWriter.toString();
     }
 
-    public File pathModel (String projectBasePath , String groupId, String projectName , int idFramework ) throws Exception {
-        if ( idFramework == 1 ) { // Spring boot
-            File modelsDir = new File(projectBasePath.toString(), "src/main/java/" + groupId.replace('.', '/') + "/" + projectName + "/models");
-            if (!modelsDir.exists() || !modelsDir.isDirectory()) {
-                throw new RuntimeException("Path not foud projet Spring boot : " + modelsDir.getAbsolutePath());
+    public File pathModel(String projectBasePath, String groupId, String projectName, int idFramework)
+            throws Exception {
+        if (idFramework == 1) { // Spring boot
+            String groupPath = groupId != null ? groupId.replace('.', '/') : "org/example";
+            String artifact = projectName != null ? projectName : "";
+            File[] candidates = new File[] {
+                    new File(projectBasePath, "src/main/java/" + groupPath + "/" + artifact + "/models"),
+                    new File(projectBasePath, artifact + "/src/main/java/" + groupPath + "/" + artifact + "/models"),
+                    new File(projectBasePath, "src/main/java/" + groupPath + "/models")
+            };
+            for (File candidate : candidates) {
+                if (candidate.exists() && candidate.isDirectory()) {
+                    return candidate;
+                }
             }
-            return modelsDir;
+            throw new RuntimeException("Path not found for Spring Boot project: " + candidates[0].getAbsolutePath());
         }
         if (idFramework == 2) { // .NET
-            File modelsDir = new File(projectBasePath.toString(), projectName + "/Models");
-            if (!modelsDir.exists() || !modelsDir.isDirectory()) {
-                throw new RuntimeException("Path not foud projet .NET : " + modelsDir.getAbsolutePath());
+            String majProject = projectName != null ? org.labs.utils.StringUtils.majStart(projectName) : "";
+            File[] candidates = new File[] {
+                    new File(projectBasePath, projectName + "/Models"),
+                    new File(projectBasePath, majProject + "/Models"),
+                    new File(projectBasePath, "Models"),
+                    new File(projectBasePath, projectName + "/models"),
+                    new File(projectBasePath, majProject + "/models"),
+                    new File(projectBasePath, "models")
+            };
+            for (File candidate : candidates) {
+                if (candidate.exists() && candidate.isDirectory()) {
+                    return candidate;
+                }
             }
-            return modelsDir;
+            throw new RuntimeException("Path not found for .NET project: " + candidates[0].getAbsolutePath());
         }
-        return null ;
+        return null;
     }
 
-    public String extractMetaData(Path projectBasePath, String groupId, String projectName, int idFramework) throws Exception {
+    public String extractMetaData(Path projectBasePath, String groupId, String projectName, int idFramework)
+            throws Exception {
         IMetaDataExtractor extractor = switch (idFramework) {
             case 1 -> new SpringMetaDataExtractor(idFramework);
             case 2 -> new DotNetMetaDataExtractor(idFramework);

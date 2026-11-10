@@ -14,6 +14,13 @@
   flex-direction: column;
 }
 
+.file-preview { width: 80px; height: 60px; object-fit: cover; border-radius: 4px; }
+.preview-trigger { align-self: flex-start; border: 0; padding: 0; background: transparent; cursor: zoom-in; }
+.file-download { display: flex; align-items: center; gap: .5rem; }
+.image-preview-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1rem; background: rgba(0,0,0,.82); }
+.image-preview-overlay img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+.preview-close { position: absolute; top: 1rem; right: 1rem; color: white; background: transparent; border: 0; font-size: 2rem; cursor: pointer; }
+
 /* Labels */
 label {
   font-weight: 700;
@@ -35,6 +42,20 @@ input {
   background-color: white;
   transition: border-color 0.2s;
 }
+
+.ckeditor-content {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  min-height: 42px;
+  overflow-wrap: anywhere;
+}
+
+.ckeditor-content :first-child { margin-top: 0; }
+.ckeditor-content :last-child { margin-bottom: 0; }
+.ckeditor-content ul { list-style: disc; padding-left: 1.5rem; }
+.ckeditor-content ol { list-style: decimal; padding-left: 1.5rem; }
+.ckeditor-content a { color: var(--primary); text-decoration: underline; }
 
 input:focus {
   border-color:var(--primary-light);

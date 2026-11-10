@@ -78,4 +78,22 @@ public class StringUtilsTest {
         // Test avec une chaîne déjà en minuscules
         assertEquals("test string", formatReadableLowerCase("test_string"));
     }
+
+    @Test
+    public void testToSafeCamelCase() {
+        // Chaîne snake_case convertie en camelCase
+        assertEquals("latitudeCol", toSafeCamelCase("latitude_col"));
+        assertEquals("latField", toSafeCamelCase("lat_field"));
+        // Chaîne déjà en camelCase préservée sans écraser les majuscules intermédiaires
+        assertEquals("latField", toSafeCamelCase("latField"));
+        assertEquals("latitudeField", toSafeCamelCase("latitudeField"));
+        // Chaîne PascalCase passée en minStart
+        assertEquals("location", toSafeCamelCase("Location"));
+        // Chaîne simple minuscule
+        assertEquals("location", toSafeCamelCase("location"));
+        // Null et vide
+        assertEquals("", toSafeCamelCase(null));
+        assertEquals("", toSafeCamelCase(""));
+        assertEquals("", toSafeCamelCase("   "));
+    }
 }

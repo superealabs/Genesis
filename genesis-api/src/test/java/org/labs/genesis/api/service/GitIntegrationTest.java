@@ -10,7 +10,7 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.io.TempDir;
 import org.labs.genesis.api.GenesisApiApplication;
 import org.labs.genesis.api.context.GenerationContextStore;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.config.tools.GitConfiguration;
 import org.labs.genesis.config.langage.FilesEdit;
 import org.labs.utils.GitUtils;
 import org.springframework.boot.SpringApplication;
