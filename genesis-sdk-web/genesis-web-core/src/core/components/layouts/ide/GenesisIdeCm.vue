@@ -68,10 +68,11 @@ const charCount = computed(() => (props.modelValue || '').length);
 // ════════════════════════════════════════════════════════════
 // Thème Genesis — construit à partir des CSS vars du document
 // ════════════════════════════════════════════════════════════
-function getCssVar(name: string): string {
-    return getComputedStyle(document.documentElement)
-        .getPropertyValue(name).trim();
-}
+const getCssVar = (name: string) => {
+    return getComputedStyle(document.body)
+        .getPropertyValue(name)
+        .trim();
+};
 
 function buildGenesisTheme(dark: boolean) {
     const bg       = getCssVar('--color-bg-dark');
@@ -79,7 +80,7 @@ function buildGenesisTheme(dark: boolean) {
     const fg       = getCssVar('--color-text'); // Assure-toi que --color-text existe, sinon utilise --color-text-muted ou #f8fafc
     const fgMuted  = getCssVar('--color-text-muted');
     const accent   = getCssVar('--color-accent');
-    const border   = getCssVar('--color-neutral-light-genesis');
+    const border   = getCssVar('--color-bg-neutral-genesis');
 
     return EditorView.theme({
         // Conteneur principal — prend tout l'espace disponible
