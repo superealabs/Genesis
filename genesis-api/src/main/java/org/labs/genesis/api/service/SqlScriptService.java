@@ -113,6 +113,17 @@ public class SqlScriptService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Chemin de script trop long");
         }
 
+        if (content.isBlank() && !path.isBlank()) {
+            try {
+                java.nio.file.Path scriptFilePath = java.nio.file.Path.of(path);
+                if (java.nio.file.Files.isRegularFile(scriptFilePath)) {
+                    content = java.nio.file.Files.readString(scriptFilePath);
+                }
+            } catch (Exception ignored) {
+                // Si la lecture directe échoue, on continue avec le contenu fourni
+            }
+        }
+
         if (content.length() > MAX_SCRIPT_LENGTH) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Script SQL trop volumineux");
         }
@@ -127,15 +138,25 @@ public class SqlScriptService {
 
         if (path.isBlank() && content.isBlank()) {
             savedScript.set(null);
+            contextStore.getContext().setSqlScript(null);
             return new ScriptConfigResponse(true, "Configuration SQL effacée");
         }
 
         savedScript.set(new ScriptConfigRequest(path, content));
+        contextStore.getContext().setSqlScript(content);
+        if (contextStore.getContext().getDatabase() != null && !content.isBlank()) {
+            try {
+                contextStore.getContext().setTables();
+            } catch (Exception e) {
+                // Erreur de parsing éventuelle non bloquante à la sauvegarde
+            }
+        }
 
         return new ScriptConfigResponse(true, "Configuration du script SQL enregistrée");
     }
 
     public void clearSavedScript() {
         savedScript.set(null);
+        contextStore.getContext().setSqlScript(null);
     }
 }

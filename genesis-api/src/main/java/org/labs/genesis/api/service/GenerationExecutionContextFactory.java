@@ -26,30 +26,30 @@ public class GenerationExecutionContextFactory {
 
     public ExecutionContext open(String profileName) {
         ProjectGenerationContext source = contextStore.getContext();
-        if (source.getDatabase() == null || source.getCredentials() == null) {
+        boolean isScriptMode = source.getSqlScript() != null && !source.getSqlScript().isBlank();
+        if (source.getDatabase() == null) {
+            throw new RelationException("Base de données absente pour le profil " + profileName);
+        }
+        if (!isScriptMode && source.getCredentials() == null) {
             throw new RelationException("Configuration JDBC absente pour le profil " + profileName);
         }
         Connection connection = null;
         try {
-            // 1. Ouvrir la connexion dédiée avant de charger les tables.
-            connection = source.getDatabase().getConnection(source.getCredentials());
-            if (connection == null
-                    || connection.isClosed()
-                    || !connection.isValid(5)) {
-                throw new SQLException("Connexion JDBC d'exécution invalide");
+            if (!isScriptMode) {
+                connection = source.getDatabase().getConnection(source.getCredentials());
+                if (connection == null
+                        || connection.isClosed()
+                        || !connection.isValid(5)) {
+                    throw new SQLException("Connexion JDBC d'exécution invalide");
+                }
             }
 
             // 2. Charger directement les métadonnées
-            // sur cette connexion.
             ProjectGenerationContext context = profileRelationService.buildContext(profileName, connection);
 
-            // 3. Isoler le framework frontend si le service
-            // d'isolation a été intégré :
-            //
-             frontendIsolationService.isolate(context);
+            // 3. Isoler le framework frontend
+            frontendIsolationService.isolate(context);
 
-            // 4. Transférer la responsabilité de la connexion
-            // au contexte d'exécution retourné.
             return new ExecutionContext(profileName, context, connection);
 
         } catch (Exception exception) {
@@ -76,24 +76,28 @@ public class GenerationExecutionContextFactory {
                 .orElseThrow(() -> new RelationException("Profil absent de l'instantané : " + profileName));
 
         ProjectGenerationContext source = contextStore.getContext();
+        boolean isScriptMode = source.getSqlScript() != null && !source.getSqlScript().isBlank();
 
-        if (source.getDatabase() == null || source.getCredentials() == null) {
+        if (source.getDatabase() == null) {
+            throw new RelationException("Base de données absente");
+        }
+        if (!isScriptMode && source.getCredentials() == null) {
             throw new RelationException("Configuration JDBC indisponible");
         }
 
         Connection connection = null;
         try {
-            connection = source.getDatabase().getConnection(source.getCredentials());
-            if (connection == null
-                    || connection.isClosed()
-                    || !connection.isValid(5)) {
-                throw new SQLException("Connexion JDBC d'exécution invalide");
+            if (!isScriptMode) {
+                connection = source.getDatabase().getConnection(source.getCredentials());
+                if (connection == null
+                        || connection.isClosed()
+                        || !connection.isValid(5)) {
+                    throw new SQLException("Connexion JDBC d'exécution invalide");
+                }
             }
 
             ProjectGenerationContext context = profileRelationService.buildContext(profile, snapshot.relationsFor(profileName), connection);
 
-            // Activer ici uniquement lorsque la copie profonde
-            // du framework frontend a été validée.
             frontendIsolationService.isolate(context);
             return new ExecutionContext(profileName, context, connection);
         } catch (Exception exception) {

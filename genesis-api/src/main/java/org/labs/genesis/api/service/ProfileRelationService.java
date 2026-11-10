@@ -88,11 +88,12 @@ public class ProfileRelationService {
     }
 
     public synchronized ProjectGenerationContext buildContext(String profileName, Connection connection) {
-        if (connection == null) {
+        ProjectGenerationContext source = contextStore.getContext();
+        boolean isScriptMode = source.getSqlScript() != null && !source.getSqlScript().isBlank();
+        if (!isScriptMode && connection == null) {
             throw new RelationException("Aucune connexion JDBC disponible pour le profil " + profileName);
         }
 
-        ProjectGenerationContext source = contextStore.getContext();
         GenerationParameterRequest profile = findProfile(profileName, source);
         // Copier les paramètres sans modifier le contexte global.
         ProjectGenerationContext copy = source.duplicateWithNoTables();
@@ -123,9 +124,12 @@ public class ProfileRelationService {
     public ProjectGenerationContext buildContext(GenerationParameterRequest profile, GenerationConfigurationSnapshot.RelationSelection selection, Connection connection) {
         Objects.requireNonNull(profile, "Profil obligatoire");
         Objects.requireNonNull(selection, "Relations obligatoires");
-        Objects.requireNonNull(connection, "Connexion obligatoire");
 
         ProjectGenerationContext source = contextStore.getContext();
+        boolean isScriptMode = source.getSqlScript() != null && !source.getSqlScript().isBlank();
+        if (!isScriptMode) {
+            Objects.requireNonNull(connection, "Connexion obligatoire");
+        }
 
         ProjectGenerationContext copy = source.duplicateWithNoTables();
 

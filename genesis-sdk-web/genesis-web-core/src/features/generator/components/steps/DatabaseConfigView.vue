@@ -42,6 +42,34 @@
         </div>
       </div>
 
+      <!-- BASCULE MODE SCRIPT OU CONNEXION DIRECTE -->
+      <div
+        class="p-4 rounded-lg border transition-all duration-200"
+        :class="isScriptMode ? 'border-primary/50 bg-primary/10' : 'border-neutral-light bg-bg-secondary/20'"
+      >
+        <div class="flex items-center justify-between gap-4">
+          <div class="flex flex-col gap-1">
+            <span class="text-sm font-semibold text-text">
+              {{ isScriptMode ? 'Mode Script SQL actif' : 'Connexion directe ou script ?' }}
+            </span>
+            <span class="text-xs text-muted">
+              {{ isScriptMode
+                ? 'Aucune connexion active requise. Cliquez sur "Suivant" pour importer ou saisir votre script DDL.'
+                : 'Vous n\'avez pas de serveur de base de données actif ? Basculez en mode Script SQL pour fournir un fichier DDL.'
+              }}
+            </span>
+          </div>
+          <GenesisButton
+            :variant="isScriptMode ? 'primary' : 'secondary'"
+            size="md"
+            @click="toggleScriptMode"
+          >
+            {{ isScriptMode ? 'Utiliser une connexion live' : 'Utiliser un script SQL' }}
+          </GenesisButton>
+        </div>
+      </div>
+
+      <template v-if="!isScriptMode">
       <!-- 2. HÔTE ET PORT -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GenesisInput
@@ -187,6 +215,23 @@
           one-line
         />
       </div>
+      </template>
+
+      <!-- ÉTAT SCRIPT MODE ACTIF : MESSAGE CLAIR ET GUIDÉ -->
+      <template v-else>
+        <div class="p-8 border border-dashed border-primary/40 rounded-xl bg-primary/5 text-center space-y-4">
+          <div class="w-12 h-12 mx-auto rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
+            SQL
+          </div>
+          <h4 class="text-base font-semibold text-text">
+            Mode Script SQL sélectionné pour {{ selectedEngineName }}
+          </h4>
+          <p class="text-sm text-muted max-w-md mx-auto">
+            Les paramètres réseau (Hôte, Port, Identifiants) et le test de connexion JDBC sont ignorés.
+            Cliquez sur <strong class="text-text">Suivant</strong> pour importer ou rédiger votre script SQL.
+          </p>
+        </div>
+      </template>
     </div>
 
     <!-- PARTIE DROITE : CARROUSEL TUTORIEL -->
@@ -245,9 +290,15 @@ const {
   pendingDatabaseEngine,      
   setPendingDatabaseEngine,   
   testDatabaseConnection,
-  setDatabaseEngine,   
+  setDatabaseEngine,
+  isScriptMode,
+  setScriptMode,
 } = useGenerator();
 const databaseStore = useDatabaseStore();
+
+function toggleScriptMode() {
+  setScriptMode(!isScriptMode.value);
+}
 
 const database = computed(() => stepperData.value.database);
 const isTesting = ref(false);
