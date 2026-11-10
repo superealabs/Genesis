@@ -4909,13 +4909,15 @@
         if (window.Chart && window.ChartDataLabels) {
             Chart.register(ChartDataLabels);
         }
-        
-        document.addEventListener("DOMContentLoaded", function () {   
+
+        document.addEventListener("DOMContentLoaded", function () {
             initializeDashboardLayouts();
             observeDashboardLayouts();
-            initializeDashboardPagination();       
+            initializeDashboardPagination();
+            observeDashboardChartTheme();
+            document.querySelector("[data-dashboard-refresh]")?.addEventListener("click", () => window.location.reload());
         });
-        
+
         function initializeDashboardPagination() {
             const pages = Array.from(document.querySelectorAll("[data-dashboard-page]"));
             const pagination = document.querySelector("[data-dashboard-pagination]");
@@ -4977,7 +4979,13 @@
                     nextButton.disabled = currentPageIndex === pages.length - 1;
                 }
 
-                refreshDashboardPage(pages[currentPageIndex]);
+                const activePage = pages[currentPageIndex];
+                updateDashboardGridLayout(activePage.querySelector(".dashboard-grid"));
+                refreshDashboardPage(activePage);
+                activePage.querySelectorAll("canvas").forEach(canvas => {
+                    if (window.Chart) Chart.getChart(canvas)?.resize();
+                });
+                window.dispatchEvent(new Event("resize"));
             }
 
             pageButtons.forEach(
@@ -5017,7 +5025,7 @@
                 0
             );
         }
-        
+
         function refreshDashboardPage(page) {
 
             if (!page) {
@@ -5099,7 +5107,7 @@
                 case "SCATTER":
                     renderScatter(widget, rows, fields, options);
                     break;
-        
+
                 case "MAP":
                     renderMap(widget, rows, fields, options);
                     break;
@@ -5193,209 +5201,189 @@
             });
         }
 
-        function renderCategoryChart(widget, rows, fields, chartType, horizontal,  visualOptions) {
+        function getCssVariable(name, fallback) {
+            return getComputedStyle(document.body || document.documentElement).getPropertyValue(name).trim()
+                || getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+        }
+
+        function observeDashboardChartTheme() {
+            let pending = false;
+            const observer = new MutationObserver(() => {
+                if (pending) return;
+                pending = true;
+                queueMicrotask(() => {
+                    pending = false;
+                    document.querySelectorAll(".dashboard-widget canvas").forEach(canvas => {
+                        if (!window.Chart) return;
+                        const chart = Chart.getChart(canvas);
+                        if (!chart) return;
+                        chart.destroy();
+                        const widget = canvas.closest(".dashboard-widget");
+                        widget.dataset.dashboardRendered = "false";
+                        if (!widget.closest("[hidden]")) {
+                            renderDashboardWidget(widget);
+                            Chart.getChart(canvas)?.update("none");
+                            widget.dataset.dashboardRendered = "true";
+                        }
+                    });
+                });
+            });
+            const options = {attributes: true, attributeFilter: ["data-theme", "class", "style"]};
+            observer.observe(document.documentElement, options);
+            observer.observe(document.body, options);
+        }
+
+        function getDashboardPrimaryColor() {
+            return getCssVariable("--primary-color", "#4285f4");
+        }
+
+        function dashboardColorChannels(color) {
+            const context = document.createElement("canvas").getContext("2d");
+            context.fillStyle = color;
+            context.fillRect(0, 0, 1, 1);
+            return Array.from(context.getImageData(0, 0, 1, 1).data).slice(0, 3);
+        }
+
+        function colorWithOpacity(color, opacity) {
+            return "rgba(" + dashboardColorChannels(color).join(",") + "," + opacity + ")";
+        }
+
+        function getDashboardChartTheme() {
+            return {
+                primary: getDashboardPrimaryColor(),
+                text: getCssVariable("--text-secondary", "#64748b"),
+                background: getCssVariable("--bg-secondary", "#f8fafc"),
+                grid: colorWithOpacity(getCssVariable("--border-color", "#94a3b8"), 0.35)
+            };
+        }
+
+        function getDashboardPalette(count) {
+            const primary = getDashboardPrimaryColor();
+            const [r, g, b] = dashboardColorChannels(primary).map(value => value / 255);
+            const max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
+            let hue = 0;
+            if (delta) {
+                hue = max === r ? ((g - b) / delta) % 6 : max === g ? (b - r) / delta + 2 : (r - g) / delta + 4;
+                hue = (hue * 60 + 360) % 360;
+            }
+            return Array.from({length: count}, (_, index) => index === 0 ? primary
+                : "hsl(" + ((hue + index * 137.508) % 360) + ", 55%, " + (index % 2 ? 57 : 44) + "%)");
+        }
+
+        function getDashboardLegendOptions(options, circular, theme) {
+            return {
+                display: circular || Boolean(options.legendTitle),
+                position: circular ? "bottom" : "top",
+                maxHeight: 64,
+                labels: {color: theme.text, usePointStyle: true, pointStyle: "circle", boxWidth: 8, boxHeight: 8, padding: 12},
+                title: {display: Boolean(options.legendTitle), text: options.legendTitle, color: theme.text}
+            };
+        }
+
+        function getDashboardScales(options, horizontal, scatter, theme) {
+            function axis(title, numeric, formatter) {
+                return {
+                    border: {display: false},
+                    grid: {display: numeric, color: theme.grid},
+                    title: {display: Boolean(title), text: title, color: theme.text},
+                    ticks: {color: theme.text, maxTicksLimit: 8, ...(numeric ? {callback: formatter} : {})}
+                };
+            }
+            if (scatter) {
+                return {
+                    x: axis(options.legendX, true, value => formatScatterNumber(value, options.valuePrefixX, options.valueSuffixX, options.decimalsX)),
+                    y: axis(options.legendY, true, value => formatScatterNumber(value, options.valuePrefixY, options.valueSuffixY, options.decimalsY))
+                };
+            }
+            const number = value => formatChartNumber(value, options);
+            return {
+                x: axis(horizontal ? options.legendY : options.legendX, horizontal, number),
+                y: axis(horizontal ? options.legendX : options.legendY, !horizontal, number)
+            };
+        }
+
+        function getDashboardChartOptions(options, theme, circular, tooltipLabel) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: {duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450, easing: "easeOutQuart"},
+                plugins: {
+                    legend: getDashboardLegendOptions(options, circular, theme),
+                    tooltip: {
+                        backgroundColor: "rgba(17, 24, 39, 0.92)", titleColor: "#f8fafc", bodyColor: "#f8fafc",
+                        padding: 12, cornerRadius: 8, displayColors: true,
+                        callbacks: {label: tooltipLabel}
+                    },
+                    datalabels: {display: false}
+                }
+            };
+        }
+
+        function renderCategoryChart(widget, rows, fields, chartType, horizontal, visualOptions) {
             const dimension = findField(fields, "DIMENSION");
             const measure = findField(fields, "MEASURE");
-
             if (!dimension || !measure) {
                 showDashboardEmpty(widget);
                 return;
             }
-
-            const labels = rows.map(
-                                function (row) {
-                                    return row[dimension.key];
-                                }
-                            );
-
-            const values = rows.map(
-                              function (row) {
-                                  return toDashboardNumber(
-                                          row[measure.key]
-                                  );
-                              }
-                            );
-
-            const canvas = widget.querySelector("canvas[data-dashboard-target]");
-            new Chart(
-                    canvas,
-                    {
-                        type: chartType,
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    label:
-                                            visualOptions.legendY
-                                            || measure.column
-                                            || measure.key,
-
-                                    data: values
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            indexAxis:
-                                    horizontal
-                                            ? "y"
-                                            : "x",
-                            scales:
-                                    chartType === "pie"
-                                    || chartType === "doughnut"
-                                            ? {}
-                                            : horizontal
-                                                    ? {
-                                                        x: {
-                                                            title: {
-                                                                display:
-                                                                        Boolean(visualOptions.legendY),
-                            
-                                                                text:
-                                                                        visualOptions.legendY
-                                                            },
-                            
-                                                            ticks: {
-                                                                callback:
-                                                                        function (value) {
-                                                                            return formatChartNumber(value, visualOptions);
-                                                                        }
-                                                            }
-                                                        },
-                            
-                                                        y: {
-                                                            title: {
-                                                                display:
-                                                                        Boolean(visualOptions.legendX),
-                            
-                                                                text:
-                                                                        visualOptions.legendX
-                                                            }
-                                                        }
-                                                    }
-                                                    : {
-                                                        x: {
-                                                            title: {
-                                                                display:
-                                                                        Boolean(visualOptions.legendX),
-                            
-                                                                text:
-                                                                        visualOptions.legendX
-                                                            }
-                                                        },
-                            
-                                                        y: {
-                                                            title: {
-                                                                display:
-                                                                        Boolean(visualOptions.legendY),
-                            
-                                                                text:
-                                                                        visualOptions.legendY
-                                                            },
-                            
-                                                            ticks: {
-                                                                callback:
-                                                                        function (value) {
-                                                                            return formatChartNumber(value, visualOptions);
-                                                                        }
-                                                            }
-                                                        }
-                                                    },
-                            plugins: {
-
-                              legend: {
-                                display: true,
-                                position:
-                                  chartType === "pie"
-                                  || chartType === "doughnut"
-                                    ? "bottom"
-                                    : "top",
-
-                                title: {
-                                  display:
-                                    Boolean(
-                                      visualOptions.legendTitle
-                                    ),
-
-                                  text:
-                                    visualOptions.legendTitle
-                                }
-                              },
-                          
-                              tooltip: {
-                                
-                                callbacks: {
-                                  
-                                  label:
-                                      function (context) {
-                                                           
-                                           let value;
-                                           
-                                           if (chartType === "pie" || chartType === "doughnut") {
-                                           
-                                              value = context.parsed;
-                                           
-                                           } else {
-                                           
-                                              value = horizontal
-                                                ? context.parsed.x
-                                                : context.parsed.y;
-                                           }
-                                           
-                                           return formatChartNumber(value, visualOptions);
-                                      }
-                                }
-                              },
-                              datalabels:
-                                chartType === "pie"
-                                || chartType === "doughnut"
-                                  ? {
-                                      color: "#ffffff",
-                                      font: {
-                                        weight: "bold"
-                                      },
-                                      formatter:
-                                        function (value, context) {
-
-                                          const data =
-                                            context.chart.data.datasets[0].data
-                                            || [];
-
-                                          const total =
-                                            data.reduce(
-                                              function (sum, current) {
-                                                return sum + Number(current || 0);
-                                              },
-                                              0
-                                            );
-
-                                          if (!total) {
-                                            return "";
-                                          }
-
-                                          const percentage =
-                                            (Number(value || 0) / total) * 100;
-
-                                          return Math.round(percentage) + "%";
-                                        }
-                                    }
-                                  : {
-                                      display: false
-                                    },
-                            }
-                        }
+            const labels = rows.map(row => row[dimension.key]);
+            const values = rows.map(row => toDashboardNumber(row[measure.key]));
+            const circular = chartType === "pie" || chartType === "doughnut";
+            const theme = getDashboardChartTheme();
+            const dataset = {label: visualOptions.legendY || measure.column || measure.key, data: values};
+            if (circular) {
+                Object.assign(dataset, {
+                    backgroundColor: getDashboardPalette(values.length), borderColor: theme.background,
+                    borderWidth: 2, hoverOffset: 6
+                });
+            } else if (chartType === "line") {
+                Object.assign(dataset, {
+                    borderColor: theme.primary, backgroundColor: colorWithOpacity(theme.primary, 0.10),
+                    borderWidth: 2.5, tension: 0.35, fill: true,
+                    pointRadius: 3, pointHoverRadius: 5, pointBackgroundColor: theme.primary
+                });
+            } else {
+                Object.assign(dataset, {
+                    backgroundColor: colorWithOpacity(theme.primary, 0.75), borderColor: theme.primary,
+                    hoverBackgroundColor: colorWithOpacity(theme.primary, 0.95),
+                    borderWidth: 1, borderRadius: 6, borderSkipped: false,
+                    categoryPercentage: 0.85, barPercentage: 0.9,
+                    ...(values.length === 1 ? {maxBarThickness: 120} : {})
+                });
+            }
+            const options = getDashboardChartOptions(visualOptions, theme, circular,
+                context => formatChartNumber(circular ? context.parsed : horizontal ? context.parsed.x : context.parsed.y, visualOptions));
+            options.indexAxis = horizontal ? "y" : "x";
+            options.scales = circular ? {} : getDashboardScales(visualOptions, horizontal, false, theme);
+            if (chartType === "doughnut") options.cutout = "64%";
+            if (circular) {
+                options.layout = {padding: 6};
+                options.plugins.datalabels = {
+                    color: theme.text, backgroundColor: colorWithOpacity(theme.background, 0.94),
+                    borderRadius: 4, padding: 3, font: {weight: "bold", size: 11},
+                    display: "auto", clamp: true,
+                    formatter: function (value, context) {
+                        const total = context.dataset.data.reduce((sum, current) => sum + Math.abs(Number(current) || 0), 0);
+                        const percentage = total ? Math.abs(Number(value) || 0) / total * 100 : 0;
+                        
+                        const area = context.chart.chartArea;
+                        return percentage >= 5 && area && Math.min(area.width, area.height) >= 140
+                            ? Math.round(percentage) + "%" : "";
                     }
-            );
+                };
+            }
+            new Chart(widget.querySelector("canvas[data-dashboard-target]"), {
+                type: chartType, data: {labels: labels, datasets: [dataset]}, options: options
+            });
         }
-        
+
         function formatChartNumber(value,options) {
             const numericValue =Number(value);
-            
+
             if (!Number.isFinite(numericValue)) {
                 return value == null? "-" : String(value);
             }
-            
+
             const decimals = Number.isFinite(options?.decimals) ? options.decimals : 0;
             const formatted = new Intl.NumberFormat(undefined,{minimumFractionDigits:decimals,maximumFractionDigits:decimals}).format(numericValue);
             return (options?.valuePrefix || "")
@@ -5406,162 +5394,58 @@
         function renderScatter(widget, rows, fields, visualOptions) {
             const xField = findField(fields, "VALUE", 0);
             const yField = findField(fields, "VALUE", 1);
-
             if (!xField || !yField) {
                 showDashboardEmpty(widget);
                 return;
             }
-
-            const values =
-                    rows.map(
-                            function (row) {
-                                return {
-                                    x:
-                                            toDashboardNumber(row[xField.key]),
-
-                                    y:
-                                            toDashboardNumber(row[yField.key])
-                                };
-                            }
-                    );
-
-            const canvas = widget.querySelector(
-                              "canvas[data-dashboard-target]"
-                          );
-
-            new Chart(
-                    canvas,
-                    {
-                        type: "scatter",
-                        data: {
-                            datasets: [
-                                {
-                                    label:
-                                            visualOptions.legendY
-                                            || yField.column
-                                            || yField.key,
-                                    data: values
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-        
-                            scales: {
-                              x: {
-                                  title: {
-                                      display:
-                                              Boolean(visualOptions.legendX),
-      
-                                      text:
-                                              visualOptions.legendX
-                                  },
-      
-                                  ticks: {
-                                      callback:
-                                              function (value) {
-                                                  return formatScatterNumber(
-                                                          value,
-                                                          visualOptions.valuePrefixX,
-                                                          visualOptions.valueSuffixX,
-                                                          visualOptions.decimalsX
-                                                  );
-                                              }
-                                  }
-                              },
-      
-                              y: {
-                                  title: {
-                                      display:
-                                              Boolean(visualOptions.legendY),
-      
-                                      text:
-                                              visualOptions.legendY
-                                  },
-      
-                                  ticks: {
-                                      callback:
-                                              function (value) {
-      
-                                                  return formatScatterNumber(
-                                                          value,
-                                                          visualOptions.valuePrefixY,
-                                                          visualOptions.valueSuffixY,
-                                                          visualOptions.decimalsY
-                                                  );
-                                              }
-                                  }
-                              }
-                            },
-      
-                            plugins: {
-        
-                                tooltip: {
-        
-                                    callbacks: {
-        
-                                        label:
-                                                function (context) {
-        
-                                                    const x =
-                                                            formatScatterNumber(
-                                                                    context.parsed.x,
-                                                                    visualOptions.valuePrefixX,
-                                                                    visualOptions.valueSuffixX,
-                                                                    visualOptions.decimalsX
-                                                            );
-        
-                                                    const y =
-                                                            formatScatterNumber(
-                                                                    context.parsed.y,
-                                                                    visualOptions.valuePrefixY,
-                                                                    visualOptions.valueSuffixY,
-                                                                    visualOptions.decimalsY
-                                                            );
-        
-                                                    return "X: "
-                                                            + x
-                                                            + " | Y: "
-                                                            + y;
-                                                }
-                                    }
-                                }
-                            }
-                        }
-                    }
-            );
+            const theme = getDashboardChartTheme();
+            const options = getDashboardChartOptions(visualOptions, theme, false, context => {
+                const x = formatScatterNumber(context.parsed.x, visualOptions.valuePrefixX, visualOptions.valueSuffixX, visualOptions.decimalsX);
+                const y = formatScatterNumber(context.parsed.y, visualOptions.valuePrefixY, visualOptions.valueSuffixY, visualOptions.decimalsY);
+                return "X: " + x + " | Y: " + y;
+            });
+            options.scales = getDashboardScales(visualOptions, false, true, theme);
+            new Chart(widget.querySelector("canvas[data-dashboard-target]"), {
+                type: "scatter",
+                data: {datasets: [{
+                    label: visualOptions.legendY || yField.column || yField.key,
+                    data: rows.map(row => ({x: toDashboardNumber(row[xField.key]), y: toDashboardNumber(row[yField.key])})),
+                    backgroundColor: colorWithOpacity(theme.primary, 0.65), borderColor: theme.primary,
+                    pointRadius: 5, pointHoverRadius: 7, pointBorderWidth: 1
+                }]},
+                options: options
+            });
         }
-        
+
         function renderMap(widget, rows, fields, visualOptions) {
           const latitudeField = findField(fields, "LATITUDE");
           const longitudeField = findField(fields, "LONGITUDE");
           const labelField = findField(fields, "COLUMN");
           const valueField = findField(fields, "MEASURE");
-          
+
           if (!latitudeField || !longitudeField) {
             showDashboardEmpty(widget);
             return;
           }
-          
+
           const container = widget.querySelector(".dashboard-map-container");
-      
+
           if (!container) {
             showDashboardEmpty(widget);
             return;
           }
-          
+
           const points = rows.map(function (row) {
             const latitude = Number(row[latitudeField.key]);
             const longitude = Number(row[longitudeField.key]);
             if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
               return null;
             }
-          
+
             if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
               return null;
             }
-          
+
             const label = labelField ? row[labelField.key] : null;
             const value = valueField ? Number(row[valueField.key]) : null;
             return {
@@ -5569,7 +5453,7 @@
               longitude: longitude,
               label:
                   label == null ? "" : String(label),
-              
+
               value:
                   Number.isFinite(value) ? value : null
             };
@@ -5580,14 +5464,14 @@
               return point != null;
             }
           );
-          
+
           if (points.length === 0) {
             showDashboardEmpty(widget);
             return;
           }
-          
+
           const map = L.map(container);
-          
+
           L.tileLayer(
             "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             {
@@ -5596,16 +5480,16 @@
                 "&copy; OpenStreetMap contributors"
             }
           ).addTo(map);
-          
+
           const bounds = [];
-          
+
           points.forEach(
               function (point) {
                 const latLng = [point.latitude, point.longitude];
                 bounds.push(latLng);
-                
+
                 let marker;
-                
+
                 if (visualOptions.markerType === "BUFFER") {
                   marker = L.circleMarker(latLng, {
                                                       radius:
@@ -5631,13 +5515,13 @@
                     );
                 }
                 const popupContent = buildMapPopup(point, visualOptions);
-                
+
                 if (popupContent) {
                   marker.bindPopup(popupContent);
                 }
             }
           );
-          
+
           if (bounds.length === 1) {
             map.setView(bounds[0], 13);
           } else {
@@ -5647,7 +5531,7 @@
                                   }
                           );
             }
-          
+
           setTimeout(
             function () {
               map.invalidateSize();
@@ -5655,21 +5539,21 @@
             0
           );
         }
-        
+
         function calculateMapRadius(value) {
           if (!Number.isFinite(value) || value <= 0) {
             return 8;
           }
-        
+
           const radius = Math.sqrt(value) / 20;
           return Math.max(6, Math.min(radius, 30));
         }
-        
+
         function buildMapPopup(point, visualOptions) {
           const parts = [];
-          
+
           if (point.label) {
-          
+
             parts.push(
               "<strong>"
               + escapeDashboardHtml(
@@ -5678,9 +5562,9 @@
               + "</strong>"
             );
           }
-          
+
           if (point.value != null) {
-          
+
             parts.push(
               escapeDashboardHtml(
                 formatChartNumber(
@@ -5690,20 +5574,20 @@
               )
             );
           }
-          
+
           if (parts.length === 0) {
             return null;
           }
-          
+
           return parts.join(
             "<br>"
           );
         }
-        
+
         function escapeDashboardHtml(
           value
         ) {
-          
+
           if (value == null) {
             return "";
           }
@@ -5712,22 +5596,22 @@
             document.createElement(
               "div"
             );
-          
+
           element.textContent =
             String(value);
-          
+
           return element.innerHTML;
         }
-        
+
         function formatScatterNumber(value, prefix, suffix, decimals) {
           const numericValue = Number(value);
-          
+
           if (!Number.isFinite(numericValue)) {
             return "-";
           }
-          
+
           const precision = Number.isFinite(decimals) ? decimals : 0;
-          
+
           return (prefix || "") + new Intl.NumberFormat(undefined,{minimumFractionDigits:precision,maximumFractionDigits:precision}).format(numericValue)+ (suffix || "");
         }
 
@@ -5773,102 +5657,99 @@
 
             return prefix + String(value) + suffix;
         }
-        
+
         function readDashboardOptions(widget) {
           const decimals = Number.parseInt(widget.dataset.decimals, 10);
           const decimalsX = Number.parseInt(widget.dataset.decimalsX, 10);
           const decimalsY = Number.parseInt(widget.dataset.decimalsY, 10);
-  
+
           return {
             legendX:
               widget.dataset.legendX || "",
-            
+
             legendY:
               widget.dataset.legendY || "",
-            
+
             legendTitle:
               widget.dataset.legendTitle || "",
-        
+
             markerType:
                 (widget.dataset.markerType || "PIN").toUpperCase(),
-            
+
             valuePrefix:
               widget.dataset.valuePrefix || "",
-            
+
             valueSuffix:
               widget.dataset.valueSuffix || "",
-            
+
             decimals:
                 Number.isFinite(decimals) ? decimals : 0,
-            
+
             valuePrefixX:
               widget.dataset.valuePrefixX || "",
-            
+
             valueSuffixX:
               widget.dataset.valueSuffixX || "",
-            
+
             decimalsX:
                 Number.isFinite(decimalsX) ? decimalsX : 0,
-            
+
             valuePrefixY:
               widget.dataset.valuePrefixY || "",
-            
+
             valueSuffixY:
               widget.dataset.valueSuffixY || "",
-            
+
             decimalsY:
                 Number.isFinite(decimalsY) ? decimalsY : 0
           };
         }
-        
-        function updateDashboardGridLayout(grid) {
-            if (!grid) {
-                return;
-            }
-            const width = grid.clientWidth;
-            if (!width || width <= 0) {
-                return;
-            }
-            const densityFactor = 0.76;
-            const cellSize = (width / 24) * densityFactor;
 
+        function updateDashboardGridLayout(grid) {
+            if (!grid || !grid.clientWidth || grid.closest("[hidden]")) return;
+            if (window.matchMedia("(max-width: 900px)").matches) {
+                grid.style.removeProperty("--dashboard-cell-size");
+                return;
+            }
+            const widgets = Array.from(grid.querySelectorAll(".dashboard-widget"));
+            const rows = Math.max(1, ...widgets.map(widget => Number(widget.dataset.layoutY || 0) + Number(widget.dataset.layoutHeight || 1)));
+            const style = getComputedStyle(grid);
+            const gap = Number.parseFloat(style.rowGap) || 0;
+            const columnGap = Number.parseFloat(style.columnGap) || 0;
+            const page = grid.closest(".dashboard-page");
+            const sheet = grid.closest(".dashboard-page-sheet");
+            const pagination = page.querySelector(".dashboard-pagination");
+            const sheetStyle = getComputedStyle(sheet);
+            const paginationStyle = pagination ? getComputedStyle(pagination) : null;
+            const paginationHeight = pagination && !pagination.hidden
+                ? pagination.getBoundingClientRect().height + (parseFloat(paginationStyle.marginTop) || 0) : 0;
+            
+            const availableHeight = window.innerHeight - grid.getBoundingClientRect().top
+                - (parseFloat(sheetStyle.paddingBottom) || 0) - paginationHeight - 24;
+            const fromWidth = (grid.clientWidth - 23 * columnGap) / 24;
+            const fromHeight = (availableHeight - (rows - 1) * gap) / rows;
+            
+            const minimum = Math.max(24, ...widgets.map(widget => {
+                const height = Math.max(1, Number(widget.dataset.layoutHeight || 1));
+                const readable = widget.dataset.dashboardType.toUpperCase() === "KPI" ? 110 : 210;
+                return (readable - (height - 1) * gap) / height;
+            }));
+            const cellSize = Math.max(minimum, Math.min(fromWidth, fromHeight));
             grid.style.setProperty("--dashboard-cell-size", cellSize + "px");
         }
-        
+
         function initializeDashboardLayouts() {
-            const grids = document.querySelectorAll(".dashboard-grid");
-
-            grids.forEach(
-                function (grid) {
-                    updateDashboardGridLayout(grid);
-                }
-            );
+            document.querySelectorAll(".dashboard-grid").forEach(updateDashboardGridLayout);
         }
-        
+
         function observeDashboardLayouts() {
-            const grids = document.querySelectorAll(".dashboard-grid");
-
-            if (typeof ResizeObserver === "undefined") {
-                grids.forEach(updateDashboardGridLayout);
-                return;
+            const update = () => initializeDashboardLayouts();
+            window.addEventListener("resize", update);
+            if (document.fonts) document.fonts.ready.then(update);
+            if (typeof ResizeObserver !== "undefined") {
+                const observer = new ResizeObserver(update);
+                document.querySelectorAll(".dashboard-grid, .dashboard-toolbar, .dashboard-header, .dashboard-pagination").forEach(element => observer.observe(element));
             }
-
-            const observer =
-                new ResizeObserver(
-                    function (entries) {
-                        entries.forEach(
-                            function (entry) {
-                                updateDashboardGridLayout(entry.target);
-                            }
-                        );
-                    }
-                );
-
-            grids.forEach(
-                function (grid) {
-                    observer.observe(grid);
-                }
-            );
         }
       destinationPath: "${destinationFolder}/${majStart(projectName)}/src/main/resources/static/js"
 

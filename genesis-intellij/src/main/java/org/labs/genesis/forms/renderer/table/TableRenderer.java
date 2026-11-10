@@ -17,10 +17,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.HashMap;
 
 public class TableRenderer implements VisualizationRenderer {
 
     private static final int MAX_DISPLAY_ROWS = 100;
+    private final Map<String, String> columnHeaders = new HashMap<>();
 
     private static final NumberFormat NUMBER_FORMAT =
             NumberFormat.getInstance(Locale.US);
@@ -111,6 +114,15 @@ public class TableRenderer implements VisualizationRenderer {
             columns = new ArrayList<>();
         }
 
+        columnHeaders.clear();
+        if (config.getValue("columnsHeaders") instanceof Map<?, ?> headers) {
+            headers.forEach((key, value) -> {
+                if (key instanceof String name && value instanceof String label) {
+                    columnHeaders.put(normalizeHeaderKey(name), label);
+                }
+            });
+        }
+
         title = config.getString("title");
 
         if (table != null) {
@@ -175,8 +187,8 @@ public class TableRenderer implements VisualizationRenderer {
 
         for (int i = 0; i < columns.size(); i++) {
 
-            result[i] =
-                    cleanColumnName(columns.get(i));
+            String column = columns.get(i);
+            result[i] = cleanColumnName(columnHeaders.getOrDefault(normalizeHeaderKey(column), column));
         }
 
         return result;
@@ -260,6 +272,11 @@ public class TableRenderer implements VisualizationRenderer {
         return value.toString();
     }
 
+    private String normalizeHeaderKey(String column) {
+        String name = column.substring(column.lastIndexOf(':') + 1);
+        return name.substring(name.lastIndexOf('.') + 1);
+    }
+
     private String cleanColumnName(String column) {
 
         if (column == null) {
@@ -312,7 +329,7 @@ public class TableRenderer implements VisualizationRenderer {
         );
 
         table.setSelectionBackground(
-                new Color(99, 102, 241, 50)
+                DashboardTheme.withAlpha(DashboardTheme.ACCENT, 50)
         );
 
         table.setSelectionForeground(

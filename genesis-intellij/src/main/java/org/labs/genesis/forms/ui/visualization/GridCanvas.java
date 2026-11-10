@@ -10,7 +10,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
-import java.awt.image.BufferedImage;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -21,14 +21,14 @@ public class GridCanvas extends JPanel {
 
     private static final int GRID_COLUMNS = 24;
     private static final int RADIUS = 12;
-    private static final int BORDER_WIDTH = 1;
 
     private final List<DashboardVisualComponent> visualComponents = new ArrayList<>();
     private DashboardVisualComponent selectedVisual;
 
-    // Cache pour la grille
-    private BufferedImage gridCache;
-    private Dimension gridCacheSize;
+    private static final double PAGE_ASPECT_RATIO = 16.0 / 9.0;
+    private static final int PAGE_MARGIN = 20;
+    private static final int PAGE_PADDING = 12;
+    private static final int MAX_PAGE_WIDTH = 1600;
 
     // Resize state
     private DashboardVisualComponent resizingComponent;
@@ -160,6 +160,7 @@ public class GridCanvas extends JPanel {
     private void startResize(DashboardVisualComponent comp,
                              DashboardVisualComponent.ResizeDirection dir,
                              Point mousePoint) {
+        resizeCellSize = getCellSize();
         isDraggingOrResizing = true;
         resizingComponent = comp;
         resizeDirection = dir;
@@ -168,7 +169,6 @@ public class GridCanvas extends JPanel {
         resizeStartGridY = comp.getGridY();
         resizeStartWidth = comp.getGridWidth();
         resizeStartHeight = comp.getGridHeight();
-        resizeCellSize = getCellSize();
         comp.setResizing(true);
         comp.setActiveResizeDirection(dir);
         setCursor(CursorUtils.getCursorForDirection(dir));
@@ -234,8 +234,11 @@ public class GridCanvas extends JPanel {
         if (newX < 0) { newWidth += newX; newX = 0; }
         if (newY < 0) { newHeight += newY; newY = 0; }
         if (newX + newWidth > GRID_COLUMNS) newWidth = GRID_COLUMNS - newX;
-        newWidth = Math.max(1, newWidth);
-        newHeight = Math.max(1, newHeight);
+        newX = Math.min(GRID_COLUMNS - 1, newX);
+        newWidth = Math.max(1, Math.min(newWidth, GRID_COLUMNS - newX));
+        int maxRows = getVisibleRows();
+        newY = Math.min(maxRows - 1, newY);
+        newHeight = Math.max(1, Math.min(newHeight, maxRows - newY));
 
         resizingComponent.setGridX(newX);
         resizingComponent.setGridY(newY);
@@ -255,16 +258,19 @@ public class GridCanvas extends JPanel {
         resizeStartMouse = null;
         resizeCellSize = 0;
         isDraggingOrResizing = false;
+        updateCanvasSize();
+        revalidate();
+        repaint();
         setCursor(Cursor.getDefaultCursor());
     }
 
     private void startDrag(DashboardVisualComponent comp, Point mousePoint) {
+        dragCellSize = getCellSize();
         isDraggingOrResizing = true;
         draggingComponent = comp;
         dragStartMouse = new Point(mousePoint);
         dragStartGridX = comp.getGridX();
         dragStartGridY = comp.getGridY();
-        dragCellSize = getCellSize();
         comp.setDragging(true);
         setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
         setComponentZOrder(comp, 0);
@@ -282,7 +288,8 @@ public class GridCanvas extends JPanel {
 
         int newX = Math.max(0, Math.min(GRID_COLUMNS - draggingComponent.getGridWidth(),
                 dragStartGridX + gridDeltaX));
-        int newY = Math.max(0, dragStartGridY + gridDeltaY);
+        int newY = Math.max(0, Math.min(getVisibleRows() - draggingComponent.getGridHeight(),
+                dragStartGridY + gridDeltaY));
 
         draggingComponent.setGridX(newX);
         draggingComponent.setGridY(newY);
@@ -301,25 +308,19 @@ public class GridCanvas extends JPanel {
         dragStartMouse = null;
         dragCellSize = 0;
         isDraggingOrResizing = false;
+        updateCanvasSize();
+        revalidate();
+        repaint();
         setCursor(Cursor.getDefaultCursor());
     }
 
     private int getCellSize() {
-        int available = getWidth() - 2 * BORDER_WIDTH;
-        return Math.max(1, available / GRID_COLUMNS);
-    }
-
-    private boolean isAreaAvailableExcluding(int x, int y, int w, int h,
-                                             DashboardVisualComponent exclude) {
-        for (DashboardVisualComponent existing : visualComponents) {
-            if (existing == exclude) continue;
-            if (rectanglesIntersect(x, y, w, h,
-                    existing.getGridX(), existing.getGridY(),
-                    existing.getGridWidth(), existing.getGridHeight())) {
-                return false;
-            }
+        if (isDraggingOrResizing) {
+            return Math.max(1, resizingComponent != null ? resizeCellSize : dragCellSize);
         }
-        return true;
+        Rectangle page = getPageBounds();
+        return Math.max(1, Math.min((page.width - 2 * PAGE_PADDING) / GRID_COLUMNS,
+                (page.height - 2 * PAGE_PADDING) / getRequiredRows()));
     }
 
     private boolean rectanglesIntersect(int x1, int y1, int w1, int h1,
@@ -378,26 +379,44 @@ public class GridCanvas extends JPanel {
         return true;
     }
 
-    private void updateCanvasSize() {
-        int width = getParent() != null ? getParent().getWidth() : getWidth();
-        if (width <= 0) return;
-        int cellSize = Math.max(1, width / GRID_COLUMNS);
-        int requiredRows = 8;
+    private int getRequiredRows() {
+        int rows = 8;
         for (DashboardVisualComponent comp : visualComponents) {
-            requiredRows = Math.max(requiredRows, comp.getGridY() + comp.getGridHeight());
+            rows = Math.max(rows, comp.getGridY() + comp.getGridHeight());
         }
-        setPreferredSize(new Dimension(width, requiredRows * cellSize));
-        invalidateGridCache();
+        return rows;
+    }
+
+    private Rectangle getPageBounds() {
+        int width = Math.max(1, Math.min(MAX_PAGE_WIDTH, getWidth() - 2 * PAGE_MARGIN));
+        int height = Math.max(1, (int) Math.round(width / PAGE_ASPECT_RATIO));
+        return new Rectangle((getWidth() - width) / 2,
+                Math.max(PAGE_MARGIN, (getHeight() - height) / 2), width, height);
+    }
+
+    private int getVisibleRows() {
+        return Math.max(1, (getPageBounds().height - 2 * PAGE_PADDING) / getCellSize());
+    }
+
+    private Point getGridOrigin() {
+        Rectangle page = getPageBounds();
+        return new Point(page.x + (page.width - GRID_COLUMNS * getCellSize()) / 2,
+                page.y + PAGE_PADDING);
+    }
+
+    private void updateCanvasSize() {
+        updateVisualComponents();
     }
 
     private void updateVisualComponents() {
-        int width = getWidth();
-        if (width <= 0) return;
-        int cellSize = Math.max(1, (width - 2 * BORDER_WIDTH) / GRID_COLUMNS);
+        if (getWidth() <= 0) return;
+        int cellSize = getCellSize();
+        Point origin = getGridOrigin();
         for (DashboardVisualComponent comp : visualComponents) {
-            int x = BORDER_WIDTH + comp.getGridX() * cellSize;
-            int y = BORDER_WIDTH + comp.getGridY() * cellSize;
-            comp.setBounds(x, y, comp.getGridWidth() * cellSize, comp.getGridHeight() * cellSize);
+            comp.setBounds(origin.x + comp.getGridX() * cellSize,
+                    origin.y + comp.getGridY() * cellSize,
+                    Math.max(1, comp.getGridWidth() * cellSize - 4),
+                    Math.max(1, comp.getGridHeight() * cellSize - 4));
         }
     }
 
@@ -406,101 +425,42 @@ public class GridCanvas extends JPanel {
         updateVisualComponents();
     }
 
-    // =========================================================
-    // PAINTING WITH CACHE
-    // =========================================================
-
-    private void invalidateGridCache() {
-        gridCache = null;
-        gridCacheSize = null;
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        int w = getWidth(), h = getHeight();
-        if (w <= 0 || h <= 0) return;
-
+        Rectangle page = getPageBounds();
         Graphics2D g2 = (Graphics2D) g.create();
         try {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-
-            // Fond
-            RoundRectangle2D shape = new RoundRectangle2D.Double(0.5, 0.5, w - 1, h - 1, RADIUS, RADIUS);
+            RoundRectangle2D shape = new RoundRectangle2D.Double(page.x, page.y,
+                    page.width, page.height, RADIUS, RADIUS);
             g2.setColor(DashboardTheme.CANVAS_BG);
             g2.fill(shape);
-
-            Shape oldClip = g2.getClip();
-            g2.clip(shape);
-
-            // Dessiner la grille (avec cache)
-            drawGrid(g2, w, h);
-
-            g2.setClip(oldClip);
             g2.setColor(DashboardTheme.CANVAS_BORDER);
-            g2.setStroke(new BasicStroke(BORDER_WIDTH));
             g2.draw(shape);
-
-            // Texte "CANVAS"
-            g2.setColor(DashboardTheme.TEXT_SECONDARY);
-            g2.setFont(getFont().deriveFont(Font.BOLD, 16f));
-            String title = "CANVAS";
-            FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(title, (w - fm.stringWidth(title)) / 2, (h - fm.getHeight()) / 2 + fm.getAscent());
-
+            g2.clip(shape);
+            int cell = getCellSize();
+            Point origin = getGridOrigin();
+            int rows = getVisibleRows();
+            g2.setColor(DashboardTheme.GRID_COLOR);
+            for (int col = 0; col <= GRID_COLUMNS; col++) {
+                int x = origin.x + col * cell;
+                g2.drawLine(x, origin.y, x, origin.y + rows * cell);
+            }
+            for (int row = 0; row <= rows; row++) {
+                int y = origin.y + row * cell;
+                g2.drawLine(origin.x, y, origin.x + GRID_COLUMNS * cell, y);
+            }
         } finally {
             g2.dispose();
         }
     }
 
-    /**
-     * Dessine la grille avec mise en cache pour éviter de recalculer à chaque paint.
-     */
-    private void drawGrid(Graphics2D g2, int w, int h) {
-        // Vérifier si le cache est valide
-        if (gridCache != null && gridCacheSize != null &&
-                gridCacheSize.width == w && gridCacheSize.height == h) {
-            g2.drawImage(gridCache, 0, 0, null);
-            return;
-        }
-
-        // Créer le cache
-        gridCache = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D cacheG2 = gridCache.createGraphics();
-        try {
-            cacheG2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            cacheG2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-
-            int cellSize = Math.max(1, (w - 2 * BORDER_WIDTH) / GRID_COLUMNS);
-            int gridRows = Math.max(1, (int) Math.ceil((h - 2 * BORDER_WIDTH) / (double) cellSize));
-            int gridWidth = GRID_COLUMNS * cellSize;
-            int gridHeight = gridRows * cellSize;
-            int offsetX = Math.max(0, (w - gridWidth) / 2);
-            int offsetY = 0;
-
-            cacheG2.setColor(DashboardTheme.GRID_COLOR);
-            for (int col = 0; col <= GRID_COLUMNS; col++) {
-                int x = offsetX + col * cellSize;
-                cacheG2.drawLine(x, offsetY, x, Math.min(h, offsetY + gridHeight));
-            }
-            for (int row = 0; row <= gridRows; row++) {
-                int y = offsetY + row * cellSize;
-                cacheG2.drawLine(offsetX, y, Math.min(w, offsetX + gridWidth), y);
-            }
-
-            gridCacheSize = new Dimension(w, h);
-        } finally {
-            cacheG2.dispose();
-        }
-
-        g2.drawImage(gridCache, 0, 0, null);
-    }
-
     @Override
     public Dimension getPreferredSize() {
-        int width = DashboardTheme.MAX_WIDTH;
-        if (getParent() != null) width = Math.max(DashboardTheme.MAX_WIDTH, getParent().getWidth());
-        return new Dimension(width, super.getPreferredSize().height);
+        int width = getParent() != null ? getParent().getWidth() : 960;
+        int pageWidth = Math.max(1, Math.min(MAX_PAGE_WIDTH, width - 2 * PAGE_MARGIN));
+        return new Dimension(Math.max(1, width),
+                (int) Math.round(pageWidth / PAGE_ASPECT_RATIO) + 2 * PAGE_MARGIN);
     }
 }

@@ -9,6 +9,7 @@ import org.labs.genesis.forms.ui.visualization.configuration.VisualizationConfig
 import org.labs.genesis.forms.ui.visualization.configuration.listener.VisualizationSelectionListener;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationParameter;
 import org.labs.genesis.forms.theme.DashboardTheme;
+import org.labs.genesis.forms.theme.ThemeAwareVisualizationIcon;
 import org.labs.genesis.forms.ui.common.RoundedBorder;
 import org.labs.genesis.forms.ui.visualization.model.VisualizationItem;
 
@@ -437,8 +438,7 @@ public class VisualizationPanel extends JPanel {
         java.net.URL resource = getClass().getResource(path);
         if (resource == null) return AllIcons.General.Error;
         ImageIcon original = new ImageIcon(resource);
-        Image image = original.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
-        return new ImageIcon(image);
+        return new ThemeAwareVisualizationIcon(original.getImage(), width, height);
     }
 
     private javax.swing.border.Border createNormalBorder() {

@@ -324,7 +324,7 @@ public class LineChartRenderer extends AbstractChartRenderer {
             double x = centerX - pointSize / 2.0;
             double y = centerY - pointSize / 2.0;
 
-            g.setColor(Color.WHITE);
+            g.setColor(DashboardTheme.CANVAS_BG);
             g.fill(new Ellipse2D.Double(x, y, pointSize, pointSize));
 
             g.setColor(DashboardTheme.ACCENT);

@@ -1,4 +1,6 @@
 {
+    "dashboard": "Tableau de bord",
+    "refresh": "Actualiser",
     "language": "Langue",
     "login": "Se connecter",
     "password": "Mot de passe",

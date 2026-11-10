@@ -1,6 +1,10 @@
 ${viewAnnotations}
 
 <section class="dashboard-page">
+    <div class="dashboard-toolbar">
+        <h1 data-i18n="dashboard"></h1>
+        <button type="button" class="btn btn-primary btn-md" data-dashboard-refresh data-i18n="refresh"></button>
+    </div>
 
     {{#each dashboardPages}}
     <section class="dashboard-section dashboard-page-sheet"
@@ -10,9 +14,9 @@ ${viewAnnotations}
 
         <div class="dashboard-header">
             <div>
-                <h1 class="page-title">
+                <h2 class="page-title">
                     ${this.title}
-                </h1>
+                </h2>
             </div>
         </div>
 

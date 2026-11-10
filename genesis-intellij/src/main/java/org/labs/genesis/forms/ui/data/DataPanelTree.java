@@ -851,8 +851,8 @@ public class DataPanelTree extends JPanel {
 
         // Gradient background
         GradientPaint gradient = new GradientPaint(
-                0, 0, new Color(45, 47, 54),
-                0, height, new Color(35, 37, 42)
+                0, 0, DashboardTheme.SURFACE_ACTIVE,
+                0, height, DashboardTheme.SURFACE_2
         );
         g.setPaint(gradient);
 
@@ -863,7 +863,7 @@ public class DataPanelTree extends JPanel {
         g.fill(shape);
 
         // Border
-        g.setColor(new Color(255, 255, 255, 60));
+        g.setColor(DashboardTheme.BORDER);
         g.setStroke(new BasicStroke(1.2f));
         g.draw(shape);
     }
@@ -882,13 +882,13 @@ public class DataPanelTree extends JPanel {
                 + getFontMetrics(font).getAscent();
 
         g.setFont(font);
-        g.setColor(Color.WHITE);
+        g.setColor(DashboardTheme.TEXT);
         g.drawString(text, textX, textY);
 
         // Type
         Font typeFont = DashboardTheme.getFont(9).deriveFont(Font.PLAIN);
         g.setFont(typeFont);
-        g.setColor(new Color(255, 255, 255, 140));
+        g.setColor(DashboardTheme.TEXT_SECONDARY);
 
         FontMetrics typeMetrics = g.getFontMetrics(typeFont);
         int typeX = textX + textWidth + 6;

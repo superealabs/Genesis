@@ -24,6 +24,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -62,7 +64,15 @@ public class DashboardVisualComponent extends JPanel {
      * Permet d'éviter qu'une ancienne requête asynchrone
      * écrase les données d'une requête plus récente.
      */
-    private int dataLoadVersion = 0;
+    private volatile int dataLoadVersion = 0;
+    private static final int DATA_REFRESH_DELAY_MS = 300;
+    private static final Set<String> PRESENTATION_KEYS = Set.of(
+            "title", "legendX", "legendY", "legendTitle", "markerType", "columnsHeaders",
+            "valuePrefix", "valueSuffix", "decimals",
+            "valuePrefixX", "valueSuffixX", "decimalsX",
+            "valuePrefixY", "valueSuffixY", "decimalsY"
+    );
+    private final Timer dataRefreshTimer = new Timer(DATA_REFRESH_DELAY_MS, e -> refreshDataIfNeeded());
     private final String dashboardId = java.util.UUID.randomUUID().toString();
 
     public DashboardVisualComponent(
@@ -99,6 +109,7 @@ public class DashboardVisualComponent extends JPanel {
         this.visualComponent =
                 renderer.createComponent(config);
 
+        dataRefreshTimer.setRepeats(false);
         configureComponent();
         updateDisplayState();
     }
@@ -126,6 +137,9 @@ public class DashboardVisualComponent extends JPanel {
             String key,
             Object value
     ) {
+        if (Objects.equals(config.getValue(key), value)) {
+            return;
+        }
         config.setValue(key, value);
 
         if ("title".equals(key)) {
@@ -147,7 +161,9 @@ public class DashboardVisualComponent extends JPanel {
 
         renderer.updateConfig(config);
 
-        refreshDataIfNeeded();
+        if (!PRESENTATION_KEYS.contains(key)) {
+            scheduleDataRefresh();
+        }
 
         updateDisplayState();
     }
@@ -181,6 +197,7 @@ public class DashboardVisualComponent extends JPanel {
 
         setLayout(new BorderLayout());
         setOpaque(false);
+        setBorder(new EmptyBorder(1, 1, 1, 1));
 
         setCursor(
                 Cursor.getPredefinedCursor(
@@ -193,6 +210,8 @@ public class DashboardVisualComponent extends JPanel {
                         visualizationItem.name
                 );
 
+        titleLabel.setOpaque(true);
+        titleLabel.setBackground(DashboardTheme.ACCENT_LIGHT);
         titleLabel.setForeground(
                 DashboardTheme.TEXT_DARK
         );
@@ -311,6 +330,11 @@ public class DashboardVisualComponent extends JPanel {
     // DATA LOADING
     // =========================================================================
 
+    private void scheduleDataRefresh() {
+        ++dataLoadVersion;
+        dataRefreshTimer.restart();
+    }
+
     private void refreshDataIfNeeded() {
 
         if (context == null) {
@@ -335,8 +359,8 @@ public class DashboardVisualComponent extends JPanel {
 
         List<TableMetadata> availableTables = context.getAllTables();
 
-        final int version =
-                ++dataLoadVersion;
+        final int version = dataLoadVersion;
+        final VisualizationConfig queryConfig = config.snapshot();
 
         clearVisualizationData();
 
@@ -349,13 +373,16 @@ public class DashboardVisualComponent extends JPanel {
                 .getApplication()
                 .executeOnPooledThread(() -> {
 
+                    if (version != dataLoadVersion) {
+                        return;
+                    }
                     try {
                         if (isMapVisualization()) {
                             MapData data =
                                     dataProvider.loadMap(
                                             context.getConnection(),
                                             tableName,
-                                            config,
+                                            queryConfig,
                                             visualizationItem,
                                             availableTables
 
@@ -390,7 +417,7 @@ public class DashboardVisualComponent extends JPanel {
                                     dataProvider.loadTable(
                                             context.getConnection(),
                                             tableName,
-                                            config,
+                                            queryConfig,
                                             visualizationItem,
                                             availableTables
                                     );
@@ -422,7 +449,7 @@ public class DashboardVisualComponent extends JPanel {
                                 dataProvider.loadChart(
                                         context.getConnection(),
                                         tableName,
-                                        config,
+                                        queryConfig,
                                         visualizationItem,
                                         availableTables
                                 );
@@ -1166,7 +1193,7 @@ public class DashboardVisualComponent extends JPanel {
                     );
 
             g2.setColor(
-                    DashboardTheme.ACCENT_LIGHT
+                    DashboardTheme.CANVAS_BG
             );
 
             g2.fill(shape);
@@ -1195,6 +1222,18 @@ public class DashboardVisualComponent extends JPanel {
         } finally {
 
             g2.dispose();
+        }
+    }
+
+    @Override
+    protected void paintChildren(Graphics g) {
+        Graphics2D copy = (Graphics2D) g.create();
+        try {
+            copy.clip(new RoundRectangle2D.Double(1, 1, Math.max(0, getWidth() - 2),
+                    Math.max(0, getHeight() - 2), RADIUS, RADIUS));
+            super.paintChildren(copy);
+        } finally {
+            copy.dispose();
         }
     }
 
@@ -1308,7 +1347,7 @@ public class DashboardVisualComponent extends JPanel {
 
         renderer.updateConfig(config);
 
-        refreshDataIfNeeded();
+        scheduleDataRefresh();
 
         updateDisplayState();
     }

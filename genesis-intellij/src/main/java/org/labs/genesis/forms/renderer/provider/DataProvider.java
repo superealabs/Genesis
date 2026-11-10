@@ -687,71 +687,19 @@ public class DataProvider {
 
         Result<?> result = executeDashboardQuery(connection, dsl, query, commonPlan, item.name);
 
-        return convertTableResult(
-                result,
-                config
-        );
+        return convertTableResult(result);
     }
 
     // =========================================================================
     // TABLE RESULT
     // =========================================================================
 
-    private TableData convertTableResult(
-            Result<?> result,
-            VisualizationConfig config
-    ) {
+    private TableData convertTableResult(Result<?> result) {
         List<String> columns = new ArrayList<>();
         List<List<Object>> rows = new ArrayList<>();
 
-        Map<String, String> configuredHeaders = null;
-        Object headersObj = config.getValue("columnsHeaders");
-
-        if (headersObj instanceof Map<?, ?> map) {
-
-            configuredHeaders = new HashMap<>();
-
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-
-                if (entry.getKey() instanceof String key
-                        && entry.getValue() instanceof String value) {
-
-                    if (key.contains(":")) {
-                        key = key.substring(
-                                key.lastIndexOf(":") + 1
-                        );
-                    }
-
-                    if (key.contains(".")) {
-                        key = key.substring(
-                                key.lastIndexOf(".") + 1
-                        );
-                    }
-
-                    configuredHeaders.put(
-                            key,
-                            value
-                    );
-                }
-            }
-        }
-
         for (Field<?> field : result.fields()) {
-
-            String fieldName =
-                    field.getName();
-
-            if (configuredHeaders != null
-                    && configuredHeaders.containsKey(fieldName)) {
-
-                columns.add(
-                        configuredHeaders.get(fieldName)
-                );
-
-            } else {
-
-                columns.add(fieldName);
-            }
+            columns.add(field.getName());
         }
 
         for (Record record : result) {

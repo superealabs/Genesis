@@ -14,7 +14,7 @@ ${additionalImports}
 <form class="form">
     {{#each fields}}
     <div class="form-group">
-        <label for="${this.name}">${this.name}</label>
+        <label for="${this.name}">{{#if this.isForeignKey}}${this.type}{{else}}${this.name}{{/if}}</label>
         <div class="info">
 
             {{#if this.type = byte[]}}

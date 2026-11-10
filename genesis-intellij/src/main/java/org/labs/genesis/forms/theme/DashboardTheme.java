@@ -1,39 +1,40 @@
 package org.labs.genesis.forms.theme;
 
+import com.intellij.ui.JBColor;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public final class DashboardTheme {
 
-    // Couleurs principales
-    public static final Color BACKGROUND = new Color(43, 43, 43);
-    public static final Color SURFACE = new Color(30, 31, 34);
-    public static final Color SURFACE_2 = new Color(37, 38, 42);
-    public static final Color SURFACE_ACTIVE = new Color(58, 61, 68);
-    public static final Color BORDER = new Color(70, 72, 78);
-    public static final Color TEXT = new Color(220, 223, 228);
-    public static final Color TEXT_DARK = new Color(48, 47, 47);
-    public static final Color TEXT_DARK_SECONDARY = new Color(90, 90, 96);
-    public static final Color TEXT_SECONDARY = new Color(150, 154, 162);
-    public static final Color TEXT_DISABLED = new Color(100, 103, 110);
-    public static final Color SURFACE_HOVER = new Color(43, 45, 50);
-    public static final Color TAB_HOVER = new Color(48, 50, 56);
-    public static final Color BORDER_SUBTLE = new Color(54, 56, 62);
+    // Resolve colors through the active IntelliJ theme, including after a theme switch.
+    public static final Color BACKGROUND = JBColor.namedColor("Panel.background", 0xF7F8FA, 0x2B2D30);
+    public static final Color SURFACE = JBColor.namedColor("ToolWindow.background", 0xFFFFFF, 0x1E1F22);
+    public static final Color SURFACE_2 = JBColor.namedColor("Popup.background", 0xF2F3F5, 0x25262A);
+    public static final Color SURFACE_ACTIVE = JBColor.namedColor("List.selectionBackground", 0xDCEBFF, 0x3A3D44);
+    public static final Color BORDER = JBColor.namedColor("Component.borderColor", 0xCDD0D6, 0x46484E);
+    public static final Color TEXT = JBColor.namedColor("Label.foreground", 0x303030, 0xDCDFE4);
+    // Legacy names retained for renderers; preview text follows the active theme too.
+    public static final Color TEXT_DARK = TEXT;
+    public static final Color TEXT_DARK_SECONDARY = JBColor.namedColor("Label.infoForeground", 0x5A5A60, 0xADB0B8);
+    public static final Color TEXT_SECONDARY = TEXT_DARK_SECONDARY;
+    public static final Color TEXT_DISABLED = JBColor.namedColor("Label.disabledForeground", 0x8C8F94, 0x64676E);
+    public static final Color SURFACE_HOVER = JBColor.namedColor("List.hoverBackground", 0xE9EDF3, 0x2B2D32);
+    public static final Color TAB_HOVER = SURFACE_HOVER;
+    public static final Color BORDER_SUBTLE = JBColor.namedColor("Separator.foreground", 0xDEE1E6, 0x36383E);
 
-    // Couleurs Canvas (pour les zones de dessin)
-    public static final Color CANVAS_BG = new Color(245, 246, 248);
-    public static final Color CANVAS_BORDER = new Color(171, 171, 175);
-    public static final Color GRID_COLOR = new Color(225, 228, 232);
-    public static final Color TEXT_MUTED = new Color(160, 160, 160);
+    public static final Color CANVAS_BG = JBColor.namedColor("EditorPane.background", 0xFFFFFF, 0x1E1F22);
+    public static final Color CANVAS_BORDER = BORDER;
+    public static final Color GRID_COLOR = JBColor.namedColor("Component.borderColor", 0xE1E4E8, 0x36383E);
+    public static final Color TEXT_MUTED = TEXT_DISABLED;
 
-    // Couleurs d'accentuation
-    public static final Color ACCENT = new Color(66, 133, 244);
-    public static final Color ACCENT_HOVER = new Color(52, 115, 220);
-    public static final Color ACCENT_LIGHT = new Color(232, 240, 254);
-    public static final Color SUCCESS = new Color(52, 168, 83);
-    public static final Color WARNING = new Color(251, 188, 5);
-    public static final Color ERROR = new Color(234, 67, 53);
+    public static final Color ACCENT = JBColor.namedColor("Component.focusColor", 0x4285F4, 0x6B9BFA);
+    public static final Color ACCENT_HOVER = JBColor.namedColor("Link.activeForeground", 0x3473DC, 0x8AB4FF);
+    public static final Color ACCENT_LIGHT = JBColor.namedColor("TableHeader.background", 0xE8F0FE, 0x2D3442);
+    public static final Color SUCCESS = JBColor.namedColor("Label.successForeground", 0x248A3D, 0x73BD79);
+    public static final Color WARNING = JBColor.namedColor("Label.warningForeground", 0xA66B00, 0xEBC158);
+    public static final Color ERROR = JBColor.namedColor("Label.errorForeground", 0xC93C3C, 0xF08080);
 
     // Dimensions
     public static final int EXPANDED_WIDTH = 280;
@@ -75,6 +76,6 @@ public final class DashboardTheme {
 
     // Nouvelle méthode utilitaire pour les couleurs avec alpha
     public static Color withAlpha(Color color, int alpha) {
-        return new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
+        return JBColor.lazy(() -> new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
     }
 }

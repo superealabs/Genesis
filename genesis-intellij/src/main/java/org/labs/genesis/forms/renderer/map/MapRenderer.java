@@ -55,6 +55,7 @@ public class MapRenderer extends AbstractComponentRenderer {
     }
 
     private void updateMap() {
+        if (browser == null) return;
 
         MapData loading = getMapLoading();
 
@@ -523,12 +524,15 @@ public class MapRenderer extends AbstractComponentRenderer {
 
             sb.append("\"markerType\":");
 
-            if (point.markerType() == null) {
+            String markerType = point.markerType();
+            String configuredType = config != null ? config.getString("markerType") : null;
+            if (configuredType != null && !configuredType.isBlank()) {
+                markerType = "PIN".equalsIgnoreCase(configuredType.trim()) ? "PIN" : "BUBBLE";
+            }
+            if (markerType == null) {
                 sb.append("null");
             } else {
-                sb.append('"')
-                        .append(escapeJson(point.markerType()))
-                        .append('"');
+                sb.append('"').append(escapeJson(markerType)).append('"');
             }
 
             sb.append(',');

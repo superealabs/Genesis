@@ -12,7 +12,7 @@ import java.util.Locale;
 
 public class DonutChartRenderer extends AbstractChartRenderer {
 
-    private static final Color GAP_COLOR = new Color(255, 255, 255, 225);
+    private static final Color GAP_COLOR = DashboardTheme.CANVAS_BG;
 
     private enum LegendLayout { BOTTOM_ROW, RIGHT_COLUMN, HIDDEN }
 

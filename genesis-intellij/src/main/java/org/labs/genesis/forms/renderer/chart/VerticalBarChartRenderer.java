@@ -11,9 +11,9 @@ import java.util.List;
 public class VerticalBarChartRenderer extends AbstractChartRenderer {
 
     private static final Color BAR_COLOR = DashboardTheme.ACCENT;
-    private static final Color GRID_COLOR = new Color(203, 213, 225);
-    private static final Color AXIS_COLOR = new Color(100, 116, 139);
-    private static final Color LABEL_COLOR = new Color(71, 85, 105);
+    private static final Color GRID_COLOR = DashboardTheme.GRID_COLOR;
+    private static final Color AXIS_COLOR = DashboardTheme.TEXT_SECONDARY;
+    private static final Color LABEL_COLOR = DashboardTheme.TEXT_DARK;
     private static final Color MUTED_COLOR = DashboardTheme.TEXT_MUTED;
 
     // =========================== PAINT ===========================

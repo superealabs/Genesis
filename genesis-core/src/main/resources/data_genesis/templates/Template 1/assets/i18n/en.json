@@ -1,4 +1,6 @@
 {
+    "dashboard": "Dashboard",
+    "refresh": "Refresh",
     "language": "Language",
     "login": "Log in",
     "password": "Password",
