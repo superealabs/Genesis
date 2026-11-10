@@ -3,7 +3,6 @@ import type {
     TableMetadataDto, 
     RelationParameter, 
     ProjectConfig, 
-    ScriptConfig,
     GenerationParameter,
     LlmModelDto, 
     AiPromptPayload,
@@ -13,6 +12,8 @@ import type {
     GeneratorData,
     GenerationResult
 } from './generator.shared';
+
+import type { ScriptConfig, SqlExecutionResponse, SqlScriptRequest, SqlValidationResponse  } from './sql/sql.types';
 
 /**
  * Contrat du service générateur (Pure Interface).
@@ -36,6 +37,8 @@ export interface IGeneratorService {
     fetchAvailableLlmModels(): Promise<LlmModelDto[]>;
     generateAiScript(payload: AiPromptPayload): Promise<AiResponseDto>;
     saveScriptConfig(script: ScriptConfig): Promise<{ success: boolean; message: string }>;
+    validateSqlScript(request: SqlScriptRequest): Promise<SqlValidationResponse>;
+    executeSqlScript(request: SqlScriptRequest): Promise<SqlExecutionResponse>;
 
     // ═══ ÉTAPE 6 : SÉLECTION DES TABLES, VUES ET COMPOSANTS ═══
     fetchTablesMetadata(): Promise<TableMetadataDto[]>;

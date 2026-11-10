@@ -5,6 +5,7 @@ import type {
     ProjectConfig,
     DatabaseConfig,
     ScriptConfig,
+    SqlScriptRequest,
     GenerationParameter,
     AiPromptPayload,
     FrontendLayoutConfig,
@@ -172,6 +173,24 @@ export class GeneratorHandler {
             panel.webview.postMessage({ type: 'SCRIPT_CONFIG_SAVED', payload: result });
         } catch (error) {
             this.sendApiError(panel, 'SAVE_SCRIPT_CONFIG', error);
+        }
+    }
+
+    async handleValidateSqlScript(payload: SqlScriptRequest, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.validateSqlScript(payload);
+            panel.webview.postMessage({ type: 'SQL_SCRIPT_VALIDATED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'VALIDATE_SQL_SCRIPT', error);
+        }
+    }
+
+    async handleExecuteSqlScript(payload: SqlScriptRequest, panel: vscode.WebviewPanel): Promise<void> {
+        try {
+            const result = await this.service.executeSqlScript(payload);
+            panel.webview.postMessage({ type: 'SQL_SCRIPT_EXECUTED', payload: result });
+        } catch (error) {
+            this.sendApiError(panel, 'EXECUTE_SQL_SCRIPT', error);
         }
     }
 

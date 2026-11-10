@@ -110,6 +110,13 @@ export class WebviewMessageRouter {
                 case 'SAVE_SCRIPT_CONFIG':
                     await this.generatorHandler.handleSaveScriptConfig(message.payload, this.panel);
                     break;
+                case 'VALIDATE_SQL_SCRIPT':
+                    await this.generatorHandler.handleValidateSqlScript(message.payload, this.panel);
+                    break;
+                case 'EXECUTE_SQL_SCRIPT':
+                    await this.generatorHandler.handleExecuteSqlScript(message.payload, this.panel);
+                    break;
+
 
                 // ═══ GENERATOR : TABLES & RELATIONS (Étapes 6 & 7) ═══
                 case 'GET_TABLES_METADATA':

@@ -6,6 +6,9 @@ import type {
     ProjectConfig,
     DatabaseConfig,
     ScriptConfig,
+    SqlScriptRequest,             
+    SqlValidationResponse,        
+    SqlExecutionResponse,         
     GenerationParameter,
     LlmModelDto,
     AiPromptPayload,
@@ -150,6 +153,42 @@ export class GeneratorServiceVsc implements IGeneratorService {
 
             const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
                 if (data.command === 'SAVE_SCRIPT_CONFIG') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
+    validateSqlScript(request: SqlScriptRequest): Promise<SqlValidationResponse> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('VALIDATE_SQL_SCRIPT', request);
+
+            const cleanup = this.vscode.onMessage<SqlValidationResponse>(
+                'SQL_SCRIPT_VALIDATED',
+                (data) => { cleanup(); resolve(data); }
+            );
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'VALIDATE_SQL_SCRIPT') {
+                    cleanup(); errorCleanup();
+                    reject(new Error(data.message));
+                }
+            });
+        });
+    }
+
+    executeSqlScript(request: SqlScriptRequest): Promise<SqlExecutionResponse> {
+        return new Promise((resolve, reject) => {
+            this.vscode.sendMessage('EXECUTE_SQL_SCRIPT', request);
+
+            const cleanup = this.vscode.onMessage<SqlExecutionResponse>(
+                'SQL_SCRIPT_EXECUTED',
+                (data) => { cleanup(); resolve(data); }
+            );
+
+            const errorCleanup = this.vscode.onMessage<any>('API_ERROR', (data) => {
+                if (data.command === 'EXECUTE_SQL_SCRIPT') {
                     cleanup(); errorCleanup();
                     reject(new Error(data.message));
                 }

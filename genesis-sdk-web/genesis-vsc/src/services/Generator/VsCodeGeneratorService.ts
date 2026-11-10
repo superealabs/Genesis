@@ -9,6 +9,10 @@ import type {
     ProjectConfig,
     DatabaseConfig,
     ScriptConfig,
+    ScriptConfigResponse,
+    SqlScriptRequest,
+    SqlValidationResponse,
+    SqlExecutionResponse,
     GenerationParameter,
     LlmModelDto,
     AiPromptPayload,
@@ -283,15 +287,50 @@ export class VsCodeGeneratorService implements IGeneratorService {
         }
     }
 
-    async saveScriptConfig(script: ScriptConfig): Promise<{ success: boolean; message: string }> {
+    async saveScriptConfig(script: ScriptConfig): Promise<ScriptConfigResponse> {
         try {
             logger.log(LOG_CHANNEL, `💾 Sauvegarde du script: ${script.path}`, VsCodeGeneratorService.DEBUG);
-            const { data } = await getAxiosInstance().post<{ success: boolean; message: string }>('/generator/script-config', script);
+            const { data } = await getAxiosInstance().post<ScriptConfigResponse>(
+            '/generator/script-config',
+            script
+            );
             return data;
         } catch (error) {
             logger.log(LOG_CHANNEL, `❌ saveScriptConfig API échouée: ${(error as Error).message}`, VsCodeGeneratorService.DEBUG);
             throw error;
         }
+    }
+
+        // ═══ VALIDATION / EXÉCUTION SQL ═══
+
+    async validateSqlScript(request: SqlScriptRequest): Promise<SqlValidationResponse> {
+    try {
+        logger.log(LOG_CHANNEL, `🔍 Validation SQL (${request.script.length} chars)`, VsCodeGeneratorService.DEBUG);
+        const { data } = await getAxiosInstance().post<SqlValidationResponse>(
+        '/generator/sql/validate',
+        request
+        );
+        logger.log(LOG_CHANNEL, `✅ Validation SQL → valid=${data.valid}`, VsCodeGeneratorService.DEBUG);
+        return data;
+    } catch (error) {
+        logger.log(LOG_CHANNEL, `❌ validateSqlScript API échouée: ${(error as Error).message}`, VsCodeGeneratorService.DEBUG);
+        throw error;
+    }
+    }
+
+    async executeSqlScript(request: SqlScriptRequest): Promise<SqlExecutionResponse> {
+    try {
+        logger.log(LOG_CHANNEL, `▶️ Exécution SQL (${request.script.length} chars)`, VsCodeGeneratorService.DEBUG);
+        const { data } = await getAxiosInstance().post<SqlExecutionResponse>(
+        '/generator/sql/execute',
+        request
+        );
+        logger.log(LOG_CHANNEL, `✅ Exécution SQL → success=${data.success}`, VsCodeGeneratorService.DEBUG);
+        return data;
+    } catch (error) {
+        logger.log(LOG_CHANNEL, `❌ executeSqlScript API échouée: ${(error as Error).message}`, VsCodeGeneratorService.DEBUG);
+        throw error;
+    }
     }
 
     async saveGenerationParameters(params: GenerationParameter[]): Promise<{ success: boolean; message: string }> {

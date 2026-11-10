@@ -9,6 +9,8 @@ export * from './database.service.interface';
 export * from './generator.service.interface';
 export * from './frontend.service.interface';
 
+export * from './sql/sql.types';
+
 export * from './configStorage/config.service.interface';
 export * from './configStorage/config.types'
 

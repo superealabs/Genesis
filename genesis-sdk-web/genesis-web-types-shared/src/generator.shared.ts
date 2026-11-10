@@ -6,6 +6,7 @@ import type { Framework } from './framework.shared';
 import type { FrontendFramework } from './frontend.shared';
 import type { DatabaseConfig } from './database.shared';
 import { RepositoryConfig } from './repository';
+import { ScriptConfig } from './sql/sql.types';
 
 // ═══ Interfaces et Types (Purs, sans dépendance UI) ═══
 
@@ -24,11 +25,6 @@ export interface ProjectConfig {
     securityType: string;    // Ex: 'JWT', 'OAuth2', 'NONE'
     cacheProvider: string;   // Ex: 'Redis', 'NONE'
     hibernateDdlAuto?: string;
-}
-
-export interface ScriptConfig {
-    path: string;
-    content: string;
 }
 
 export interface TableMetadataDto {

@@ -36,6 +36,13 @@ import { defaultKeymap, indentWithTab }                         from '@codemirro
 import { sql }                                                  from '@codemirror/lang-sql';
 import { json }                                                 from '@codemirror/lang-json';
 
+import {
+    HighlightStyle,
+    syntaxHighlighting,
+} from '@codemirror/language';
+
+import { tags } from '@lezer/highlight';
+
 // ════════════════════════════════════════════════════════════
 // Props & Emits
 // ════════════════════════════════════════════════════════════
@@ -68,113 +75,144 @@ const charCount = computed(() => (props.modelValue || '').length);
 // ════════════════════════════════════════════════════════════
 // Thème Genesis — construit à partir des CSS vars du document
 // ════════════════════════════════════════════════════════════
-const getCssVar = (name: string) => {
-    return getComputedStyle(document.body)
-        .getPropertyValue(name)
-        .trim();
-};
+// const getCssVar = (name: string) => {
+//     return getComputedStyle(document.body)
+//         .getPropertyValue(name)
+//         .trim();
+// };
 
 function buildGenesisTheme(dark: boolean) {
-    const bg       = getCssVar('--color-bg-dark');
-    const bgPanel  = getCssVar('--color-bg-dark');
-    const fg       = getCssVar('--color-text'); // Assure-toi que --color-text existe, sinon utilise --color-text-muted ou #f8fafc
-    const fgMuted  = getCssVar('--color-text-muted');
-    const accent   = getCssVar('--color-accent');
-    const border   = getCssVar('--color-bg-neutral-genesis');
-
     return EditorView.theme({
-        // Conteneur principal — prend tout l'espace disponible
         '&': {
-            height:          '100%',
-            backgroundColor: bg,
-            color:           fg,
-            fontSize:        '13px',
-            fontFamily:      "var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace)",
+            height: '100%',
+            backgroundColor: 'var(--color-bg-dark, #ffffff)',
+            color: 'var(--color-text, #111111)',
+            fontSize: '13px',
+            fontFamily: 'var(--font-mono, monospace)',
         },
 
-        // Scroller — C'est ICI que le scroll interne est défini
         '.cm-scroller': {
-            overflow:   'auto',
-            height:     '100%',
-            fontFamily: "var(--font-mono, 'JetBrains Mono', 'Fira Code', monospace)",
+            overflow: 'auto',
+            height: '100%',
+            fontFamily: 'var(--font-mono, monospace)',
             lineHeight: '1.6',
         },
 
-        // Gouttière numéros de ligne
         '.cm-gutters': {
-            backgroundColor: bgPanel,
-            borderRight:     `none`,
-            color:           fgMuted,
-            paddingRight:    '8px',
+            backgroundColor: 'var(--color-bg-dark, var(--color-bg-dark))',
+            color: 'var(--color-text-muted, #888888)',
+            border: 'none',
+            paddingRight: '8px',
         },
+
         '.cm-lineNumbers .cm-gutterElement': {
             minWidth: '32px',
         },
+
         '.cm-activeLineGutter': {
             backgroundColor: 'transparent',
-            color:           accent,
+            color: 'var(--color-accent, #00aa66)',
         },
 
-        // Ligne active
         '.cm-activeLine': {
-            backgroundColor: dark
-                ? 'rgba(255,255,255,0.04)'
-                : 'rgba(0,0,0,0.03)',
+            backgroundColor: 'color-mix(in srgb, var(--color-secondary) 8%, transparent)',
         },
 
-        // Curseur
         '.cm-cursor': {
-            borderLeftColor: accent,
+            borderLeftColor: 'var(--color-neutral-light-genesis, #00aa66)',
         },
 
-        // Sélection
         '.cm-selectionBackground, ::selection': {
-            backgroundColor: dark
-                ? 'rgba(145,255,145,0.15)'
-                : 'rgba(0,120,60,0.15)',
+            backgroundColor: 'color-mix(in srgb, var(--color-secondary) 25%, transparent)',
         },
 
-        // Placeholder
+        '&.cm-focused .cm-selectionBackground': {
+            backgroundColor: 'color-mix(in srgb, var(--color-secondary) 30%, transparent)',
+        },
+
         '.cm-placeholder': {
-            color:   fgMuted,
-            opacity: '0.5',
+            color: 'var(--color-text-muted, #888888)',
+            opacity: '0.6',
         },
 
-        // Scrollbars webkit
         '.cm-scroller::-webkit-scrollbar': {
-            width: '8px', height: '8px',
+            width: '8px',
+            height: '8px',
         },
+
         '.cm-scroller::-webkit-scrollbar-track': {
             background: 'transparent',
         },
+
         '.cm-scroller::-webkit-scrollbar-thumb': {
-            backgroundColor: border,
-            borderRadius:    '9999px',
-            border:          '2px solid transparent',
-            backgroundClip:  'content-box',
+            backgroundColor: 'var(--color-bg-neutral-genesis, #aaaaaa)',
+            borderRadius: '9999px',
+            border: '2px solid transparent',
+            backgroundClip: 'content-box',
         },
+
         '.cm-scroller::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: accent,
+            backgroundColor: 'var(--color-accent, #00aa66)',
         },
+
     }, { dark });
 }
 
 // Tokens SQL colorés avec la couleur accent du thème
-function buildSyntaxHighlight(dark: boolean) {
-    const accent  = getCssVar('--color-accent') || 'hsl(145,100%,44%)';
-    const fg      = dark ? 'hsl(145,100%,94%)' : 'hsl(175,100%,4%)';
-    const fgMuted = dark ? 'hsl(145,100%,88%)' : 'hsl(175,100%,15%)';
+function buildSyntaxHighlight() {
+    return syntaxHighlighting(
+        HighlightStyle.define([
+            // Mots-clés SQL
+            {
+                tag: tags.keyword,
+                color: 'var(--color-primary)',
+                fontWeight: '600',
+            },
 
-    // On surcharge les classes hl- de CodeMirror
-    return EditorView.baseTheme({
-        '.ql-keyword, .tok-keyword':  { color: accent,  fontWeight: '600' },
-        '.tok-string':                { color: fg,       opacity: '0.85'   },
-        '.tok-number':                { color: fgMuted                     },
-        '.tok-comment':               { color: fgMuted,  fontStyle: 'italic', opacity: '0.6' },
-        '.tok-operator':              { color: fgMuted,  opacity: '0.8'    },
-        '.tok-typeName':              { color: accent,   opacity: '0.8'    },
-        '.tok-name':                  { color: fg                          },
-    });
+            // Chaînes de caractères
+            {
+                tag: tags.string,
+                color: 'var(--color-accent, var(--color-text))',
+            },
+
+            // Nombres
+            {
+                tag: tags.number,
+                color: 'var(--color-accent, var(--color-text))',
+            },
+
+            // Commentaires
+            {
+                tag: tags.comment,
+                color: 'var(--color-text-muted)',
+                fontStyle: 'italic',
+            },
+
+            // Opérateurs
+            {
+                tag: tags.operator,
+                color: 'var(--color-text-muted)',
+            },
+
+            // Types
+            {
+                tag: tags.typeName,
+                color: 'var(--color-secondary, var(--color-accent))',
+            },
+
+            // Propriétés JSON
+            {
+                tag: tags.propertyName,
+                color: 'var(--color-accent-text, var(--color-text))',
+            },
+            // Booléens et valeurs null
+            {
+                tag: [tags.bool, tags.null],
+                color: 'var(--color-accent)',
+                fontWeight: '600',
+            },
+        ])
+    );
 }
 
 // ════════════════════════════════════════════════════════════
@@ -209,7 +247,7 @@ function initEditor() {
             // Thème
             themeCompartment.of([
                 buildGenesisTheme(props.isDark),
-                buildSyntaxHighlight(props.isDark),
+                buildSyntaxHighlight(),
             ]),
 
             // Readonly
@@ -262,7 +300,7 @@ watch(() => props.isDark, (dark) => {
     editorView.value?.dispatch({
         effects: themeCompartment.reconfigure([
             buildGenesisTheme(dark),
-            buildSyntaxHighlight(dark),
+            buildSyntaxHighlight(),
         ]),
     });
 });
@@ -271,6 +309,12 @@ watch(() => props.isDark, (dark) => {
 watch(() => props.readonly, (ro) => {
     editorView.value?.dispatch({
         effects: readonlyCompartment.reconfigure(EditorState.readOnly.of(ro)),
+    });
+});
+
+watch(() => props.language, () => {
+    editorView.value?.dispatch({
+        effects: langCompartment.reconfigure(getLangExtension()),
     });
 });
 
@@ -360,7 +404,7 @@ onBeforeUnmount(() => editorView.value?.destroy());
     gap:           16px;
     padding:       4px 12px;
     background:    var(--color-bg-dark);
-    border-top:    2px solid var(--color-neutral-light-genesis);
+    border-top:    2px solid var(--color-bg-neutral-genesis);
     flex-shrink:   0;
 }
 
