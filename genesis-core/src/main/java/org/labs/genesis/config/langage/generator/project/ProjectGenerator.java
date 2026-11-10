@@ -346,7 +346,7 @@ public class ProjectGenerator {
         );
         System.out.println("Generating PROJECT FILESSS 2");
 
-        if(hasPoint) {
+        if (hasPoint && context.getFramework() != null && context.getFramework().getConditionalFiles() != null) {
             FilesEdit serializer = context.getFramework().getConditionalFiles().stream()
                     .filter(file -> "PointSerializer".equals(file.getFileType()))
                     .findFirst()
@@ -356,8 +356,12 @@ public class ProjectGenerator {
                     .findFirst()
                     .orElse(null);
 
-            addFile(projectFilesEditsHashMap, serializer, serializer.getDestinationPath());
-            addFile(projectFilesEditsHashMap, deserializer, serializer.getDestinationPath());
+            if (serializer != null && serializer.getDestinationPath() != null) {
+                addFile(projectFilesEditsHashMap, serializer, serializer.getDestinationPath());
+            }
+            if (deserializer != null && deserializer.getDestinationPath() != null) {
+                addFile(projectFilesEditsHashMap, deserializer, deserializer.getDestinationPath());
+            }
         }
 
         boolean useDocker = context != null && context.getDockerConfiguration() != null ? context.getDockerConfiguration().isUseDocker() : false;

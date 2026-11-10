@@ -50,25 +50,10 @@ public class FormConfigurationWizardStep extends ModuleWizardStep {
 
     @Override
     public void updateDataModel() {
-
-        TableMetadata selectedTable =
-                form.getSelectedTable();
-
-        List<ColumnMetadata> selectedColumns =
-                form.getSelectedColumns();
-
-        if (selectedTable == null) {
-            return;
+        if (generationContextManager != null && generationContextManager.getContext() != null) {
+            Map<String, Map<String, FieldConfiguration>> tables = form.getTablesConfiguration();
+            generationContextManager.getContext().setFormConfiguration(tables);
         }
-
-        /*
-         * Plus tard, ici :
-         *
-         * projectGenerationContext.set...
-         *
-         * Mais pour cette version de démonstration,
-         * on ne modifie pas encore le contexte.
-         */
     }
 
     @Override

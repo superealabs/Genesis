@@ -86,7 +86,9 @@ public class ProjectMetadataProvider {
             configFile.put("databaseHost", dbHost != null ? dbHost : "localhost");
             configFile.put("databasePort", dbPort != null ? dbPort : (database.getPort() != null ? database.getPort() : "3306"));
         }
-        configFile.putAll(frameworkOptions);
+        if (frameworkOptions != null) {
+            configFile.putAll(frameworkOptions);
+        }
 
         return configFile;
     }
@@ -111,8 +113,12 @@ public class ProjectMetadataProvider {
             Language language, Framework framework, Map<String, Object> langageConfiguration,
             Map<String, Object> frameworkConfiguration, boolean hasPoint) {
         HashMap<String, Object> dependencyFileMap = new HashMap<>();
-        dependencyFileMap.putAll(langageConfiguration);
-        dependencyFileMap.putAll(frameworkConfiguration);
+        if (langageConfiguration != null) {
+            dependencyFileMap.putAll(langageConfiguration);
+        }
+        if (frameworkConfiguration != null) {
+            dependencyFileMap.putAll(frameworkConfiguration);
+        }
         dependencyFileMap.put("projectDescription", projectDescription);
         boolean isOracleLegacy = database != null && "Oracle".equalsIgnoreCase(database.getName())
                 && database.getDatabaseMajorVersion() > 0 && database.getDatabaseMajorVersion() < 12;
@@ -184,7 +190,13 @@ public class ProjectMetadataProvider {
 
     private static @NotNull List<HashMap<String, String>> getDependenciesHashMaps(Framework framework) {
         List<HashMap<String, String>> dependencies = new ArrayList<>();
+        if (framework == null) {
+            return dependencies;
+        }
         List<Framework.Dependency> dependenciesList = framework.getDependencies();
+        if (dependenciesList == null) {
+            return dependencies;
+        }
 
         for (Framework.Dependency dependency : dependenciesList) {
             HashMap<String, String> dependencyMap = new HashMap<>();
@@ -201,6 +213,9 @@ public class ProjectMetadataProvider {
     private static List<HashMap<String, String>> getFrameworkSecurityDependenciesHashMaps(Framework framework,
             Map<String, Object> frameworkConfiguration) {
         List<HashMap<String, String>> dependencies = new ArrayList<>();
+        if (framework == null || frameworkConfiguration == null) {
+            return dependencies;
+        }
         String securityType = (String) frameworkConfiguration.get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
 
@@ -226,6 +241,9 @@ public class ProjectMetadataProvider {
     private static List<HashMap<String, String>> getFrameworkCachingDependenciesHashMaps(Framework framework,
             Map<String, Object> frameworkConfiguration) {
         List<HashMap<String, String>> dependencies = new ArrayList<>();
+        if (framework == null || frameworkConfiguration == null) {
+            return dependencies;
+        }
         String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
         Optional<FrameworkCaching> selectedCacheProviderOption = framework
                 .getSelectedCacheProviderByName(cacheProvider);
@@ -253,6 +271,9 @@ public class ProjectMetadataProvider {
     private static HashMap<String, Object> getFrameworkSecurityTrueBooleansHashMap(Framework framework,
             Map<String, Object> frameworkConfiguration) {
         HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
+        if (framework == null || frameworkConfiguration == null) {
+            return frameworkSecurityBooleanMetadata;
+        }
         String securityType = (String) frameworkConfiguration.get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
         selectedSecurityOption.ifPresent(security -> {
@@ -266,6 +287,9 @@ public class ProjectMetadataProvider {
     private static HashMap<String, Object> getFrameworkCachingTrueBooleansHashMap(Framework framework,
             Map<String, Object> frameworkConfiguration) {
         HashMap<String, Object> frameworkFrameworkCachingBooleanMetadata = new HashMap<>();
+        if (framework == null || frameworkConfiguration == null) {
+            return frameworkFrameworkCachingBooleanMetadata;
+        }
         String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
         Optional<FrameworkCaching> selectedFrameworkCachingOption = framework
                 .getSelectedCacheProviderByName(cacheProvider);
@@ -304,8 +328,8 @@ public class ProjectMetadataProvider {
         combinedMap.put("enableAuth", enableAuth);
         combinedMap.put("hasPoint", hasPoint);
 
-        if(framework.getId() == Constantes.NET_ID) {
-            if(database.getId() == Constantes.MySQL_ID) {
+        if (framework != null && framework.getId() == Constantes.NET_ID && database != null) {
+            if (database.getId() == Constantes.MySQL_ID) {
                 combinedMap.put("topologyProvider", "Pomelo.EntityFrameworkCore.MySql");
             } else if (database.getId() == Constantes.Oracle_ID) {
                 combinedMap.put("topologyProvider", "Oracle.EntityFrameworkCore");

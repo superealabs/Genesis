@@ -181,7 +181,9 @@ public class FormConfigurationForm {
             viewNames.addAll(context.getViewNames());
         }
 
-        this.tables = context.getEntityTables()
+        this.tables = context.getEntityTables() == null
+                ? List.of()
+                : context.getEntityTables()
                 .stream()
                 .filter(table -> table.getTableName() != null)
                 .filter(table ->

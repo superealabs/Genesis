@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -201,5 +202,52 @@ public class FieldConfiguration {
         }
 
         return conf.getValue();
+    }
+
+    public static FieldConfiguration findConfiguration(
+            Map<String, Map<String, FieldConfiguration>> formConfiguration,
+            String tableName,
+            ColumnMetadata field
+    ) {
+        if (formConfiguration == null || tableName == null || field == null) {
+            return null;
+        }
+
+        Map<String, FieldConfiguration> tableConfig = formConfiguration.get(tableName);
+        if (tableConfig == null) {
+            for (Map.Entry<String, Map<String, FieldConfiguration>> entry : formConfiguration.entrySet()) {
+                if (entry.getKey().equalsIgnoreCase(tableName)) {
+                    tableConfig = entry.getValue();
+                    break;
+                }
+            }
+        }
+        if (tableConfig == null) {
+            return null;
+        }
+
+        // 1. Priorité conventionnelle : referencedColumn (nom physique SQL)
+        String refCol = field.getReferencedColumn();
+        if (refCol != null && !refCol.isBlank()) {
+            FieldConfiguration config = tableConfig.get(refCol);
+            if (config != null) return config;
+        }
+
+        // 2. Fallback : name (nom d'attribut modèle / camelCase)
+        String name = field.getName();
+        if (name != null && !name.isBlank()) {
+            FieldConfiguration config = tableConfig.get(name);
+            if (config != null) return config;
+        }
+
+        // 3. Fallback insensible à la casse
+        for (Map.Entry<String, FieldConfiguration> entry : tableConfig.entrySet()) {
+            if ((refCol != null && entry.getKey().equalsIgnoreCase(refCol))
+                    || (name != null && entry.getKey().equalsIgnoreCase(name))) {
+                return entry.getValue();
+            }
+        }
+
+        return null;
     }
 }

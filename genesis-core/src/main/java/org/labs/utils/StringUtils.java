@@ -60,6 +60,13 @@ public class StringUtils {
         });
     }
 
+    public static String toSafeCamelCase(String string) {
+        if (string == null || string.isBlank()) return "";
+        return string.contains("_")
+                ? minStart(toCamelCase(string))
+                : minStart(string);
+    }
+
     public static String toPascalCase(String string) {
         if (string == null || string.isEmpty()) return string;
         return string.transform(s -> {

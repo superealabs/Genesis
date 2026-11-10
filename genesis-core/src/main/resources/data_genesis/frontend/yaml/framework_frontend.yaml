@@ -8197,7 +8197,6 @@
                   <tr class="text-primary-focus">
                     <th class="">#</th>
                     {{#each fields}}{{#if this.isPrimaryKey}}{{removeLine}}
-                    {{elseIf this.isParentForeignKey}}{{removeLine}}
                     {{elseIf this.type=none}}{{removeLine}}
                     {{elseIf this.isForeignKey}}
                     <th v-if="!isParentFK('${minStart(this.name)}', '${majStart(this.type)}')" class="">${formatReadable(this.name)}</th>

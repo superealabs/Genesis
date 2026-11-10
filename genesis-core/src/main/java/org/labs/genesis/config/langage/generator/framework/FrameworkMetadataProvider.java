@@ -674,9 +674,7 @@ public class FrameworkMetadataProvider {
         fieldMap.put("latitude", "");
         fieldMap.put("longitude", "");
 
-        FieldConfiguration configuredField = formConfiguration == null || tableName == null
-                ? null
-                : formConfiguration.getOrDefault(tableName, Map.of()).get(field.getReferencedColumn());
+        FieldConfiguration configuredField = FieldConfiguration.findConfiguration(formConfiguration, tableName, field);
         if (configuredField == null) {
             return null;
         }
@@ -690,14 +688,14 @@ public class FrameworkMetadataProvider {
             fieldMap.put("accepted-file", configuredField.getFileConfiguration());
             fieldMap.put("currency", configuredField.getCurrency());
             String latitude = configuredField.getLatitude();
-            if(latitude != null) {
-                fieldMap.put("longitude", "${minStart(this.name)}");
-                fieldMap.put("latitude", StringUtils.minStart(StringUtils.toCamelCase(latitude)));
+            if (latitude != null) {
+                fieldMap.put("longitude", StringUtils.toSafeCamelCase(field.getName()));
+                fieldMap.put("latitude", StringUtils.toSafeCamelCase(latitude));
             } else {
                 String longitude = configuredField.getLongitude();
-                if(longitude != null) {
-                    fieldMap.put("longitude", StringUtils.minStart(StringUtils.toCamelCase(longitude)));
-                    fieldMap.put("latitude", "${minStart(this.name)}");
+                if (longitude != null) {
+                    fieldMap.put("longitude", StringUtils.toSafeCamelCase(longitude));
+                    fieldMap.put("latitude", StringUtils.toSafeCamelCase(field.getName()));
                 }
             }
         }

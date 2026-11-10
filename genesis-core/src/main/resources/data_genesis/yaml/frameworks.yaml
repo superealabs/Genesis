@@ -2958,7 +2958,7 @@
         using System.Text.Json.Serialization;
         using NetTopologySuite.Geometries;
 
-        namespace TestVue.Serialization;
+        namespace ${majStart(projectName)}.Serialization;
 
         public class PointJsonConverter : JsonConverter<Point>
         {
@@ -3092,7 +3092,7 @@
         using ${majStart(projectName)}.Repositories.Interface;
         using ${majStart(projectName)}.Services.Implementation;
         using ${majStart(projectName)}.Services.Interface;
-        {{#if hasPoint}}using TestVue.Serialization;{{/if}}
+        {{#if hasPoint}}using ${majStart(projectName)}.Serialization;{{/if}}
         
         var builder = WebApplication.CreateBuilder(args);
         
