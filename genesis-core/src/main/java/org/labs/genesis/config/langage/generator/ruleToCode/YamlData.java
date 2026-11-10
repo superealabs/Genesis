@@ -70,6 +70,10 @@ public class YamlData {
                 return new String[] { "org.example", projectDir.getFileName().toString() };
             }
         }
+        if (frameworkId == 2) {
+            String projectName = projectDir.getFileName() != null ? projectDir.getFileName().toString() : "";
+            return new String[] { "", projectName };
+        }
         return null;
     }
 
@@ -103,19 +107,36 @@ public class YamlData {
     public File pathModel(String projectBasePath, String groupId, String projectName, int idFramework)
             throws Exception {
         if (idFramework == 1) { // Spring boot
-            File modelsDir = new File(projectBasePath.toString(),
-                    "src/main/java/" + groupId.replace('.', '/') + "/" + projectName + "/models");
-            if (!modelsDir.exists() || !modelsDir.isDirectory()) {
-                throw new RuntimeException("Path not foud projet Spring boot : " + modelsDir.getAbsolutePath());
+            String groupPath = groupId != null ? groupId.replace('.', '/') : "org/example";
+            String artifact = projectName != null ? projectName : "";
+            File[] candidates = new File[] {
+                    new File(projectBasePath, "src/main/java/" + groupPath + "/" + artifact + "/models"),
+                    new File(projectBasePath, artifact + "/src/main/java/" + groupPath + "/" + artifact + "/models"),
+                    new File(projectBasePath, "src/main/java/" + groupPath + "/models")
+            };
+            for (File candidate : candidates) {
+                if (candidate.exists() && candidate.isDirectory()) {
+                    return candidate;
+                }
             }
-            return modelsDir;
+            throw new RuntimeException("Path not found for Spring Boot project: " + candidates[0].getAbsolutePath());
         }
         if (idFramework == 2) { // .NET
-            File modelsDir = new File(projectBasePath.toString(), projectName + "/Models");
-            if (!modelsDir.exists() || !modelsDir.isDirectory()) {
-                throw new RuntimeException("Path not foud projet .NET : " + modelsDir.getAbsolutePath());
+            String majProject = projectName != null ? org.labs.utils.StringUtils.majStart(projectName) : "";
+            File[] candidates = new File[] {
+                    new File(projectBasePath, projectName + "/Models"),
+                    new File(projectBasePath, majProject + "/Models"),
+                    new File(projectBasePath, "Models"),
+                    new File(projectBasePath, projectName + "/models"),
+                    new File(projectBasePath, majProject + "/models"),
+                    new File(projectBasePath, "models")
+            };
+            for (File candidate : candidates) {
+                if (candidate.exists() && candidate.isDirectory()) {
+                    return candidate;
+                }
             }
-            return modelsDir;
+            throw new RuntimeException("Path not found for .NET project: " + candidates[0].getAbsolutePath());
         }
         return null;
     }
