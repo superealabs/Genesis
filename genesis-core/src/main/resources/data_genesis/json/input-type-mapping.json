@@ -16,7 +16,8 @@
       "int[]": "multiple-int",
       "string[]": "multiple-string",
       "byte[]": "file",
-      "System.Net.IPAddress": "text"
+      "System.Net.IPAddress": "text",
+      "org.locationtech.jts.geom.Point" : "map"
     },
     "validations": {
       "notNull": "required",
@@ -49,7 +50,8 @@
       "BooleanField": "radio",
       "ForeignKey": "select",
       "OneToOneField": "select",
-      "ManyToManyField": "select"
+      "ManyToManyField": "select",
+      "NetTopologySuite.Geometries.Point" : "map"
     },
     "validations": {
       "notNull": "required",

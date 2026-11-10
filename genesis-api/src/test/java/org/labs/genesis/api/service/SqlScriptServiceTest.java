@@ -13,7 +13,7 @@ import static org.mockito.Mockito.*;
 
 class SqlScriptServiceTest {
     @Test
-    void rejectsMissingConfirmationBeforeOpeningConnection() {
+    void rejectsMissingConfirmationBeforeOpeningConnection() throws Exception {
         var store = new GenerationContextStore();
         var database = mock(Database.class);
         store.getContext().setDatabase(database);
@@ -21,18 +21,32 @@ class SqlScriptServiceTest {
         assertThatThrownBy(() -> service.execute(new SqlScriptRequest("SELECT 1;", false)))
                 .isInstanceOfSatisfying(ResponseStatusException.class,
                         error -> assertThat(error.getStatusCode().value()).isEqualTo(400));
-        verifyNoInteractions(database);
+        verify(database, never()).getConnection(any());
+        verify(database, never()).getConnection(any(), any());
     }
 
     @Test
-    void savingScriptNeverOpensConnection() {
+    void savingScriptNeverOpensConnection() throws Exception {
         var store = new GenerationContextStore();
         var database = mock(Database.class);
         store.getContext().setDatabase(database);
         var service = new SqlScriptService(store, true);
-        assertThat(service.saveScriptConfig(new ScriptConfigRequest("", "CREATE TABLE test(id INT);"))
+        String sql = "CREATE TABLE test(id INT);";
+        assertThat(service.saveScriptConfig(new ScriptConfigRequest("", sql))
                 .success()).isTrue();
-        verifyNoInteractions(database);
+        assertThat(store.getContext().getSqlScript()).isEqualTo(sql);
+        verify(database, never()).getConnection(any());
+        verify(database, never()).getConnection(any(), any());
+    }
+
+    @Test
+    void savingBlankScriptClearsContext() {
+        var store = new GenerationContextStore();
+        store.getContext().setSqlScript("CREATE TABLE old(id INT);");
+        var service = new SqlScriptService(store, true);
+        assertThat(service.saveScriptConfig(new ScriptConfigRequest("", ""))
+                .success()).isTrue();
+        assertThat(store.getContext().getSqlScript()).isNull();
     }
 
     @Test

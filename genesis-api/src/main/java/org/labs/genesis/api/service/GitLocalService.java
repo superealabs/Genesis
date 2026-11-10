@@ -2,7 +2,7 @@ package org.labs.genesis.api.service;
 
 import org.labs.genesis.api.context.GenerationContextStore;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.config.tools.GitConfiguration;
 import org.labs.genesis.config.langage.FilesEdit;
 import org.labs.genesis.config.langage.FrameworkMVC;
 import org.labs.genesis.api.dto.GitDtos.GitConfigRequest;
@@ -77,7 +77,7 @@ public class GitLocalService {
         Path root = Path.of(context.getDestinationFolder()).toAbsolutePath().normalize();
         FilesEdit backendIgnore = GitUtils.getGitIgnore(context.getFramework().getConditionalFiles());
 
-        Path backend = context.getFramework() instanceof FrameworkMVC ? root : Path.of(backendIgnore == null ? root + "/" + StringUtils.majStart(context.getProjectName()) : ProjectGenerator.engine.simpleRender(backendIgnore.getDestinationPath(), Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))).toAbsolutePath().normalize();
+        Path backend = context.getFramework() instanceof FrameworkMVC ? root : Path.of(backendIgnore == null || backendIgnore.getDestinationPath() == null || backendIgnore.getDestinationPath().isBlank() ? root + "/" + StringUtils.majStart(context.getProjectName()) : ProjectGenerator.engine.simpleRender(backendIgnore.getDestinationPath(), Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))).toAbsolutePath().normalize();
         List<IgnoreFile> ignores = new ArrayList<>();
         if (backendIgnore != null)
             ignores.add(new IgnoreFile(backend, backendIgnore.getContent()));

@@ -1,6 +1,7 @@
 package org.labs.genesis.config.langage.generator.project;
 
 import org.jetbrains.annotations.NotNull;
+import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
@@ -11,7 +12,8 @@ import java.util.*;
 public class ProjectMetadataProvider {
     private static final GenesisTemplateEngine engine = new GenesisTemplateEngine();
 
-    public static HashMap<String, Object> getInitialHashMap(String destinationFolder, String projectName, String groupLink) {
+    public static HashMap<String, Object> getInitialHashMap(String destinationFolder, String projectName,
+            String groupLink) {
         HashMap<String, Object> metadata = new HashMap<>();
         metadata.put("destinationFolder", destinationFolder);
         metadata.put("projectName", projectName);
@@ -20,50 +22,83 @@ public class ProjectMetadataProvider {
         return metadata;
     }
 
-    public static HashMap<String, Object> getConfigFileHashMap(String projectPort, Database database, Credentials credentials, Language language, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
+    public static HashMap<String, Object> getConfigFileHashMap(String projectName, String projectPort, Database database,
+            Credentials credentials, Language language, Framework framework, Map<String, Object> frameworkOptions)
+            throws Exception {
         HashMap<String, Object> configFile = new HashMap<>();
         configFile.put("projectPort", projectPort);
 
         if (framework.getUseDB()) {
-            System.out.println(" id language = "+language.getId()+ " database "+database.getName());
+            System.out.println(" id language = " + language.getId() + " database " + database.getName());
             String databaseUrl = database.getConnectionString().get(language.getId());
             System.out.println("Database URL: " + databaseUrl);
-            Map<String, Object> databaseMetadata = database.getDatabaseMetadataHashMap(credentials);
-            if(databaseMetadata.get("database").equals(""))
-            {
-                databaseMetadata.put("database",credentials.getSID().toLowerCase());
+
+            Map<String, Object> databaseMetadata;
+            String dbUser;
+            String dbPassword;
+            String dbName;
+            String dbHost;
+            String dbPort;
+
+            if (credentials == null) {
+                // Choix Script SQL (sans credentials JDBC)
+                databaseMetadata = database.getDatabaseMetadataHashMapFromScript(projectName);
+                dbUser = (String) databaseMetadata.get("username");
+                dbPassword = (String) databaseMetadata.get("password");
+                dbName = (String) databaseMetadata.get("database");
+                dbHost = (String) databaseMetadata.get("host");
+                dbPort = (String) databaseMetadata.get("port");
+            } else {
+                // Choix Base de données connectée (mode JDBC classique)
+                databaseMetadata = database.getDatabaseMetadataHashMap(credentials);
+                if (databaseMetadata.get("database") != null && databaseMetadata.get("database").equals("")) {
+                    databaseMetadata.put("database", credentials.getSID() != null ? credentials.getSID().toLowerCase() : "");
+                }
+                dbUser = database.getCredentials() != null ? database.getCredentials().getUser() : credentials.getUser();
+                dbPassword = database.getCredentials() != null ? database.getCredentials().getPwd() : credentials.getPwd();
+                dbName = database.getCredentials() != null ? database.getCredentials().getDatabaseName() : credentials.getDatabaseName();
+                dbHost = database.getCredentials() != null ? database.getCredentials().getHost() : credentials.getHost();
+                dbPort = database.getCredentials() != null ? database.getCredentials().getPort() : credentials.getPort();
             }
+
             databaseUrl = engine.render(databaseUrl, databaseMetadata);
 
             configFile.put("databaseUrl", databaseUrl);
-            configFile.put("databaseUsername", database.getCredentials().getUser());
-            configFile.put("databasePassword", database.getCredentials().getPwd());
+            configFile.put("databaseUsername", dbUser != null ? dbUser : "");
+            configFile.put("databasePassword", dbPassword != null ? dbPassword : "");
             configFile.put("databaseType", database.getName());
-            configFile.put("databaseVersion", database.getDriverVersion());
-            boolean isOracleLegacy = "Oracle".equalsIgnoreCase(database.getName()) && database.getDatabaseMajorVersion() > 0 && database.getDatabaseMajorVersion() < 12;
+            configFile.put("databaseVersion", database.getDriverVersion() != null ? database.getDriverVersion() : "");
+            boolean isOracleLegacy = "Oracle".equalsIgnoreCase(database.getName())
+                    && database.getDatabaseMajorVersion() > 0 && database.getDatabaseMajorVersion() < 12;
             String hibernateDialect;
             if (isOracleLegacy) {
-                hibernateDialect =
-                        "org.hibernate.community.dialect.OracleLegacyDialect";
+                hibernateDialect = "org.hibernate.community.dialect.OracleLegacyDialect";
             } else {
-                hibernateDialect =
-                        "org.hibernate.dialect."
-                                + database.getName().replaceAll("\\s+", "")
-                                + "Dialect";
+                hibernateDialect = "org.hibernate.dialect."
+                        + database.getName().replaceAll("\\s+", "")
+                        + "Dialect";
             }
             configFile.put("isOracleLegacy", isOracleLegacy);
             configFile.put("hibernateDialect", hibernateDialect);
             // Django-specific database configuration
             configFile.put("databaseEngine", getDjangoDatabaseEngine(database.getName()));
-            configFile.put("databaseName", database.getCredentials().getDatabaseName());
-            // configFile.put("databaseUser", database.getCredentials().getUser());
-            configFile.put("databaseHost", database.getCredentials().getHost());
-            configFile.put("databasePort", database.getCredentials().getPort());
+            configFile.put("databaseName", dbName != null ? dbName : "app_db");
+            configFile.put("databaseHost", dbHost != null ? dbHost : "localhost");
+            configFile.put("databasePort", dbPort != null ? dbPort : (database.getPort() != null ? database.getPort() : "3306"));
         }
-        configFile.putAll(frameworkOptions);
+        if (frameworkOptions != null) {
+            configFile.putAll(frameworkOptions);
+        }
 
         return configFile;
     }
+
+    public static HashMap<String, Object> getConfigFileHashMap(String projectPort, Database database,
+            Credentials credentials, Language language, Framework framework, Map<String, Object> frameworkOptions)
+            throws Exception {
+        return getConfigFileHashMap(null, projectPort, database, credentials, language, framework, frameworkOptions);
+    }
+
     private static String getDjangoDatabaseEngine(String databaseType) {
         return switch (databaseType) {
             case "MySQL" -> "django.db.backends.mysql";
@@ -74,25 +109,36 @@ public class ProjectMetadataProvider {
         };
     }
 
-    public static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database, Language language, Framework framework, Map<String, Object> langageConfiguration, Map<String, Object> frameworkConfiguration) {
+    public static HashMap<String, Object> getDependencyFileHashMap(String projectDescription, Database database,
+            Language language, Framework framework, Map<String, Object> langageConfiguration,
+            Map<String, Object> frameworkConfiguration, boolean hasPoint) {
         HashMap<String, Object> dependencyFileMap = new HashMap<>();
-        dependencyFileMap.putAll(langageConfiguration);
-        dependencyFileMap.putAll(frameworkConfiguration);
+        if (langageConfiguration != null) {
+            dependencyFileMap.putAll(langageConfiguration);
+        }
+        if (frameworkConfiguration != null) {
+            dependencyFileMap.putAll(frameworkConfiguration);
+        }
         dependencyFileMap.put("projectDescription", projectDescription);
-        boolean isOracleLegacy = database != null && "Oracle".equalsIgnoreCase(database.getName()) && database.getDatabaseMajorVersion() > 0 && database.getDatabaseMajorVersion() < 12;
+        boolean isOracleLegacy = database != null && "Oracle".equalsIgnoreCase(database.getName())
+                && database.getDatabaseMajorVersion() > 0 && database.getDatabaseMajorVersion() < 12;
         dependencyFileMap.put("isOracleLegacy", isOracleLegacy);
         dependencyFileMap.put("useCloud", framework.getUseCloud());
         dependencyFileMap.put("useEurekaServer", framework.getUseEurekaServer());
         dependencyFileMap.put("useGatewaySecurity", framework.getUseGatewaySecurity());
 
         List<HashMap<String, String>> dependencies = getDependenciesHashMaps(framework);
-        List<HashMap<String, String>> additionalSecurityDependencies = getFrameworkSecurityDependenciesHashMaps(framework, frameworkConfiguration);
+        List<HashMap<String, String>> additionalSecurityDependencies = getFrameworkSecurityDependenciesHashMaps(
+                framework, frameworkConfiguration);
         List<HashMap<String, String>> allDependencies = new ArrayList<>();
         allDependencies.addAll(dependencies);
         allDependencies.addAll(additionalSecurityDependencies);
-        List<HashMap<String, String>> additionalCacheProviderDependencies = getFrameworkCachingDependenciesHashMaps(framework, frameworkConfiguration);
+        List<HashMap<String, String>> additionalCacheProviderDependencies = getFrameworkCachingDependenciesHashMaps(
+                framework, frameworkConfiguration);
         allDependencies.addAll(additionalCacheProviderDependencies);
         dependencyFileMap.put("isOracleLegacy", isOracleLegacy);
+
+        
         if (isOracleLegacy) {
             HashMap<String, String> oracleLegacyDependency = new HashMap<>();
             oracleLegacyDependency.put("groupId", "org.hibernate.orm");
@@ -101,10 +147,22 @@ public class ProjectMetadataProvider {
             oracleLegacyDependency.put("scope", "{{removeLine}}");
             allDependencies.add(oracleLegacyDependency);
         }
-        // Filter out Django from dependencies to avoid duplication in requirements.txt (Django is already added explicitly)
+        // Filter out Django from dependencies to avoid duplication in requirements.txt
+        // (Django is already added explicitly)
         if (framework.getCoreFramework() != null && framework.getCoreFramework().equalsIgnoreCase("Django")) {
             allDependencies.removeIf(dep -> "Django".equals(dep.get("artifactId")));
         }
+
+        if (framework.getCoreFramework() != null
+                && framework.getId() == Constantes.Spring_REST_API_ID
+                && !hasPoint) {
+
+            allDependencies.removeIf(dep ->
+                    "hibernate-spatial".equals(dep.get("artifactId"))
+                            || "jts-core".equals(dep.get("artifactId"))
+            );
+        }
+
         dependencyFileMap.put("dependencies", allDependencies);
 
         if (database != null && framework.getUseDB()) {
@@ -132,7 +190,13 @@ public class ProjectMetadataProvider {
 
     private static @NotNull List<HashMap<String, String>> getDependenciesHashMaps(Framework framework) {
         List<HashMap<String, String>> dependencies = new ArrayList<>();
+        if (framework == null) {
+            return dependencies;
+        }
         List<Framework.Dependency> dependenciesList = framework.getDependencies();
+        if (dependenciesList == null) {
+            return dependencies;
+        }
 
         for (Framework.Dependency dependency : dependenciesList) {
             HashMap<String, String> dependencyMap = new HashMap<>();
@@ -146,8 +210,12 @@ public class ProjectMetadataProvider {
         return dependencies;
     }
 
-    private static List<HashMap<String, String>> getFrameworkSecurityDependenciesHashMaps(Framework framework, Map<String, Object> frameworkConfiguration) {
+    private static List<HashMap<String, String>> getFrameworkSecurityDependenciesHashMaps(Framework framework,
+            Map<String, Object> frameworkConfiguration) {
         List<HashMap<String, String>> dependencies = new ArrayList<>();
+        if (framework == null || frameworkConfiguration == null) {
+            return dependencies;
+        }
         String securityType = (String) frameworkConfiguration.get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
 
@@ -169,10 +237,16 @@ public class ProjectMetadataProvider {
 
         return dependencies;
     }
-    private static List<HashMap<String, String>> getFrameworkCachingDependenciesHashMaps(Framework framework, Map<String, Object> frameworkConfiguration) {
+
+    private static List<HashMap<String, String>> getFrameworkCachingDependenciesHashMaps(Framework framework,
+            Map<String, Object> frameworkConfiguration) {
         List<HashMap<String, String>> dependencies = new ArrayList<>();
+        if (framework == null || frameworkConfiguration == null) {
+            return dependencies;
+        }
         String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
-        Optional<FrameworkCaching> selectedCacheProviderOption = framework.getSelectedCacheProviderByName(cacheProvider);
+        Optional<FrameworkCaching> selectedCacheProviderOption = framework
+                .getSelectedCacheProviderByName(cacheProvider);
 
         selectedCacheProviderOption.ifPresent(frameworkCaching -> {
             try {
@@ -194,37 +268,52 @@ public class ProjectMetadataProvider {
         return dependencies;
     }
 
-    private static HashMap<String, Object> getFrameworkSecurityTrueBooleansHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
+    private static HashMap<String, Object> getFrameworkSecurityTrueBooleansHashMap(Framework framework,
+            Map<String, Object> frameworkConfiguration) {
         HashMap<String, Object> frameworkSecurityBooleanMetadata = new HashMap<>();
+        if (framework == null || frameworkConfiguration == null) {
+            return frameworkSecurityBooleanMetadata;
+        }
         String securityType = (String) frameworkConfiguration.get("securityType");
         Optional<FrameworkSecurity> selectedSecurityOption = framework.getSelectedSecurityByName(securityType);
         selectedSecurityOption.ifPresent(security -> {
-            for(String key : security.getMetadataBooleanTrueKeys()){
+            for (String key : security.getMetadataBooleanTrueKeys()) {
                 frameworkSecurityBooleanMetadata.put(key, true);
             }
         });
         return frameworkSecurityBooleanMetadata;
     }
-    private static HashMap<String, Object> getFrameworkCachingTrueBooleansHashMap(Framework framework, Map<String, Object> frameworkConfiguration) {
+
+    private static HashMap<String, Object> getFrameworkCachingTrueBooleansHashMap(Framework framework,
+            Map<String, Object> frameworkConfiguration) {
         HashMap<String, Object> frameworkFrameworkCachingBooleanMetadata = new HashMap<>();
+        if (framework == null || frameworkConfiguration == null) {
+            return frameworkFrameworkCachingBooleanMetadata;
+        }
         String cacheProvider = (String) frameworkConfiguration.get("cacheProvider");
-        Optional<FrameworkCaching> selectedFrameworkCachingOption = framework.getSelectedCacheProviderByName(cacheProvider);
+        Optional<FrameworkCaching> selectedFrameworkCachingOption = framework
+                .getSelectedCacheProviderByName(cacheProvider);
         selectedFrameworkCachingOption.ifPresent(frameworkCaching -> {
-            for(String key : frameworkCaching.getMetadataBooleanTrueKeys()){
+            for (String key : frameworkCaching.getMetadataBooleanTrueKeys()) {
                 frameworkFrameworkCachingBooleanMetadata.put(key, true);
             }
         });
         return frameworkFrameworkCachingBooleanMetadata;
     }
 
-    public static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName, String groupLink, String projectPort, Database database, Credentials credentials, @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration, Framework framework, Map<String, Object> frameworkOptions) throws Exception {
+    public static HashMap<String, Object> getProjectFilesEditsHashMap(String destinationFolder, String projectName,
+            String groupLink, String projectPort, Database database, Credentials credentials,
+            @NotNull Language language, String projectDescription, Map<String, Object> langageConfiguration,
+            Framework framework, Map<String, Object> frameworkOptions, boolean hasPoint) throws Exception {
         HashMap<String, Object> combinedMap = new HashMap<>();
         System.out.println("Project files edits hashmap");
-        combinedMap.putAll(getConfigFileHashMap(projectPort, database, credentials, language, framework, frameworkOptions));
-        combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework, langageConfiguration, frameworkOptions));
+        combinedMap.putAll(
+                getConfigFileHashMap(projectName, projectPort, database, credentials, language, framework, frameworkOptions));
+        combinedMap.putAll(getDependencyFileHashMap(projectDescription, database, language, framework,
+                langageConfiguration, frameworkOptions, hasPoint));
         combinedMap.putAll(getInitialHashMap(destinationFolder, projectName, groupLink));
-        combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework,frameworkOptions));
-        combinedMap.putAll(getFrameworkCachingTrueBooleansHashMap(framework,frameworkOptions));
+        combinedMap.putAll(getFrameworkSecurityTrueBooleansHashMap(framework, frameworkOptions));
+        combinedMap.putAll(getFrameworkCachingTrueBooleansHashMap(framework, frameworkOptions));
 
         // Ajouter enableAuth dans les métadonnées (par défaut true si non spécifié)
         boolean enableAuth = true;
@@ -237,6 +326,19 @@ public class ProjectMetadataProvider {
             }
         }
         combinedMap.put("enableAuth", enableAuth);
+        combinedMap.put("hasPoint", hasPoint);
+
+        if (framework != null && framework.getId() == Constantes.NET_ID && database != null) {
+            if (database.getId() == Constantes.MySQL_ID) {
+                combinedMap.put("topologyProvider", "Pomelo.EntityFrameworkCore.MySql");
+            } else if (database.getId() == Constantes.Oracle_ID) {
+                combinedMap.put("topologyProvider", "Oracle.EntityFrameworkCore");
+            } else if (database.getId() == Constantes.SQL_Server_ID) {
+                combinedMap.put("topologyProvider", "Microsoft.EntityFrameworkCore.SqlServer");
+            } else if (database.getId() == Constantes.PostgreSQL_ID) {
+                combinedMap.put("topologyProvider", "Npgsql.EntityFrameworkCore.PostgreSQL");
+            }
+        }
 
         return combinedMap;
     }

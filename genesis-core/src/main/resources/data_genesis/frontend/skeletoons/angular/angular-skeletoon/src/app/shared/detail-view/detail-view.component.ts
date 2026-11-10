@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, HostListener, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { objectToRecord } from '../../../utilities/utilities';
 import { ConfirmationBoxComponent } from '../confirmation-box.component/confirmation-box.component';
@@ -6,12 +6,13 @@ import { Language,LanguageService } from '../services/language/language.service'
 import { MotherComponent } from '../mother-component/mother.component';
 import { Router } from '@angular/router';
 import { TranslateService } from '../services/language/translate.service';
-import {buildFileSource, getGeneratedFileName, isImageContent} from '../file-utils';
+import { DetailMapComponent } from './detail-map.component';
+import {buildFileSource, downloadFile, getFileSize, getGeneratedFileName, isImageContent} from '../file-utils';
 
 @Component({
   selector: 'app-detail-view',
   standalone: true,
-  imports: [CommonModule, ConfirmationBoxComponent],
+  imports: [CommonModule, ConfirmationBoxComponent, DetailMapComponent],
   templateUrl: './detail-view.component.html',
   styleUrls: ['./detail-view.component.css']
 })
@@ -19,8 +20,15 @@ export class DetailViewComponent extends MotherComponent implements OnChanges,On
   readonly buildFileSource = buildFileSource;
   readonly getGeneratedFileName = getGeneratedFileName;
   readonly isImageContent = isImageContent;
+  readonly getFileSize = getFileSize;
+  previewSource: string | null = null;
+  previewAlt = '';
+  downloadedFile: string | null = null;
+  private downloadFeedbackTimeout?: ReturnType<typeof setTimeout>;
   @Input() object: any = {};
   @Input() fieldTypes: Record<string, string> = {};
+  @Input() fieldUiTypes: Record<string, string> = {};
+  @Input() fieldMapConfig: Record<string, { geographic: boolean; latitude?: string; longitude?: string }> = {};
   @Input() id?: string = "";
   @Input() deletfn?: (id: string) => void;
   @Input() LinkContext:string="";
@@ -67,6 +75,9 @@ export class DetailViewComponent extends MotherComponent implements OnChanges,On
       .replace(/\s/g, '')
       .toLowerCase();
     return [
+      'bytea',
+      'blob',
+      'varbinary',
       'uint8array',
       'byte[]',
       'bytearray',
@@ -74,7 +85,30 @@ export class DetailViewComponent extends MotherComponent implements OnChanges,On
     ].includes(fieldType);
   }
 
+  mapPosition(fieldName: string): { latitude: number | string | null; longitude: number | string | null } {
+    const config = this.fieldMapConfig[fieldName];
+    const value = this.data[fieldName];
+    if (config?.geographic) {
+      return { latitude: value?.latitude ?? value?.lat ?? null, longitude: value?.longitude ?? value?.lng ?? null };
+    }
+    if (config?.latitude && config?.longitude) {
+      return { latitude: this.data[config.latitude] ?? null, longitude: this.data[config.longitude] ?? null };
+    }
+    return { latitude: value?.latitude ?? value?.lat ?? null, longitude: value?.longitude ?? value?.lng ?? null };
+  }
+
   get entries() {
     return Object.entries(this.data);
   }
+
+  openPreview(content: unknown, alt: string): void { this.previewSource = buildFileSource(content); this.previewAlt = alt; }
+  closePreview(): void { this.previewSource = null; }
+  downloadAsset(content: unknown): void {
+    const fileName = getGeneratedFileName(content);
+    downloadFile(content, fileName);
+    this.downloadedFile = fileName;
+    if (this.downloadFeedbackTimeout) clearTimeout(this.downloadFeedbackTimeout);
+    this.downloadFeedbackTimeout = setTimeout(() => this.downloadedFile = null, 1600);
+  }
+  @HostListener('document:keydown.escape') onEscape(): void { this.closePreview(); }
 }

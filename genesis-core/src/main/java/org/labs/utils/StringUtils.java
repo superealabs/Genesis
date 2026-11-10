@@ -17,7 +17,10 @@ public class StringUtils {
 
 
     public static String minStart(String string) {
-        return string.transform(s -> s.replaceFirst(String.valueOf(s.charAt(0)), String.valueOf(s.charAt(0)).toLowerCase()));
+        if (string == null || string.isEmpty()) {
+            return string;
+        }
+        return string.substring(0, 1).toLowerCase() + string.substring(1);
     }
 
 
@@ -57,7 +60,15 @@ public class StringUtils {
         });
     }
 
+    public static String toSafeCamelCase(String string) {
+        if (string == null || string.isBlank()) return "";
+        return string.contains("_")
+                ? minStart(toCamelCase(string))
+                : minStart(string);
+    }
+
     public static String toPascalCase(String string) {
+        if (string == null || string.isEmpty()) return string;
         return string.transform(s -> {
             // step 1 : normalizing by inserting separators where there is case change
             s = s.replaceAll("([a-z])([A-Z])", "$1_$2")         // factSales → fact_Sales

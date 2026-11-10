@@ -25,6 +25,12 @@ public class DatabaseController {
         return databaseConfigService.getEngines();
     }
 
+    @PostMapping({ "/api/database/{id}/select", "/api/generator/database/{id}/select" })
+    public java.util.Map<String, Object> selectDatabase(@PathVariable int id) {
+        databaseConfigService.selectEngine(id);
+        return java.util.Map.of("success", true, "id", id);
+    }
+
     // Test JDBC sans sauvegarde du contexte
     @PostMapping("/api/database/test-connection")
     public DatabaseConnectionTestResponse testConnection(@RequestBody DatabaseConfigRequest request) {

@@ -48,6 +48,7 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   // Domaine : Base de données - traçage pour détecter les changements
   const lastCommittedDatabaseConfig = ref<DatabaseConfig | null>(null);
+  const isScriptMode = ref(false);
 
   // Domaine : Étape 2 - Options de configuration projet (Listes dynamiques)
   const availableLoggingLevels = ref<string[]>([]);
@@ -328,6 +329,10 @@ function reset() {
       || last.username !== current.username;
   }
 
+  function setScriptMode(value: boolean) {
+    isScriptMode.value = value;
+  }
+
   // --- Étape 5 : Script / IA ---
   function updateScript<K extends keyof ScriptConfig>(key: K, value: ScriptConfig[K]) { 
     (stepperData.value.script as any)[key] = value; 
@@ -576,7 +581,7 @@ function reset() {
     // Étape 3 & 4 : Base de Données
     pendingDatabaseEngine, setPendingDatabaseEngine, setDatabaseEngine, updateDatabase,
     lastCommittedDatabaseConfig, setLastCommittedDatabaseConfig, hasDatabaseConfigChanged,
-    cancelPendingDatabaseChange,
+    cancelPendingDatabaseChange, isScriptMode, setScriptMode,
 
     // Étape 5 : Script / IA
     updateScript,

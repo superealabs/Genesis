@@ -2,7 +2,9 @@ package org.labs.genesis.config.langage.generator.project;
 
 import org.labs.genesis.config.Constantes;
 import org.labs.genesis.config.ProjectGenerationContext;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.config.form.FormConfiguration;
+import org.labs.genesis.config.tools.DockerConfiguration;
+import org.labs.genesis.config.tools.GitConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.framework.APIGenerator;
 import org.labs.genesis.config.langage.generator.framework.FrameworkMetadataProvider;
@@ -11,6 +13,7 @@ import org.labs.genesis.config.langage.generator.indicator.NoOpProgressReporter;
 import org.labs.genesis.config.langage.generator.indicator.ProgressReporter;
 import org.labs.genesis.config.langage.generator.sync.builder.GenesisContextBuilder;
 import org.labs.genesis.config.langage.generator.sync.models.GenesisContextModel;
+import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.frontend.generator.ViewsGenerator;
 import org.labs.genesis.connexion.Credentials;
@@ -24,12 +27,16 @@ import org.labs.genesis.frontend.generator.IFrontendGenerator;
 import org.labs.genesis.frontend.generator.IViewsGenerator;
 import org.labs.genesis.frontend.generator.frameworkFrontend.FrameworkFrontendMetadataProvider;
 import org.labs.genesis.frontend.generator.model.InterfaceLang;
+import org.labs.utils.DockerUtils;
 import org.labs.utils.FileUtils;
 import org.labs.utils.GitUtils;
 import org.labs.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,6 +57,8 @@ public class ProjectGenerator {
     public static final Map<Integer, FrontendLanguage> frontendLanguage;
     public static final Map<Integer, FrontendFramework> frontendFrameworks;
     public static final Map<Integer, InterfaceLang> langs;
+    public static final FormConfiguration formConfiguration;
+    public static final Map<String, FilesEdit> dockerConfs;
 
     static {
         try {
@@ -61,8 +70,13 @@ public class ProjectGenerator {
             languages = Arrays.stream(FileUtils.fromJson(Language[].class, Constantes.LANGUAGE_JSON))
                     .collect(Collectors.toMap(Language::getId, language -> language));
 
+            formConfiguration = FileUtils.fromJson(FormConfiguration.class, Constantes.FORM_CONFIGURATION_JSON);
+
             projects = Arrays.stream(FileUtils.fromYaml(Project[].class, Constantes.PROJECT_YAML))
                     .collect(Collectors.toMap(Project::getId, project -> project));
+
+            dockerConfs = Arrays.stream(FileUtils.fromYaml(FilesEdit[].class, Constantes.DOCKER_CONF_YAML))
+                    .collect(Collectors.toMap(FilesEdit::getFileName, dockerConf -> dockerConf));
 
             frameworks = Arrays.stream(FileUtils.fromYaml(Framework[].class, Constantes.FRAMEWORK_YAML))
                     .peek(framework -> {
@@ -276,6 +290,13 @@ public class ProjectGenerator {
         if (!context.isGenerateProjectStructure()){
             return;
         }
+
+        boolean hasPoint = entities != null
+                && entities.stream()
+                .filter(entity -> entity.getColumns() != null)
+                .flatMap(entity -> Arrays.stream(entity.getColumns()))
+                .anyMatch(ColumnMetadata::isGeographic);
+
         HashMap<String, Object> initializeHashMap = getInitialHashMap(
                 context.getDestinationFolder(),
                 context.getProjectName(),
@@ -294,13 +315,33 @@ public class ProjectGenerator {
                 context.getProjectDescription(),
                 context.getLanguageConfiguration(),
                 context.getFramework(),
-                context.getFrameworkConfiguration()
+                context.getFrameworkConfiguration(),
+                hasPoint
         );
         System.out.println("Generating PROJECT FILESSS 2");
 
+        if (hasPoint && context.getFramework() != null && context.getFramework().getConditionalFiles() != null) {
+            FilesEdit serializer = context.getFramework().getConditionalFiles().stream()
+                    .filter(file -> "PointSerializer".equals(file.getFileType()))
+                    .findFirst()
+                    .orElse(null);
+            FilesEdit deserializer = context.getFramework().getConditionalFiles().stream()
+                    .filter(file -> "PointDeserializer".equals(file.getFileType()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (serializer != null && serializer.getDestinationPath() != null) {
+                addFile(projectFilesEditsHashMap, serializer, serializer.getDestinationPath());
+            }
+            if (deserializer != null && deserializer.getDestinationPath() != null) {
+                addFile(projectFilesEditsHashMap, deserializer, deserializer.getDestinationPath());
+            }
+        }
+
+        boolean useDocker = context != null && context.getDockerConfiguration() != null ? context.getDockerConfiguration().isUseDocker() : false;
         if (context.getFramework().getUseDB()) {
             if (context.getFramework().getModelDao() != null) {
-                var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName());
+                var mapDaoGlobal = getHashMapDaoGlobal(context.getFramework(), entities, context.getProjectName(), useDocker);
                 projectFilesEditsHashMap.putAll(mapDaoGlobal);
             } else {
                 // For frameworks without ModelDao (like Django), still generate entitiesImports and entitiesAll
@@ -408,6 +449,16 @@ public class ProjectGenerator {
         }
     }
 
+    private static void addFile(HashMap<String, Object> projectFilesEditsHashMap, FilesEdit serializer, String destinationPath) throws Exception {
+        if(serializer != null) {
+            String serializerDestination = engine.simpleRender(destinationPath, projectFilesEditsHashMap);
+            String serializerContent = serializer.getContent() == null ? "" : serializer.getContent();
+            Path serializerTarget = Paths.get(serializerDestination, serializer.getFileName() + "." + serializer.getExtension());
+            FileUtils.createFileStructure(serializerDestination);
+            Files.writeString(serializerTarget, engine.render(serializerContent, projectFilesEditsHashMap));
+        }
+    }
+
     /**
      * Configure a Python virtual environment and installs requirements for Django projects
      */
@@ -483,20 +534,21 @@ public class ProjectGenerator {
 
         tableMetadata.setColumnsFrontendTypes(frontendLanguage, database);
         if (context.getFrontendGenerationOptions() != null && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT)) {
-            frontendGenerator.generateComponent(securityType,database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName,  generateComponentOnly);
+            frontendGenerator.generateComponent(securityType,database,frontendLanguage,frontendFramework,tableMetadata,webappFolder, projectName, generateComponentOnly, context.getFormConfiguration());
         }
 
         if (context.getFrontendGenerationOptions() != null && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT_SERVICE)) {
-            frontendGenerator.generateService(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly);
+            frontendGenerator.generateService(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly, context.getFormConfiguration());
         }
 
         if (context.getFrontendGenerationOptions() != null && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT_MODEL)) {
-            frontendGenerator.generateModel(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly);
+            frontendGenerator.generateModel(securityType, database, frontendLanguage, frontendFramework, tableMetadata, webappFolder, projectName, generateComponentOnly, context.getFormConfiguration());
         }
 
         if (generateRelationFiles && context.getFrontendGenerationOptions() != null
                 && context.getFrontendGenerationOptions().contains(ProjectGenerationContext.FRONTEND_COMPONENT)) {
-            HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(tableMetadata, webappFolder, projectName);
+            HashMap<String, Object> tableHashMapData = FrameworkFrontendMetadataProvider.getHashMapIntermediaire(
+                tableMetadata, webappFolder, projectName, context.getFormConfiguration());
             if (tableMetadata.getIsParent()) {
                 renderFilesEdits(frontendFramework.getMereFiles(), tableHashMapData);
             }
@@ -611,8 +663,9 @@ public class ProjectGenerator {
         }
 
         if (generateRelationFiles) {
-            HashMap<String, Object> tableHashMapData =
-                    FrameworkMetadataProvider.getHashMapIntermediaire(language, tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink);
+            HashMap<String, Object> tableHashMapData = FrameworkMetadataProvider.getHashMapIntermediaire(
+                language, tableMetadata, framework, frameworkOptions, renderedDestinationFolder, projectName, groupLink,
+                context.getFormConfiguration());
 
             if (tableMetadata.getIsParent()) {
                 renderFilesEdits(framework.getMereFiles(), tableHashMapData);
@@ -631,19 +684,18 @@ public class ProjectGenerator {
         generateProject(context, new NoOpProgressReporter());
     }
 
-    public void initGit(String path, boolean isCreateRemote, String repoName, String userName, String token) throws Exception {
+    public void initGit(String path, boolean isCreateRemote, String repoName, String userName, String token, boolean isPrivate) throws Exception {
         GitUtils.gitInit(path);
         GitUtils.gitAdd(path);
-        GitUtils.gitCommit(path, "Initialisation du projet");
+        GitUtils.gitSetMainBranch(path);
+        GitUtils.gitCommit(path, "chore: Initialize project setup");
 
         if(repoName != null && !repoName.isBlank() && userName != null && !userName.isBlank()) {
             GitUtils.gitRemote(path, userName, repoName);
         }
 
         if(isCreateRemote) {
-            try {
-                GitUtils.createRemoteRepo(token, repoName, false);
-            } catch (Exception e) {}
+            GitUtils.createRemoteRepo(token, repoName, isPrivate);
             GitUtils.gitPush(path, userName, token);
         }
     }
@@ -654,38 +706,72 @@ public class ProjectGenerator {
 
         Framework framework = context.getFramework();
         FrontendFramework frontendFramework = context.getFrontendFramework();
-        if (framework == null) {
-            return;
-        }
+        if (framework == null) return;
 
-        String projectPath = engine.simpleRender(context.getDestinationFolder(), Map.of("projectName", context.getProjectName()));
+        Map<String, Object> variables = Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder());
+
+        String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);
+        String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());
         String frontendPath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
 
-        FilesEdit backendGitIgnoreFile = GitUtils.getGitIgnore(framework.getConditionalFiles());
-        String backendPath = backendGitIgnoreFile != null ? engine.simpleRender(backendGitIgnoreFile.getDestinationPath(),
-                Map.of("projectName", context.getProjectName(), "destinationFolder", context.getDestinationFolder()))
-            : projectPath + "/" + StringUtils.majStart(context.getProjectName());
+        FilesEdit backendGitIgnoreFile = GitUtils.get(framework.getConditionalFiles(), ".gitignore");
 
         GitUtils.generateGitIgnoreIfNeeded(backendGitIgnoreFile, backendPath);
-
-        if(context.isGenerateProjectStructure()) {
-            if (frontendFramework == null) {
-                return;
-            }
-            FilesEdit frontendGitIgnoreFile = GitUtils.getGitIgnore(frontendFramework.getConditionalFiles());
+        if(context.isGenerateFrontendApp()) {
+            if (frontendFramework == null) return;
+            FilesEdit frontendGitIgnoreFile = GitUtils.get(frontendFramework.getConditionalFiles(), ".gitignore");
             GitUtils.generateGitIgnoreIfNeeded(frontendGitIgnoreFile, frontendPath);
         }
 
         if(config.isSeparateRepositories()) {
             initGit(backendPath, config.isCreateRemoteRepository(), config.getBackendRepositoryName(),
-                        config.getGithubUsername(), config.getGithubToken());
-            if(context.isGenerateProjectStructure()) {
+                        config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
+            if(context.isGenerateFrontendApp()) {
                 initGit(frontendPath, config.isCreateRemoteRepository(), config.getFrontendRepositoryName(),
-                        config.getGithubUsername(), config.getGithubToken());
+                        config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
             }
         } else {
             initGit(projectPath, config.isCreateRemoteRepository(), config.getRepositoryName(),
-                    config.getGithubUsername(), config.getGithubToken());
+                    config.getGithubUsername(), config.getGithubToken(), config.isRepositoryPrivate());
+        }
+    }
+
+    public void addDockerConfiguration(ProjectGenerationContext context) throws Exception {
+        DockerConfiguration config = context.getDockerConfiguration();
+        if(!config.isUseDocker()) return;
+
+        Framework framework = context.getFramework();
+        FrontendFramework frontendFramework = context.getFrontendFramework();
+        if (framework == null) return;
+
+        Map<String, Object> variables = DockerUtils.getVariables(context, config, framework, frontendFramework, engine);
+
+        String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);
+        String backendPath = projectPath + "/" + StringUtils.majStart(context.getProjectName());
+        String frontendPath = FrameworkFrontendMetadataProvider.getWebappFolder(context);
+
+        FilesEdit dockerCompose = dockerConfs.get("docker-compose");
+        String dockerComposeContent = engine.render(dockerCompose.getContent(), variables);
+        Path dockerComposePath = Paths.get(projectPath,
+                dockerCompose.getFileName() + "." + dockerCompose.getExtension());
+        Files.writeString(dockerComposePath, dockerComposeContent);
+
+        FilesEdit backendDockerFile = GitUtils.get(
+                framework.getConditionalFiles(), "DockerFile");
+        String backendDockerFileContent = engine.render(
+                backendDockerFile != null ? backendDockerFile.getContent() : "", variables);
+        Path backendDockerFilePath = Paths.get(backendPath, backendDockerFile != null ? backendDockerFile.getFileName() : "");
+        Files.writeString(backendDockerFilePath, backendDockerFileContent);
+
+        if(context.isGenerateFrontendApp()) {
+            if(frontendFramework == null) return;
+            FilesEdit frontendDockerFile = GitUtils.get(
+                    frontendFramework.getConditionalFiles(), "DockerFile");
+            String frontendDockerFileContent = engine.render(
+                    frontendDockerFile != null ? frontendDockerFile.getContent() : "", variables);
+            Path frontendDockerFilePath = Paths.get(
+                    frontendPath, frontendDockerFile.getFileName());
+            Files.writeString(frontendDockerFilePath, frontendDockerFileContent);
         }
     }
 
@@ -697,6 +783,7 @@ public class ProjectGenerator {
             generateComponentsOnly(context, indicator);
         }
         initGit(context);
+        addDockerConfiguration(context);
     }
     private  void generateFullBackendProject(ProjectGenerationContext context, List<TableMetadata> entities, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         GenesisGenerator genesisGenerator = new APIGenerator(ProjectGenerator.engine);
@@ -767,8 +854,15 @@ public class ProjectGenerator {
         Connection connection = context.getConnection();
 
         if (framework.getUseDB()) {
-            try (Connection connex = (connection != null) ? connection : database.getConnection(credentials)) {
-                List<TableMetadata> allEntities = generateFullProjectComponents(context, connex, false, indicator);
+            // Mode script SQL : connection=null mais tables déjà construites dans le contexte.
+            // Les gardes isEmpty() dans generateFullProjectComponents évitent tout appel DB.
+            boolean isScriptMode = connection == null
+                    && context.getSqlScript() != null
+                    && !context.getSqlScript().isBlank();
+
+            Connection connex = isScriptMode ? null : database.getConnection(credentials);
+            try (Connection c = (connection != null) ? connection : connex) {
+                List<TableMetadata> allEntities = generateFullProjectComponents(context, c, false, indicator);
                 generateFullProjectStrucutres(context, allEntities, indicator);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -781,13 +875,22 @@ public class ProjectGenerator {
 
     public List<TableMetadata> generateFullProjectComponents(ProjectGenerationContext context, Connection connex, boolean generateComponentOnly, ProgressReporter indicator) throws Exception {
         indicator.setProgress(0.2,"Fetching data from database...");
-        if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
-            indicator.setText2("Fetching tables");
-            context.setEntityTables(connex);
-        }
-        if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
-            indicator.setText("Fetching views");
-            context.setViewTables(connex);
+        if (connex != null) {
+            if (context.getEntityTables() == null || context.getEntityTables().isEmpty()) {
+                indicator.setText2("Fetching tables");
+                context.setEntityTables(connex);
+            }
+            if (context.getViewTables() == null || context.getViewTables().isEmpty()) {
+                indicator.setText("Fetching views");
+                context.setViewTables(connex);
+            }
+        } else {
+            if (context.getEntityTables() == null) {
+                context.setEntityTables(new ArrayList<>());
+            }
+            if (context.getViewTables() == null) {
+                context.setViewTables(new ArrayList<>());
+            }
         }
         indicator.setText2("Build all entities table");
         indicator.setFraction(0.25);

@@ -24,6 +24,21 @@ public class DatabaseConfigService {
         this.generationContextStore = generationContextStore;
     }
 
+    public synchronized void selectEngine(int engineId) {
+        Database database = ProjectGenerator.databases.get(engineId);
+        if (database == null) {
+            throw new DatabaseConfigException("Moteur de base de données introuvable : " + engineId);
+        }
+        ProjectGenerationContext context = generationContextStore.getContext();
+        context.setDatabase(database);
+        if (context.getSqlScript() != null && !context.getSqlScript().isBlank()) {
+            try {
+                context.setTables();
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     public List<DatabaseEngineResponse> getEngines() {
         return ProjectGenerator.databases.values()
                 .stream()

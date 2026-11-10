@@ -358,7 +358,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       }
     },
 
-    beforeNext: async (store) => {
+    beforeNext: async (store, { svc }) => {
       if (!store.pendingDatabaseEngine) {
         store.setWizardError("Veuillez sélectionner un moteur de base de données.");
         return false;
@@ -367,12 +367,26 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
       store.setDatabaseEngine(store.pendingDatabaseEngine);
       console.log(`[Wizard: database_select] Moteur BDD commit :`, store.pendingDatabaseEngine.name);
 
+      try {
+        if (store.pendingDatabaseEngine.id) {
+          await svc.selectDatabase(store.pendingDatabaseEngine.id);
+        }
+      } catch (error) {
+        console.warn("[Wizard: database_select] Erreur notification selectDatabase:", error);
+      }
+
       return true;
     }
   },
 
   database_config: {
     beforeNext: async (store, { dbsvc, svc }) => {
+      // Si l'utilisateur a choisi le mode script, pas de validation JDBC requise
+      if (store.isScriptMode) {
+        console.log("[Wizard: database_config] Mode script actif : passage sans connexion JDBC.");
+        return true;
+      }
+
       const db = toRaw(store.stepperData.database);
 
       console.log("BEFORE NEXT : DATABASE, CONFIG : ", db);
@@ -444,17 +458,18 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   },
 
   script: {
-    beforeNext: async (/* store, { svc } */) => {
-      // const script = store.stepperData.script;
-      
-      // if (script.path || script.content) {
-      //   try { 
-      //     await svc.saveScriptConfig(script); 
-      //   } catch (error) { 
-      //     console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error); 
-      //   }
-      // }
-      
+    beforeNext: async (store, { svc }) => {
+      const script = store.stepperData.script;
+
+      if (script && (script.path || script.content)) {
+        try {
+          await svc.saveScriptConfig(toRaw(script));
+          console.log("[Wizard: script] Script sauvegardé avec succès");
+        } catch (error) {
+          console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error);
+        }
+      }
+
       return true;
     },
     skipCascade: [] // Peut être sauté sans conséquence sur les autres

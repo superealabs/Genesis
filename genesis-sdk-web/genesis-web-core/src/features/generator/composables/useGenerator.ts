@@ -264,7 +264,7 @@ export function useGenerator() {
   }
 
   async function saveScript(): Promise<boolean> {
-    const script = store.stepperData.script;
+    const script = toRaw(store.stepperData.script);
     
     if (script.path || script.content) {
       try { 
@@ -579,6 +579,8 @@ export function useGenerator() {
     setPendingRepositoryProvider: store.setPendingRepositoryProvider,
     setDatabaseEngine: store.setDatabaseEngine,
     setSelectedFrontendFramework: store.setSelectedFrontendFramework,
+    isScriptMode: computed(() => store.isScriptMode),
+    setScriptMode: store.setScriptMode,
     
     updateConfig: store.updateConfig,
     updateDatabase: store.updateDatabase,

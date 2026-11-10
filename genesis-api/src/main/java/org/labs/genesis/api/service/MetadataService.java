@@ -26,6 +26,21 @@ public class MetadataService {
     public TablesMetadataResponse loadAll() {
         ProjectGenerationContext context = generationContextStore.getContext();
         validateMetadataContext(context);
+        boolean isScriptMode = context.getSqlScript() != null && !context.getSqlScript().isBlank();
+        if (isScriptMode) {
+            try {
+                context.setTables();
+                List<TableMetadataResponse> tableResponses = context.getEntityTables() == null
+                        ? List.of()
+                        : context.getEntityTables().stream().map(TableMetadataMapper::toResponse).toList();
+                List<TableMetadataResponse> viewResponses = context.getViewTables() == null
+                        ? List.of()
+                        : context.getViewTables().stream().map(TableMetadataMapper::toResponse).toList();
+                return new TablesMetadataResponse(tableResponses, viewResponses);
+            } catch (Exception exception) {
+                throw new MetadataException("Impossible de charger les métadonnées depuis le script : " + exception.getMessage());
+            }
+        }
         try {
             List<TableMetadata> tables = context.getDatabase().getEntities(context.getConnection(), context.getCredentials(), context.getLanguage(), context.getFramework());
             List<TableMetadata> views = context.getDatabase().getViews(context.getConnection(), context.getCredentials(), context.getLanguage(), context.getFramework());
@@ -46,6 +61,10 @@ public class MetadataService {
         }
         if (context.getDatabase() == null) {
             throw new MetadataException("Aucune base de données configurée");
+        }
+        boolean isScriptMode = context.getSqlScript() != null && !context.getSqlScript().isBlank();
+        if (isScriptMode) {
+            return;
         }
         if (context.getCredentials() == null) {
             throw new MetadataException("Aucun identifiant de connexion configuré");
@@ -97,11 +116,15 @@ public class MetadataService {
     }
 
     void validateSelectionContext(ProjectGenerationContext context) {
-        if (context.getDatabase() == null || context.getCredentials() == null || context.getConnection() == null) {
-            throw new TableSelectionException("La base de données doit être configurée avant la sélection");
-        }
         if (context.getFramework() == null || context.getLanguage() == null) {
             throw new TableSelectionException("Le framework doit être sélectionné avant la sélection des tables");
+        }
+        if (context.getDatabase() == null) {
+            throw new TableSelectionException("La base de données doit être configurée avant la sélection");
+        }
+        boolean isScriptMode = context.getSqlScript() != null && !context.getSqlScript().isBlank();
+        if (!isScriptMode && (context.getCredentials() == null || context.getConnection() == null)) {
+            throw new TableSelectionException("La base de données doit être configurée avant la sélection");
         }
     }
 
