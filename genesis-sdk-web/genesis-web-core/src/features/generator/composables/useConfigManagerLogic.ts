@@ -14,7 +14,7 @@ export interface ConfigLogicParams<TPayload = any> {
   watchSource: () => (string | undefined)[];
   applyValues: (values: string[]) => void;
   isApplyingRef: Ref<boolean>;
-  framework: Ref<{ id: number; name: string } | null | undefined>;
+  framework: Ref<{ id: number; name: string; coreFramework?: string } | null | undefined>;
   saveConfiguration: (config: GenesisConfig<TPayload>) => Promise<void>;
   deleteConfiguration: (id: string | number) => Promise<void>;
   persistedConfigs: Ref<GenesisConfig<any>[]>;
@@ -144,12 +144,14 @@ export function useConfigManagerLogic<TPayload = any>(params: ConfigLogicParams<
   };
 
   const handleRename = async (id: string | number, newName: string) => {
-    manager.renameConfiguration(id, newName);
+    const name = newName.trim();
+    if (!name) return;
+    manager.renameConfiguration(id, name);
     const existing = persistedConfigs.value.find(c => String(c.id) === String(id));
     if (existing && framework.value) {
       await saveConfiguration({
         ...existing,
-        name: newName,
+        name,
         payload: {
           ...(existing.payload as any),
           frameworkId: framework.value.id,
@@ -258,12 +260,21 @@ export function useConfigManagerLogic<TPayload = any>(params: ConfigLogicParams<
       }
 
       const payload = item.payload;
+      // APRÈS
       const isFrameworkBound = 'frameworkId' in payload || 'frameworkName' in payload;
-      if (isFrameworkBound && !(fw && (payload.frameworkId === fw.id || payload.frameworkName === fw.name))) {
-        const source = typeof payload.frameworkName === 'string' ? payload.frameworkName : `id ${String(payload.frameworkId)}`;
+      const sharedByCore = typeof payload.coreFramework === 'string';
+      const matchesFramework = sharedByCore
+        ? !!fw && payload.coreFramework === fw.coreFramework
+        : !!fw && (payload.frameworkId === fw.id || payload.frameworkName === fw.name);
+
+      if (isFrameworkBound && !matchesFramework) {
+        const source = sharedByCore
+          ? payload.coreFramework
+          : typeof payload.frameworkName === 'string' ? payload.frameworkName : `id ${String(payload.frameworkId)}`;
+        const current = sharedByCore ? fw?.coreFramework : fw?.name;
         skip(item, index, fw
-          ? `créée pour le framework « ${source} », alors que le framework courant est « ${fw.name} »`
-          : `liée au framework « ${source} », mais aucun framework n'est sélectionné`);
+          ? `créée pour ${sharedByCore ? 'le core framework' : 'le framework'} « ${source} », alors que ${sharedByCore ? 'le core framework courant' : 'le framework courant'} est « ${current} »`
+          : `liée au ${sharedByCore ? 'core framework' : 'framework'} « ${source} », mais aucun framework n'est sélectionné`);
         continue;
       }
 

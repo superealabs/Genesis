@@ -153,32 +153,27 @@ function reset() {
    * ⚠️ Ne touche PAS à `configFramework` : c'est le rôle de `resetFrameworkDependentConfig(next)`.
    *    Utilisez cette fonction pour nettoyer la config sans changer de framework.
    */
-  function resetFrameworkRelatedProjectConfig() {
+  // APRÈS
+  /** keepStack : on conserve versions du langage/framework, build tool et groupId (même coreFramework). */
+  function resetFrameworkRelatedProjectConfig(keepStack = false) {
     const initial = INITIAL_STATE.config;
-
-    // On ne reset QUE les champs dépendants du framework.
-    // Les champs utilisateur (projectName, projectLocation, projectDescription, projectPort)
-    // sont conservés.
-    updateConfig('languageVersion', initial.languageVersion);
-    updateConfig('buildTool', initial.buildTool);
-    updateConfig('groupId', initial.groupId);
-    updateConfig('frameworkVersion', initial.frameworkVersion);
+    if (!keepStack) {
+      updateConfig('languageVersion', initial.languageVersion);
+      updateConfig('buildTool', initial.buildTool);
+      updateConfig('groupId', initial.groupId);
+      updateConfig('frameworkVersion', initial.frameworkVersion);
+    }
     updateConfig('loggingLevel', initial.loggingLevel);
     updateConfig('securityType', initial.securityType);
     updateConfig('cacheProvider', initial.cacheProvider);
     updateConfig('hibernateDdlAuto', initial.hibernateDdlAuto);
   }
 
-  
-  function resetFrameworkDependentConfig(next: Framework) {
-    const initial = INITIAL_STATE.config;
-    const keys = [
-      'languageVersion', 'buildTool', 'groupId', 'frameworkVersion',
-      'loggingLevel', 'securityType', 'cacheProvider', 'hibernateDdlAuto'
-    ] as const;
-    keys.forEach(k => updateConfig(k, initial[k]));
-    // Les listes d'options appartiennent à l'ancien framework : on les vide en même temps que les
-    // valeurs, sinon une valeur par défaut est calculée sur des options périmées (voir ProjectConfigView).
+  function resetFrameworkDependentConfig(next: Framework, keepStack = false) {
+    resetFrameworkRelatedProjectConfig(keepStack);
+    // Le groupId n'a de sens que si le nouveau framework le demande (ex. « Spring - MVC » : withGroupId = false)
+    if (keepStack && !next.withGroupId) updateConfig('groupId', INITIAL_STATE.config.groupId);
+    // Les listes d'options appartiennent à l'ancien framework : on les vide avec les valeurs.
     clearFrameworkOptions();
     configFramework.value = next;
   }

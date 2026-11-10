@@ -24,7 +24,16 @@ export function useConfig() {
     const { configurations, selectedConfigId, isLoading, error, selectedConfig, getFilteredConfigs } = storeToRefs(store);
 
     // 3. Actions orchestrées (Service + Store)
-    
+
+    /**
+     * Expose au store les configurations chargées : export, renommage et auto-save
+     * (useConfigManagerLogic) les retrouvent dans `configurations`, pas dans la valeur de retour du loader.
+     */
+    function cacheInStore<T extends GenesisConfig>(data: T[]): T[] {
+        data.forEach(c => store.addOrUpdateConfiguration(c));
+        return data;
+    }
+
     async function loadConfigurations(configType?: ConfigType) {
         store.setLoading(true);
         store.clearError();
@@ -121,10 +130,10 @@ export function useConfig() {
         store.clearError();
         try {
             const data = await svc.getAll('framework_advanced-configuration');
-            return data.filter(c => {
+            return cacheInStore(data.filter(c => {
                 const p = c.payload as any;
                 return p.frameworkId === frameworkId || p.frameworkName === frameworkName;
-            });
+            }));
         } catch (err) {
             store.setError((err as Error).message || 'Erreur lors du chargement des configurations avancées.');
             return [];
@@ -133,15 +142,18 @@ export function useConfig() {
         }
     }
 
-    async function loadTechnicalStackConfigurations(frameworkId: number, frameworkName: string) {
+    async function loadTechnicalStackConfigurations(frameworkId: number, frameworkName: string, coreFramework?: string) {
         store.setLoading(true);
         store.clearError();
         try {
             const data = await svc.getAll('framework_technical-stack');
-            return data.filter(c => {
+            return cacheInStore(data.filter(c => {
                 const p = c.payload as any;
+                // Stack partagée par coreFramework (ex : tous les « Spring Boot »).
+                if (p.coreFramework) return p.coreFramework === coreFramework;
+                // Anciennes configurations (sans coreFramework) : rattachées à leur framework.
                 return p.frameworkId === frameworkId || p.frameworkName === frameworkName;
-            });
+            }));
         } catch (err) {
             store.setError((err as Error).message || 'Erreur lors du chargement des configurations stack technique.');
             return [];
@@ -155,8 +167,7 @@ export function useConfig() {
         store.clearError();
         try {
             const data = await svc.getAll('generator_generation-options');
-            data.forEach(c => store.addOrUpdateConfiguration(c)); // expose les configs à l'export
-            return data;
+            return cacheInStore(data);
         } catch (err) {
             store.setError((err as Error).message || 'Erreur lors du chargement des options de génération.');
             return [];
@@ -171,7 +182,7 @@ export function useConfig() {
         try {
             // On récupère TOUTES les configurations de ce type, sans filtre
             const data = await svc.getAll('frontend_languages-configuration');
-            return data; 
+            return cacheInStore(data);
         } catch (err) {
             store.setError((err as Error).message || 'Erreur lors du chargement des configurations de langues.');
             return [];

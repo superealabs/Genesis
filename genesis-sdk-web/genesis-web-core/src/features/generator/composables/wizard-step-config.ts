@@ -159,27 +159,28 @@ export async function confirmFrameworkChange(store: GeneratorStore, next: Framew
   const owner = store.configFramework;
   if (!owner || owner.id === next.id) return true;
 
+  const sameCore = (a: Framework, b: Framework) => a.coreFramework === b.coreFramework;
+  const keepStack = sameCore(owner, next);
   const resetFrontend = frontendImpacted(owner, next) && store.hasFrontendData;
 
-  const details = [
-    'Versions du langage et du framework, build tool',
-    'Configuration avancée (logging, sécurité, cache, Hibernate)'
-  ];
+  const details = ['Configuration avancée (logging, sécurité, cache, Hibernate)'];
+  if (!keepStack) details.unshift('Versions du langage et du framework, build tool');
+
+  
   if (resetFrontend) {
     details.push('Frontend sélectionné et sa configuration (chaque framework MVC a sa propre liste de frontends)');
   }
 
-  const confirmed = await useGenesisWarning().confirm({
-    title: 'Changer de framework ?',
-    message: `Vous passez de ${owner.name} à ${next.name}. Certaines données de la configuration seront réinitialisées.`,
-    details,
-    confirmLabel: 'Changer de framework',
-    variant: 'danger'
+const confirmed = await useGenesisWarning().confirm({
+  title: 'Changer de framework ?',
+  message: keepStack
+    ? `Vous passez de ${owner.name} à ${next.name} (même ${next.coreFramework}) : la stack technique est conservée, le reste de la configuration sera réinitialisé.`
+    : `Vous passez de ${owner.name} à ${next.name}. Certaines données de la configuration seront réinitialisées.`,
   });
   if (!confirmed) return false;
 
   store.resetFrameworkRelatedProjectConfig();
-  store.resetFrameworkDependentConfig(next);
+  store.resetFrameworkDependentConfig(next, keepStack);
   
   if (frontendImpacted(owner, next)) store.resetFrontendDependentConfig();
 

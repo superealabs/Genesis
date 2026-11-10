@@ -477,6 +477,14 @@ function getEffectiveValue<T>(currentValue: T | '' | null | undefined, options: 
   return options.length > 0 ? options[0].value : '';
 }
 
+/**
+ * Valeur absente des options → '' (la valeur par défaut est alors appliquée via getEffectiveValue).
+ * Sans options chargées, on ne filtre pas.
+ */
+function keepIfAvailable(value: string, options: { value: string }[]): string {
+  return options.length === 0 || options.some(o => o.value === value) ? value : '';
+}
+
 // ============================================================================
 // 4. INITIALISATION DES LOGIQUES DE CONFIGURATION (Via le Composable DRY)
 // ============================================================================
@@ -526,6 +534,7 @@ const techStackLogic = useConfigManagerLogic({
   ],
   buildPayload: (values) => ({
     frameworkId: framework.value?.id || 0, frameworkName: framework.value?.name || 'Inconnu',
+    coreFramework: framework.value?.coreFramework || 'Inconnu',
     languageVersion: values ? values[0] : config.value.languageVersion,
     buildTool: values ? values[1] : config.value.buildTool,
     groupId: values ? values[2] : config.value.groupId,
@@ -535,8 +544,11 @@ const techStackLogic = useConfigManagerLogic({
   watchSource: () => [config.value.languageVersion, config.value.buildTool, config.value.groupId, config.value.frameworkVersion],
   applyValues: (vals) => {
     isApplyingTechStackConfig.value = true;
-    updateConfig('languageVersion', vals[0]); updateConfig('buildTool', vals[1]);
-    updateConfig('groupId', vals[2]); updateConfig('frameworkVersion', vals[3]);
+    // Une stack est partagée par coreFramework : on ignore les valeurs absentes des options du framework courant.
+    updateConfig('languageVersion', keepIfAvailable(vals[0], languageVersionOptions.value));
+    updateConfig('buildTool', keepIfAvailable(vals[1], buildToolOptions.value));
+    updateConfig('groupId', vals[2]);
+    updateConfig('frameworkVersion', keepIfAvailable(vals[3], frameworkVersionOptions.value));
     nextTick(() => { isApplyingTechStackConfig.value = false; });
   },
   isApplyingRef: isApplyingTechStackConfig,
@@ -641,7 +653,7 @@ function syncSelection(
 
 async function syncConfigsToCurrentFramework(resetValues: boolean) {
   if (!framework.value) return;
-  const { id: fwId, name: fwName } = framework.value;
+  const { id: fwId, name: fwName, coreFramework } = framework.value;
 
   const advancedData = await loadAdvancedConfigurations(fwId, fwName);
   configManager.configurations.value = advancedData.map(c => {
@@ -652,7 +664,7 @@ async function syncConfigsToCurrentFramework(resetValues: boolean) {
     () => [config.value.loggingLevel, config.value.securityType, config.value.cacheProvider, config.value.hibernateDdlAuto],
     resetValues);
 
-  const techStackData = await loadTechnicalStackConfigurations(fwId, fwName);
+  const techStackData = await loadTechnicalStackConfigurations(fwId, fwName, coreFramework);
   techStackConfigManager.configurations.value = techStackData.map(c => {
     const p = c.payload as any;
     return { id: c.id, name: c.name, isHidden: false, components: [p.languageVersion, p.buildTool, p.groupId, p.frameworkVersion] };
@@ -660,6 +672,9 @@ async function syncConfigsToCurrentFramework(resetValues: boolean) {
   syncSelection(techStackConfigManager, techStackLogic,
     () => [config.value.languageVersion, config.value.buildTool, config.value.groupId, config.value.frameworkVersion],
     resetValues);
+
+  console.log('[DEBUG] affichées :', configManager.configurations.value.length + techStackConfigManager.configurations.value.length,
+          '| dans le store :', persistedConfigs.value.length);
 }
 
 // Au montage : reset uniquement si le framework choisi n'est pas encore celui validé

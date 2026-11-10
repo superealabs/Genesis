@@ -21,6 +21,7 @@ export interface FrameworkAdvancedConfigurationPayload {
 }
 
 export interface FrameworkTechnicalStackPayload {
+  coreFramework?: string;
   frameworkId: number;
   frameworkName: string;
   languageVersion: string;
