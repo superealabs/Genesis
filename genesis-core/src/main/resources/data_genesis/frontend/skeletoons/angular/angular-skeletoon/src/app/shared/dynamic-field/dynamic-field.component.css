@@ -23,6 +23,15 @@ label {
   box-shadow: 0 0 5px rgba(0,123,255,0.4);
 }
 
+.file-value { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.file-preview { width: 96px; height: 72px; object-fit: cover; border-radius: 4px; }
+.file-label { font-size: 13px; }
+.file-action { cursor: pointer; }
+.preview-trigger { border: 0; padding: 0; background: transparent; cursor: zoom-in; }
+.image-preview-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 1rem; background: rgba(0, 0, 0, .82); }
+.image-preview-overlay img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+.preview-close { position: absolute; top: 1rem; right: 1rem; color: white; background: transparent; border: 0; font-size: 2rem; cursor: pointer; }
+
 /* Style pour les messages d'erreur */
 .error {
   background-color: #f8d7da; /* rouge clair */

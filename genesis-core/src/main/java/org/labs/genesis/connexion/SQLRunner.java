@@ -3,9 +3,7 @@ package org.labs.genesis.connexion;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class SQLRunner {
@@ -104,5 +102,127 @@ public class SQLRunner {
         String[] errorMessages = e.getMessage().split("\\.");
         String formattedMessage = String.join(".\n", errorMessages);
         return new Exception("Batch execution failed: " + formattedMessage, e);
+    }
+
+    /**
+     * Extrait les noms des tables depuis le script SQL (utilisé pour peupler l'UI).
+     */
+    public static List<String> extractTableNames(String sql) {
+        List<String> tables = new ArrayList<>();
+        if (sql == null || sql.isBlank())
+            return tables;
+
+        String clean = removeComments(sql);
+        for (String query : clean.split(";")) {
+            String trimmed = query.trim();
+            String upper = trimmed.toUpperCase();
+            if (upper.startsWith("CREATE TABLE") || upper.contains("CREATE TABLE")) {
+                int idx = upper.indexOf("TABLE");
+                if (idx != -1) {
+                    String afterTable = trimmed.substring(idx + 5).trim();
+                    afterTable = afterTable.replaceFirst("(?i)^IF\\s+NOT\\s+EXISTS\\s+", "").trim();
+                    String[] tokens = afterTable.split("[\\s(]+");
+                    if (tokens.length > 0 && !tokens[0].isBlank()) {
+                        String name = tokens[0].replaceAll("[\"``\\[\\]]", "").trim();
+                        if (name.contains(".")) {
+                            name = name.substring(name.lastIndexOf('.') + 1);
+                        }
+                        if (!name.isBlank() && !tables.contains(name)) {
+                            tables.add(name);
+                        }
+                    }
+                }
+            }
+        }
+        return tables;
+    }
+
+    /**
+     * Extrait les noms des vues depuis le script SQL (utilisé pour peupler l'UI).
+     */
+    public static List<String> extractViewNames(String sql) {
+        List<String> views = new ArrayList<>();
+        if (sql == null || sql.isBlank())
+            return views;
+
+        String clean = removeComments(sql);
+        for (String query : clean.split(";")) {
+            String trimmed = query.trim();
+            if (isCreateViewStatement(trimmed)) {
+                String upper = trimmed.toUpperCase();
+                int idx = upper.indexOf("VIEW");
+                if (idx != -1) {
+                    String afterView = trimmed.substring(idx + 4).trim();
+                    String[] tokens = afterView.split("[\\s(]+");
+                    if (tokens.length > 0 && !tokens[0].isBlank()) {
+                        String name = tokens[0].replaceAll("[\"``\\[\\]]", "").trim();
+                        if (name.contains(".")) {
+                            name = name.substring(name.lastIndexOf('.') + 1);
+                        }
+                        if (!name.isBlank() && !views.contains(name)) {
+                            views.add(name);
+                        }
+                    }
+                }
+            }
+        }
+        return views;
+    }
+
+    /**
+     * Découpe le corps d'un CREATE TABLE (entre parenthèses) en clauses
+     * individuelles
+     * en respectant les parenthèses imbriquées (ex: DECIMAL(10,2), CHECK(...)).
+     */
+    public static List<String> splitClauses(String body) {
+        List<String> clauses = new ArrayList<>();
+        if (body == null || body.isBlank())
+            return clauses;
+
+        StringBuilder current = new StringBuilder();
+        int depth = 0;
+        boolean inSingleQuotes = false;
+        boolean inDoubleQuotes = false;
+
+        for (int i = 0; i < body.length(); i++) {
+            char c = body.charAt(i);
+
+            if (c == '\'' && !inDoubleQuotes) {
+                if (inSingleQuotes && i + 1 < body.length() && body.charAt(i + 1) == '\'') {
+                    current.append(c);
+                    current.append('\'');
+                    i++;
+                    continue;
+                }
+                inSingleQuotes = !inSingleQuotes;
+                current.append(c);
+            } else if (c == '"' && !inSingleQuotes) {
+                inDoubleQuotes = !inDoubleQuotes;
+                current.append(c);
+            } else if (!inSingleQuotes && !inDoubleQuotes) {
+                if (c == '(') {
+                    depth++;
+                    current.append(c);
+                } else if (c == ')') {
+                    depth--;
+                    current.append(c);
+                } else if (c == ',' && depth == 0) {
+                    String clause = current.toString().trim();
+                    if (!clause.isEmpty())
+                        clauses.add(clause);
+                    current.setLength(0);
+                } else {
+                    current.append(c);
+                }
+            } else {
+                current.append(c);
+            }
+        }
+
+        String last = current.toString().trim();
+        if (!last.isEmpty())
+            clauses.add(last);
+
+        return clauses;
     }
 }

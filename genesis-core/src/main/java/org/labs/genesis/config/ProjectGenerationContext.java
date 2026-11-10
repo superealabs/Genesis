@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.labs.genesis.config.git.GitConfiguration;
+import org.labs.genesis.config.tools.DockerConfiguration;
+import org.labs.genesis.config.tools.GitConfiguration;
 import org.labs.genesis.config.langage.*;
 import org.labs.genesis.config.langage.generator.indicator.IntellijGenerationProcess;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
@@ -12,6 +13,7 @@ import org.labs.genesis.config.langage.generator.sync.report.FrontendChangeRepor
 import org.labs.genesis.config.langage.generator.sync.report.WebApiChangeReport;
 import org.labs.genesis.connexion.Credentials;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.SQLRunner;
 import org.labs.genesis.connexion.model.ColumnMetadata;
 import org.labs.genesis.connexion.model.RelationParameter;
 import org.labs.genesis.connexion.model.TableMetadata;
@@ -23,6 +25,9 @@ import org.labs.utils.StringUtils;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -56,6 +61,7 @@ public class ProjectGenerationContext {
     private List<TableMetadata> viewTables;
     private List<RelationParameter> relationParameters;
     private Connection connection;
+    private String sqlScript;
     private List<String> generationOptions;
     private List<String> frontendGenerationOptions;
     private boolean generateProjectStructure = true;
@@ -70,6 +76,7 @@ public class ProjectGenerationContext {
     private  boolean generateViewsTemplates = true;
     private ViewsTemplate viewsTemplate;
     private GitConfiguration gitConfiguration;
+    private DockerConfiguration dockerConfiguration;
 
     public ProjectGenerationContext() {
         this.generationProcess = new IntellijGenerationProcess();
@@ -102,6 +109,7 @@ public class ProjectGenerationContext {
         copy.setFrontendFramework(this.frontendFramework);
         copy.setFrontendLanguage(this.frontendLanguage);
         copy.setConnection(this.connection);
+        copy.setSqlScript(this.sqlScript);
         copy.setViewsTemplate(this.viewsTemplate);
         return copy;
     }
@@ -166,13 +174,179 @@ public class ProjectGenerationContext {
     public void setViewTables(Connection connection) throws SQLException, ClassNotFoundException {
         this.viewTables = database.getViewsByNames(this.getViewNames(), connection, credentials, language, framework);
     }
-    public  void setTables(){
-        try {
-            setEntityTables(connection);
-            setViewTables(connection);
-        } catch (SQLException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+    public void setTables() {
+        if (connection != null) {
+            try {
+                setEntityTables(connection);
+                setViewTables(connection);
+            } catch (SQLException | ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        } else if (sqlScript != null && !sqlScript.isBlank()) {
+            this.entityTables = buildTablesFromScript(sqlScript, entityNames);
+            this.viewTables = buildViewsFromScript(sqlScript, viewNames);
         }
+    }
+
+    private List<TableMetadata> buildTablesFromScript(String sql, List<String> selectedNames) {
+        List<TableMetadata> tables = new ArrayList<>();
+        if (sql == null || sql.isBlank()) return tables;
+
+        String clean = SQLRunner.removeComments(sql);
+
+        for (String query : clean.split(";")) {
+            String trimmed = query.trim();
+            String upper = trimmed.toUpperCase();
+            if (!upper.contains("CREATE TABLE")) continue;
+
+            int idx = upper.indexOf("TABLE");
+            String afterTable = trimmed.substring(idx + 5).trim();
+            afterTable = afterTable.replaceFirst("(?i)^IF\\s+NOT\\s+EXISTS\\s+", "").trim();
+
+            int openParen = afterTable.indexOf('(');
+            if (openParen == -1) continue;
+
+            int depth = 0;
+            int closeParen = -1;
+            boolean inSingle = false;
+            boolean inDouble = false;
+            for (int i = openParen; i < afterTable.length(); i++) {
+                char c = afterTable.charAt(i);
+                if (c == '\'' && !inDouble) {
+                    if (inSingle && i + 1 < afterTable.length() && afterTable.charAt(i + 1) == '\'') {
+                        i++;
+                        continue;
+                    }
+                    inSingle = !inSingle;
+                } else if (c == '"' && !inSingle) {
+                    inDouble = !inDouble;
+                } else if (!inSingle && !inDouble) {
+                    if (c == '(') {
+                        depth++;
+                    } else if (c == ')') {
+                        depth--;
+                        if (depth == 0) {
+                            closeParen = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (closeParen <= openParen) continue;
+
+            String tableName = afterTable.substring(0, openParen).replaceAll("[\"``\\[\\]]", "").trim();
+            if (tableName.contains(".")) tableName = tableName.substring(tableName.lastIndexOf('.') + 1);
+            if (tableName.isBlank()) continue;
+            if (selectedNames != null && !selectedNames.isEmpty() && !selectedNames.contains(tableName)) continue;
+
+            String body = afterTable.substring(openParen + 1, closeParen);
+
+            TableMetadata tm = new TableMetadata();
+            tm.setTableName(tableName);
+            tm.initializeFromScript(body, database, language);
+            tables.add(tm);
+        }
+
+        // Support ALTER TABLE ... ADD CONSTRAINT ... FOREIGN KEY ... REFERENCES ...
+        for (String query : clean.split(";")) {
+            String trimmed = query.trim();
+            String upper = trimmed.toUpperCase();
+            if (upper.contains("ALTER TABLE") && upper.contains("FOREIGN KEY") && upper.contains("REFERENCES")) {
+                Pattern alterFkPat = Pattern.compile(
+                        "ALTER\\s+TABLE\\s+(?:ONLY\\s+)?([\\w.`\"\\[\\]]+)\\s+ADD\\s+(?:CONSTRAINT\\s+[\\w.`\"\\[\\]]+\\s+)?FOREIGN\\s+KEY\\s*\\(([^)]+)\\)\\s*REFERENCES\\s+([\\w.`\"\\[\\]]+)\\s*\\(([^)]+)\\)",
+                        Pattern.CASE_INSENSITIVE);
+                Matcher am = alterFkPat.matcher(trimmed);
+                if (am.find()) {
+                    String srcTable = am.group(1).replaceAll("[\"``\\[\\]]", "").trim();
+                    if (srcTable.contains(".")) srcTable = srcTable.substring(srcTable.lastIndexOf('.') + 1);
+                    String fkColName = am.group(2).replaceAll("[\"``\\[\\]]", "").trim();
+                    String refTable = am.group(3).replaceAll("[\"``\\[\\]]", "").trim();
+                    if (refTable.contains(".")) refTable = refTable.substring(refTable.lastIndexOf('.') + 1);
+                    String refCol = am.group(4).replaceAll("[\"``\\[\\]]", "").trim();
+
+                    final String finalSrcTable = srcTable;
+                    final String finalRefTable = refTable;
+                    final String finalRefCol = refCol;
+                    tables.stream().filter(t -> t.getTableName().equalsIgnoreCase(finalSrcTable)).findFirst().ifPresent(t -> {
+                        if (t.getColumns() != null) {
+                            for (ColumnMetadata col : t.getColumns()) {
+                                if (col.getReferencedColumn().equalsIgnoreCase(fkColName)) {
+                                    col.setForeign(true);
+                                    col.setReferencedTable(finalRefTable);
+                                    col.setReferencedPrimaryKeyColumn(StringUtils.toCamelCase(finalRefCol.toLowerCase()));
+                                    t.setHasFk(true);
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+        }
+
+        for (TableMetadata tm : tables) {
+            if (tm.getColumns() == null) continue;
+            for (ColumnMetadata col : tm.getColumns()) {
+                if (col.isForeign() && col.getReferencedTable() != null) {
+                    tm.setHasFk(true);
+                    String refTable = col.getReferencedTable();
+                    col.setType(Stream.of(refTable).map(String::toLowerCase).map(StringUtils::toCamelCase).map(StringUtils::removeLastS).map(StringUtils::majStart).findFirst().orElse(refTable));
+                    col.setName(StringUtils.toCamelCase(col.getReferencedColumn().toLowerCase()) + StringUtils.majStart(StringUtils.toCamelCase(refTable.toLowerCase())));
+                    col.setReferencedTable(StringUtils.toCamelCase(refTable));
+
+                    // Resolve referencedColumnType & referencedPrimaryKeyColumn
+                    TableMetadata targetTable = tables.stream()
+                            .filter(t -> t.getTableName().equalsIgnoreCase(refTable))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (targetTable != null && targetTable.getColumns() != null) {
+                        String targetColName = col.getReferencedPrimaryKeyColumn();
+                        ColumnMetadata targetCol = null;
+                        if (targetColName != null) {
+                            targetCol = Arrays.stream(targetTable.getColumns())
+                                    .filter(c -> c.getName().equalsIgnoreCase(targetColName) || c.getReferencedColumn().equalsIgnoreCase(targetColName))
+                                    .findFirst()
+                                    .orElse(null);
+                        }
+                        if (targetCol == null && targetTable.getPrimaryColumn() != null) {
+                            targetCol = targetTable.getPrimaryColumn();
+                        }
+                        if (targetCol != null) {
+                            col.setReferencedColumnType(targetCol.getType());
+                            col.setColumnType(targetCol.getColumnType());
+                            if (col.getReferencedPrimaryKeyColumn() == null) {
+                                col.setReferencedPrimaryKeyColumn(targetCol.getName());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return tables;
+    }
+
+    private List<TableMetadata> buildViewsFromScript(String sql, List<String> selectedNames) {
+        List<TableMetadata> views = new ArrayList<>();
+        List<String> viewNames = SQLRunner.extractViewNames(sql);
+        for (String viewName : viewNames) {
+            if (selectedNames != null && !selectedNames.isEmpty() && !selectedNames.contains(viewName)) continue;
+            TableMetadata vm = new TableMetadata();
+            vm.setTableName(viewName);
+            vm.setDatabase(database);
+            vm.setIsView(true);
+            vm.setClassName(Stream.of(viewName).map(String::toLowerCase).map(StringUtils::toCamelCase).map(StringUtils::majStart).map(StringUtils::removeLastS).findFirst().orElse(viewName));
+            ColumnMetadata idCol = new ColumnMetadata();
+            idCol.setReferencedColumn("id");
+            idCol.setName("id");
+            idCol.setType("String");
+            idCol.setColumnType("VARCHAR");
+            idCol.setDatabaseColumnType("VARCHAR");
+            vm.setColumns(new ColumnMetadata[]{idCol});
+            vm.setPKForView();
+            views.add(vm);
+        }
+        return views;
     }
 
     public void setEntityNamesFromTables(List<TableMetadata> entityTables) {

@@ -70,6 +70,20 @@
     [attr.required]="field.constraints?.required ? true : null"
     (change)="onFileChange($event)"
   />
+  <div class="file-value" *ngIf="field.type === 'file' && currentFile as file">
+    <button *ngIf="isImageContent(file)" type="button" class="preview-trigger" (click)="openPreview(file)" title="Prévisualiser l'image">
+      <img class="file-preview" [src]="buildFileSource(file)" [alt]="getGeneratedFileName(file)" />
+    </button>
+    <ng-container *ngIf="!isImageContent(file)">
+      <span class="file-label"><strong>{{ getFileTypeLabel(file) }}</strong> {{ getGeneratedFileName(file) }} <small>{{ getFileSize(file) }}</small></span>
+      <button type="button" class="file-action" (click)="downloadAsset(file)">{{ downloadedFile === getGeneratedFileName(file) ? 'Téléchargement…' : 'Télécharger' }}</button>
+    </ng-container>
+    <button type="button" class="file-action" (click)="removeFile()">Supprimer le fichier</button>
+  </div>
+  <div *ngIf="previewSource" class="image-preview-overlay" role="dialog" aria-modal="true" [attr.aria-label]="previewAlt" (click)="closePreview()">
+    <button type="button" class="preview-close" aria-label="Fermer la prévisualisation" (click)="closePreview()">×</button>
+    <img [src]="previewSource" [alt]="previewAlt" (click)="$event.stopPropagation()" />
+  </div>
 
   <!-- Hidden input -->
   <input
