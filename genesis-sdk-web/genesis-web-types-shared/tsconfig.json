@@ -10,7 +10,7 @@
         "outDir": "./dist",
         "rootDir": "./src",
         "strict": true,
-        "baseUrl": ".",
+        // "baseUrl": ".",
         "ignoreDeprecations": "5.0",
     },
     "include": ["src/**/*.ts"]
