@@ -62,8 +62,13 @@
           <GenesisButton
             :variant="isScriptMode ? 'primary' : 'secondary'"
             size="md"
+            is-perspective
             @click="toggleScriptMode"
           >
+            <template #leftIcon>
+              <IconData v-if="isScriptMode" />
+              <IconCode v-else />
+            </template>
             {{ isScriptMode ? 'Utiliser une connexion live' : 'Utiliser un script SQL' }}
           </GenesisButton>
         </div>
@@ -164,6 +169,7 @@
           content-align="center"
           :disabled="isTesting || testSuccess"
           size="lg"
+          is-perspective
           @click="handleTestConnection"
           class="w-full md:w-auto"
         >
@@ -220,8 +226,8 @@
       <!-- ÉTAT SCRIPT MODE ACTIF : MESSAGE CLAIR ET GUIDÉ -->
       <template v-else>
         <div class="p-8 border border-dashed border-primary/40 rounded-xl bg-primary/5 text-center space-y-4">
-          <div class="w-12 h-12 mx-auto rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg">
-            SQL
+          <div class="w-12 h-12 mx-auto rounded-full bg-primary/20 flex items-center justify-center text-primary">
+            <IconCode :size="24" />
           </div>
           <h4 class="text-base font-semibold text-text">
             Mode Script SQL sélectionné pour {{ selectedEngineName }}
@@ -268,6 +274,8 @@ import { useDatabaseStore } from '@genesis-labs/web-core/features/database/store
 
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import IconCode from '@genesis-labs/web-core/core/components/ui/icons/IconCode.vue';
+import IconData from '@genesis-labs/web-core/core/components/ui/icons/IconData.vue';
 // import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 // import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
 

@@ -23,10 +23,14 @@
                 v-if="scriptPath || scriptContent"
                 variant="primary"
                 size="lg"
+                is-perspective
                 :disabled="isExecuting"
                 @click="handleExecute"
                 class="mb-0.5 shrink-0"
             >
+                <template #leftIcon>
+                    <IconCaretRight />
+                </template>
                 <span v-if="isExecuting">Exécution...</span>
                 <span v-else>Exécuter</span>
             </GenesisButton>
@@ -39,6 +43,7 @@ import { ref } from 'vue';
 import type { FileRequestPayload } from '@genesis-labs/shared-types';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import IconCaretRight from '@genesis-labs/web-core/core/components/ui/icons/IconCaretRight.vue';
 import { useScriptFields } from '@genesis-labs/web-core/features/generator/composables/UseScriptFields';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 
