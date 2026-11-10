@@ -29,3 +29,20 @@ export function getAxiosInstance(): AxiosInstance {
     if (!instance) throw new Error('[Genesis] axiosInstance non initialisée. Le JAR est-il démarré ?');
     return instance;
 }
+
+/**
+ * ✅ NOUVEAU : remet l'instance à null.
+ * À appeler quand le JAR s'arrête (stop()) ou avant un nouveau start(),
+ * pour éviter de réutiliser une instance qui pointe vers un port mort.
+ */
+export function resetAxiosInstance(): void {
+    instance = null;
+}
+
+/**
+ * ✅ NOUVEAU : indique si une instance est actuellement disponible.
+ * Utile pour les checks défensifs sans try/catch.
+ */
+export function hasAxiosInstance(): boolean {
+    return instance !== null;
+}

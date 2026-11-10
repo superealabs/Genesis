@@ -40,38 +40,14 @@
             Annuler
           </GenesisButton>
         </div>
-      </div>
 
-      <!-- BASCULE MODE SCRIPT OU CONNEXION DIRECTE -->
-      <div
-        class="p-4 rounded-lg border transition-all duration-200"
-        :class="isScriptMode ? 'border-primary/50 bg-primary/10' : 'border-neutral-light bg-bg-secondary/20'"
-      >
-        <div class="flex items-center justify-between gap-4">
-          <div class="flex flex-col gap-1">
-            <span class="text-sm font-semibold text-text">
-              {{ isScriptMode ? 'Mode Script SQL actif' : 'Connexion directe ou script ?' }}
-            </span>
-            <span class="text-xs text-muted">
-              {{ isScriptMode
-                ? 'Aucune connexion active requise. Cliquez sur "Suivant" pour importer ou saisir votre script DDL.'
-                : 'Vous n\'avez pas de serveur de base de données actif ? Basculez en mode Script SQL pour fournir un fichier DDL.'
-              }}
-            </span>
+          <div class="pb-0.5">
+            <GenesisSegmentedControl
+              v-model="modeValue"
+              :options="modeOptions"
+              size="lg"
+            />
           </div>
-          <GenesisButton
-            :variant="isScriptMode ? 'primary' : 'secondary'"
-            size="md"
-            is-perspective
-            @click="toggleScriptMode"
-          >
-            <template #leftIcon>
-              <IconData v-if="isScriptMode" />
-              <IconCode v-else />
-            </template>
-            {{ isScriptMode ? 'Utiliser une connexion live' : 'Utiliser un script SQL' }}
-          </GenesisButton>
-        </div>
       </div>
 
       <template v-if="!isScriptMode">
@@ -276,10 +252,13 @@ import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/Genes
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 // import CarrouselPanel from '@genesis-labs/web-core/core/components/ui/carrousel/CarrouselPanel.vue';
 // import type { CarouselSlide } from '@genesis-labs/web-core/core/composables/ux/useCarousel';
+import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/actions/GenesisSegmentedControl.vue';
 
 import databaseIllustration from '../../assets/database-summary.png';
 
 import { DatabaseConfig } from '@genesis-labs/shared-types';
+import IconData from '@genesis-labs/web-core/core/components/ui/icons/IconData.vue';
+import IconCode from '@genesis-labs/web-core/core/components/ui/icons/IconCode.vue';
 
 // ============================================================================
 // 1. EMITS
@@ -302,14 +281,22 @@ const {
 } = useGenerator();
 const databaseStore = useDatabaseStore();
 
-function toggleScriptMode() {
-  setScriptMode(!isScriptMode.value);
-}
+// ═══ Bascule Connexion / Script ═══
+const modeOptions = [
+  { label: 'Connexion', value: 'connection', icon: IconData },
+  { label: 'Script',    value: 'script',     icon: IconCode },
+];
+
+/** v-model dérivé de isScriptMode */
+const modeValue = computed<'connection' | 'script'>({
+  get: () => (isScriptMode.value ? 'script' : 'connection'),
+  set: (v) => setScriptMode(v === 'script'),
+});
 
 const database = computed(() => stepperData.value.database);
 const isTesting = ref(false);
-const testSuccess = ref(false);          // 👈 nouveau
-let successTimer: ReturnType<typeof setTimeout> | null = null;  // 👈 nouveau
+const testSuccess = ref(false);          
+let successTimer: ReturnType<typeof setTimeout> | null = null;  
 const selectedEngineName = computed(() => 
   pendingDatabaseEngine.value?.name || stepperData.value.database.engine || 'Aucun SGBD sélectionné'
 );
