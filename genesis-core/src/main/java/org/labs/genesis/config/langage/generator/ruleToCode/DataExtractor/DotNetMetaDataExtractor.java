@@ -9,8 +9,9 @@ import java.util.*;
 
 public class DotNetMetaDataExtractor implements IMetaDataExtractor {
 
-    int idFramework ;
-    public DotNetMetaDataExtractor( int idFramework ) {
+    private final int idFramework;
+
+    public DotNetMetaDataExtractor(int idFramework) {
         this.idFramework = idFramework;
     }
 
@@ -21,30 +22,51 @@ public class DotNetMetaDataExtractor implements IMetaDataExtractor {
         String typeClass = ".cs";
         List<Map<String, Object>> entities = new ArrayList<>();
 
-        for (File file : Objects.requireNonNull(srcDir.listFiles((dir, name) -> name.endsWith(typeClass)))) {
+        if (srcDir == null || !srcDir.exists() || !srcDir.isDirectory()) {
+            return yamlData.convertToYaml(entities);
+        }
+
+        File[] files = srcDir.listFiles((dir, name) -> name.endsWith(typeClass));
+        if (files == null) {
+            return yamlData.convertToYaml(entities);
+        }
+
+        // Sort files for deterministic output across environments
+        Arrays.sort(files, Comparator.comparing(File::getName));
+
+        for (File file : files) {
             List<String> lines = Files.readAllLines(file.toPath());
 
             String className = lines.stream()
                     .filter(l -> l.trim().startsWith("public class"))
-                    .map(l -> l.replace("public class", "").trim().split(" ")[0])
+                    .map(l -> l.replace("public class", "").trim().split("[\\s:]")[0].trim())
                     .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Class not found in " + file.getName()));
+                    .orElse(null);
+
+            if (className == null || className.isEmpty()) {
+                continue;
+            }
 
             Map<String, Object> entity = new LinkedHashMap<>();
             entity.put("name", className);
 
             List<Map<String, String>> fields = new ArrayList<>();
-            lines.stream()
-                    .filter(l -> l.trim().startsWith("public") && l.contains("{ get; set; }"))
-                    .forEach(l -> {
-                        String[] parts = l.trim().split(" ");
-                        if (parts.length >= 3) {
-                            Map<String, String> f = new LinkedHashMap<>();
-                            f.put("type", parts[1].trim());
-                            f.put("name", parts[2].replace(";", "").trim());
-                            fields.add(f);
-                        }
-                    });
+            for (String line : lines) {
+                String trimmed = line.trim();
+                if (trimmed.startsWith("public") && trimmed.contains("{ get; set; }")) {
+                    String[] parts = trimmed.split("\\s+");
+                    int typeIdx = 1;
+                    if (typeIdx < parts.length && ("virtual".equals(parts[typeIdx]) || "override".equals(parts[typeIdx]))) {
+                        typeIdx++;
+                    }
+                    if (typeIdx + 1 < parts.length) {
+                        Map<String, String> f = new LinkedHashMap<>();
+                        f.put("type", parts[typeIdx].trim());
+                        f.put("name", parts[typeIdx + 1].replace(";", "").trim());
+                        fields.add(f);
+                    }
+                }
+            }
 
             entity.put("fields", fields);
             entities.add(entity);
