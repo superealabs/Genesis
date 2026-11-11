@@ -43,9 +43,10 @@
 
           <div class="pb-0.5">
             <GenesisSegmentedControl
-              v-model="modeValue"
+              :model-value="modeValue"
               :options="modeOptions"
               size="lg"
+              @update:model-value="handleModeChange"
             />
           </div>
       </div>
@@ -153,6 +154,20 @@
           <span v-else-if="isTesting">Test en cours...</span>
           <span v-else>Test Connexion</span>
         </GenesisButton>
+        <GenesisButton
+          variant="primary"
+          size="lg"
+          is-perspective
+          :disabled="!canEditScript"
+          @click="handleEditScript"
+          class="w-full md:w-auto"
+          title="Ouvrir l'éditeur de script SQL"
+        >
+          <template #leftIcon>
+            <IconEdit />
+          </template>
+          Éditer
+        </GenesisButton>
       </div>
 
       <!-- 6. CONFIGURATIONS AVANCÉES (Drivers & Spécifique Oracle) -->
@@ -201,18 +216,10 @@
 
       <!-- ÉTAT SCRIPT MODE ACTIF : MESSAGE CLAIR ET GUIDÉ -->
       <template v-else>
-        <div class="p-8 border border-dashed border-primary/40 rounded-xl bg-primary/5 text-center space-y-4">
-          <div class="w-12 h-12 mx-auto rounded-full bg-primary/20 flex items-center justify-center text-primary">
-            <IconCode :size="24" />
-          </div>
-          <h4 class="text-base font-semibold text-text">
-            Mode Script SQL sélectionné pour {{ selectedEngineName }}
-          </h4>
-          <p class="text-sm text-muted max-w-md mx-auto">
-            Les paramètres réseau (Hôte, Port, Identifiants) et le test de connexion JDBC sont ignorés.
-            Cliquez sur <strong class="text-text">Suivant</strong> pour importer ou rédiger votre script SQL.
-          </p>
-        </div>
+        <ScriptImportPanel 
+          @request-file-path="(payload: FileRequestPayload) => emit('request-file-path', payload)"
+          @edit="handleEditScript"
+        />
       </template>
     </div>
 
@@ -259,12 +266,18 @@ import databaseIllustration from '../../assets/database-summary.png';
 import { DatabaseConfig } from '@genesis-labs/shared-types';
 import IconData from '@genesis-labs/web-core/core/components/ui/icons/IconData.vue';
 import IconCode from '@genesis-labs/web-core/core/components/ui/icons/IconCode.vue';
+import { FileRequestPayload } from '@genesis-labs/shared-types';
+import ScriptImportPanel from '../script/ScriptImportPanel.vue';
+import IconEdit from '@genesis-labs/web-core/core/components/ui/icons/IconEdit.vue';
+import { useGenesisWarning } from '@genesis-labs/web-core/core/composables/ux/feedback/useGenesisWarning';
 
 // ============================================================================
 // 1. EMITS
 // ============================================================================
 const emit = defineEmits<{
   'test-connection-error': [message: string];
+  'request-file-path': [payload: FileRequestPayload];
+  'edit-script': [];
 }>();
 
 // ============================================================================
@@ -278,6 +291,7 @@ const {
   setDatabaseEngine,
   isScriptMode,
   setScriptMode,
+  resetScript,
 } = useGenerator();
 const databaseStore = useDatabaseStore();
 
@@ -288,18 +302,24 @@ const modeOptions = [
 ];
 
 /** v-model dérivé de isScriptMode */
-const modeValue = computed<'connection' | 'script'>({
-  get: () => (isScriptMode.value ? 'script' : 'connection'),
-  set: (v) => setScriptMode(v === 'script'),
-});
+const modeValue = computed<'connection' | 'script'>(() =>
+  isScriptMode.value ? 'script' : 'connection'
+);
 
 const database = computed(() => stepperData.value.database);
 const isTesting = ref(false);
 const testSuccess = ref(false);          
+const connectionValidated = ref(false);      // état persistant pour Éditer
 let successTimer: ReturnType<typeof setTimeout> | null = null;  
 const selectedEngineName = computed(() => 
   pendingDatabaseEngine.value?.name || stepperData.value.database.engine || 'Aucun SGBD sélectionné'
 );
+
+const canEditScript = computed(() => connectionValidated.value);
+
+function handleEditScript() {
+  emit('edit-script');
+}
 
 /**
  * Clé normalisée du moteur courant (minuscules, sans espaces).
@@ -448,6 +468,17 @@ async function handleTestConnection() {
         successTimer = null;
       }, 3000);
     }
+
+    if (result.success) {
+      testSuccess.value = true;
+      connectionValidated.value = true;    // ✅ persistant
+      successTimer = setTimeout(() => {
+        testSuccess.value = false;         // ← seul l'affichage reset
+        successTimer = null;
+      }, 3000);
+    } else {
+      connectionValidated.value = false;   // ← reset si échec
+    }
   } catch (error) {
     const errorMessage = error instanceof Error
       ? error.message
@@ -456,5 +487,51 @@ async function handleTestConnection() {
   } finally {
     isTesting.value = false;
   }
+  
 }
+
+// ═══ Bascule Connexion / Script avec confirmation ═══
+async function handleModeChange(v: string | number) {
+  const newIsScript = v === 'script';
+  if (newIsScript === isScriptMode.value) return;   // pas de changement
+
+  const script = stepperData.value.script;
+  const hasScript = !!(script?.path || script?.content);
+
+  if (hasScript) {
+    const confirmed = await useGenesisWarning().confirm({
+      title: 'Changer de mode ?',
+      message: 'Le script configuré sera réinitialisé. Continuer ?',
+      details: [
+        'Le contenu du script sera perdu.',
+        'Vous devrez le reconfigurer si vous revenez en mode Script.',
+      ],
+      confirmLabel: 'Changer de mode',
+      cancelLabel: 'Rester',
+      variant: 'warning',
+    });
+
+    if (!confirmed) return;   // ← le segmented control reste sur l'ancienne valeur
+    resetScript();       // ← reset du script
+  }
+
+  setScriptMode(newIsScript);
+}
+
+watch(
+  () => [
+    database.value.host,
+    database.value.port,
+    database.value.databaseName,
+    database.value.username,
+    database.value.password,
+    database.value.schema,
+    database.value.sid,
+  ],
+  () => {
+    if (connectionValidated.value) {
+      connectionValidated.value = false;   // ← reset si un champ change
+    }
+  }
+);
 </script>

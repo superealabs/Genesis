@@ -1,13 +1,33 @@
 <template>
-  <GenesisPanelContainer
-    class="h-full w-full"
-    :panel="panel"
-    :editors="editors"
-    :class="'bg-bg-light p-2'"
-  />
+  <div class="flex flex-col h-full">
+    <div class="flex items-center gap-2 px-4 pt-3 pb-2 flex-shrink-0">
+      <GenesisButton
+        variant="secondary"
+        size="md"
+        is-perspective
+        @click="$emit('close')"
+      >
+        <template #leftIcon>
+          <IconChevronLeft />
+        </template>
+        Retour
+      </GenesisButton>
+      <span class="text-sm text-text-muted">Édition du script</span>
+    </div>
+
+    <!-- Éditeur de panneaux (inchangé) -->
+    <GenesisPanelContainer
+      class="flex-1 min-h-0 w-full"
+      :panel="panel"
+      :editors="editors"
+      :class="'bg-bg-light p-2'"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import IconChevronLeft from '@genesis-labs/web-core/core/components/ui/icons/IconChevronLeft.vue';
 import type { FileRequestPayload } from '@genesis-labs/shared-types';
 
 // Panneaux
@@ -36,6 +56,7 @@ import IconBot from '@genesis-labs/web-core/core/components/ui/icons/IconBot.vue
 // ============================================================================
 const emit = defineEmits<{
   'request-file-path': [payload: FileRequestPayload];
+  close: [];
 }>();
 
 // ============================================================================

@@ -1,53 +1,59 @@
 <template>
-    <GenesisContainer
-        :is-loading="isLoading"
-        :loading-text="loadingText"
-        :is-empty="items.length === 0"
-        :empty-text="emptyText"
-        :min-height="minHeight"
-        :max-height="maxHeight"
-        :height="height"
-    >
-        <div
-            v-for="item in items"
-            :key="item.tableName"
-            class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 transition-colors"
-            :class="isEditable
-                ? 'cursor-pointer hover:bg-bg-secondary hover:text-secondary'
-                : 'cursor-default hover:bg-bg-secondary/50'"
-            @click="(e) => handleRowClick(item, e)"
+    <div class="flex flex-col gap-2">
+        <div class="flex flex-row justify-between text-text-muted">
+            <div>Selected element : <span>{{ selectedItems.length }}/{{ items.length }}</span></div>
+            <div>Element left : <span>{{ items.length }}</span></div>
+        </div>
+        <GenesisContainer
+            :is-loading="isLoading"
+            :loading-text="loadingText"
+            :is-empty="items.length === 0"
+            :empty-text="emptyText"
+            :min-height="minHeight"
+            :max-height="maxHeight"
+            :height="height"
         >
-            <div class="flex items-center gap-3 flex-1 min-w-0">
-                <!-- Case à cocher : uniquement en mode éditable -->
-                <GenesisCheckboxSimple
-                    v-if="isEditable"
-                    :model-value="selectedItems.includes(item.tableName)"
-                />
+            <div
+                v-for="item in items"
+                :key="item.tableName"
+                class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 transition-colors"
+                :class="isEditable
+                    ? 'cursor-pointer hover:bg-bg-secondary hover:text-secondary'
+                    : 'cursor-default hover:bg-bg-secondary/50'"
+                @click="(e) => handleRowClick(item, e)"
+            >
+                <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <!-- Case à cocher : uniquement en mode éditable -->
+                    <GenesisCheckboxSimple
+                        v-if="isEditable"
+                        :model-value="selectedItems.includes(item.tableName)"
+                    />
 
-                <!-- Icône à gauche : table ou vue -->
-                <component
-                    :is="item.isView ? IconShow : IconData"
-                    :size="18"
-                    class="flex-shrink-0 text-text-muted"
-                    :class="item.isView ? 'text-secondary' : 'text-accent'"
-                />
+                    <!-- Icône à gauche : table ou vue -->
+                    <component
+                        :is="item.isView ? IconShow : IconData"
+                        :size="18"
+                        class="flex-shrink-0 text-text-muted"
+                        :class="item.isView ? 'text-secondary' : 'text-accent'"
+                    />
 
-                <div class="flex flex-col min-w-0 select-none">
-                    <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
-                    <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
+                    <div class="flex flex-col min-w-0 select-none">
+                        <span class="text-sm font-medium truncate">{{ item.tableName }}</span>
+                        <span class="text-xs text-text-muted truncate">{{ item.isView ? 'Vue' : 'Table' }}</span>
+                    </div>
+                </div>
+
+                <!-- Texte de droite (texte simple, sans badge) -->
+                <div
+                    v-if="rightText"
+                    class="flex-shrink-0 ml-4 text-right min-w-[120px] truncate text-xs font-medium text-primary"
+                    :title="rightText(item)"
+                >
+                    {{ rightText(item) }}
                 </div>
             </div>
-
-            <!-- Texte de droite (texte simple, sans badge) -->
-            <div
-                v-if="rightText"
-                class="flex-shrink-0 ml-4 text-right min-w-[120px] truncate text-xs font-medium text-primary"
-                :title="rightText(item)"
-            >
-                {{ rightText(item) }}
-            </div>
-        </div>
-    </GenesisContainer>
+        </GenesisContainer>
+    </div>
 </template>
 
 <script setup lang="ts">

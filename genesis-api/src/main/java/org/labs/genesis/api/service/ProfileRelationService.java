@@ -251,9 +251,11 @@ public class ProfileRelationService {
             throw new RelationException("Aucun profil de génération enregistré");
         }
 
-        if (source.getDatabase() == null || source.getCredentials() == null) {
-            throw new RelationException("Configuration de la base de données manquante");
-        }
+
+        // à configurer en fonction du flag du mode de type de source de donnée(Connection Mode || Script Mode)
+        // if (source.getDatabase() == null || source.getCredentials() == null) {
+        //     throw new RelationException("Configuration de la base de données manquante");
+        // }
 
         // Préparer les nouvelles relations sans modifier les profils.
         Map<String, List<RelationParameter>> prepared = new LinkedHashMap<>();

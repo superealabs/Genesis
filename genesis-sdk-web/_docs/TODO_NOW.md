@@ -1,131 +1,39 @@
+Remplacer l'image :
+la taille de l'image est à mettre en cover et non en taille-fixe
+
 BUG
-    URGENCE :
-        onEnter ne se déclenche pas si on change d'étape depuis le stepper display (l'indicateur d'étape)
+    - Quand on fait Ctrl + f5,
+    et qu'on crée une nouvelle fenêtre VSC, et quand démarre l'api en parallèle, il y a 2/5 chances pour que le jar de l'extension ne démarre pas
 
-        un bug dans la génération (les données envoyées créent un état bloquant)
-    tester la création de repository
+    - Absence de nettoyage de ScriptConfig et de Database config
 
-    BUG BACKEND(
-        .NET MVC nécessite une version de language que le backend ne fournit pas
-    )
+    - loadAll table/view ne fonctionne plus quand on switch entre les deux modes
+        - gestion de l'état des deux modes
 
-fonctionnalité globale(zone cible : generation & relation)
-    Selection
-        système de séléction multiple
-            need :
-                visibleArray
-                last élément selected(defautl : first in array)
-                limit
-                Shift touch
+    - Relation
+        Script mode n'a pas besoin de vérification de databaseConfig
 
-            trois modes : 
-                select (set selection to true)
-                unselect (set selection to false)
-                inverted (invert the current selection)
+    - Rajouter le nombre total d'élément, et le nombre d'élément séléctionné
 
-            on a une liste :
-                - elément A(cochée)
-                - élément B(non cochée)
-                - élément C(Cochée)
+    - Generation
+        - déplacer la position du Profil de génération au dessus
 
-    SearchBar
-        Advanced SearchBar
-            - searchBar Option
-                - StartWith
-                - endwith
-                - contain
-                - custom(use * no replace the unknow element, exemple : *car*white* => search all car that have the combination that contain car & white)
-                - order(activate or not)
-
-fonctionnalité ciblée :
-    generation
-        modification technique :
-            - drag & drop the table & view
-            - useAdvancedSearch(global)
-            - useAdvancedSelection(global)
-
-        Modification descriptif UX & UI :
-            - Ajout d'un bouton advanced search, permet de faire des recherches personnalisée avec les options dites plutôt
-            - Ajout de la fonctionnalité de séléction multiple (clic gauche élément de départ vers shif + clic gauche élément de fin, à maintenir)
-                - cette fonctionnalité est associée à un dropdown contenant les options
-                    - select
-                    - unselect
-                    - inverted
-            - ajout de système de drag & drop(optionnelle)
-
-    relation
-        modification technique :
-            - useAdvancedSelection(global)
-            - remplacer le sytème de gestion de relation par assignation multiple
-            - système qui permet de générer toutes les relations possibles d'un enfant à un parent et un inversement
-
-        Rajouter une option pour créer un écran de multiple assignation :
+    - Repository
+        - le premier clic ne doit pas directement valider github
 
 
-        - l'affichage sera divisée en deux
-            - en haut : système d'ajout de relation
-                - on met le parent/enfant au dessus d'un tableau parent/enfant en fonction du si c'est parentFirst ou ChildFirst
-                    au dessus, on a la séléction de parent en dropdown, à droite la séléction de (parentFirst, childFirst)
+API :
+    besoin d'une api pour réinitialiser les config de la base de donnée
 
-            - en bas : système de modification de relation
-                - rajouter un switch qui passe en advanced selection
-                - au dessus du tableau et de la barre de recherche, on a une ligne de model à deux colonnes : hasForm & isMandatory
-                    - chacun utilise aussi les options de type de séléction (select, unSelect, inverted)
-                    - ce modèle s'appliquera à toutes les lignes séléctionnée au clic du bouton assign
-                - tableau de relation devient :
-                    - nouvelle colonne : checkbox de séléction
-                    - hasForm & isMandatory deviennent mandatory
+Correction
+    Mode Script Mode
+    - retirer Script Config de l'étape de configuration(le mettre en tant que option plutôt que étape à suivre)
+        - rajouter un bouton éditer à côté de l'import, ce bouton permettra d'ouvrir l'interface de SCriptCOnfig par dessus StepperPopup.
 
-
-
-
-- le rollBack de donnée(réinitialiser à la donnée d'origine pour la configuration de base de donnée)
-
-
-
-- choisir le mode de génération dès le début
-    - rajouter un set (associer avec le bouton créer un nouveau projet)
-
-
-
-l'ajout d'une relation permet d'afficher le détail de fille :
-    Créer une fonction qui permet de créer plusieurs relation
-
-
-    Rajouter un bouton qui permet de rajouter toutes les relations d'un enfant/parent
-        rajouter une fonctionnalité qui permet de set plusieurs colonnes en une fois
-
-
-
-
-Absence de chargement
-
-
-BUG :
-    Quand on change de framework depuis la page de config, valeur par defaut du champs version du Framework est la première valeur du tableau de version de l'ancien framework
-
-
-
-
-
-
-rajouter un raw par étape pour voir la forme des données envoyées
-
-
-database ne contient pas de séléction mais on lui envoie directement databaseCOnfig :
-
-
-
-- pull pour récupérer les modifications
-
-
-
-
-
-
-
-
-
+        Et là l'utilisateur configure ce qu'il veut, quand c'est ok, 
+    Mode connexion
+    - Si la connexion est Success et que l'utilisateur ne change aucune information du champs, on active le bouton d'édition de à côté de test connexion
+    SI l'utilisateur change une information et n'a pas fais test(avec confirmation que la connexion est ok), on désactive le bouton d'édition
 
 
 

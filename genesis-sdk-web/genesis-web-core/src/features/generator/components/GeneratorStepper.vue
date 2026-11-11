@@ -12,7 +12,7 @@
 
     :disable-next="hasWarning || (currentStepId === 'summary' && !isSummaryComplete)"
     :is-loading="store.isGenerating"
-    :hide-footer="store.isGenerationComplete"
+    :hide-footer="store.isGenerationComplete || isEditingScript"
 
     :show-tutorial-trigger="true"
     :is-advancing="isAdvancing"
@@ -76,14 +76,17 @@
 
     <!-- ÉTAPE : CONFIGURATION BASE DE DONNÉES -->
     <DatabaseConfigView 
-      v-else-if="currentStepId === 'database_config'" 
+      v-else-if="currentStepId === 'database_config' && !isEditingScript" 
       @test-connection-error="handleChildError" 
+      @request-file-path="handleRequestFilePath" 
+      @edit-script="openScriptEditor"
     />
 
     <!-- ÉTAPE : SCRIPT / IA -->
-    <ScriptConfigView 
-      v-else-if="currentStepId === 'script'" 
-      @request-file-path="handleRequestFilePath" 
+    <ScriptConfigView
+      v-else-if="currentStepId === 'database_config' && isEditingScript"
+      @request-file-path="handleRequestFilePath"
+      @close="closeScriptEditor"
     />
 
     <!-- ÉTAPE : SÉLECTION TABLES/VUES -->
@@ -264,6 +267,7 @@ const frameworkGroupBy = ref<keyof Framework | null>(null);
 const feDetailFramework = ref<FrontendFramework | null>(null);
 const dbDetailEngine = ref<DatabaseEngineDto | null>(null);
 // const repoDetailProvider = ref<RepositoryProviderMetadata | null>(null);
+const isEditingScript = ref(false);
 
 
 const showError = ref(false);
@@ -459,6 +463,14 @@ function handleRequestFolderPath() {
 
 function handleRequestFilePath(payload: FileRequestPayload) { 
   emit('request-file-path', payload); 
+}
+
+function openScriptEditor() {
+  isEditingScript.value = true;
+}
+
+function closeScriptEditor() {
+  isEditingScript.value = false;
 }
 
 function handleChildError(message: string) {

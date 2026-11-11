@@ -105,7 +105,7 @@ export class GenesisPanel {
         this.shutdownTimer = setTimeout(() => {
             console.log('[Genesis] Arrêt effectif de l\'API après 10 min d\'inactivité.');
             this.genesisApi.stop();
-        }, 10 * 60 * 1000);
+        }, 5 * 60 * 1000);
     }
 
     private cancelShutdown(): void {

@@ -581,6 +581,7 @@ export function useGenerator() {
     setSelectedFrontendFramework: store.setSelectedFrontendFramework,
     isScriptMode: computed(() => store.isScriptMode),
     setScriptMode: store.setScriptMode,
+    resetScript: store.resetScript,
     
     updateConfig: store.updateConfig,
     updateDatabase: store.updateDatabase,

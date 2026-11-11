@@ -38,7 +38,7 @@
                     v-else 
                     key="neutral" 
                     :size="iconPixelSize" 
-                    class="absolute inset-0 text-text-muted group-hover:text-text" 
+                    class="absolute inset-0 text-primary-text" 
                 />
             </transition>
         </div>

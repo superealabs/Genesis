@@ -24,53 +24,57 @@
                 variant="primary"
                 size="lg"
                 is-perspective
-                :disabled="isExecuting"
-                @click="handleExecute"
+                @click="handleEdit"
                 class="mb-0.5 shrink-0"
-            >
+                title="Ouvrir l'éditeur de script SQL"
+                >
                 <template #leftIcon>
-                    <IconCaretRight />
+                    <IconEdit />
                 </template>
-                <span v-if="isExecuting">Exécution...</span>
-                <span v-else>Exécuter</span>
+                Éditer
             </GenesisButton>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+// import { ref } from 'vue';
 import type { FileRequestPayload } from '@genesis-labs/shared-types';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
-import IconCaretRight from '@genesis-labs/web-core/core/components/ui/icons/IconCaretRight.vue';
+// import IconCaretRight from '@genesis-labs/web-core/core/components/ui/icons/IconCaretRight.vue';
 import { useScriptFields } from '@genesis-labs/web-core/features/generator/composables/UseScriptFields';
-import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+// import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+import IconEdit from '@genesis-labs/web-core/core/components/ui/icons/IconEdit.vue';
 
 const emit = defineEmits<{
     'request-file-path': [payload: FileRequestPayload];
+    edit: [];
 }>();
 
 // ✅ On récupère uniquement les refs nécessaires. Le v-model gère la mise à jour automatiquement.
 const { scriptPath, scriptContent } = useScriptFields();
 
 // ✅ On récupère l'action de sauvegarde du composable principal
-const { saveScript } = useGenerator();
+// const { saveScript } = useGenerator();
 
-const isExecuting = ref(false);
+// const isExecuting = ref(false);
 
 function handleBrowse() {
     emit('request-file-path', { field: 'script', extensions: ['sql'] });
 }
 
-async function handleExecute() {
-    isExecuting.value = true;
-    try {
-        await saveScript();
-    } catch (error) {
-        console.error("Erreur lors de l'exécution du script", error);
-    } finally {
-        isExecuting.value = false;
-    }
+function handleEdit() {
+  emit('edit');
 }
+// async function handleExecute() {
+//     isExecuting.value = true;
+//     try {
+//         await saveScript();
+//     } catch (error) {
+//         console.error("Erreur lors de l'exécution du script", error);
+//     } finally {
+//         isExecuting.value = false;
+//     }
+// }
 </script>

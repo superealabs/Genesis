@@ -62,7 +62,7 @@ export type StepId =
   | 'project_config'
   | 'database_select'
   | 'database_config'
-  | 'script'
+  // | 'script'
   | 'generation'
   | 'relations'
   | 'frontend_select'
@@ -76,7 +76,7 @@ export const STEP_LABELS: string[] = [
   'Configuration Projet',
   'Sélection BDD',
   'Configuration BDD',
-  'Script / IA',
+  // 'Script / IA',
   'Génération',
   'Relations',
   'Sélection Frontend',
@@ -99,7 +99,7 @@ export const WIZARD_STEP_ORDER: StepId[] = [
   'project_config',
   'database_select',
   'database_config',
-  'script',
+  // 'script',
   'generation',
   'relations',
   'frontend_select',
@@ -118,7 +118,7 @@ export const STEP_TO_SUMMARY_MAP: Record<StepId, number | null> = {
   'project_config': 0,
   'database_select': 1,
   'database_config': 1,
-  'script': null, // Intentionnel : pas de résumé
+  // 'script': null, // Intentionnel : pas de résumé
   'generation': 2,
   'relations': 3,
   'frontend_select': 4,
@@ -381,101 +381,199 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
   database_config: {
     beforeNext: async (store, { dbsvc, svc }) => {
-      // Si l'utilisateur a choisi le mode script, pas de validation JDBC requise
+      // ═══════════════════════════════════════════════════════════════════
+      // MODE SCRIPT : pas de JDBC, pas d'execute
+      // 1. Valider le script
+      // 2. Sauvegarder le script
+      // 3. Vider le script (succès)
+      // ═══════════════════════════════════════════════════════════════════
       if (store.isScriptMode) {
-        console.log("[Wizard: database_config] Mode script actif : passage sans connexion JDBC.");
+        try {
+          const script = store.stepperData.script;
+          if (!script?.content) {
+            store.setWizardError('[Script] Aucun script configuré.');
+            return false;
+          }
+
+          // 1. Valider
+          const validation = await svc.validateSqlScript({
+            script: script.content,
+            confirmExecution: false,
+          });
+          if (!validation.valid) {
+            store.setWizardError(`[Script] Validation échouée : ${validation.message}`);
+            return false;
+          }
+
+          // 2. Sauvegarder
+          const saveResult = await svc.saveScriptConfig({
+            path: script.path ?? '',
+            content: script.content,
+          });
+          if (!saveResult.success) {
+            store.setWizardError(`[Script] Sauvegarde échouée : ${saveResult.message}`);
+            return false;
+          }
+
+          // 3. Vider le script
+          // TODO: afficher un toast "Script sauvegardé" quand on aura un système de notification
+          store.resetScript();
+
+          console.log("[Wizard: database_config] Mode Script : validate + save OK, script réinitialisé.");
+          return true;
+        } catch (error) {
+          store.setWizardError(
+            error instanceof Error ? `[Script] ${error.message}` : '[Script] Échec inconnu.'
+          );
+          return false;
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // MODE CONNEXION
+      // Ordre : validation → JDBC → script(validate+save) → save DB → script(execute)
+      // ═══════════════════════════════════════════════════════════════════
+      try {
+        const db = toRaw(store.stepperData.database);
+        const script = store.stepperData.script;
+        const hasScript = !!script?.content;
+
+        console.log("BEFORE NEXT : DATABASE, CONFIG : ", db);
+
+        // 1. Validation des champs
+        if (reject(store, validateDatabaseFields(store))) return false;
+
+        // 2. Détection du changement (uniquement les champs métier)
+        const configChanged = store.hasDatabaseConfigChanged(db);
+        const isFirstCommit = !store.lastCommittedDatabaseConfig;
+
+        // 3. Confirmation utilisateur si changement (et pas premier commit)
+        if (configChanged && !isFirstCommit) {
+          const confirmed = await useGenesisWarning().confirm({
+            title: 'Changer de base de données ?',
+            message: 'La configuration de la base de données a changé. Les associations tables/profils de l\'étape Génération seront réinitialisées.',
+            details: [
+              'Les tables et vues assignées seront perdues.',
+              'Vous devrez reconfigurer l\'étape Génération.',
+              'Les relations définies seront également réinitialisées.'
+            ],
+            confirmLabel: 'Continuer',
+            variant: 'danger'
+          });
+          if (!confirmed) return false;
+        }
+
+        // 4. Test de connexion JDBC
+        try {
+          const result = await dbsvc.testDatabaseConnection(db);
+          if (!result.success) {
+            store.setWizardError(`[Connexion] Test JDBC échoué : ${result.message}`);
+            return false;
+          }
+        } catch (error) {
+          store.setWizardError(
+            error instanceof Error ? `[Connexion] ${error.message}` : '[Connexion] Échec du test de connexion.'
+          );
+          return false;
+        }
+
+        // 5. Si un script est présent : VALIDER + SAUVEGARDER (AVANT save DB)
+        if (hasScript) {
+          // 5a. Valider
+          const validation = await svc.validateSqlScript({
+            script: script.content,
+            confirmExecution: false,
+          });
+          if (!validation.valid) {
+            store.setWizardError(`[Script] Validation échouée : ${validation.message}`);
+            return false;
+          }
+
+          // 5b. Sauvegarder
+          const saveResult = await svc.saveScriptConfig({
+            path: script.path ?? '',
+            content: script.content,
+          });
+          if (!saveResult.success) {
+            store.setWizardError(`[Script] Sauvegarde échouée : ${saveResult.message}`);
+            return false;
+          }
+
+          console.log("[Wizard: database_config] Script validé et sauvegardé (avant save DB).");
+        }
+
+        // 6. Sauvegarde backend de la config DB
+        try {
+          await svc.saveDatabaseConfig(db);
+          console.log("[Wizard: database_config] Configuration DB sauvegardée côté backend.");
+        } catch (error) {
+          // TODO: si le script a été sauvegardé à l'étape 5 mais que la config DB échoue,
+          //       il faudrait "rollback" le script côté backend. Pas implémenté pour l'instant.
+          store.setWizardError(
+            error instanceof Error ? `[Connexion] ${error.message}` : '[Connexion] Échec de la sauvegarde de la configuration.'
+          );
+          return false;
+        }
+
+        // 7. Reset des associations SI changement (même premier commit : no-op si vide)
+        if (configChanged) {
+          console.log("[Wizard: database_config] Config DB changée → reset des associations de génération.");
+          store.resetGenerationAssociations();
+          store.invalidateSteps(['generation', 'relations', 'summary']);
+        }
+
+        // 8. Mémorise la nouvelle config commitée
+        store.setLastCommittedDatabaseConfig(db);
+
+        // 9. Si un script est présent : EXÉCUTER (APRÈS save DB)
+        if (hasScript) {
+          const execResult = await svc.executeSqlScript({
+            script: script.content,
+            confirmExecution: true,
+          });
+          if (!execResult.success) {
+            // TODO: si l'exécution échoue, la config DB est déjà sauvée.
+            //       On ne rollback pas (pas de fonction), on laisse l'utilisateur corriger.
+            store.setWizardError(`[Script] Exécution échouée : ${execResult.message}`);
+            return false;
+          }
+
+          // 10. Vider le script (succès)
+          // TODO: afficher un toast "Script exécuté avec succès" quand on aura un système de notification
+          store.resetScript();
+          console.log("[Wizard: database_config] Script exécuté + réinitialisé.");
+        }
+
+        console.log("[Wizard: database_config] Configuration BDD validée (test + save OK).");
         return true;
-      }
-
-      const db = toRaw(store.stepperData.database);
-
-      console.log("BEFORE NEXT : DATABASE, CONFIG : ", db);
-
-      // 1. Validation des champs
-      if (reject(store, validateDatabaseFields(store))) return false;
-
-      // 2. Détection du changement (uniquement les champs métier)
-      const configChanged = store.hasDatabaseConfigChanged(db);
-      const isFirstCommit = !store.lastCommittedDatabaseConfig;
-
-      // 3. Confirmation utilisateur si changement (et pas premier commit)
-      if (configChanged && !isFirstCommit) {
-        const confirmed = await useGenesisWarning().confirm({
-          title: 'Changer de base de données ?',
-          message: 'La configuration de la base de données a changé. Les associations tables/profils de l\'étape Génération seront réinitialisées.',
-          details: [
-            'Les tables et vues assignées seront perdues.',
-            'Vous devrez reconfigurer l\'étape Génération.',
-            'Les relations définies seront également réinitialisées.'
-          ],
-          confirmLabel: 'Continuer',
-          variant: 'danger'
-        });
-
-        if (!confirmed) {
-          return false;
-        }
-      }
-
-      // 4. Test de connexion (avec toRaw)
-      try {
-        const result = await dbsvc.testDatabaseConnection(db);
-        if (!result.success) {
-          store.setWizardError(result.message);
-          return false;
-        }
       } catch (error) {
         store.setWizardError(
-          error instanceof Error ? error.message : "Échec du test de connexion."
+          error instanceof Error ? `[Connexion] ${error.message}` : '[Connexion] Échec inconnu.'
         );
         return false;
       }
-
-      // 5. Sauvegarde backend (await !)
-      try {
-        await svc.saveDatabaseConfig(db);
-        console.log("[Wizard: database_config] Configuration DB sauvegardée côté backend.");
-      } catch (error) {
-        store.setWizardError(
-          error instanceof Error ? error.message : "Échec de la sauvegarde de la configuration."
-        );
-        return false;
-      }
-
-      // 6. Reset des associations SI changement (même premier commit : no-op si vide)
-      if (configChanged) {
-        console.log("[Wizard: database_config] Config DB changée → reset des associations de génération.");
-        store.resetGenerationAssociations();
-        store.invalidateSteps(['generation', 'relations', 'summary']);
-      }
-
-      // 7. Mémorise la nouvelle config commitée
-      store.setLastCommittedDatabaseConfig(db);
-
-      console.log("[Wizard: database_config] Configuration BDD validée (test + save OK).");
-      return true;
     }
   },
 
-  script: {
-    beforeNext: async (store, { svc }) => {
-      const script = store.stepperData.script;
+  // script: {
+  //   beforeNext: async (store, { svc }) => {
+  //     const script = store.stepperData.script;
 
-      if (script && (script.path || script.content)) {
-        try {
-          await svc.saveScriptConfig(toRaw(script));
-          console.log("[Wizard: script] Script sauvegardé avec succès");
-        } catch (error) {
-          console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error);
-        }
-      }
+  //     if (script && (script.path || script.content)) {
+  //       try {
+  //         await svc.saveScriptConfig(toRaw(script));
+  //         console.log("[Wizard: script] Script sauvegardé avec succès");
+  //       } catch (error) {
+  //         console.warn("[Wizard: script] Échec sauvegarde script (non bloquant):", error);
+  //       }
+  //     }
 
-      return true;
-    },
-    skipCascade: [] // Peut être sauté sans conséquence sur les autres
+  //     return true;
+  //   },
+  //   skipCascade: [] // Peut être sauté sans conséquence sur les autres
 
 
-  },
+  // },
 
   generation: {
     onEnter: async (store, { svc }) => {
@@ -794,6 +892,7 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
     onSkip: async (store, { svc }) => {
       // 1. Reset local
+      // store.pendingRepositoryProvider
       store.skipGitConfig();
 
       store.markStepAsSkipped('repository_select');

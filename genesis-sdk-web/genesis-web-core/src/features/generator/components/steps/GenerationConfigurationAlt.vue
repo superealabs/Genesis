@@ -26,17 +26,26 @@
         <div class="flex-1 min-h-0 flex flex-col space-y-3">
           <div class="flex items-center justify-between flex-shrink-0">
             <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-              Disponibles (Non assignées)
+              Unassigned Entity
               <span class="text-primary text-sm font-normal">*</span>
             </h3>
-            <button 
-              v-if="unassignedItems.length > 0"
-              type="button"
-              class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-              @click="toggleAllUnassigned"
-            >
-              {{ areAllUnassignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
-            </button>
+            <div class="flex items-center gap-2">
+              <GenesisButton
+                :disabled="!hasSelectedInUnassigned"
+                :variant="'secondary'"
+                @click="clearUnassignedSelection"
+                title="Désélectionner les tables/vues visibles"
+              >
+                Clear
+              </GenesisButton>
+              <GenesisButton
+                :disabled="unassignedItems.length === 0"
+                variant="primary"
+                @click="toggleAllUnassigned"
+              >
+                {{ areAllUnassignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+              </GenesisButton>
+            </div>
           </div>
           
           <p class="text-sm text-text-muted flex-shrink-0">
@@ -76,7 +85,36 @@
       <!-- ═══ COLONNE 2 : GESTION DES CONFIGURATIONS (Centrale) ═══ -->
       <!-- ✅ Enveloppement pour le tutoriel -->
 
-        <section class="w-80 flex-shrink-0 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
+        <section class="w-80 flex-shrink-0 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-8">
+          <GenesisTutorialItem id="generation-profiles-configuration-settings">
+            <div v-if="activeConfig" class="p-4 rounded-lg border border-bg-neutral-genesis space-y-3">
+              <div class="flex items-center justify-between">
+                <h4 class="text-sm font-semibold text-text">
+                  Composants : <span class="text-primary">{{ activeConfig.name }}</span>
+                </h4>
+              </div>
+              
+              <div class="flex items-center justify-between py-2 border-b border-secondary/50 mb-2">
+                <span class="text-xs font-medium text-text-muted">
+                  Dépendances hiérarchiques
+                </span>
+                <GenesisSwitch v-model="enforceDependencies" size="sm" />
+              </div>
+
+              <div class="flex flex-col gap-2">
+                <GenesisCheckboxSimple
+                  v-for="comp in AVAILABLE_COMPONENTS"
+                  :key="comp.value"
+                  :model-value="activeConfig.components.includes(comp.value)"
+                  :label="comp.label"
+                  :disabled="isComponentDisabled(comp.value)"
+                  size="md"
+                  @update:model-value="(isChecked) => handleComponentToggle(comp.value, isChecked)"
+                />
+              </div>
+            </div>
+          </GenesisTutorialItem>
+
           <GenesisTutorialItem id="generation-profile-configuration-list">
             <div>
               <h3 class="text-lg font-semibold text-text mb-3 flex items-center gap-2">
@@ -125,35 +163,6 @@
               />
             </div>
           </GenesisTutorialItem>
-
-          <GenesisTutorialItem id="generation-profiles-configuration-settings">
-            <div v-if="activeConfig" class="p-4 rounded-lg border border-bg-neutral-genesis space-y-3">
-              <div class="flex items-center justify-between">
-                <h4 class="text-sm font-semibold text-text">
-                  Composants : <span class="text-primary">{{ activeConfig.name }}</span>
-                </h4>
-              </div>
-              
-              <div class="flex items-center justify-between py-2 border-b border-secondary/50 mb-2">
-                <span class="text-xs font-medium text-text-muted">
-                  Dépendances hiérarchiques
-                </span>
-                <GenesisSwitch v-model="enforceDependencies" size="sm" />
-              </div>
-
-              <div class="flex flex-col gap-2">
-                <GenesisCheckboxSimple
-                  v-for="comp in AVAILABLE_COMPONENTS"
-                  :key="comp.value"
-                  :model-value="activeConfig.components.includes(comp.value)"
-                  :label="comp.label"
-                  :disabled="isComponentDisabled(comp.value)"
-                  size="md"
-                  @update:model-value="(isChecked) => handleComponentToggle(comp.value, isChecked)"
-                />
-              </div>
-            </div>
-          </GenesisTutorialItem>
         </section>
 
       <!-- ═══ COLONNE 3 : TABLES ET VUES ASSIGNÉES ═══ -->
@@ -162,16 +171,25 @@
         <div class="flex-1 min-h-0 flex flex-col space-y-3">
           <div class="flex items-center justify-between flex-shrink-0">
             <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-              Déjà assignées
+              Assignated Entity
             </h3>
-            <button 
-              v-if="assignedItems.length > 0"
-              type="button"
-              class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-              @click="toggleAllAssigned"
-            >
-              {{ areAllAssignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
-            </button>
+            <div class="flex items-center gap-2">
+              <GenesisButton
+                :disabled="!hasSelectedInAssigned"
+                @click="clearAssignedSelection"
+                title="Désélectionner les tables/vues visibles"
+                :variant="'secondary'"
+              >
+                Clear
+              </GenesisButton>
+              <GenesisButton
+                :disabled="assignedItems.length === 0"
+                variant="primary"
+                @click="toggleAllAssigned"
+              >
+                {{ areAllAssignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+              </GenesisButton>
+            </div>
           </div>
           
           <p class="text-sm text-text-muted flex-shrink-0">
@@ -236,6 +254,7 @@ import GenesisButtonIcon from '@genesis-labs/web-core/core/components/ui/actions
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue'; // ✅ AJOUT
 import GenesisEntityTable from '@genesis-labs/web-core/core/components/layouts/display/table/GenesisEntityTable.vue';
 import { useConfigManagerLogic } from '@genesis-labs/web-core/features/generator/composables/useConfigManagerLogic';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 
 // ============================================================================
 // 1. COMPOSABLES & ÉTAT LOCAL
@@ -645,6 +664,29 @@ watch(enforceDependencies, (isEnforced) => {
     }
   }
 });
+
+/**
+ * Désélectionne tous les items VISIBLES (filtrés) de la colonne "Disponibles".
+ * Contrairement à `toggleAllUnassigned`, agit uniquement en mode "retirer".
+ * N'affecte PAS les items filtrés (recherche active ou filtre table/view).
+ */
+const clearUnassignedSelection = (): void => {
+  const visibleNames = new Set(unassignedItems.value.map(item => item.tableName));
+  store.selectedItemsInList = store.selectedItemsInList.filter(
+    name => !visibleNames.has(name)
+  );
+};
+
+/**
+ * Désélectionne tous les items VISIBLES (filtrés) de la colonne "Assignées".
+ * Contrairement à `toggleAllAssigned`, agit uniquement en mode "retirer".
+ */
+const clearAssignedSelection = (): void => {
+  const visibleNames = new Set(assignedItems.value.map(item => item.tableName));
+  store.selectedItemsInList = store.selectedItemsInList.filter(
+    name => !visibleNames.has(name)
+  );
+};
 </script>
 
 <style scoped>

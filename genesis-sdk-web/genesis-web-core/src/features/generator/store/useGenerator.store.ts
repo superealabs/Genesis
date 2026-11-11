@@ -338,6 +338,16 @@ function reset() {
     (stepperData.value.script as any)[key] = value; 
   }
 
+  /** 
+   * Réinitialise le script (path + content).
+   * Utilisé :
+   * - au switch de mode (Connexion ↔ Script) pour éviter les restes
+   * - après une exécution réussie pour éviter les ré-exécutions accidentelles
+   */
+  function resetScript() {
+    stepperData.value.script = structuredClone(INITIAL_STATE.script);
+  }
+
   // --- Étape 6 : Tables, Vues & Composants ---
   function setAvailableTables(data: TableMetadataDto[]) { availableTables.value = data; }
   function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
@@ -536,6 +546,7 @@ function reset() {
   }
 
   function skipGitConfig() {
+    pendingRepositoryProvider.value = null;
     stepperData.value.git = {
       useGit: false,
       useRemoteRepo: false,
@@ -585,6 +596,7 @@ function reset() {
 
     // Étape 5 : Script / IA
     updateScript,
+    resetScript,
 
     // Étape 6 : Tables, Vues & Composants
     generationProfiles,
