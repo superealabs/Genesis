@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.Instant;
 import java.util.Map;
 
-import org.labs.genesis.api.dto.GenerationErrorResponse;
+import org.labs.genesis.api.dto.GenerationDtos.GenerationErrorResponse;
 import org.labs.genesis.api.service.GenerationPublicationService;
 import org.labs.genesis.api.service.GitLocalService.GitOperationException;
 import java.io.IOException;

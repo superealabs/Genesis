@@ -1,5 +1,6 @@
 package org.labs.genesis.api.dto;
 
+import java.time.Instant;
 import java.util.List;
 
 public final class GenerationDtos {
@@ -102,5 +103,13 @@ public final class GenerationDtos {
             createdFiles = List.copyOf(createdFiles);
             skippedExistingFiles = List.copyOf(skippedExistingFiles);
         }
+    }
+
+    public record GenerationErrorResponse(
+            Instant timestamp,
+            int status,
+            String code,
+            String message
+    ) {
     }
 }
