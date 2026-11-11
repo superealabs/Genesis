@@ -14,33 +14,35 @@
 
     <!-- Mode A : 1 ancre + N cibles -->
     <template v-if="internalMode === 'A'">
-        <div class="flex gap-2 items-end">
-            <!-- ÉTAPE : Dropdown ancre -->
-            <GenesisTutorialItem :id="subTargeted('anchor')">
-                <GenesisInput
-                    v-model="internalAnchor"
-                    type="select"
-                    :options="anchorOptions"
-                    :label="isChildFirst ? 'Table Enfant' : 'Table Parent'"
-                    placeholder="Sélectionner..."
-                    size="lg"
-                    fill-width
-                    class="flex-1"
-                />
-            </GenesisTutorialItem>
+      <div class="flex gap-2 items-end">
+        <!-- ÉTAPE : Dropdown ancre -->
+        <GenesisTutorialItem :id="subTargeted('anchor')">
+            <GenesisInput
+                v-model="internalAnchor"
+                type="select"
+                :options="anchorOptions"
+                :label="isChildFirst ? 'Table Enfant' : 'Table Parent'"
+                placeholder="Sélectionner..."
+                size="lg"
+                fill-width
+                class="flex-1"
+            />
+        </GenesisTutorialItem>
 
-            <!-- ÉTAPE : Segmented parent/enfant -->
-            <GenesisTutorialItem :id="subTargeted('direction')">
-                <GenesisSegmentedControl
-                    v-model="internalDirection"
-                    :options="[
-                    { label: 'Parent', value: 'parent' },
-                    { label: 'Enfant', value: 'enfant' }
-                    ]"
-                    size="lg"
-                />
-            </GenesisTutorialItem>
-        </div>
+        <!-- ÉTAPE : Segmented parent/enfant -->
+        <GenesisTutorialItem :id="subTargeted('direction')">
+            <GenesisSegmentedControl
+                v-model="internalDirection"
+                :options="[
+                { label: 'Parent', value: 'parent' },
+                { label: 'Enfant', value: 'enfant' }
+                ]"
+                size="lg"
+            />
+        </GenesisTutorialItem>
+      </div>
+
+
 
       <!-- Recherche + liste checkbox -->
       <div class="flex gap-2">
@@ -57,15 +59,29 @@
               </template>
           </GenesisInput>
         </GenesisTutorialItem>
-      </div>
-      <div v-if="visibleCountA > 0" class="flex justify-end shrink-0">
-        <button
-          type="button"
-          class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-          @click="toggleAllA"
-        >
-          {{ allSelectedA ? 'Tout désélectionner' : 'Tout sélectionner' }}
-        </button>
+
+        <div v-if="modeAItems.length > 0" class="flex items-center justify-end gap-2 shrink-0">
+          <GenesisButton
+            :disabled="!hasSelectedA"
+            variant="secondary"
+            size="md"
+            is-perspective
+            @click="clearA"
+            title="Désélectionner les entités visibles"
+          >
+            Clear
+          </GenesisButton>
+          <GenesisButton
+            :disabled="allSelectedA"
+            variant="primary"
+            size="md"
+            is-perspective
+            @click="selectAllA"
+            title="Sélectionner toutes les entités visibles"
+          >
+            Select All
+          </GenesisButton>
+        </div>
       </div>
       <div class="shrink-0">
         <!-- ÉTAPE : GenesisEntityTable -->
@@ -83,43 +99,56 @@
     <!-- Mode B -->
     <template v-else>
         <div class="flex gap-2 items-center">
-            <!-- ÉTAPE : barre de recherche -->
-            <GenesisTutorialItem :id="subMass('searchbar-mass-table')">
-                <GenesisInput
-                    v-model="searchB"
-                    type="text"
-                    placeholder="Rechercher..."
-                    size="lg"
-                    fill-width
-                    class="flex-1"
-                >
-                    <template #left>
-                        <IconSearch :size="16" class="text-text-muted" />
-                    </template>
-                </GenesisInput>
-            </GenesisTutorialItem>
+          <!-- ÉTAPE : barre de recherche -->
+          <GenesisTutorialItem :id="subMass('searchbar-mass-table')">
+              <GenesisInput
+                  v-model="searchB"
+                  type="text"
+                  placeholder="Rechercher..."
+                  size="lg"
+                  fill-width
+                  class="flex-1"
+              >
+                  <template #left>
+                      <IconSearch :size="16" class="text-text-muted" />
+                  </template>
+              </GenesisInput>
+          </GenesisTutorialItem>
 
-            <!-- ÉTAPE : segmented direction -->
-            <GenesisTutorialItem :id="subMass('direction')">
-                <GenesisSegmentedControl
-                    v-model="internalDirection"
-                    :options="[
-                    { label: 'Parent', value: 'parent' },
-                    { label: 'Enfant', value: 'enfant' }
-                    ]"
-                    size="lg"
-                />
-            </GenesisTutorialItem>
-        </div>
+          <div v-if="modeBItems.length > 0" class="flex items-center justify-end gap-2 shrink-0">
+            <GenesisButton
+              :disabled="!hasSelectedB"
+              variant="secondary"
+              size="md"
+              is-perspective
+              @click="clearB"
+              title="Désélectionner les tables visibles"
+            >
+              Clear
+            </GenesisButton>
+            <GenesisButton
+              :disabled="allSelectedB"
+              variant="primary"
+              size="md"
+              is-perspective
+              @click="selectAllB"
+              title="Sélectionner toutes les tables visibles"
+            >
+              Select All
+            </GenesisButton>
+          </div>
 
-        <div v-if="visibleCountB > 0" class="flex justify-end shrink-0">
-          <button
-            type="button"
-            class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-            @click="toggleAllB"
-          >
-            {{ allSelectedB ? 'Tout désélectionner' : 'Tout sélectionner' }}
-          </button>
+          <!-- ÉTAPE : segmented direction -->
+          <GenesisTutorialItem :id="subMass('direction')">
+              <GenesisSegmentedControl
+                  v-model="internalDirection"
+                  :options="[
+                  { label: 'Parent', value: 'parent' },
+                  { label: 'Enfant', value: 'enfant' }
+                  ]"
+                  size="lg"
+              />
+          </GenesisTutorialItem>
         </div>
 
         <div class="shrink-0">
@@ -145,11 +174,12 @@ import GenesisSegmentedControl from '@genesis-labs/web-core/core/components/ui/a
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisEntityTable from '@genesis-labs/web-core/core/components/layouts/display/table/GenesisEntityTable.vue';
 import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSearch.vue';
-import { useSelectVisible } from './composables/useSelectVisible';
+// import { useSelectVisible } from './composables/useSelectVisible';
 
 // ✅ Tutoriel
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 import { useTutorialGroup } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 
 // ============================================================================
 // PROPS & EMITS
@@ -266,25 +296,75 @@ const modeBItems = computed<TableMetadataDto[]>(() =>
 // ============================================================================
 // SELECT ALL
 // ============================================================================
-const {
-  visibleCount: visibleCountA,
-  allSelected: allSelectedA,
-  toggleAll: toggleAllA,
-} = useSelectVisible(
-  () => modeAItems.value.map(t => t.tableName),
-  () => props.targets,
-  (ids) => emit('update:targets', ids),
-);
+// const {
+//   visibleCount: visibleCountA,
+//   allSelected: allSelectedA,
+//   toggleAll: toggleAllA,
+// } = useSelectVisible(
+//   () => modeAItems.value.map(t => t.tableName),
+//   () => props.targets,
+//   (ids) => emit('update:targets', ids),
+// );
 
-const {
-  visibleCount: visibleCountB,
-  allSelected: allSelectedB,
-  toggleAll: toggleAllB,
-} = useSelectVisible(
-  () => modeBItems.value.map(t => t.tableName),
-  () => props.massSelection,
-  (ids) => emit('update:massSelection', ids),
-);
+// const {
+//   visibleCount: visibleCountB,
+//   allSelected: allSelectedB,
+//   toggleAll: toggleAllB,
+// } = useSelectVisible(
+//   () => modeBItems.value.map(t => t.tableName),
+//   () => props.massSelection,
+//   (ids) => emit('update:massSelection', ids),
+// );
+
+// ═══ Mode A ═══
+/** Y a-t-il au moins une entité sélectionnée (parmi les visibles) ? */
+const hasSelectedA = computed(() => {
+  const selected = new Set(props.targets);
+  return modeAItems.value.some(item => selected.has(item.tableName));
+});
+
+/** Toutes les entités visibles sont-elles sélectionnées ? */
+const allSelectedA = computed(() => {
+  if (modeAItems.value.length === 0) return false;
+  const selected = new Set(props.targets);
+  return modeAItems.value.every(item => selected.has(item.tableName));
+});
+
+/** Sélectionne TOUTES les entités visibles (mode A). */
+function selectAllA(): void {
+  const current = new Set(props.targets);
+  modeAItems.value.forEach(item => current.add(item.tableName));
+  emit('update:targets', [...current]);
+}
+
+/** Désélectionne TOUTES les entités visibles (mode A). */
+function clearA(): void {
+  const visibleNames = new Set(modeAItems.value.map(item => item.tableName));
+  emit('update:targets', props.targets.filter(name => !visibleNames.has(name)));
+}
+
+// ═══ Mode B ═══
+const hasSelectedB = computed(() => {
+  const selected = new Set(props.massSelection);
+  return modeBItems.value.some(item => selected.has(item.tableName));
+});
+
+const allSelectedB = computed(() => {
+  if (modeBItems.value.length === 0) return false;
+  const selected = new Set(props.massSelection);
+  return modeBItems.value.every(item => selected.has(item.tableName));
+});
+
+function selectAllB(): void {
+  const current = new Set(props.massSelection);
+  modeBItems.value.forEach(item => current.add(item.tableName));
+  emit('update:massSelection', [...current]);
+}
+
+function clearB(): void {
+  const visibleNames = new Set(modeBItems.value.map(item => item.tableName));
+  emit('update:massSelection', props.massSelection.filter(name => !visibleNames.has(name)));
+}
 
 watch(
   () => modeBItems.value.map(t => t.tableName),

@@ -1,35 +1,60 @@
 <template>
   <div class="flex flex-col gap-3 w-full">
-    <!-- Barre de recherche -->
-    <GenesisInput
-      v-model="searchQuery"
-      type="text"
-      :placeholder="searchPlaceholder"
-      size="md"
-      fill-width
-    >
-      <template #left>
-        <IconSearch :size="12" class="text-text-muted" />
-      </template>
-    </GenesisInput>
-
-    <div v-if="visibleCount > 0" class="flex justify-end shrink-0">
-      <button
-        type="button"
-        class="text-xs text-primary hover:text-primary/80 font-medium transition-colors"
-        @click="toggleAll"
+    <!-- Barre de recherche + 2 boutons (Clear / Select All) -->
+    <div class="flex items-center gap-2">
+      <GenesisInput
+        v-model="searchQuery"
+        type="text"
+        :placeholder="searchPlaceholder"
+        size="md"
+        fill-width
+        class="flex-1"
       >
-        {{ allSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
-      </button>
+        <template #left>
+          <IconSearch :size="12" class="text-text-muted" />
+        </template>
+      </GenesisInput>
+
+      <div v-if="filteredRelations.length > 0" class="flex items-center gap-2 shrink-0">
+        <GenesisButton
+          :disabled="!hasSelected"
+          variant="secondary"
+          size="md"
+          is-perspective
+          @click="clear"
+          title="Désélectionner les relations visibles"
+        >
+          Clear
+        </GenesisButton>
+        <GenesisButton
+          :disabled="allSelected"
+          variant="primary"
+          size="md"
+          is-perspective
+          @click="selectAll"
+          title="Sélectionner toutes les relations visibles"
+        >
+          Select All
+        </GenesisButton>
+      </div>
     </div>
 
+
     <GenesisContainer
+      
       :min-height="minHeight"
       :max-height="maxHeight"
       :is-empty="filteredRelations.length === 0"
       :empty-text="relations.length === 0 ? 'Aucune relation configurée.' : 'Aucune relation ne correspond à ces critères.'"
     >
-      <table class="w-full text-left text-sm">
+      <GenesisLoaderOverlay
+        v-if="isLoading"
+        :visible="true"
+        size="md"
+        title="Chargement des relations"
+        class="relative h-[400px]"
+      />
+      <table v-else class="w-full text-left text-sm">
         <thead>
           <tr>
             <th class="sticky top-0 z-20 p-3 w-10 bg-bg-dark"></th>
@@ -122,10 +147,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import type { RelationParameter } from '@genesis-labs/shared-types';
 import { useRelationFilters } from './composables/useRelationFilters';
-import { useSelectVisible } from './composables/useSelectVisible';
+// import { useSelectVisible } from './composables/useSelectVisible';
 import GenesisContainer from '@genesis-labs/web-core/core/components/layouts/GenesisContainer.vue';
 import GenesisInput from '@genesis-labs/web-core/core/components/ui/inputs/GenesisInput.vue';
 import GenesisCheckboxSimple from '@genesis-labs/web-core/core/components/ui/inputs/GenesisCheckboxSimple.vue';
@@ -133,12 +158,15 @@ import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSear
 import IconCheck from '@genesis-labs/web-core/core/components/ui/icons/IconCheck.vue';
 import IconX from '@genesis-labs/web-core/core/components/ui/icons/IconX.vue';
 import { useMultiSelect } from '@genesis-labs/web-core/core/composables/ux/useMultiSelect';
+import GenesisLoaderOverlay from '@genesis-labs/web-core/core/components/ui/feedback/GenesisLoaderOverlay.vue';
+import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
 
 const props = withDefaults(defineProps<{
   relations: RelationParameter[];
   selectedRelations: string[];
   minHeight?: number;
   maxHeight?: number;
+  isLoading?: boolean;   // ← nouveau, défaut false
 }>(), {
   minHeight: 250,
   maxHeight: 600,
@@ -186,11 +214,38 @@ function updateSelection(ids: string[]) {
   emit('update:selectedRelations', [...ids]);
 }
 
-const { visibleCount, allSelected, toggleAll } = useSelectVisible(
-  () => filteredRelations.value.map(relationKey),
-  selectedIdsRef,
-  updateSelection,
-);
+// const { visibleCount, allSelected, toggleAll } = useSelectVisible(
+//   () => filteredRelations.value.map(relationKey),
+//   selectedIdsRef,
+//   updateSelection,
+// );
+
+// ═══ Select All / Clear ═══
+/** Y a-t-il au moins une relation visible sélectionnée ? */
+const hasSelected = computed(() => {
+  const selected = new Set(selectedIdsRef.value);
+  return filteredRelations.value.some(rel => selected.has(relationKey(rel)));
+});
+
+/** Toutes les relations visibles sont-elles sélectionnées ? */
+const allSelected = computed(() => {
+  if (filteredRelations.value.length === 0) return false;
+  const selected = new Set(selectedIdsRef.value);
+  return filteredRelations.value.every(rel => selected.has(relationKey(rel)));
+});
+
+/** Sélectionne TOUTES les relations visibles. */
+function selectAll(): void {
+  const current = new Set(selectedIdsRef.value);
+  filteredRelations.value.forEach(rel => current.add(relationKey(rel)));
+  updateSelection([...current]);
+}
+
+/** Désélectionne TOUTES les relations visibles. */
+function clear(): void {
+  const visibleKeys = new Set(filteredRelations.value.map(relationKey));
+  updateSelection(selectedIdsRef.value.filter(key => !visibleKeys.has(key)));
+}
 
 function handleRowClick(rel: RelationParameter, event: MouseEvent) {
   handleClick(rel, event);

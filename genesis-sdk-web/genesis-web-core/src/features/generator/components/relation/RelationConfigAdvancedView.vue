@@ -46,6 +46,7 @@
           :relations="getRelations"
           :selected-relations="selectedRelations"
           tutorial-id="relation-advanced-right"
+          :is-loading="isLoading"
           :include-sub-tutorial="true"
           @update:selected-relations="selectedRelations = $event"
           @assign="handleAssign"
@@ -129,6 +130,7 @@ const {
   addRelation,
   removeRelation,
   getChildrenOf, getParentsOf,
+  // relationsLoaded
 } = useGenerator();
 
 const {
@@ -140,6 +142,12 @@ const {
   setTargets,
   resetSelection,
 } = useRelationBuilder();
+
+// NOUVEAU : loader local pour les actions Add / Add All
+const isAddingRelations = ref(false);
+
+// isLoading = premier chargement OU ajout en cours
+const isLoading = computed(() => isAddingRelations.value);
 
 // ============================================================================
 // ÉTAT LOCAL
@@ -220,7 +228,7 @@ const currentSection = computed(() =>
   mode.value === 'A' ? 'targeted' : 'mass'
 );
 
-// ✅ Relance auto du tutoriel au basculement Ciblé <-> Masse
+// Relance auto du tutoriel au basculement Ciblé <-> Masse
 // (uniquement si un tutoriel est déjà actif sur cet écran — sinon no-op silencieux)
 watch(mode, () => {
   if (tutorial && 'restart' in tutorial) {
@@ -333,8 +341,23 @@ async function addRelations(candidates: RelationParameter[]): Promise<void> {
 // ============================================================================
 // ACTIONS UTILISATEUR
 // ============================================================================
-async function handleAdd()    { await addRelations(await computeRelationsToAdd(false)); }
-async function handleAddAll() { await addRelations(await computeRelationsToAdd(true)); }
+async function handleAdd() {
+  isAddingRelations.value = true;
+  try {
+    await addRelations(await computeRelationsToAdd(false));
+  } finally {
+    isAddingRelations.value = false;
+  }
+}
+
+async function handleAddAll() {
+  isAddingRelations.value = true;
+  try {
+    await addRelations(await computeRelationsToAdd(true));
+  } finally {
+    isAddingRelations.value = false;
+  }
+}
 
 function handleRemove() {
   const toRemove = new Set(selectedRelations.value);

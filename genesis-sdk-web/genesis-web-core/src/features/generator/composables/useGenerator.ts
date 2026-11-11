@@ -157,6 +157,7 @@ export function useGenerator() {
     tablesParents,
     frontendAssetContents,
     skippedSteps,
+    relationsLoaded
   } = storeToRefs(store);
 
   const targetSummaryIndex = ref(0);
@@ -551,6 +552,7 @@ export function useGenerator() {
     getTablesParents, 
     getTablesChilds, 
     getRelations,
+    relationsLoaded,
     
     // Options de configuration (Getters)
     availableLoggingLevels: getAvailableLoggingLevels,

@@ -63,6 +63,7 @@
           :relations="relations"
           :selected-relations="selectedRelations"
           :max-height="600"
+          :is-loading="props.isLoading"
           @update:selected-relations="$emit('update:selectedRelations', $event)"
         />
       </GenesisTutorialItem>
@@ -89,6 +90,7 @@ const props = withDefaults(defineProps<{
   isMandatory: boolean;
   relations: RelationParameter[];
   selectedRelations: string[];
+  isLoading?: boolean;
 
   // ✅ Tutoriel (optionnel : composant transparent si absent)
   tutorialId?: string;

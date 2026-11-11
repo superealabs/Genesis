@@ -35,15 +35,17 @@
                 :variant="'secondary'"
                 @click="clearUnassignedSelection"
                 title="Désélectionner les tables/vues visibles"
+                is-perspective
               >
                 Clear
               </GenesisButton>
               <GenesisButton
-                :disabled="unassignedItems.length === 0"
+                :disabled="unassignedItems.length === 0 || areAllUnassignedSelected"
                 variant="primary"
-                @click="toggleAllUnassigned"
+                @click="selectAllUnassigned"
+                is-perspective
               >
-                {{ areAllUnassignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+                Select All
               </GenesisButton>
             </div>
           </div>
@@ -178,16 +180,18 @@
                 :disabled="!hasSelectedInAssigned"
                 @click="clearAssignedSelection"
                 title="Désélectionner les tables/vues visibles"
+                is-perspective
                 :variant="'secondary'"
               >
                 Clear
               </GenesisButton>
               <GenesisButton
-                :disabled="assignedItems.length === 0"
+                :disabled="assignedItems.length === 0 || areAllAssignedSelected"
                 variant="primary"
-                @click="toggleAllAssigned"
+                is-perspective
+                @click="selectAllAssigned"
               >
-                {{ areAllAssignedSelected ? 'Tout désélectionner' : 'Tout sélectionner' }}
+                Select All
               </GenesisButton>
             </div>
           </div>
@@ -508,28 +512,54 @@ function isComponentDisabled(comp: ComponentType): boolean {
   return false;
 }
 
-const toggleAllUnassigned = (): void => {
-  const allSelected = areAllUnassignedSelected.value;
+
+// GESTION DES TOGGLE
+// const toggleAllUnassigned = (): void => {
+//   const allSelected = areAllUnassignedSelected.value;
+//   unassignedItems.value.forEach(item => {
+//     if (allSelected) {
+//       store.toggleItemInList(item.tableName);
+//     } else {
+//       if (!store.selectedItemsInList.includes(item.tableName)) {
+//         store.selectedItemsInList.push(item.tableName);
+//       }
+//     }
+//   });
+// };
+
+// const toggleAllAssigned = (): void => {
+//   const allSelected = areAllAssignedSelected.value;
+//   assignedItems.value.forEach(item => {
+//     if (allSelected) {
+//       store.toggleItemInList(item.tableName);
+//     } else {
+//       if (!store.selectedItemsInList.includes(item.tableName)) {
+//         store.selectedItemsInList.push(item.tableName);
+//       }
+//     }
+//   });
+// };
+
+/**
+ * Sélectionne TOUS les items visibles de la colonne "Disponibles".
+ * Contrairement à `toggleAllUnassigned`, n'agit qu'en mode "ajouter" (jamais retirer).
+ */
+const selectAllUnassigned = (): void => {
   unassignedItems.value.forEach(item => {
-    if (allSelected) {
-      store.toggleItemInList(item.tableName);
-    } else {
-      if (!store.selectedItemsInList.includes(item.tableName)) {
-        store.selectedItemsInList.push(item.tableName);
-      }
+    if (!store.selectedItemsInList.includes(item.tableName)) {
+      store.selectedItemsInList.push(item.tableName);
     }
   });
 };
 
-const toggleAllAssigned = (): void => {
-  const allSelected = areAllAssignedSelected.value;
+/**
+ * Sélectionne TOUS les items visibles de la colonne "Assignées".
+ * Contrairement à `toggleAllAssigned`, n'agit qu'en mode "ajouter" (jamais retirer).
+ */
+const selectAllAssigned = (): void => {
   assignedItems.value.forEach(item => {
-    if (allSelected) {
-      store.toggleItemInList(item.tableName);
-    } else {
-      if (!store.selectedItemsInList.includes(item.tableName)) {
-        store.selectedItemsInList.push(item.tableName);
-      }
+    if (!store.selectedItemsInList.includes(item.tableName)) {
+      store.selectedItemsInList.push(item.tableName);
     }
   });
 };
