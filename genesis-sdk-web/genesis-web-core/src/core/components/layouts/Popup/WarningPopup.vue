@@ -1,21 +1,36 @@
-<!-- genesis-sdk-web/genesis-web-core/src/core/components/layouts/Popup/WarningPopup.vue -->
 <template>
     <BaseFormPopup :title="title" :size="size" :position="position" @close="$emit('cancel')">
-        <div class="flex flex-col gap-4 py-4 flex-1 min-h-0">
-            <!-- Message + conséquences -->
-            <div class="flex flex-col gap-3 border-l-4 pl-4" :class="accentClass">
-                <p class="text-sm text-text">{{ message }}</p>
+        <div class="flex flex-col h-full gap-4">
 
-                <ul v-if="details.length" class="flex flex-col gap-1 list-disc pl-5 text-sm text-text-muted">
-                    <li v-for="detail in details" :key="detail">{{ detail }}</li>
-                </ul>
+            <!-- ═══ ZONE SCROLLABLE : contenu (image + titre + message + détails + slot) ═══ -->
+            <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-4 py-4">
+                <img
+                    :src="WarningPicture"
+                    alt="Alerte"
+                    class="w-1/2 max-w-full h-auto object-contain shrink-0 mx-auto"
+                />
+
+                <div class="flex flex-col justify-center gap-3 pl-4" :class="accentClass">
+                    <!-- ✅ NOUVEAU : sous-titre dans le contenu (défaut "Warning") -->
+                    <h3 class="text-lg font-semibold text-text">
+                        {{ contentTitle }}
+                    </h3>
+
+                    <!-- Message principal -->
+                    <p class="text-sm text-text">{{ message }}</p>
+
+                    <!-- Détails -->
+                    <ul v-if="details.length" class="flex flex-col gap-1 list-disc pl-5 text-sm text-text-muted">
+                        <li v-for="detail in details" :key="detail">{{ detail }}</li>
+                    </ul>
+                </div>
+
+                <!-- Slot custom (ex: liste scrollable des doublons) -->
+                <slot name="custom" />
             </div>
 
-            <!-- 👇 NOUVEAU : slot custom (ex: liste scrollable des doublons) -->
-            <slot name="custom" />
-
-            <!-- Actions -->
-            <div class="flex justify-end items-center gap-2 pt-4 mt-auto border-t border-bg-neutral-genesis shrink-0">
+            <!-- ═══ ACTIONS FIXES : toujours visibles ═══ -->
+            <div class="flex justify-end items-center gap-2 pt-4 border-t border-bg-neutral-genesis shrink-0">
                 <GenesisButton variant="secondary" @click="$emit('cancel')">
                     {{ cancelLabel }}
                 </GenesisButton>
@@ -31,10 +46,13 @@
 import { computed } from 'vue';
 import BaseFormPopup from '@genesis-labs/web-core/core/components/layouts/Popup/BaseFormPopup.vue';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import WarningPicture from '../../../../assets/PICTURES/warning.png';
 import type { PopupPosition, PopupSize } from './popup.types';
 
 const props = withDefaults(defineProps<{
     title: string;
+    /** ✅ NOUVEAU : sous-titre affiché dans le contenu (au-dessus du message) */
+    contentTitle?: string;
     message: string;
     /** Conséquences listées sous le message (ex. données réinitialisées) */
     details?: string[];
@@ -50,7 +68,8 @@ const props = withDefaults(defineProps<{
     cancelLabel: 'Annuler',
     variant: 'warning',
     size: 'md',
-    position: 'center'
+    position: 'center',
+    contentTitle: 'Warning',   // ✅ défaut
 });
 
 defineEmits<{

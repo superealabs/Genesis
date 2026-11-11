@@ -81,7 +81,7 @@
         v-if="frontendIllustration"
         :src="frontendIllustration" 
         alt="Illustration Frontend" 
-        class="absolute inset-0 w-full h-full object-cover"
+        class="absolute inset-0 w-full h-full object-contain"
       />
 
       <!-- ✅ 2. Sinon (v-else), on affiche le placeholder générique (centré par le flex du parent) -->
@@ -107,6 +107,7 @@ import frontendIllustration from '../../assets/frontend-summary.png';
 
 const { stepperData, skippedSteps, frontendAssetContents } = useGenerator();
 const frontendStore = useFrontendStore();
+const isMVC = computed(() => stepperData.value.framework?.type === 'MVC');
 
 const frontend = computed(() => stepperData.value.frontend);
 const layout = computed(() => stepperData.value.frontendLayout);
@@ -158,7 +159,7 @@ const featureGroups = computed<FeatureGroup[]>(() => {
       gridClass: 'grid-cols-2',
       valueClass: 'text-xl font-semibold',
       fields: [
-        { label: 'Port',      value: or(l.port) },
+        ...(isMVC.value ? [] : [{ label: 'Port', value: or(l.port) }]),
         { label: 'Navigation', value: NAVBAR_LABELS[l.navbarType] ?? 'Non défini' },
         { label: 'Langues',   value: or(languages, 'Aucune langue sélectionnée') },
       ],

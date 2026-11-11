@@ -17,7 +17,7 @@
         v-if="relationIllustration"
         :src="relationIllustration" 
         alt="Relation" 
-        class="absolute inset-0 w-full h-full object-cover"
+        class="absolute inset-0 w-full h-full object-contain"
       />
       <template v-else>
         <svg class="w-12 h-12 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">

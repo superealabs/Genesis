@@ -12,14 +12,7 @@ BUG
 
     - Relation
         Script mode n'a pas besoin de vérification de databaseConfig
-
-    - Rajouter le nombre total d'élément, et le nombre d'élément séléctionné
-
-    - Generation
-        - déplacer la position du Profil de génération au dessus
-
-    - Repository
-        - le premier clic ne doit pas directement valider github
+        Afficher le nombre de relation
 
 
 API :

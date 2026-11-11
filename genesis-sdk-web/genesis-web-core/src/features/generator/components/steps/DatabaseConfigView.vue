@@ -234,7 +234,7 @@
         v-if="databaseIllustration"
         :src="databaseIllustration" 
         alt="Illustration Base de données" 
-        class="absolute inset-0 w-full h-full object-cover"
+        class="absolute inset-0 w-full h-full object-contain"
       />
 
       <!-- ✅ 2. Sinon (v-else), on affiche le placeholder générique (centré par le flex du parent) -->
