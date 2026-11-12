@@ -3,13 +3,14 @@
     :selectedIndex="selectedIndex"
     @change="handleChange"
     as="div"
-    class="inline-flex flex-col gap-4"
+    class="flex flex-col gap-4"
+    :class="fillWidth ? 'w-full' : 'inline-flex'"
   >
     <!-- Conteneur : hauteur extérieure = échelle unique (CONTROL_SIZES), padding compris dedans -->
     <TabList
       ref="listRef"
-      class="relative inline-flex rounded-md gap-1 bg-bg-light border-b-4 border-neutral-shadow/50"
-      :class="[tokens.box, paddingClasses]"
+      class="relative rounded-md gap-1 bg-bg-light border-b-4 border-neutral-shadow/50"
+      :class="[tokens.box, paddingClasses, fillWidth ? 'flex w-full' : 'inline-flex']"
       role="group"
     >
       <!-- Indicateur glissant : mesuré sur le bouton actif -->
@@ -30,8 +31,7 @@
         <button
           :ref="(el: any) => setTabRef(el, index)"
           type="button"
-          class="relative z-10 inline-flex items-center justify-center whitespace-nowrap
-                 rounded-lg h-full
+          class="relative z-10 inline-flex items-center justify-center whitespace-nowrap rounded-lg h-full
                  transition-colors duration-200
                  focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           :class="[
@@ -39,6 +39,7 @@
             tokens.px,
             tokens.gap,
             selected ? 'text-primary-text' : 'text-text-muted hover:text-text',
+            { 'flex-1': fillWidth },
             (disabled || option.disabled) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
           ]"
         >
@@ -49,7 +50,7 @@
     </TabList>
 
     <!-- Panneaux de contenu (optionnel) -->
-    <TabPanels v-if="$slots.panels" class="w-full">
+    <TabPanels v-if="$slots.panels" :class="fillWidth ? 'w-full' : ''">
       <TabPanel
         v-for="option in options"
         :key="String(option.value)"
@@ -82,11 +83,13 @@ interface Props {
   /** Hauteur extérieure du composant : même échelle que GenesisButton / GenesisInput */
   size?: UI_Size_Unit;
   disabled?: boolean;
+  fillWidth?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: 'md',
-  disabled: false
+  disabled: false,
+  fillWidth: false
 });
 
 const emit = defineEmits<{

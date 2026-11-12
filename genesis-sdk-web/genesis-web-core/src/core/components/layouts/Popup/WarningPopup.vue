@@ -3,16 +3,16 @@
         <div class="flex flex-col h-full gap-4">
 
             <!-- ═══ ZONE SCROLLABLE : contenu (image + titre + message + détails + slot) ═══ -->
-            <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-4 py-4">
+            <div class="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-6 py-4">
                 <img
                     :src="WarningPicture"
                     alt="Alerte"
-                    class="w-1/2 max-w-full h-auto object-contain shrink-0 mx-auto"
+                    class="w-1/2 max-w-full h-64 object-contain shrink-0 mx-auto"
                 />
 
-                <div class="flex flex-col justify-center gap-3 pl-4" :class="accentClass">
+                <div class="flex flex-col justify-center gap-3 px-8" :class="accentClass">
                     <!-- ✅ NOUVEAU : sous-titre dans le contenu (défaut "Warning") -->
-                    <h3 class="text-lg font-semibold text-text">
+                    <h3 class="text-lg font-semibold text-text text-center">
                         {{ contentTitle }}
                     </h3>
 

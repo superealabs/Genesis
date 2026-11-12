@@ -6,49 +6,56 @@
       <h3 class="text-lg font-semibold text-text mb-2">Configuration de la Connexion</h3>
 
       <!-- 1. MOTEUR (Sélectionnable avec le même pattern que le Framework) -->
-      <div ref="databaseSelectorRef" class="flex items-end gap-3 pb-4 border-b border-neutral-light">
-        <div class="flex-1">
-          <template v-if="isEditingDatabase">
-            <GenesisInput
-              type="combobox"
-              :options="availableDatabasesOptions"
-              :model-value="tempDatabaseName"
-              @update:model-value="handleDatabaseSelect"
-              label="SGBD"
-              placeholder="Rechercher un SGBD..."
-              size="lg"
-              fill-width
-            />
-          </template>
-          <template v-else>
-            <div class="flex flex-col gap-1">
-              <label class="text-sm font-medium text-muted">
-                SGBD Sélectionné <span class="text-accent ml-0.5">*</span>
-              </label>
-              <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
-                <span class="truncate font-medium">{{ selectedEngineName }}</span>
+      <div ref="databaseSelectorRef" class="flex flex-col gap-3 pb-4 border-b border-neutral-light">
+
+        <!-- ═══ Ligne 1 : SGBD + Modifier ═══ -->
+        <div class="flex items-end gap-3">
+          <div class="flex-1">
+            <template v-if="isEditingDatabase">
+              <GenesisInput
+                type="combobox"
+                :options="availableDatabasesOptions"
+                :model-value="tempDatabaseName"
+                @update:model-value="handleDatabaseSelect"
+                label="SGBD"
+                placeholder="Rechercher un SGBD..."
+                size="lg"
+                fill-width
+              />
+            </template>
+            <template v-else>
+              <div class="flex flex-col gap-1">
+                <label class="text-sm font-medium text-muted">
+                  SGBD Sélectionné <span class="text-accent ml-0.5">*</span>
+                </label>
+                <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
+                  <span class="truncate font-medium">{{ selectedEngineName }}</span>
+                </div>
               </div>
-            </div>
-          </template>
-        </div>
-        
-        <div class="pb-0.5">
-          <GenesisButton v-if="!isEditingDatabase" variant="secondary" size="lg" is-perspective @click="startEditingDatabase">
-            Modifier
-          </GenesisButton>
-          <GenesisButton v-else variant="tertiary" size="lg" is-perspective @click="cancelEditingDatabase">
-            Annuler
-          </GenesisButton>
-        </div>
+            </template>
+          </div>
 
           <div class="pb-0.5">
-            <GenesisSegmentedControl
-              :model-value="modeValue"
-              :options="modeOptions"
-              size="lg"
-              @update:model-value="handleModeChange"
-            />
+            <GenesisButton v-if="!isEditingDatabase" variant="secondary" size="lg" is-perspective @click="startEditingDatabase">
+              Modifier
+            </GenesisButton>
+            <GenesisButton v-else variant="tertiary" size="lg" is-perspective @click="cancelEditingDatabase">
+              Annuler
+            </GenesisButton>
           </div>
+        </div>
+
+        <!-- ═══ Ligne 2 : Switch Connexion / Script ═══ -->
+        <div>
+          <GenesisSegmentedControl
+            :fill-width="true"
+            :model-value="modeValue"
+            :options="modeOptions"
+            :size="'xl'"
+            @update:model-value="handleModeChange"
+          />
+        </div>
+
       </div>
 
       <template v-if="!isScriptMode">
@@ -216,7 +223,8 @@
 
       <!-- ÉTAT SCRIPT MODE ACTIF : MESSAGE CLAIR ET GUIDÉ -->
       <template v-else>
-        <ScriptImportPanel 
+        <ScriptImportPanel
+          :show-edit-button="true"
           @request-file-path="(payload: FileRequestPayload) => emit('request-file-path', payload)"
           @edit="handleEditScript"
         />
