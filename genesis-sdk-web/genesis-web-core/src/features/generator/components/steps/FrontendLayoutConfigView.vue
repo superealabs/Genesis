@@ -330,7 +330,7 @@ type NavbarType = 'side' | 'top' | '';
 
 const navbarOptions: { label: string; value: NavbarType }[] = [
   { label: 'Barre latérale (Side)', value: 'side' },
-  { label: 'Barre supérieure (Top)', value: 'top' }
+  // { label: 'Barre supérieure (Top)', value: 'top' }
 ];
 
 // const panelSlides: CarouselSlide[] = [

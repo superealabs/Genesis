@@ -41,7 +41,6 @@
 
 
     <GenesisContainer
-      
       :min-height="minHeight"
       :max-height="maxHeight"
       :is-empty="filteredRelations.length === 0"
@@ -132,12 +131,12 @@
             <td class="p-4 font-medium text-text">{{ rel.parentTable }}</td>
             <td class="p-4 font-medium text-text">{{ rel.childTable }}</td>
             <td class="p-4 text-center">
-              <IconCheck v-if="rel.hasForm" class="w-6 h-6 text-primary inline-block" />
-              <IconX v-else class="w-6 h-6 text-red-500 inline-block" />
+              <IconCheck v-if="rel.hasForm" class="w-12 h-12 text-secondary inline-block" />
+              <IconX v-else class="w-12 h-12 text-red-500 inline-block" />
             </td>
             <td class="p-4 text-center">
-              <IconCheck v-if="rel.mandatory" class="w-6 h-6 text-primary inline-block" />
-              <IconX v-else class="w-6 h-6 text-red-500 inline-block" />
+              <IconCheck v-if="rel.mandatory" class="w-12 h-12 text-secondary inline-block" />
+              <IconX v-else class="w-12 h-12 text-red-500 inline-block" />
             </td>
           </tr>
         </tbody>

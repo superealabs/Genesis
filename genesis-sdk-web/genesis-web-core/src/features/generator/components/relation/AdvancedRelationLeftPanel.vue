@@ -3,12 +3,13 @@
     <!-- Segmented A / B -->
     <div>
         <GenesisSegmentedControl
-            v-model="internalMode"
-            :options="[
-                { label: 'Ciblé', value: 'A' },
-                { label: 'Masse', value: 'B' }
-            ]"
-            size="md"
+          :fill-width="true"
+          v-model="internalMode"
+          :options="[
+              { label: 'Ciblé', value: 'A', icon: IconTargetLock },
+              { label: 'Masse', value: 'B', icon: IconPackage }
+          ]"
+          size="xl"
         />
     </div>
 
@@ -105,7 +106,7 @@
                   v-model="searchB"
                   type="text"
                   placeholder="Rechercher..."
-                  size="lg"
+                  size="md"
                   fill-width
                   class="flex-1"
               >
@@ -115,9 +116,9 @@
               </GenesisInput>
           </GenesisTutorialItem>
 
-          <div v-if="modeBItems.length > 0" class="flex items-center justify-end gap-2 shrink-0">
+          <div class="flex items-center justify-end gap-2 shrink-0">
             <GenesisButton
-              :disabled="!hasSelectedB"
+              :disabled="!hasSelectedB && modeBItems.length > 0"
               variant="secondary"
               size="md"
               is-perspective
@@ -127,7 +128,7 @@
               Clear
             </GenesisButton>
             <GenesisButton
-              :disabled="allSelectedB"
+              :disabled="allSelectedB && modeBItems.length > 0"
               variant="primary"
               size="md"
               is-perspective
@@ -180,6 +181,8 @@ import IconSearch from '@genesis-labs/web-core/core/components/ui/icons/IconSear
 import GenesisTutorialItem from '@genesis-labs/web-core/core/features/tutorial/components/GenesisTutorialItem.vue';
 import { useTutorialGroup } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
 import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/GenesisButton.vue';
+import IconTargetLock from '@genesis-labs/web-core/core/components/ui/icons/IconTargetLock.vue';
+import IconPackage from '@genesis-labs/web-core/core/components/ui/icons/IconPackage.vue';
 
 // ============================================================================
 // PROPS & EMITS
