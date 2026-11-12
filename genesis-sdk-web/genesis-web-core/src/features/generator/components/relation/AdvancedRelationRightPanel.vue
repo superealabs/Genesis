@@ -36,6 +36,7 @@
             size="md"
             :disabled="selectedRelations.length === 0"
             @click="$emit('assign')"
+            is-perspective
           >
             Assign
           </GenesisButton>
@@ -48,6 +49,7 @@
             size="md"
             :disabled="relations.length === 0"
             @click="$emit('assignAll')"
+            is-perspective
           >
             Assign All
           </GenesisButton>

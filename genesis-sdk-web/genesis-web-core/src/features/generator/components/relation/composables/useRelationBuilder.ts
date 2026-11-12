@@ -1,3 +1,4 @@
+// useRelationBuilder.ts
 import { reactive, toRefs } from 'vue';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 
@@ -9,7 +10,6 @@ import { useGenerator } from '@genesis-labs/web-core/features/generator/composab
  * - `targets`      : les tables choisies de l'autre côté (1 seule en Simple, N en Advanced)
  *
  * Module-level singleton : même instance quelle que soit la vue montée.
- * Les chargements API (parents/enfants liés) sont centralisés ici (plus de watchers dans les vues).
  */
 const state = reactive({
   isChildFirst: false,
@@ -17,6 +17,52 @@ const state = reactive({
   targets: [] as string[],
 });
 
+// ============================================================================
+// 1. ÉTAT PUR (sans dépendance injectée)
+// ============================================================================
+/**
+ * ✅ Version SANS `useGenerator` — utilisable HORS composant (ex: wizard-step-config.ts).
+ * Expose uniquement les mutations SYNCHRONES (pas d'appel API).
+ */
+export function useRelationBuilderState() {
+  /** Setter pur pour `targets`. */
+  function setTargets(names: string[]) {
+    state.targets = names;
+  }
+
+  /**
+   * Remise à zéro SYNCHRONE, sans appel API.
+   * Utilisable partout (y compris dans `relations.onEnter` qui recharge déjà les listes).
+   */
+  function resetState() {
+    state.isChildFirst = false;
+    state.anchor = '';
+    state.targets = [];
+  }
+
+  /**
+   * Reset "ciblé" : vide `anchor` + `targets`, sans toucher à `isChildFirst`.
+   * Pas d'appel API (l'appelant gère le rechargement s'il en a besoin).
+   */
+  function clearSelection() {
+    state.anchor = '';
+    state.targets = [];
+  }
+
+  return {
+    ...toRefs(state),
+    setTargets,
+    resetState,
+    clearSelection,
+  };
+}
+
+// ============================================================================
+// 2. COMPOSABLE COMPLET (avec `useGenerator`)
+// ============================================================================
+/**
+ * ⚠️ Utilisable UNIQUEMENT dans un composant Vue (utilise `inject` via `useGenerator`).
+ */
 export function useRelationBuilder() {
   const { fetchTablesMetadataParents, fetchTablesMetadataChilds } = useGenerator();
 
@@ -64,30 +110,22 @@ export function useRelationBuilder() {
     await loadTargetSide(name);
   }
 
-  function setTargets(names: string[]) {
-    state.targets = names;
-  }
-
-  /** Vide la sélection (ancre + cibles) et recharge les listes complètes si besoin. */
-  async function resetSelection() {
-    const hadAnchor = !!state.anchor;
-    state.anchor = '';
-    state.targets = [];
-    if (hadAnchor) await loadTargetSide('');
-  }
-
   /**
-   * Remise à zéro SYNCHRONE, sans appel API.
-   * À utiliser dans `relations.onEnter` (qui charge déjà les listes complètes).
+   * Vide la sélection (anchor + targets).
+   * ⚠️ SYNCHRONE : ne recharge PAS les listes.
+   * Si l'appelant a besoin de recharger les listes complètes, il doit appeler `loadAll()` ou
+   * `loadTargetSide('')` lui-même.
    */
-  function resetState() {
-    state.isChildFirst = false;
+  function resetSelection() {
     state.anchor = '';
     state.targets = [];
   }
+
+  // ✅ Réutilise les fonctions pures
+  const { setTargets, resetState } = useRelationBuilderState();
 
   return {
-    ...toRefs(state), // isChildFirst, anchor, targets (refs en lecture)
+    ...toRefs(state),
     setDirection,
     setAnchor,
     setTargets,

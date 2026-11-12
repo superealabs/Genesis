@@ -135,7 +135,7 @@
                   :view-mode="'two-view'"
                   :show-toggle-visibility="true"
 
-                  :can-assign="hasSelectedInUnassigned"
+                  :can-assign="hasSelectedInUnassigned || hasSelectedInAssigned"
                   :can-remove="hasSelectedInAssigned"
                   :can-assign-all="unassignedItems.length > 0"
                   :can-remove-all="assignedItems.length > 0"
@@ -415,13 +415,38 @@ function handleRename(id: string | number, newName: string) {
   persistConfig(id);
 }
 
-function handleAssign(configId: string | number, items: string[]) {
+async function handleAssign(configId: string | number, items: string[]) {
+  // ✅ 1. Identifier les configs sources affectées AVANT le transfert
+  const affectedConfigIds = new Set<string | number>();
+  
   items.forEach(tableName => {
     const item = combinedItems.value.find(i => i.tableName === tableName);
-    if (item) store.assignTableToConfig(configId, tableName, item.isView);
+    if (!item) return;
+    
+    // Trouver la config source actuelle (si l'entité est déjà assignée)
+    const currentAssoc = store.generationAssociations.find(a =>
+      item.isView
+        ? a.associatedViews.includes(tableName)
+        : a.associatedTables.includes(tableName)
+    );
+    
+    if (currentAssoc && currentAssoc.configId !== configId) {
+      affectedConfigIds.add(currentAssoc.configId);
+    }
+    
+    // ✅ 2. Assigner (le store gère déjà le transfert)
+    store.assignTableToConfig(configId, tableName, item.isView);
   });
+  
   store.clearSelectedItemsInList();
-  persistConfig(configId);
+  
+  // ✅ 3. Persister la config cible
+  await persistConfig(configId);
+  
+  // ✅ 4. Persister les configs sources affectées
+  for (const sourceId of affectedConfigIds) {
+    await persistConfig(sourceId);
+  }
 }
 
 function handleRemove(configId: string | number, items: string[]) {

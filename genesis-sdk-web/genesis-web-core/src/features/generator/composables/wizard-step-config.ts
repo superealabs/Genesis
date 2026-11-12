@@ -28,6 +28,7 @@ import {
   validateGenerationParameters,
   isRestFramework,
 } from '../utils/validators/stepValidators';
+import { useRelationBuilderState } from '../components/relation/composables/useRelationBuilder';
 
 
 // ============================================================================
@@ -653,6 +654,9 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   relations: {
     onEnter: async (store, { svc }) => {
       try {
+        // reset de selection
+        useRelationBuilderState().resetState();
+
         const tableParents = await svc.fetchTablesMetadataParents();
         const tableChilds = await svc.fetchTablesMetadataChilds();
         // const relations = await svc.fetchRelations();

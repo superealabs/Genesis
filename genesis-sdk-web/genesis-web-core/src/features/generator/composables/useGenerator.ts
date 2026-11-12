@@ -40,6 +40,8 @@ import {
 
 import { watch } from 'vue';
 import { getStepNumberById } from './wizard-step-config';
+import { useRelationBuilderState } from '../components/relation/composables/useRelationBuilder';
+
 
 
 export function useGenerator() {
@@ -320,7 +322,8 @@ export function useGenerator() {
     
     // 2. Réinitialise le compteur d'étapes du wizard
     wizard.resetWizard();
-    
+    useRelationBuilderState().resetState();
+
     // 3. Réinitialise les variables locales du composable
     hasReachedSummary.value = false;
     targetSummaryIndex.value = 0;

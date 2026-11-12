@@ -39,7 +39,10 @@
       </div>
     </div>
 
-
+    <div class="flex flex-row justify-between text-text-muted">
+        <div>Selected element : <span>{{ selectedRelations.length }}/{{ relations.length }}</span></div>
+        <div>Element left : <span>{{ relations.length }}</span></div>
+    </div>
     <GenesisContainer
       :min-height="minHeight"
       :max-height="maxHeight"

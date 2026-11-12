@@ -344,7 +344,11 @@ async function addRelations(candidates: RelationParameter[]): Promise<void> {
 async function handleAdd() {
   isAddingRelations.value = true;
   try {
-    await addRelations(await computeRelationsToAdd(false));
+    const added = await computeRelationsToAdd(false);
+    await addRelations(added);
+    if (added.length > 0) {
+      resetSelection();   // ← reset anchor + targets
+    }
   } finally {
     isAddingRelations.value = false;
   }
@@ -353,7 +357,11 @@ async function handleAdd() {
 async function handleAddAll() {
   isAddingRelations.value = true;
   try {
-    await addRelations(await computeRelationsToAdd(true));
+    const added = await computeRelationsToAdd(true);
+    await addRelations(added);
+    if (added.length > 0) {
+      resetSelection();
+    }
   } finally {
     isAddingRelations.value = false;
   }

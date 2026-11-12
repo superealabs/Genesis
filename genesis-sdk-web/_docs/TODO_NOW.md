@@ -1,6 +1,25 @@
 Remplacer l'image :
 la taille de l'image est à mettre en cover et non en taille-fixe
 
+
+    - la fonction qui charge les tables parents et les tables enfants ne charge plus les tables avec des relations
+    Exemple :
+        Scénario à tester :
+            - créer toutes les relations possibles avec la table mère personne
+            - faire suivant
+            - revenir et regarder la liste des tables mères
+
+
+    Generation :
+        Si on a une séléction à droite, cette séléction change de configuration
+
+
+- RELATION
+    - Si on assigne des relations, ensuite, on fait suivant, ensuite on revient,
+    On désasigner les relation, on fait suivant, on cherche la relation dans le parent correspondant dans la liste des parents, l'entité removed n'apparaît pas
+
+    - le champs de séléction de parent/enfant ne se réinitialise pas correctement dans le modeA après assignation/extinction du formulaire/sortie de l'étape
+
 BUG
     - Quand on fait Ctrl + f5,
     et qu'on crée une nouvelle fenêtre VSC, et quand démarre l'api en parallèle, il y a 2/5 chances pour que le jar de l'extension ne démarre pas
@@ -13,6 +32,8 @@ BUG
     - Relation
         Script mode n'a pas besoin de vérification de databaseConfig
         Afficher le nombre de relation
+
+    
 
 
 API :
