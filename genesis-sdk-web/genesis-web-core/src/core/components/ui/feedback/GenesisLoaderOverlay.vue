@@ -9,7 +9,7 @@
   >
     <div
       v-if="visible"
-      class="absolute inset-0 z-[300] flex items-center justify-center rounded-lg"
+      class="absolute inset-0 z-[50] flex items-center justify-center rounded-lg"
       :class="overlayClass"
       role="status"
       aria-live="polite"

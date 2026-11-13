@@ -31,10 +31,10 @@
 
             <!-- ═══ ACTIONS FIXES : toujours visibles ═══ -->
             <div class="flex justify-end items-center gap-2 pt-4 border-t border-bg-neutral-genesis shrink-0">
-                <GenesisButton variant="secondary" @click="$emit('cancel')">
+                <GenesisButton is-perspective variant="secondary" @click="$emit('cancel')">
                     {{ cancelLabel }}
                 </GenesisButton>
-                <GenesisButton variant="accent" @click="$emit('confirm')">
+                <GenesisButton is-perspective variant="accent" @click="$emit('confirm')">
                     {{ confirmLabel }}
                 </GenesisButton>
             </div>

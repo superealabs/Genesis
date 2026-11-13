@@ -67,22 +67,24 @@
       @cancel="resolveDuplicateWarning(false)"
     >
       <template #custom>
-        <GenesisContainer
-          :min-height="100"
-          :max-height="300"
-          :is-empty="duplicateWarning.duplicates.length === 0"
-          empty-text="Aucune relation."
-        >
-          <div class="flex flex-col gap-1 p-2">
-            <div
-              v-for="dup in duplicateWarning.duplicates"
-              :key="`${dup.parentTable}::${dup.childTable}`"
-              class="text-sm text-text-muted font-mono"
-            >
-              {{ dup.parentTable }} → {{ dup.childTable }}
+        <div class="w-full px-8">
+          <GenesisContainer
+            :min-height="100"
+            :max-height="300"
+            :is-empty="duplicateWarning.duplicates.length === 0"
+            empty-text="Aucune relation."
+          >
+            <div class="flex flex-col gap-1 p-2">
+              <div
+                v-for="dup in duplicateWarning.duplicates"
+                :key="`${dup.parentTable}::${dup.childTable}`"
+                class="text-sm text-text-muted font-mono"
+              >
+                {{ dup.parentTable }} → {{ dup.childTable }}
+              </div>
             </div>
-          </div>
-        </GenesisContainer>
+          </GenesisContainer>
+        </div>
       </template>
     </WarningPopup>
   </div>
