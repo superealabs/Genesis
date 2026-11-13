@@ -23,8 +23,6 @@ import java.util.stream.Collectors;
 @Service
 public class RelationService {
     private final ForeignKeyRelationValidator foreignKeyValidator;
-    private static final String PARENTS = "PARENTS";
-    private static final String CHILDS = "CHILDS";
     private final GenerationProfilesStore generationProfilesStore;
     private final ConsolidatedGenerationContextService consolidatedService;
     private final MetadataService metadataService;
@@ -60,17 +58,17 @@ public class RelationService {
     private List<TableMetadataResponse> getRelatedTables(String tableName, boolean parents) {
         String filter = tableName == null ? "" : tableName.trim();
 
-        // Source unique : relations consolidées des profils
+        // Les choix viennent des clés étrangères disponibles, indépendamment des relations sauvegardées.
         Set<String> relatedNames = new LinkedHashSet<>();
 
-        for (RelationResponse relation : getRelations()) {
+        for (RelationParameter relation : getAvailableRelations()) {
             String sourceName = parents
-                    ? relation.childTable()
-                    : relation.parentTable();
+                    ? relation.getChildTable()
+                    : relation.getParentTable();
 
             String relatedName = parents
-                    ? relation.parentTable()
-                    : relation.childTable();
+                    ? relation.getParentTable()
+                    : relation.getChildTable();
 
             if (!filter.isEmpty() && !sourceName.equalsIgnoreCase(filter)) {
                 continue;
@@ -213,20 +211,28 @@ public class RelationService {
         return tableName.trim();
     }
 
-    private ProjectGenerationContext getProfilesContext() {
+    private List<RelationParameter> getAvailableRelations() {
         ProjectGenerationContext source = generationContextStore.getContext();
         var profiles = generationProfilesStore.getProfiles(source);
+        List<RelationParameter> available = new ArrayList<>();
         if (profiles.isEmpty()) {
-            throw new RelationException("Enregistrez d'abord les profils de génération");
+            ProjectGenerationContext copy = source.duplicateWithNoTables();
+            copy.setEntityTables(source.getEntityTables());
+            copy.setRelationParameters(new ArrayList<>());
+            return copy.autoDetectRelationParameters();
         }
-        Set<String> tables = new LinkedHashSet<>();
-        for (var profile : profiles) {
-            tables.addAll(profile.selectedTables());
+        
+        for (GenerationParameterRequest profile : profiles) {
+            if (profile.selectedTables().isEmpty()) {
+                continue;
+            }
+            ProjectGenerationContext copy = source.duplicateWithNoTables();
+            copy.setEntityNames(new ArrayList<>(profile.selectedTables()));
+            copy.setViewNames(new ArrayList<>());
+            copy.setRelationParameters(new ArrayList<>());
+            copy.setTables();
+            available.addAll(copy.autoDetectRelationParameters());
         }
-        ProjectGenerationContext copy = source.duplicateWithNoTables();
-        copy.setEntityNames(new ArrayList<>(tables));
-        copy.setViewNames(new ArrayList<>());
-        copy.setTables();
-        return copy;
+        return available;
     }
 }
