@@ -213,7 +213,7 @@ const menuItemsVariantClasses = computed(() => {
 });
 
 const menuItemsClasses = computed(() => {
-  const base = `absolute z-50 rounded-lg p-1 max-h-[40vh] overflow-y-auto border-2 border-bg-neutral-genesis`;
+  const base = `absolute z-50 rounded-lg p-1 max-h-[40vh] overflow-y-auto border-b-4 border border-bg-neutral-genesis border-b-bg-neutral-genesis`;
   const size = (MENU_SIZES as Record<string, string>)[props.dropdownSize] || 'w-56';
 
   // Un style fourni de l'extérieur (ex. champ de formulaire) prime sur celui du bouton
