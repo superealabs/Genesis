@@ -52,6 +52,7 @@
             :model-value="modeValue"
             :options="modeOptions"
             :size="'xl'"
+            :variant="'tertiary'"
             @update:model-value="handleModeChange"
           />
         </div>

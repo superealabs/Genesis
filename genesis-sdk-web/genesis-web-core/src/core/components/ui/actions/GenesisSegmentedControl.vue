@@ -9,8 +9,8 @@
     <!-- Conteneur : hauteur extérieure = échelle unique (CONTROL_SIZES), padding compris dedans -->
     <TabList
       ref="listRef"
-      class="relative rounded-md gap-1 bg-bg-light border-b-4 border-neutral-shadow/50"
-      :class="[tokens.box, paddingClasses, fillWidth ? 'flex w-full' : 'inline-flex']"
+      class="relative rounded-md border-b-4 gap-1"
+      :class="[variantClasses, tokens.box, paddingClasses, fillWidth ? 'flex w-full' : 'inline-flex']"
       role="group"
     >
       <!-- Indicateur glissant : mesuré sur le bouton actif -->
@@ -70,6 +70,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type Compon
 import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
 import { CONTROL_SIZES, type UI_Size_Unit } from '@genesis-labs/web-core/core/config/ui.config';
 
+type SegmentedVariant = 'primary' | 'secondary' | 'tertiary';
+
 interface SegmentedOption {
   label?: string;
   value: string | number;
@@ -84,12 +86,15 @@ interface Props {
   size?: UI_Size_Unit;
   disabled?: boolean;
   fillWidth?: boolean;
+
+  variant?: SegmentedVariant;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   disabled: false,
-  fillWidth: false
+  fillWidth: false,
+  variant: 'secondary',
 });
 
 const emit = defineEmits<{
@@ -108,6 +113,14 @@ const SEGMENT_PADDING: Record<UI_Size_Unit, string> = {
   '2xl': 'p-1',
 };
 const paddingClasses = computed(() => SEGMENT_PADDING[props.size]);
+
+const VARIANT_CLASSES: Record<SegmentedVariant, string> = {
+  primary: 'bg-bg-light border-neutral-shadow/50',
+  secondary: 'bg-bg-secondary border-b-secondary-shadow',
+  tertiary: 'border bg-bg-dark border-bg-neutral-genesis',
+};
+
+const variantClasses = computed(() => VARIANT_CLASSES[props.variant]);
 
 // ═══ Logique Headless UI : valeur ↔ index ═══
 const selectedIndex = computed(() => {
