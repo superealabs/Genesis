@@ -30,6 +30,7 @@ import {
 } from 'vue';
 
 // ── CodeMirror core ──────────────────────────────────────────
+import { search, searchKeymap, highlightSelectionMatches } from '@codemirror/search';
 import { EditorView, keymap, lineNumbers, highlightActiveLine } from '@codemirror/view';
 import { EditorState, Compartment }                             from '@codemirror/state';
 import { defaultKeymap, indentWithTab }                         from '@codemirror/commands';
@@ -155,6 +156,56 @@ function buildGenesisTheme(dark: boolean) {
             backgroundColor: 'var(--color-accent, #00aa66)',
         },
 
+        '.cm-panels': {
+            backgroundColor: 'var(--color-bg-dark)',
+            color: 'var(--color-text)',
+            fontFamily: 'var(--font-body)',
+        },
+        '.cm-panels.cm-panels-top': {
+            borderBottom: '2px solid var(--color-bg-neutral-genesis)',
+        },
+        '.cm-search': {
+            padding: '6px 28px 6px 10px',   // place pour la croix à droite
+        },
+        '.cm-search input, .cm-search button': {
+            fontSize: '12px',
+        },
+        '.cm-search input.cm-textfield': {
+            backgroundColor: 'transparent',
+            color: 'var(--color-text)',
+            border: '1px solid var(--color-bg-neutral-genesis)',
+            borderRadius: '4px',
+            padding: '2px 6px',
+        },
+        '.cm-search input.cm-textfield:focus': {
+            outline: 'none',
+            borderColor: 'var(--color-accent)',
+        },
+        '.cm-search button': {
+            backgroundImage: 'none',
+            backgroundColor: 'var(--color-bg-secondary)',
+            color: 'var(--color-secondary)',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '2px 8px',
+            cursor: 'pointer',
+        },
+        '.cm-search button[name=close]': {
+            backgroundColor: 'transparent',
+            color: 'var(--color-text-muted)',
+            top: '6px',
+            right: '8px',
+        },
+        '.cm-search button[name=close]:hover': {
+            color: 'var(--color-accent)',
+        },
+        '.cm-searchMatch': {
+            backgroundColor: 'color-mix(in srgb, var(--color-secondary) 25%, transparent)',
+        },
+        '.cm-searchMatch.cm-searchMatch-selected': {
+            backgroundColor: 'color-mix(in srgb, var(--color-secondary) 50%, transparent)',
+        },
+
     }, { dark });
 }
 
@@ -269,6 +320,12 @@ function initEditor() {
 
             // Placeholder
             EditorView.contentAttributes.of({ 'data-placeholder': props.placeholder || '' }),
+
+            // gestion de recherche
+            highlightActiveLine(),
+            search({ top: true }),            // panneau en haut, comme dans VSCode
+            highlightSelectionMatches(),      // surligne les occurrences
+            keymap.of([...defaultKeymap, ...searchKeymap, indentWithTab]),
         ],
     });
 
@@ -418,4 +475,6 @@ onBeforeUnmount(() => editorView.value?.destroy());
     margin-left: auto;
     opacity:     0.4;
 }
+
+
 </style>
