@@ -57,3 +57,4 @@ genesis-sdk-web/**/tsconfig.tsbuildinfo
 
 genesis-api\build
 genesis-vsc
+/graphify-out
