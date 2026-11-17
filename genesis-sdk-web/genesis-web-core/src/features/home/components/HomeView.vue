@@ -50,7 +50,7 @@
             </div>
         </header>
 
-        <main id="Hero Section" class="flex flex-col gap-20">
+        <main id="Hero Section" class="flex flex-col gap-6">
 
             <!-- ═══ TITRE CENTRAL ═══ -->
             <h1 class="text-center text-9xl md:text-9xl font-semibold text-text">
@@ -60,7 +60,7 @@
             </h1>
 
             <!-- ═══ CONTENU : texte à gauche, images à droite ═══ -->
-            <div class="flex flex-col lg:flex-row lg:justify-around gap-8 lg:items-center">
+            <div class="flex flex-col lg:flex-row lg:justify-around gap-16 lg:items-center">
 
                 <div class="w-fit lg:w-1/3 flex flex-col gap-8">
                     <div class="flex flex-col gap-4">
@@ -90,46 +90,12 @@
 
                 <div id="picture" class="w-fit lg:w-2/3 flex items-end gap-4 justify-end">
                     <div id="picture" class="w-full flex items-end gap-4">
-                        <!-- Image A : grande -->
-                        <div class="flex flex-col gap-4">
-                            <figure id="pictureA" class="relative overflow-hidden rounded-xl bg-bg-light w-[100%] h-96 aspect-square">
-                                <div
-                                    role="img"
-                                    aria-label="Image A"
-                                    class="absolute inset-0 flex items-center justify-center p-2
-                                        text-xs text-text-muted text-center border border-dashed border-secondary rounded-xl"
-                                >
-                                    Image A
-                                </div>
-                            </figure>
-                            <div>
-                                <h3>Select your framework</h3>
-                            </div>
-                        </div>
-
-                        <!-- Image B : moyenne -->
-                        <figure id="pictureB" class="relative overflow-hidden rounded-xl bg-bg-light w-[60%] h-64 aspect-square">
-                            <div
-                                role="img"
-                                aria-label="Image B"
-                                class="absolute inset-0 flex items-center justify-center p-2
-                                    text-xs text-text-muted text-center border border-dashed border-secondary rounded-xl"
-                            >
-                                Image B
-                            </div>
-                        </figure>
-
-                        <!-- Image C : petite, alignée en haut -->
-                        <figure id="pictureC" class="relative overflow-hidden rounded-xl bg-bg-light w-[60%] h-64 self-center aspect-square">
-                            <div
-                                role="img"
-                                aria-label="Image C"
-                                class="absolute inset-0 flex items-center justify-center p-2
-                                    text-xs text-text-muted text-center border border-dashed border-secondary rounded-xl"
-                            >
-                                Image C
-                            </div>
-                        </figure>
+                        <img 
+                            v-if="HeroPicture"
+                            :src="HeroPicture" 
+                            alt="Hero Pictures" 
+                            class="w-full h-full object-contain"
+                        />
                     </div>
                 </div>
             </div>
@@ -150,6 +116,7 @@ import IconMoon from '@genesis-labs/web-core/core/components/ui/icons/IconMoon.v
 // import { useGenesisTutorial } from '@genesis-labs/web-core/core/features/tutorial/composables/useGenesisTutorial';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
 import { TabGroup, TabList, Tab } from '@headlessui/vue';
+import HeroPicture from '../../../assets/PICTURES/hero.png'
 
 const props = withDefaults(defineProps<{
     colorMode?: 'light' | 'auto' | 'dark';

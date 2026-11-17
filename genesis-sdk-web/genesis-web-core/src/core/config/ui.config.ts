@@ -265,7 +265,7 @@ export const BUTTON_VARIANTS = {
   },
   neutral: {
     hover: '',
-    default: 'bg-bg-neutral-genesis/50 font-medium text-neutral-light-genesis disabled:hover:bg-transparent',
+    default: 'bg-bg-neutral-genesis font-medium text-neutral-light-genesis disabled:hover:bg-transparent',
   },
   none: {
     hover: '',

@@ -26,6 +26,7 @@
               variant="secondary"
               size="lg"
               @click="toggleSearchMode"
+              is-perspective
             >
               <IconChevronRight 
                 class="transition-transform duration-300 ease-in-out"
@@ -53,6 +54,7 @@
               size="lg"
               :disabled="!canAddRelation" 
               @click="handleAddRelation"
+              is-perspective
             >
               <template #leftIcon><IconPlus /></template>
               Ajouter

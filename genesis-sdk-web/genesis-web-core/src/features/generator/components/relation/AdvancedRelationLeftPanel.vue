@@ -10,6 +10,7 @@
               { label: 'Masse', value: 'B', icon: IconPackage }
           ]"
           size="xl"
+          :variant="'tertiary'"
         />
     </div>
 
