@@ -34,6 +34,7 @@ import org.labs.utils.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -699,6 +700,27 @@ public class ProjectGenerator {
             GitUtils.gitPush(path, userName, token);
         }
     }
+    public void saveSqlScript(ProjectGenerationContext context) throws Exception {
+        String script = context.getSqlScript();
+        if (script == null || script.isBlank()
+                || context.getProjectName() == null || context.getDestinationFolder() == null) {
+            return;
+        }
+        Map<String, Object> variables = Map.of(
+                "projectName", context.getProjectName(),
+                "destinationFolder", context.getDestinationFolder());
+        String projectPath = engine.simpleRender(context.getDestinationFolder(), variables);
+        Path dossier = Paths.get(projectPath, StringUtils.majStart(context.getProjectName()), "database");
+        Files.createDirectories(dossier);
+
+        String nomFichier = context.isGenerateProjectStructure()
+                ? "schema.sql"
+                : "ajout-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + ".sql";
+        String base = context.getDatabase() != null ? context.getDatabase().getName() : "inconnue";
+        String entete = "-- Script SQL utilisé par Genesis pour générer ce projet\n"
+                + "-- Base : " + base + "\n\n";
+        Files.writeString(dossier.resolve(nomFichier), entete + script.strip() + "\n", StandardCharsets.UTF_8);
+    }
 
     public void initGit(ProjectGenerationContext context) throws Exception {
         GitConfiguration config = context.getGitConfiguration();
@@ -782,6 +804,7 @@ public class ProjectGenerator {
         } else {
             generateComponentsOnly(context, indicator);
         }
+        saveSqlScript(context); 
         initGit(context);
         addDockerConfiguration(context);
     }
