@@ -13,6 +13,7 @@ import org.labs.genesis.config.langage.generator.project.LlmApiClient;
 import org.labs.genesis.config.langage.generator.project.LlmApiConfig;
 import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
 import org.labs.genesis.connexion.Database;
+import org.labs.genesis.connexion.ScriptDatabaseChecker;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -80,6 +81,15 @@ public class ScriptDatabaseConfigurationForm {
 
     public Database getSelectedDatabase() {
         return (Database) dmsOptions.getSelectedItem();
+    }
+
+    public void selectDatabase(Database database) {
+        dmsOptions.setSelectedItem(database);
+    }
+
+    public String checkScriptMatchesDatabase() {
+        return ScriptDatabaseChecker.mismatchMessage(getSelectedDatabase(), sqlTextArea.getText(),
+                ProjectGenerator.databases.values());
     }
 
     private void populateDmsOptions() {

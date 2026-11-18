@@ -5,6 +5,10 @@ import com.intellij.openapi.options.ConfigurationException;
 import org.labs.genesis.connexion.Database;
 import org.labs.genesis.context.GenerationContextManager;
 import org.labs.genesis.forms.ScriptDatabaseConfigurationForm;
+import com.intellij.openapi.ui.Messages;
+import org.labs.genesis.config.langage.generator.project.ProjectGenerator;
+import org.labs.genesis.connexion.ScriptDatabaseChecker;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -45,7 +49,7 @@ public class ScriptDatabaseConfigurationWizardStep extends ModuleWizardStep {
                 && isScript;
     }
 
-    @Override
+        @Override
     public boolean validate() throws ConfigurationException {
         if (form.getSelectedDatabase() == null) {
             throw new ConfigurationException("Veuillez sélectionner un type de base de données.");
@@ -54,6 +58,21 @@ public class ScriptDatabaseConfigurationWizardStep extends ModuleWizardStep {
         if (sql == null || sql.trim().isEmpty()) {
             throw new ConfigurationException(
                     "Veuillez fournir un script SQL (en chargeant un fichier, en le saisissant ou en le générant avec l'IA).");
+        }
+        String mismatch = form.checkScriptMatchesDatabase();
+        if (mismatch != null) {
+            List<Database> matching = ScriptDatabaseChecker.matchingDatabases(sql, ProjectGenerator.databases.values());
+            if (matching.size() == 1) {
+                Database target = matching.get(0);
+                int answer = Messages.showYesNoDialog(form.getMainPanel(),
+                        mismatch + "\n\nUtiliser " + target.getName() + " ?",
+                        "Script et base différents", Messages.getWarningIcon());
+                if (answer == Messages.YES) {
+                    form.selectDatabase(target);
+                    return true;
+                }
+            }
+            throw new ConfigurationException(mismatch, "Script et base différents");
         }
         return true;
     }
