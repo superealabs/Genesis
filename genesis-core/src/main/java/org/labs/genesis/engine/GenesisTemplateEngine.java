@@ -2,6 +2,7 @@ package org.labs.genesis.engine;
 
 import org.labs.utils.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,13 +36,14 @@ public class GenesisTemplateEngine {
     private static final String START_COMMENTARY_TAG = "<#";
     private static final String END_COMMENTARY_TAG = "/#>";
     // Liste des opérateurs de comparaison supportés, du plus long au plus court
-    // Définir ces opérateurs comme des constantes de classe
     private static final String GREATER_EQUAL_OPERATOR = ">=";
     private static final String LESS_EQUAL_OPERATOR = "<=";
     private static final String NOT_EQUAL_OPERATOR = "!=";
     private static final String EQUAL_OPERATOR = "=";
     private static final String GREATER_OPERATOR = ">";
     private static final String LESS_OPERATOR = "<";
+    private static final int MAX_CACHED_PLANS = 128;
+    private static final int MAX_PLAN_DEPTH = 128;
 
 
     private static final Map<String, Function<String, String>> FUNCTIONS_MAP = new HashMap<>();
@@ -63,6 +65,7 @@ public class GenesisTemplateEngine {
         FUNCTIONS_MAP.put("toPascalCase", StringUtils::toPascalCase);
     }
 
+    /** Remplace les variables simples sans interpréter les blocs. */
     public String simpleRender(String template, Map<String, Object> variables) {
         if (template == null || template.isEmpty()) {
             throw new IllegalArgumentException("The template must not be empty.");
@@ -85,6 +88,7 @@ public class GenesisTemplateEngine {
         return result.toString();
     }
 
+    /** Remplace les variables utilisant les délimiteurs alternatifs. */
     public String simpleRenderAlt(String template, Map<String, Object> variables) {
         if (template == null || template.isEmpty()) {
             throw new IllegalArgumentException("The template must not be empty.");
@@ -107,6 +111,7 @@ public class GenesisTemplateEngine {
         return result.toString();
     }
 
+    /** Résout une variable simple ou sa fonction de transformation. */
     private String evaluatePlaceholderSimple(String placeholder, Map<String, Object> variables) {
         int funcStart = placeholder.indexOf(FUNCTION_OPEN_PARENTHESIS);
         int funcEnd = placeholder.indexOf(FUNCTION_CLOSED_PARENTHESIS);
@@ -130,6 +135,9 @@ public class GenesisTemplateEngine {
         }
     }
 
+    private final ThreadLocal<RenderContext> activeRender = new ThreadLocal<>();
+
+    /** Exécute les étapes du rendu en partageant le contexte des récursions. */
     public String render(String template, Map<String, Object> variables) throws Exception {
         if (template == null || template.isEmpty()) {
             throw new IllegalArgumentException("The template must not be empty.");
@@ -137,7 +145,6 @@ public class GenesisTemplateEngine {
 
         StringBuilder result = new StringBuilder(template);
         Map<String, String> protectedComments = new HashMap<>();
-
         protectComments(result, protectedComments);
 
         if (variables == null || variables.isEmpty()) {
@@ -145,17 +152,29 @@ public class GenesisTemplateEngine {
             return result.toString();
         }
 
-        evaluateLoops(result, variables);
-        evaluateConditionals(result, variables);
-        replaceVariables(result, variables);
-        replaceVariables(result, variables);
-        processSpecialTags(result);
+        RenderContext context = activeRender.get();
+        boolean ownsContext = context == null;
+        // Le corps hérite du contexte parent même sans boucle interne.
+        if (ownsContext && result.indexOf(LOOP_START) >= 0) {
+            context = new RenderContext();
+            activeRender.set(context);
+        }
 
-        restoreComments(result, protectedComments);
-
-        return result.toString();
+        try {
+            evaluateLoops(result, variables, context);
+            evaluateConditionals(result, variables, context);
+            replaceVariables(result, variables);
+            replaceVariables(result, variables);
+            processSpecialTags(result);
+            restoreComments(result, protectedComments);
+            return result.toString();
+        } finally {
+            // get() crée aussi une entrée ThreadLocal vide sur le chemin léger.
+            if (ownsContext) activeRender.remove();
+        }
     }
 
+    /** Masque les commentaires pour préserver leur contenu pendant le rendu. */
     private void protectComments(StringBuilder template, Map<String, String> protectedComments) {
         int startIndex = 0;
         while ((startIndex = template.indexOf(START_COMMENTARY_TAG, startIndex)) != -1) {
@@ -172,6 +191,7 @@ public class GenesisTemplateEngine {
         }
     }
 
+    /** Restaure les commentaires à partir de leurs marqueurs temporaires. */
     private void restoreComments(StringBuilder template, Map<String, String> protectedComments) {
         for (Map.Entry<String, String> entry : protectedComments.entrySet()) {
             String marker = entry.getKey();
@@ -181,26 +201,29 @@ public class GenesisTemplateEngine {
         }
     }
 
+    /** Construit le marqueur temporaire d’un commentaire. */
     private String generateUniqueMarker(int position) {
         return String.format("__COMMENT_%d__", position);
     }
 
-    private void evaluateLoops(StringBuilder template, Map<String, Object> variables) throws Exception {
+    /** Développe les boucles présentes dans le template. */
+    private void evaluateLoops(StringBuilder template, Map<String, Object> variables, RenderContext context) throws Exception {
         int start;
         while ((start = template.indexOf(LOOP_START)) != -1) {
             LoopInfo loopInfo = extractLoopInfo(template, start);
-            processLoopContent(template, loopInfo, variables);
+            processLoopContent(template, loopInfo, variables, context);
         }
     }
 
+    /** Repère les limites et le contenu d’une boucle. */
     private LoopInfo extractLoopInfo(StringBuilder template, int start) throws Exception {
         int loopEndIdx = -1;
         int nestedCount = 0;
 
         for (int i = start; i < template.length(); i++) {
-            if (template.substring(i).startsWith(LOOP_START)) {
+            if (tokenAt(template, LOOP_START, i)) {
                 nestedCount++;
-            } else if (template.substring(i).startsWith(LOOP_END)) {
+            } else if (tokenAt(template, LOOP_END, i)) {
                 nestedCount--;
                 if (nestedCount == 0) {
                     loopEndIdx = i;
@@ -226,15 +249,16 @@ public class GenesisTemplateEngine {
         return new LoopInfo(loopVarName, loopContent, start);
     }
 
+    /** Rend chaque élément de la collection et remplace le bloc de boucle. */
     @SuppressWarnings("unchecked")
-    private void processLoopContent(StringBuilder template, LoopInfo loopInfo, Map<String, Object> variables) throws Exception {
+    private void processLoopContent(StringBuilder template, LoopInfo loopInfo, Map<String, Object> variables, RenderContext context) throws Exception {
         String loopVarName = loopInfo.loopVarName();
         String loopContent = loopInfo.loopContent();
         int start = loopInfo.start();
 
         Object loopVar = variables.get(loopVarName);
         if (!(loopVar instanceof List<?> loopList)) {
-            return; // Ignore if loop variable is not a List
+            return; // Ignorer les valeurs qui ne sont pas des listes.
         }
 
         StringBuilder loopResult = new StringBuilder();
@@ -242,11 +266,7 @@ public class GenesisTemplateEngine {
         for (int i = 0; i < loopList.size(); i++) {
             Object item = loopList.get(i);
             Map<String, Object> loopVariables = new HashMap<>(variables);
-
-            // Ajouter directement l'élément actuel sous `this`
             loopVariables.put(LOOP_ITEM, item);
-
-            // Ne stocker que les valeurs sous 'this' et pas toute la structure de l'objet
             if (item instanceof Map) {
                 Map<String, Object> itemMap = (Map<String, Object>) item;
                 for (Map.Entry<String, Object> entry : itemMap.entrySet()) {
@@ -258,7 +278,7 @@ public class GenesisTemplateEngine {
             loopVariables.put(IS_LOOP_FIRST_INDEX, (i == 0));
             loopVariables.put(IS_LOOP_LAST_INDEX, (i == loopList.size() - 1));
 
-            // Recursive rendering for nested structures
+            // Rendre récursivement les structures imbriquées.
             String renderedContent = render(loopContent, loopVariables).stripLeading();
             loopResult.append(renderedContent);
         }
@@ -266,7 +286,8 @@ public class GenesisTemplateEngine {
         template.insert(start, loopResult);
     }
 
-    private void evaluateConditionals(StringBuilder template, Map<String, Object> variables) throws Exception {
+    /** Évalue les blocs conditionnels avec le parcours historique. */
+    private void evaluateConditionalsLegacy(StringBuilder template, Map<String, Object> variables, RenderContext context) throws Exception {
         int start;
         while ((start = template.indexOf(IF_START)) != -1) {
             int ifEndIdx = findBlockEnd(template, start);
@@ -276,10 +297,10 @@ public class GenesisTemplateEngine {
             int contentStartIdx = findContentStartIdx(template, start);
 
             StringBuilder resultContent = new StringBuilder();
-            if (evaluateCondition(condition, variables)) {
+            if (evaluateCondition(condition, variables, context)) {
                 resultContent.append(extractIfContent(template, contentStartIdx, ifEndIdx));
             } else {
-                processElseIfBlocks(template, variables, contentStartIdx, ifEndIdx, resultContent);
+                processElseIfBlocks(template, variables, contentStartIdx, ifEndIdx, resultContent, context);
             }
 
             replaceBlockWithResult(template, start, ifEndIdx, resultContent);
@@ -287,32 +308,76 @@ public class GenesisTemplateEngine {
     }
 
 
+    /** Recherche la fermeture correspondant au niveau du bloc conditionnel. */
     private int findBlockEnd(StringBuilder template, int start) {
-        return template.indexOf(IF_END, start);
+        int depth = 0;
+        for (int index = start; index < template.length(); index++) {
+            if (tokenAt(template, IF_START, index)) {
+                depth++;
+            } else if (tokenAt(template, IF_END, index)) {
+                depth--;
+                if (depth == 0) {
+                    return index;
+                }
+            }
+        }
+        return -1;
     }
 
+    /** Recherche une branche en ignorant les conditions imbriquées. */
+    private int findBranchToken(StringBuilder template, String token, int start, int end) {
+        int depth = 0;
+        for (int index = start; index < end; index++) {
+            if (tokenAt(template, IF_START, index)) {
+                depth++;
+            } else if (tokenAt(template, IF_END, index)) {
+                depth--;
+            } else if (depth == 0 && tokenAt(template, token, index)) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    /** Compare un token à une position sans copier le suffixe du texte. */
+    private boolean tokenAt(StringBuilder template, String token, int index) {
+        if (index + token.length() > template.length()) {
+            return false;
+        }
+        for (int offset = 0; offset < token.length(); offset++) {
+            if (template.charAt(index + offset) != token.charAt(offset)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /** Extrait l’expression de l’en-tête conditionnel. */
     private String extractCondition(StringBuilder template, int start) {
         int conditionStartIdx = start + IF_START.length();
         int conditionEndIdx = template.indexOf(BLOCK_END, conditionStartIdx);
         return template.substring(conditionStartIdx, conditionEndIdx).trim();
     }
 
+    /** Repère le début du corps après l’en-tête du bloc. */
     private int findContentStartIdx(StringBuilder template, int start) {
         int conditionEndIdx = template.indexOf(BLOCK_END, start + IF_START.length());
         return conditionEndIdx + BLOCK_END.length();
     }
 
+    /** Extrait le contenu de la première branche conditionnelle. */
     private String extractIfContent(StringBuilder template, int contentStartIdx, int ifEndIdx) {
-        int elseIfIdx = template.indexOf(ELSE_IF_TOKEN, contentStartIdx);
-        int elseIdx = template.indexOf(ELSE_TOKEN, contentStartIdx);
+        int elseIfIdx = findBranchToken(template, ELSE_IF_TOKEN, contentStartIdx, ifEndIdx);
+        int elseIdx = findBranchToken(template, ELSE_TOKEN, contentStartIdx, ifEndIdx);
         int ifBlockEnd = determineBlockEnd(elseIfIdx, elseIdx, ifEndIdx);
         return template.substring(contentStartIdx, ifBlockEnd);
     }
 
+    /** Sélectionne la première branche alternative dont la condition est vraie. */
     private void processElseIfBlocks(StringBuilder template, Map<String, Object> variables,
-                                     int contentStartIdx, int ifEndIdx, StringBuilder resultContent) throws Exception {
-        int elseIfIdx = template.indexOf(ELSE_IF_TOKEN, contentStartIdx);
-        int elseIdx = template.indexOf(ELSE_TOKEN, contentStartIdx);
+                                     int contentStartIdx, int ifEndIdx, StringBuilder resultContent, RenderContext context) throws Exception {
+        int elseIfIdx = findBranchToken(template, ELSE_IF_TOKEN, contentStartIdx, ifEndIdx);
+        int elseIdx = findBranchToken(template, ELSE_TOKEN, contentStartIdx, ifEndIdx);
         boolean conditionMatched = false;
 
         while (elseIfIdx != -1 && elseIfIdx < ifEndIdx && !conditionMatched) {
@@ -322,12 +387,12 @@ public class GenesisTemplateEngine {
             int blockEnd = determineNextBlockEnd(template, contentStartIdx, ifEndIdx);
             String falseContent = template.substring(contentStartIdx, blockEnd);
 
-            if (evaluateCondition(elseIfCondition, variables)) {
+            if (evaluateCondition(elseIfCondition, variables, context)) {
                 resultContent.append(falseContent);
                 conditionMatched = true;
             }
 
-            elseIfIdx = template.indexOf(ELSE_IF_TOKEN, contentStartIdx);
+            elseIfIdx = findBranchToken(template, ELSE_IF_TOKEN, contentStartIdx, ifEndIdx);
         }
 
         if (!conditionMatched) {
@@ -335,17 +400,20 @@ public class GenesisTemplateEngine {
         }
     }
 
+    /** Extrait la condition d’une branche elseIf. */
     private String extractElseIfCondition(StringBuilder template, int elseIfIdx) {
         int elseIfConditionEndIdx = template.indexOf(BLOCK_END, elseIfIdx);
         return template.substring(elseIfIdx + ELSE_IF_TOKEN.length(), elseIfConditionEndIdx).trim();
     }
 
+    /** Repère la prochaine branche ou la fin du bloc courant. */
     private int determineNextBlockEnd(StringBuilder template, int contentStartIdx, int ifEndIdx) {
-        int nextElseIfIdx = template.indexOf(ELSE_IF_TOKEN, contentStartIdx);
-        int nextElseIdx = template.indexOf(ELSE_TOKEN, contentStartIdx);
+        int nextElseIfIdx = findBranchToken(template, ELSE_IF_TOKEN, contentStartIdx, ifEndIdx);
+        int nextElseIdx = findBranchToken(template, ELSE_TOKEN, contentStartIdx, ifEndIdx);
         return determineBlockEnd(nextElseIfIdx, nextElseIdx, ifEndIdx);
     }
 
+    /** Recopie le contenu de la branche else lorsqu’elle existe. */
     private void processElseBlock(StringBuilder template, int elseIdx, int ifEndIdx, StringBuilder resultContent) {
         if (elseIdx != -1 && elseIdx < ifEndIdx) {
             String elseContent = template.substring(elseIdx + ELSE_TOKEN.length(), ifEndIdx);
@@ -353,6 +421,7 @@ public class GenesisTemplateEngine {
         }
     }
 
+    /** Choisit la première limite parmi les branches et la fermeture. */
     private int determineBlockEnd(int elseIfIdx, int elseIdx, int ifEndIdx) {
         if (elseIfIdx != -1 && elseIfIdx < ifEndIdx) {
             return elseIfIdx;
@@ -363,24 +432,29 @@ public class GenesisTemplateEngine {
         return ifEndIdx;
     }
 
+    /** Remplace le bloc source par le contenu de la branche retenue. */
     private void replaceBlockWithResult(StringBuilder template, int start, int ifEndIdx, StringBuilder resultContent) {
         template.delete(start, ifEndIdx + IF_END.length());
         template.insert(start, resultContent);
     }
 
 
+    /** Substitue les variables en réexaminant la frontière des insertions. */
     private void replaceVariables(StringBuilder template, Map<String, Object> variables) {
-        int start;
-        while ((start = template.indexOf(VARIABLE_PLACEHOLDER_PREFIX)) != -1) {
+        int start = 0;
+        while ((start = template.indexOf(VARIABLE_PLACEHOLDER_PREFIX, start)) != -1) {
             int end = template.indexOf(VARIABLE_PLACEHOLDER_SUFFIX, start);
             if (end == -1) break;
 
             String placeholder = template.substring(start + VARIABLE_PLACEHOLDER_PREFIX.length(), end).trim();
             String value = evaluatePlaceholder(placeholder, variables);
             template.replace(start, end + VARIABLE_PLACEHOLDER_SUFFIX.length(), value);
+            // Rechercher aussi les placeholders formés à la jonction du texte.
+            start = Math.max(0, start - VARIABLE_PLACEHOLDER_PREFIX.length() + 1);
         }
     }
 
+    /** Résout la valeur ou la fonction d’un placeholder. */
     private String evaluatePlaceholder(String placeholder, Map<String, Object> variables) {
         int funcStart = placeholder.indexOf("(");
         int funcEnd = placeholder.indexOf(")");
@@ -407,6 +481,7 @@ public class GenesisTemplateEngine {
     }
 
 
+    /** Remplace chaque occurrence du marqueur demandé. */
     private void replaceAllOccurrences(StringBuilder template, String placeholder, String value) {
         int start;
         while ((start = template.indexOf(placeholder)) != -1) {
@@ -414,18 +489,25 @@ public class GenesisTemplateEngine {
         }
     }
 
-    private boolean evaluateCondition(String condition, Map<String, Object> variables) throws Exception {
+    /** Évalue une condition après traitement de la négation. */
+    private boolean evaluateCondition(String condition, Map<String, Object> variables, RenderContext context) throws Exception {
         condition = condition.trim();
 
         if (condition.startsWith("!")) {
             String innerCondition = condition.substring(1).trim();
-            return !evaluateCondition(innerCondition, variables);
+            return !evaluateCondition(innerCondition, variables, context);
         }
 
-        return evaluateCompositeCondition(condition, variables);
+        return evaluateCompositeCondition(condition, variables, context);
     }
 
-    private boolean evaluateCompositeCondition(String condition, Map<String, Object> variables) throws Exception {
+    /** Évalue les combinaisons and/or selon les règles historiques. */
+    private boolean evaluateCompositeCondition(String condition, Map<String, Object> variables, RenderContext context) throws Exception {
+
+        // Ce filtre conservateur préserve le traitement des noms contenant and ou or.
+        if (!condition.contains("and") && !condition.contains("or")) {
+            return evaluateSimpleCondition(condition, variables, context);
+        }
 
         String[] orConditions = condition.split("\\s+or\\s+");
         for (String orCondition : orConditions) {
@@ -435,7 +517,7 @@ public class GenesisTemplateEngine {
             for (String andCondition : andConditions) {
 
                 andCondition = andCondition.trim();
-                boolean result = evaluateSimpleCondition(andCondition, variables);
+                boolean result = evaluateSimpleCondition(andCondition, variables, context);
                 andResult = andResult && result;
             }
 
@@ -448,10 +530,8 @@ public class GenesisTemplateEngine {
     }
 
 
-    /**
-     * Évalue une condition simple qui peut inclure des comparaisons.
-     */
-    private boolean evaluateSimpleCondition(String condition, Map<String, Object> variables) throws Exception {
+    /** Évalue une condition simple qui peut inclure des comparaisons. */
+    private boolean evaluateSimpleCondition(String condition, Map<String, Object> variables, RenderContext context) throws Exception {
         condition = condition.trim();
 
         // Cas des valeurs booléennes littérales
@@ -468,13 +548,10 @@ public class GenesisTemplateEngine {
         if (IS_LOOP_LAST_INDEX.equals(condition)) {
             return evaluateLoopFlagValue(variables);
         }
-
-        // Recherche d'opérateurs de comparaison
         String operator = findComparisonOperator(condition);
 
         if (operator != null) {
-            // Si un opérateur est trouvé, évaluer la comparaison
-            return evaluateComparison(condition, operator, variables);
+            return evaluateComparison(condition, operator, variables, context);
         } else {
             // Comportement d'origine pour les conditions sans opérateurs
             Object conditionValue = variables.get(condition);
@@ -485,9 +562,7 @@ public class GenesisTemplateEngine {
         }
     }
 
-    /**
-     * Évalue une valeur de drapeau de boucle (comme @last ou @first).
-     */
+    /** Évalue une valeur de drapeau de boucle (comme @last ou @first). */
     private boolean evaluateLoopFlagValue(Map<String, Object> variables) throws Exception {
         Object flagValue = variables.get(GenesisTemplateEngine.IS_LOOP_LAST_INDEX);
         if (flagValue instanceof Boolean) {
@@ -521,10 +596,8 @@ public class GenesisTemplateEngine {
         return null;
     }
 
-    /**
-     * Évalue une comparaison avec un opérateur donné.
-     */
-    private boolean evaluateComparison(String condition, String operator, Map<String, Object> variables) throws Exception {
+    /** Évalue une comparaison avec un opérateur donné. */
+    private boolean evaluateComparison(String condition, String operator, Map<String, Object> variables, RenderContext context) throws Exception {
         String[] parts = condition.split(Pattern.quote(operator), 2);
         if (parts.length != 2) {
             throw new Exception("Invalid comparison condition: " + condition);
@@ -532,40 +605,28 @@ public class GenesisTemplateEngine {
 
         String leftPart = parts[0].trim();
         String rightPart = parts[1].trim();
-
-        // Extraire les valeurs des deux côtés
-        Object leftValue = extractValue(leftPart, variables);
-        Object rightValue = extractValue(rightPart, variables);
-
-        // Appliquer l'opérateur de comparaison
+        Object leftValue = extractValue(leftPart, variables, context);
+        Object rightValue = extractValue(rightPart, variables, context);
         return compareValues(leftValue, rightValue, operator);
     }
 
-    /**
-     * Extrait la valeur d'une expression qui peut être une variable ou une valeur littérale.
-     */
-    private Object extractValue(String expression, Map<String, Object> variables) {
+    /** Extrait la valeur d'une expression qui peut être une variable ou une valeur littérale. */
+    private Object extractValue(String expression, Map<String, Object> variables, RenderContext context) {
         var variable = variables.get(expression);
-
-        // Vérifier si c'est une référence à une variable
         if (variable != null) {
             return variable;
         }
-
-        // Essayer de convertir en nombre si possible
-        return convertToNumericIfPossible(expression);
+        if (context == null) return convertToNumericIfPossible(expression);
+        if (context.literals == null) context.literals = new HashMap<>();
+        return context.literals.computeIfAbsent(expression, this::convertToNumericIfPossible);
     }
 
-    /**
-     * Vérifie si l'expression est une variable délimitée par les préfixes et suffixes donnés.
-     */
+    /** Vérifie si l'expression est une variable délimitée par les préfixes et suffixes donnés. */
     private boolean isVariable(String expression, String prefix, String suffix) {
         return expression.startsWith(prefix) && expression.endsWith(suffix);
     }
 
-    /**
-     * Extrait le nom de la variable à partir de l'expression complète.
-     */
+    /** Extrait le nom de la variable à partir de l'expression complète. */
     private String extractVariableName(String expression, String prefix, String suffix) {
         return expression.substring(
                 prefix.length(),
@@ -573,9 +634,7 @@ public class GenesisTemplateEngine {
         ).trim();
     }
 
-    /**
-     * Tente de convertir une chaîne en valeur numérique.
-     */
+    /** Tente de convertir une chaîne en valeur numérique. */
     private Object convertToNumericIfPossible(String expression) {
         try {
             // Tenter la conversion en entier
@@ -591,9 +650,7 @@ public class GenesisTemplateEngine {
         }
     }
 
-    /**
-     * Compare deux valeurs avec l'opérateur donné.
-     */
+    /** Compare deux valeurs avec l'opérateur donné. */
     @SuppressWarnings("unchecked")
     private boolean compareValues(Object left, Object right, String operator) throws Exception {
         // Gestion des valeurs null
@@ -640,9 +697,7 @@ public class GenesisTemplateEngine {
         }
     }
 
-    /**
-     * Effectue une comparaison numérique.
-     */
+    /** Effectue une comparaison numérique. */
     private boolean performNumericComparison(double left, double right, String operator) {
         return switch (operator) {
             case GenesisTemplateEngine.EQUAL_OPERATOR -> left == right;
@@ -655,9 +710,7 @@ public class GenesisTemplateEngine {
         };
     }
 
-    /**
-     * Effectue une comparaison de chaînes.
-     */
+    /** Effectue une comparaison de chaînes. */
     private boolean performStringComparison(String left, String right, String operator) throws Exception {
         return switch (operator) {
             case GenesisTemplateEngine.EQUAL_OPERATOR -> left.equals(right);
@@ -670,9 +723,7 @@ public class GenesisTemplateEngine {
         };
     }
 
-    /**
-     * Effectue une comparaison avec des objets implémentant Comparable.
-     */
+    /** Effectue une comparaison avec des objets implémentant Comparable. */
     @SuppressWarnings("unchecked")
     private <T> boolean performComparableComparison(Comparable<T> left, Object right, String operator) throws Exception {
         int comparisonResult;
@@ -693,12 +744,11 @@ public class GenesisTemplateEngine {
         };
     }
 
+    /** Interprète les tags de mise en forme et de suppression de ligne. */
     private void processSpecialTags(StringBuilder template) {
         replaceAllOccurrences(template, NEWLINE_TAG, "\n");
         replaceAllOccurrences(template, TAB_TAG, "\t");
-        replaceAllOccurrences(template, SPACE_TAG, "    "); // 4 spaces for PEP 8
-
-        // Supprimer les lignes contenant le tag {{removeLine}}
+        replaceAllOccurrences(template, SPACE_TAG, "    "); // Quatre espaces selon PEP 8.
         int start;
         while ((start = template.indexOf(REMOVE_LINE_TAG)) != -1) {
             int lineStart = template.lastIndexOf("\n", start);
@@ -718,6 +768,94 @@ public class GenesisTemplateEngine {
         }
     }
 
-    private record LoopInfo(String loopVarName, String loopContent, int start) {
+    /** Utilise un plan partagé ou le parcours historique selon le contexte. */
+    private void evaluateConditionals(StringBuilder template, Map<String, Object> variables,
+                                      RenderContext context) throws Exception {
+        if (template.indexOf(IF_START) < 0) return;
+        if (context == null) {
+            evaluateConditionalsLegacy(template, variables, null);
+            return;
+        }
+        String source = template.toString();
+        ConditionalPlan plan = context.conditions == null ? null : context.conditions.get(source);
+        if (plan == null) {
+            plan = parseConditionalPlan(template, 0, template.length(), 0);
+            if (plan == null) {
+                evaluateConditionalsLegacy(template, variables, context);
+                return;
+            }
+            // Limiter la mémoire temporaire des expansions de boucles distinctes.
+            if (context.conditions == null) context.conditions = new HashMap<>();
+            if (context.conditions.size() < MAX_CACHED_PLANS) context.conditions.put(source, plan);
+        }
+        StringBuilder rendered = new StringBuilder(template.length());
+        appendConditionalPlan(plan, variables, context, rendered);
+        template.setLength(0);
+        template.append(rendered);
     }
+
+    /** Analyse les branches et demande un repli si le plan ne convient pas. */
+    private ConditionalPlan parseConditionalPlan(StringBuilder source, int begin, int end, int depth) {
+        // Confier les templates profonds à l’évaluateur itératif.
+        if (depth >= MAX_PLAN_DEPTH) return null;
+        List<PlannedNode> nodes = new ArrayList<>();
+        int cursor = begin;
+        while (cursor < end) {
+            int start = source.indexOf(IF_START, cursor);
+            if (start < 0 || start >= end) {
+                nodes.add(new PlannedText(source.substring(cursor, end)));
+                break;
+            }
+            if (start > cursor) nodes.add(new PlannedText(source.substring(cursor, start)));
+            int close = findBlockEnd(source, start);
+            int headerEnd = source.indexOf(BLOCK_END, start + IF_START.length());
+            if (close < 0 || close >= end || headerEnd < 0 || headerEnd > close) return null;
+            List<PlannedBranch> branches = new ArrayList<>();
+            String condition = source.substring(start + IF_START.length(), headerEnd).trim();
+            int bodyStart = headerEnd + BLOCK_END.length();
+            while (true) {
+                int nextElseIf = findBranchToken(source, ELSE_IF_TOKEN, bodyStart, close);
+                int nextElse = findBranchToken(source, ELSE_TOKEN, bodyStart, close);
+                // Préserver le traitement historique des branches mal formées.
+                if (nextElse >= 0 && nextElseIf >= 0 && nextElse < nextElseIf) return null;
+                int branchEnd = determineBlockEnd(nextElseIf, nextElse, close);
+                ConditionalPlan body = parseConditionalPlan(source, bodyStart, branchEnd, depth + 1);
+                if (body == null) return null;
+                branches.add(new PlannedBranch(condition, body));
+                if (nextElseIf >= 0) {
+                    int nextHeaderEnd = source.indexOf(BLOCK_END, nextElseIf);
+                    if (nextHeaderEnd < 0 || nextHeaderEnd > close) return null;
+                    condition = source.substring(nextElseIf + ELSE_IF_TOKEN.length(), nextHeaderEnd).trim();
+                    bodyStart = nextHeaderEnd + BLOCK_END.length();
+                } else {
+                    if (nextElse >= 0) {
+                        ConditionalPlan otherwise = parseConditionalPlan(source, nextElse + ELSE_TOKEN.length(), close, depth + 1);
+                        if (otherwise == null) return null;
+                        branches.add(new PlannedBranch(null, otherwise));
+                    }
+                    break;
+                }
+            }
+            nodes.add(new PlannedIf(List.copyOf(branches)));
+            cursor = close + IF_END.length();
+        }
+        return new ConditionalPlan(List.copyOf(nodes));
+    }
+
+    /** Ajoute le texte des branches retenues au résultat. */
+    private void appendConditionalPlan(ConditionalPlan plan, Map<String, Object> variables,
+                                       RenderContext context, StringBuilder result) throws Exception {
+        for (PlannedNode node : plan.nodes()) {
+            if (node instanceof PlannedText text) result.append(text.value());
+            else if (node instanceof PlannedIf conditional) {
+                for (PlannedBranch branch : conditional.branches()) {
+                    if (branch.condition() == null || evaluateCondition(branch.condition(), variables, context)) {
+                        appendConditionalPlan(branch.body(), variables, context, result);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
 }
