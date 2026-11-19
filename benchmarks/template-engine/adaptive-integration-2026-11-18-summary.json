@@ -1,0 +1,553 @@
+{
+  "referenceSourceSha256": "189b9dc68addc8dde90d88ab74fcadb832c22987ad16520786c2e8246ac5e12c",
+  "adaptiveSourceSha256": "0524f7ad6543bc866ae5ad25610f84ac6c344a5dd18acbc9425effc3fefdaa1e",
+  "confirmationOnly": false,
+  "exactOutputs": true,
+  "caseCount": 198,
+  "pipelineBasketSpeedup": 2.544633927823435,
+  "fullBasketTargetMet": true,
+  "fiveForkProtocolMet": true,
+  "suspectedRegressions": [],
+  "listGainTargetMisses": [],
+  "cases": [
+    {
+      "name": "frontend-2-List-Component-c20",
+      "referenceMs": 0.04215752101513427,
+      "adaptiveMs": 0.028364360562741095,
+      "speedup": 1.4862849074944993,
+      "gainFraction": 0.3271814879115289,
+      "deltaMs": -0.013793160452393177,
+      "referenceAllocatedBytes": 28976.0,
+      "adaptiveAllocatedBytes": 21968.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c20-pipeline",
+      "referenceMs": 0.04255123261850055,
+      "adaptiveMs": 0.02896725265048375,
+      "speedup": 1.4689426412618372,
+      "gainFraction": 0.31923822489012266,
+      "deltaMs": -0.013583979968016802,
+      "referenceAllocatedBytes": 38800.0,
+      "adaptiveAllocatedBytes": 31792.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c20-readonly",
+      "referenceMs": 0.03282103364074961,
+      "adaptiveMs": 0.02396786362437984,
+      "speedup": 1.3693766851779159,
+      "gainFraction": 0.2697407434901119,
+      "deltaMs": -0.008853170016369774,
+      "referenceAllocatedBytes": 23136.0,
+      "adaptiveAllocatedBytes": 16128.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c20-readonly-pipeline",
+      "referenceMs": 0.03317725084599562,
+      "adaptiveMs": 0.024510467928135493,
+      "speedup": 1.3535951636366579,
+      "gainFraction": 0.26122667481070627,
+      "deltaMs": -0.008666782917860126,
+      "referenceAllocatedBytes": 32960.0,
+      "adaptiveAllocatedBytes": 25952.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c5",
+      "referenceMs": 0.04340932933975778,
+      "adaptiveMs": 0.028347013436135837,
+      "speedup": 1.531354597109726,
+      "gainFraction": 0.34698338197606415,
+      "deltaMs": -0.015062315903621944,
+      "referenceAllocatedBytes": 28976.018448923813,
+      "adaptiveAllocatedBytes": 21968.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c5-pipeline",
+      "referenceMs": 0.04388988707482993,
+      "adaptiveMs": 0.029121793354494892,
+      "speedup": 1.5071148449055116,
+      "gainFraction": 0.33648055861151394,
+      "deltaMs": -0.014768093720335038,
+      "referenceAllocatedBytes": 38800.0,
+      "adaptiveAllocatedBytes": 31792.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c5-readonly",
+      "referenceMs": 0.0329154506764096,
+      "adaptiveMs": 0.023915726240015305,
+      "speedup": 1.3763098952577966,
+      "gainFraction": 0.2734194504845219,
+      "deltaMs": -0.008999724436394296,
+      "referenceAllocatedBytes": 23136.0,
+      "adaptiveAllocatedBytes": 16128.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c5-readonly-pipeline",
+      "referenceMs": 0.033328952306359155,
+      "adaptiveMs": 0.024476653930879187,
+      "speedup": 1.361662929928184,
+      "gainFraction": 0.2656038597946252,
+      "deltaMs": -0.008852298375479968,
+      "referenceAllocatedBytes": 32960.0,
+      "adaptiveAllocatedBytes": 25952.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c50",
+      "referenceMs": 0.04227562714013951,
+      "adaptiveMs": 0.0283444650945268,
+      "speedup": 1.4914949708577412,
+      "gainFraction": 0.3295317654172767,
+      "deltaMs": -0.013931162045612708,
+      "referenceAllocatedBytes": 28976.0,
+      "adaptiveAllocatedBytes": 21968.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c50-pipeline",
+      "referenceMs": 0.04276327701518067,
+      "adaptiveMs": 0.02893119268045711,
+      "speedup": 1.4781028036935053,
+      "gainFraction": 0.32345707111766175,
+      "deltaMs": -0.013832084334723563,
+      "referenceAllocatedBytes": 38800.0,
+      "adaptiveAllocatedBytes": 31792.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c50-readonly",
+      "referenceMs": 0.032790743909236975,
+      "adaptiveMs": 0.02401238887288095,
+      "speedup": 1.3655760816979814,
+      "gainFraction": 0.2677083222220893,
+      "deltaMs": -0.008778355036356024,
+      "referenceAllocatedBytes": 23136.0,
+      "adaptiveAllocatedBytes": 16128.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-Component-c50-readonly-pipeline",
+      "referenceMs": 0.03315881547184827,
+      "adaptiveMs": 0.024617473265718084,
+      "speedup": 1.3469625868559276,
+      "gainFraction": 0.2575888820088208,
+      "deltaMs": -0.008541342206130186,
+      "referenceAllocatedBytes": 32960.0,
+      "adaptiveAllocatedBytes": 25952.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c20",
+      "referenceMs": 0.035245888591266344,
+      "adaptiveMs": 0.023349549476977677,
+      "speedup": 1.509489021448499,
+      "gainFraction": 0.33752416493867277,
+      "deltaMs": -0.011896339114288668,
+      "referenceAllocatedBytes": 26088.0,
+      "adaptiveAllocatedBytes": 19080.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c20-pipeline",
+      "referenceMs": 0.035450786309333904,
+      "adaptiveMs": 0.023794891186408415,
+      "speedup": 1.4898486415261822,
+      "gainFraction": 0.32879087705472376,
+      "deltaMs": -0.011655895122925489,
+      "referenceAllocatedBytes": 33720.0,
+      "adaptiveAllocatedBytes": 26712.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c20-readonly",
+      "referenceMs": 0.030573697933227343,
+      "adaptiveMs": 0.021300293026326998,
+      "speedup": 1.4353651330260335,
+      "gainFraction": 0.3033131591459225,
+      "deltaMs": -0.009273404906900345,
+      "referenceAllocatedBytes": 23688.0,
+      "adaptiveAllocatedBytes": 16680.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c20-readonly-pipeline",
+      "referenceMs": 0.0309147145418573,
+      "adaptiveMs": 0.0218226383336243,
+      "speedup": 1.41663505893437,
+      "gainFraction": 0.29410189752593996,
+      "deltaMs": -0.009092076208233001,
+      "referenceAllocatedBytes": 31320.0,
+      "adaptiveAllocatedBytes": 24312.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c5",
+      "referenceMs": 0.035353331153220674,
+      "adaptiveMs": 0.023201511960279347,
+      "speedup": 1.5237511768088676,
+      "gainFraction": 0.343724871081471,
+      "deltaMs": -0.012151819192941327,
+      "referenceAllocatedBytes": 26088.0,
+      "adaptiveAllocatedBytes": 19080.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c5-pipeline",
+      "referenceMs": 0.03621319847908746,
+      "adaptiveMs": 0.023725241613285885,
+      "speedup": 1.5263574158422248,
+      "gainFraction": 0.34484545387541976,
+      "deltaMs": -0.012487956865801574,
+      "referenceAllocatedBytes": 33720.0,
+      "adaptiveAllocatedBytes": 26712.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c5-readonly",
+      "referenceMs": 0.03120096006364856,
+      "adaptiveMs": 0.021303740589250334,
+      "speedup": 1.4645766048893905,
+      "gainFraction": 0.31720881197912953,
+      "deltaMs": -0.009897219474398224,
+      "referenceAllocatedBytes": 23688.0,
+      "adaptiveAllocatedBytes": 16680.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c5-readonly-pipeline",
+      "referenceMs": 0.03159311935677503,
+      "adaptiveMs": 0.021731855811022254,
+      "speedup": 1.4537699693714703,
+      "gainFraction": 0.31213326656324814,
+      "deltaMs": -0.009861263545752775,
+      "referenceAllocatedBytes": 31320.0,
+      "adaptiveAllocatedBytes": 24312.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c50",
+      "referenceMs": 0.03531024458882101,
+      "adaptiveMs": 0.023235970188442503,
+      "speedup": 1.5196371962288113,
+      "gainFraction": 0.34194819494966466,
+      "deltaMs": -0.012074274400378508,
+      "referenceAllocatedBytes": 26088.0,
+      "adaptiveAllocatedBytes": 19080.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c50-pipeline",
+      "referenceMs": 0.0355671728553137,
+      "adaptiveMs": 0.023759759408857634,
+      "speedup": 1.4969500424341111,
+      "gainFraction": 0.331975034802128,
+      "deltaMs": -0.01180741344645607,
+      "referenceAllocatedBytes": 33720.0,
+      "adaptiveAllocatedBytes": 26712.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c50-readonly",
+      "referenceMs": 0.0307029913726935,
+      "adaptiveMs": 0.02123167796178344,
+      "speedup": 1.446093494256941,
+      "gainFraction": 0.3084817793791135,
+      "deltaMs": -0.009471313410910061,
+      "referenceAllocatedBytes": 23688.0,
+      "adaptiveAllocatedBytes": 16680.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    },
+    {
+      "name": "frontend-2-List-View-c50-readonly-pipeline",
+      "referenceMs": 0.030923347784408917,
+      "adaptiveMs": 0.02183783663798751,
+      "speedup": 1.4160444689203744,
+      "gainFraction": 0.29380748843119064,
+      "deltaMs": -0.009085511146421407,
+      "referenceAllocatedBytes": 31320.0,
+      "adaptiveAllocatedBytes": 24312.0,
+      "vueList": true,
+      "suspectedRegression": false,
+      "listGainTargetMet": true
+    }
+  ],
+  "variants": {
+    "reference": {
+      "forks": 5,
+      "scaling": {
+        "one-use-c20-readonly-false": {
+          "meanMs": 2.5761377457627117,
+          "medianMs": 2.5641045,
+          "allocatedBytesPerOp": 2145352.0
+        },
+        "one-use-c20-readonly-true": {
+          "meanMs": 2.359778265625,
+          "medianMs": 2.344896,
+          "allocatedBytesPerOp": 2110176.0
+        },
+        "one-use-c5-readonly-false": {
+          "meanMs": 1.163054695473251,
+          "medianMs": 1.159542,
+          "allocatedBytesPerOp": 844513.3138686131
+        },
+        "one-use-c5-readonly-true": {
+          "meanMs": 0.9503118754208754,
+          "medianMs": 0.939708,
+          "allocatedBytesPerOp": 808789.5757575758
+        },
+        "one-use-c50-readonly-false": {
+          "meanMs": 5.7193285192307695,
+          "medianMs": 5.688125,
+          "allocatedBytesPerOp": 4957672.0
+        },
+        "one-use-c50-readonly-true": {
+          "meanMs": 5.367481018181818,
+          "medianMs": 5.333208,
+          "allocatedBytesPerOp": 4922496.0
+        },
+        "reused-c20-readonly-false": {
+          "meanMs": 2.579618407079646,
+          "medianMs": 2.5187505,
+          "allocatedBytesPerOp": 2031584.0
+        },
+        "reused-c20-readonly-true": {
+          "meanMs": 2.290637702290076,
+          "medianMs": 2.290875,
+          "allocatedBytesPerOp": 1996408.0
+        },
+        "reused-c5-readonly-false": {
+          "meanMs": 1.2059110212765958,
+          "medianMs": 1.205396,
+          "allocatedBytesPerOp": 734271.7276595745
+        },
+        "reused-c5-readonly-true": {
+          "meanMs": 0.8918167842465753,
+          "medianMs": 0.8825835,
+          "allocatedBytesPerOp": 695079.9726027397
+        },
+        "reused-c50-readonly-false": {
+          "meanMs": 5.639259415094339,
+          "medianMs": 5.615084,
+          "allocatedBytesPerOp": 4843904.0
+        },
+        "reused-c50-readonly-true": {
+          "meanMs": 5.301152052631579,
+          "medianMs": 5.274,
+          "allocatedBytesPerOp": 4808728.0
+        }
+      },
+      "pipelineBasketMs": 122.89803932990435,
+      "pipelineBasketAllocatedBytes": 74990944.0,
+      "profile": {
+        "totalMs": 533.719375,
+        "observedEngineMs": 284.999959,
+        "publishedFileReadMs": 0.0,
+        "publishedFileWriteMs": 10.303915,
+        "topLevelRenderCalls": 300,
+        "uniqueTopLevelRenderInputs": 48,
+        "largeTopLevelRenderCalls": 190,
+        "uniqueLargeTopLevelRenderInputs": 37,
+        "allRenderCallsIncludingLoopRecursion": 1930
+      }
+    },
+    "adaptive": {
+      "forks": 5,
+      "scaling": {
+        "one-use-c20-readonly-false": {
+          "meanMs": 1.031025866894198,
+          "medianMs": 1.025708,
+          "allocatedBytesPerOp": 1513488.0
+        },
+        "one-use-c20-readonly-true": {
+          "meanMs": 0.9923710811688312,
+          "medianMs": 0.984875,
+          "allocatedBytesPerOp": 1492104.0
+        },
+        "one-use-c5-readonly-false": {
+          "meanMs": 0.6117548987854251,
+          "medianMs": 0.5889795,
+          "allocatedBytesPerOp": 707380.5821596244
+        },
+        "one-use-c5-readonly-true": {
+          "meanMs": 0.5348901179577465,
+          "medianMs": 0.531083,
+          "allocatedBytesPerOp": 684408.0
+        },
+        "one-use-c50-readonly-false": {
+          "meanMs": 2.0105524733333335,
+          "medianMs": 1.9990835,
+          "allocatedBytesPerOp": 3305664.0
+        },
+        "one-use-c50-readonly-true": {
+          "meanMs": 1.952620206451613,
+          "medianMs": 1.944125,
+          "allocatedBytesPerOp": 3284280.0
+        },
+        "reused-c20-readonly-false": {
+          "meanMs": 0.9995361805555555,
+          "medianMs": 0.979875,
+          "allocatedBytesPerOp": 1399712.0
+        },
+        "reused-c20-readonly-true": {
+          "meanMs": 0.9381122492211839,
+          "medianMs": 0.933875,
+          "allocatedBytesPerOp": 1378328.0
+        },
+        "reused-c5-readonly-false": {
+          "meanMs": 0.6536785478841871,
+          "medianMs": 0.6527295,
+          "allocatedBytesPerOp": 596446.7349665924
+        },
+        "reused-c5-readonly-true": {
+          "meanMs": 0.49014189825119236,
+          "medianMs": 0.479375,
+          "allocatedBytesPerOp": 570632.0
+        },
+        "reused-c50-readonly-false": {
+          "meanMs": 1.9393239419354837,
+          "medianMs": 1.931666,
+          "allocatedBytesPerOp": 3191888.0
+        },
+        "reused-c50-readonly-true": {
+          "meanMs": 1.9004317658227847,
+          "medianMs": 1.8908755,
+          "allocatedBytesPerOp": 3170504.0
+        }
+      },
+      "pipelineBasketMs": 48.29694282785335,
+      "pipelineBasketAllocatedBytes": 48149674.688,
+      "profile": {
+        "totalMs": 352.398833,
+        "observedEngineMs": 116.593699,
+        "publishedFileReadMs": 0.0,
+        "publishedFileWriteMs": 11.929464,
+        "topLevelRenderCalls": 300,
+        "uniqueTopLevelRenderInputs": 48,
+        "largeTopLevelRenderCalls": 190,
+        "uniqueLargeTopLevelRenderInputs": 37,
+        "allRenderCallsIncludingLoopRecursion": 1930
+      }
+    },
+    "freemarker": {
+      "forks": 5,
+      "scaling": {
+        "one-use-c20-readonly-false": {
+          "meanMs": 4.60093946875,
+          "medianMs": 4.542896,
+          "allocatedBytesPerOp": 830168.0
+        },
+        "one-use-c20-readonly-true": {
+          "meanMs": 4.580027181818181,
+          "medianMs": 4.5334585,
+          "allocatedBytesPerOp": 858920.8484848485
+        },
+        "one-use-c5-readonly-false": {
+          "meanMs": 4.707591403225806,
+          "medianMs": 4.7070205,
+          "allocatedBytesPerOp": 803528.0
+        },
+        "one-use-c5-readonly-true": {
+          "meanMs": 4.598830181818181,
+          "medianMs": 4.5946875,
+          "allocatedBytesPerOp": 761680.0
+        },
+        "one-use-c50-readonly-false": {
+          "meanMs": 4.569049384615385,
+          "medianMs": 4.561166,
+          "allocatedBytesPerOp": 989952.4210526316
+        },
+        "one-use-c50-readonly-true": {
+          "meanMs": 4.639790461538462,
+          "medianMs": 4.6315,
+          "allocatedBytesPerOp": 1054305.0
+        },
+        "reused-c20-readonly-false": {
+          "meanMs": 0.044190006399999995,
+          "medianMs": 0.043625,
+          "allocatedBytesPerOp": 166584.0
+        },
+        "reused-c20-readonly-true": {
+          "meanMs": 0.0404407076,
+          "medianMs": 0.039,
+          "allocatedBytesPerOp": 195336.0
+        },
+        "reused-c5-readonly-false": {
+          "meanMs": 0.0263093476,
+          "medianMs": 0.023708,
+          "allocatedBytesPerOp": 139963.9808
+        },
+        "reused-c5-readonly-true": {
+          "meanMs": 0.0185611982,
+          "medianMs": 0.018208,
+          "allocatedBytesPerOp": 98096.0
+        },
+        "reused-c50-readonly-false": {
+          "meanMs": 0.088078216374269,
+          "medianMs": 0.087375,
+          "allocatedBytesPerOp": 326456.0
+        },
+        "reused-c50-readonly-true": {
+          "meanMs": 0.08084869699388135,
+          "medianMs": 0.080083,
+          "allocatedBytesPerOp": 391736.0
+        }
+      }
+    }
+  },
+  "publishedFiles": 250,
+  "confirmedRegressions": [],
+  "acceptancePassed": true,
+  "summaryScope": "Condensed historical report: all acceptance flags, 24 Vue list cases and aggregate/scaling results. Full data is produced by run_adaptive_study.py."
+}
