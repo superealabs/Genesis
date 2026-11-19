@@ -1,0 +1,144 @@
+{
+  "viewAnnotations": "<!-- Reconstructed benchmark fixture: Product -->",
+  "className": "Product",
+  "createLink": "/products/create",
+  "filterLink": "action=\"/products/filter\"",
+  "orderSortsTagHelper": "<span th:text=\"$[thymeleafDollar]{sortOrder}\"></span>",
+  "pageSizeChangeLink": "'/products?pageSize=' + this.value",
+  "pageSizeTagHelper": "th:selected=\"$[thymeleafDollar]{pageSize == ${this}}\"",
+  "inputRadioTagHelper": "th:value=\"$[thymeleafDollar]{searchCriteria.${this.name}}\"",
+  "inputDateTagHelper": "name=\"${this.name}\" th:value=\"$[thymeleafDollar]{searchCriteria.${this.name}}\"",
+  "inputTagHelper": "name=\"${this.name}\" th:value=\"$[thymeleafDollar]{searchCriteria.${this.name}}\"",
+  "selectTagHelper": "name=\"${this.name}\" id=\"${this.name}\"",
+  "exportLink": "action=\"/products/export\"",
+  "pageSizeValue": "20",
+  "currentSortValue": "name,asc",
+  "antiForgeryTokenTagHelper": "<input type=\"hidden\" name=\"_csrf\" th:value=\"$[thymeleafDollar]{_csrf.token}\" />",
+  "blockLoopStatementStart": "<th:block th:each=\"product : $[thymeleafDollar]{products}\">",
+  "dataForeignValue": "<span th:text=\"$[thymeleafDollar]{product.${this.name}.name}\"></span>",
+  "dataValue": "<span th:text=\"$[thymeleafDollar]{product.${this.name}}\"></span>",
+  "blockLoopStatementEnd": "</th:block>",
+  "totalElementsTagHelper": "42",
+  "sortLink": "href=\"/products?sort=${this.name}\"",
+  "activeSortAscCondition": "sort-asc-${this.name}",
+  "activeSortDescCondition": "sort-desc-${this.name}",
+  "dataRawValue": "product.${this.name}",
+  "detailsLink": "/products/details",
+  "updateLink": "/products/edit",
+  "deleteDataTagHelper": "data-id=\"$[thymeleafDollar]{product.id}\"",
+  "deleteLink": "action=\"/products/delete\"",
+  "previousPageLink": "/products?page=0",
+  "previousClassCondition": "",
+  "pagesListLoop": "<a href=\"/products?page=1\">2</a>",
+  "nextPageLink": "/products?page=2",
+  "nextClassCondition": "",
+  "onGoingPageLink": "/products",
+  "onGoingPagesLoop": "<option value=\"1\">2</option>",
+  "scriptSection": "<script src=\"/js/products-list.js\"></script>",
+  "isView": false,
+  "pageSizesList": [
+    10,
+    20,
+    50,
+    100
+  ],
+  "fields": [
+    {
+      "name": "id",
+      "type": "Long",
+      "columnType": "bigint",
+      "isPrimaryKey": true,
+      "isForeignKey": false
+    },
+    {
+      "name": "name",
+      "type": "String",
+      "columnType": "varchar",
+      "isPrimaryKey": false,
+      "isForeignKey": false
+    },
+    {
+      "name": "price",
+      "type": "BigDecimal",
+      "columnType": "decimal",
+      "isPrimaryKey": false,
+      "isForeignKey": false
+    },
+    {
+      "name": "active",
+      "type": "Boolean",
+      "columnType": "boolean",
+      "isPrimaryKey": false,
+      "isForeignKey": false
+    },
+    {
+      "name": "createdAt",
+      "type": "LocalDateTime",
+      "columnType": "timestamp",
+      "isPrimaryKey": false,
+      "isForeignKey": false
+    },
+    {
+      "name": "category",
+      "type": "Category",
+      "columnType": "bigint",
+      "isPrimaryKey": false,
+      "isForeignKey": true
+    },
+    {
+      "name": "payload",
+      "type": "String",
+      "columnType": "json",
+      "isPrimaryKey": false,
+      "isForeignKey": false
+    },
+    {
+      "name": "attributes",
+      "type": "String",
+      "columnType": "jsonb",
+      "isPrimaryKey": false,
+      "isForeignKey": false
+    },
+    {
+      "name": "document",
+      "type": "String",
+      "columnType": "xml",
+      "isPrimaryKey": false,
+      "isForeignKey": false
+    },
+    {
+      "name": "attachment",
+      "type": "byte[]",
+      "columnType": "bytea",
+      "isPrimaryKey": false,
+      "isForeignKey": false
+    }
+  ],
+  "fieldsFK": [
+    {
+      "name": "category",
+      "type": "Category",
+      "columnType": "bigint",
+      "isPrimaryKey": false,
+      "isForeignKey": true
+    }
+  ],
+  "inputsFilter": [
+    {
+      "name": "active",
+      "type": "radio"
+    },
+    {
+      "name": "createdAt",
+      "type": "datetime-local"
+    },
+    {
+      "name": "name",
+      "type": "text"
+    },
+    {
+      "name": "price",
+      "type": "number"
+    }
+  ]
+}

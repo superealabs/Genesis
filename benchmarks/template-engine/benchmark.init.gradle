@@ -1,0 +1,95 @@
+gradle.beforeProject { core ->
+    if (core.path != ':genesis-core') return
+    core.plugins.withId('java') {
+      core.with {
+        def benchmark = sourceSets.create('templateBenchmark') {
+            java.srcDir rootProject.file('benchmarks/template-engine/src')
+            resources.srcDir rootProject.file('benchmarks/template-engine/resources')
+            compileClasspath += sourceSets.main.output
+            runtimeClasspath += sourceSets.main.output
+        }
+        configurations.templateBenchmarkImplementation.extendsFrom(configurations.testImplementation)
+        configurations.templateBenchmarkRuntimeOnly.extendsFrom(configurations.testRuntimeOnly)
+        dependencies.add('templateBenchmarkImplementation', 'org.freemarker:freemarker:2.3.35')
+        tasks.register('templateBenchmark', Test) {
+            description = 'Opt-in comparison of Genesis and FreeMarker on a full list template'
+            group = 'verification'
+            testClassesDirs = benchmark.output.classesDirs
+            classpath = benchmark.runtimeClasspath
+            if (project.hasProperty('corpusEngineClasses')) {
+                classpath = files(project.property('corpusEngineClasses')) + classpath
+            }
+            useJUnitPlatform { includeTags 'template-benchmark' }
+            maxParallelForks = 1
+            minHeapSize = '512m'
+            maxHeapSize = '512m'
+            testLogging { showStandardStreams = true; exceptionFormat = 'full' }
+            outputs.upToDateWhen { false }
+        }
+        tasks.register('templateCorpus', Test) {
+            description = 'Production template corpus: exact snapshots, timing and thread allocations'
+            group = 'verification'
+            testClassesDirs = benchmark.output.classesDirs
+            classpath = benchmark.runtimeClasspath
+            if (project.hasProperty('corpusEngineClasses')) {
+                classpath = files(project.property('corpusEngineClasses')) + classpath
+            }
+            useJUnitPlatform { includeTags 'template-corpus' }
+            systemProperty 'corpus.variant', project.findProperty('corpusVariant') ?: 'baseline'
+            systemProperty 'corpus.fork', project.findProperty('corpusFork') ?: '1'
+            systemProperty 'corpus.cases', project.findProperty('corpusCases') ?: ''
+            systemProperty 'corpus.confirmation', project.findProperty('corpusConfirmation') ?: 'false'
+            maxParallelForks = 1
+            minHeapSize = '512m'
+            maxHeapSize = '512m'
+            testLogging { showStandardStreams = true; exceptionFormat = 'full' }
+            outputs.upToDateWhen { false }
+        }
+        tasks.register('generationProfile', Test) {
+            testClassesDirs = benchmark.output.classesDirs
+            classpath = benchmark.runtimeClasspath
+            if (project.hasProperty('corpusEngineClasses')) {
+                classpath = files(project.property('corpusEngineClasses')) + classpath
+            }
+            useJUnitPlatform { includeTags 'generation-profile' }
+            systemProperty 'corpus.variant', project.findProperty('corpusVariant') ?: 'current'
+            systemProperty 'corpus.fork', project.findProperty('corpusFork') ?: '1'
+            minHeapSize = '512m'
+            maxHeapSize = '512m'
+            testLogging { showStandardStreams = true; exceptionFormat = 'full' }
+            outputs.upToDateWhen { false }
+        }
+        tasks.register('perRenderCompatibility', Test) {
+            testClassesDirs = benchmark.output.classesDirs
+            classpath = benchmark.runtimeClasspath
+            if (project.hasProperty('corpusEngineClasses')) {
+                classpath = files(project.property('corpusEngineClasses')) + classpath
+            }
+            useJUnitPlatform { includeTags 'per-render-compatibility' }
+            systemProperty 'reference.classes', project.findProperty('referenceClasses') ?: layout.buildDirectory.dir('classes/java/main').get().asFile.absolutePath
+            testLogging { exceptionFormat = 'full' }
+            outputs.upToDateWhen { false }
+        }
+        tasks.register('freeMarkerScaling', Test) {
+            testClassesDirs = benchmark.output.classesDirs
+            classpath = benchmark.runtimeClasspath
+            if (project.hasProperty('corpusEngineClasses')) {
+                classpath = files(project.property('corpusEngineClasses')) + classpath
+            }
+            useJUnitPlatform { includeTags 'freemarker-scaling' }
+            systemProperty 'corpus.variant', project.findProperty('corpusVariant') ?: 'current'
+            systemProperty 'corpus.fork', project.findProperty('corpusFork') ?: '1'
+            systemProperty 'scaling.engine', project.findProperty('scalingEngine') ?: 'genesis'
+            minHeapSize = '512m'
+            maxHeapSize = '512m'
+            testLogging { showStandardStreams = true; exceptionFormat = 'full' }
+            outputs.upToDateWhen { false }
+        }
+        tasks.named('test', Test) {
+            if (project.hasProperty('corpusEngineClasses')) {
+                classpath = files(project.property('corpusEngineClasses')) + classpath
+            }
+        }
+    }
+    }
+}
