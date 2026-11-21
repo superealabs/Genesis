@@ -599,3 +599,118 @@
   projectFiles: []
 
   projectFolders: []
+
+- id: 5
+  name: "Gradle"
+  coreFrameworks:
+    - "Spring Boot"
+
+  projectFilesEdits:
+    - fileType: "GradleBuild"
+      fileName: "build"
+      extension: "gradle"
+      content: |
+        plugins {
+            id 'java'
+            id 'org.springframework.boot' version '${frameworkVersion}'
+            id 'io.spring.dependency-management' version '1.1.7'
+        }
+
+        group = '${groupLink}'
+        version = '0.0.1-SNAPSHOT'
+
+        java {
+            toolchain {
+                languageVersion = JavaLanguageVersion.of(${languageVersion})
+            }
+        }
+
+        repositories {
+            mavenCentral()
+        }
+
+        dependencies {
+            {{#each dependencies}}
+            {{#if this.scope = test}}
+            testImplementation(
+                group: '${this.groupId}',
+                name: '${this.artifactId}',
+                version: '${this.version}'
+            )
+            {{elseIf this.scope = provided}}
+            compileOnly(
+                group: '${this.groupId}',
+                name: '${this.artifactId}',
+                version: '${this.version}'
+            )
+            {{else}}
+            implementation(
+                group: '${this.groupId}',
+                name: '${this.artifactId}',
+                version: '${this.version}'
+            )
+            {{/if}}
+
+            {{#if this.artifactId = lombok}}
+            annotationProcessor(
+                group: '${this.groupId}',
+                name: '${this.artifactId}',
+                version: '${this.version}'
+            )
+            {{/if}}
+            {{/each}}
+
+            {{#if useDB}}
+            implementation(
+              group: '${DBgroupId}',
+              name: '${DBartifactId}',
+              version: '${DBversion}'
+            )
+            {{/if}}
+        
+            testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+            {{#if useEurekaServer}}
+            implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+            implementation 'org.springframework.boot:spring-boot-starter-actuator'
+            {{/if}}
+        }
+
+        {{#if useCloud}}
+        dependencyManagement {
+            imports {
+                mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.3"
+            }
+        }
+        {{/if}}
+
+        tasks.named('test') {
+            useJUnitPlatform()
+        }
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
+    - fileType: "GradleSettings"
+      fileName: "settings"
+      extension: "gradle"
+      content: |
+        rootProject.name = '${projectName}'
+
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
+  projectFiles:
+    - fileType: "Script"
+      fileName: "gradlew"
+      sourcePath: "data_genesis/gradle/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
+    - fileType: "ScriptWin"
+      fileName: "gradlew.bat"
+      sourcePath: "data_genesis/gradle/"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
+
+  projectFolders:
+    - folderType: "GradleFolder"
+      folderName: "gradle"
+      sourcePath: "data_genesis/gradle/gradle"
+      destinationPath: "${destinationFolder}/${majStart(projectName)}/"
