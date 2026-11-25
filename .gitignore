@@ -57,4 +57,23 @@ genesis-sdk-web/**/tsconfig.tsbuildinfo
 
 genesis-api\build
 genesis-vsc
+
+### Site vitrine (anciens .gitignore du site, de web-genesis et de deploy) ###
+# Siteback : contexte de génération (contient le mot de passe de la base) et build Maven
+genesis-sdk-web/genesis-web-site-vitrine/Siteback/genesis-context.json
+genesis-sdk-web/genesis-web-site-vitrine/Siteback/Siteback/target/
+# web-genesis : builds Nuxt et logs
+genesis-sdk-web/genesis-web-site-vitrine/web-genesis/.nuxt/
+genesis-sdk-web/genesis-web-site-vitrine/web-genesis/.output/
+genesis-sdk-web/genesis-web-site-vitrine/web-genesis/.data/
+genesis-sdk-web/genesis-web-site-vitrine/web-genesis/.nitro/
+genesis-sdk-web/genesis-web-site-vitrine/web-genesis/.cache/
+genesis-sdk-web/genesis-web-site-vitrine/web-genesis/logs/
+genesis-sdk-web/genesis-web-site-vitrine/**/*.log
+# Secrets : fichiers .env, mot de passe de l'admin, jar copié pour Docker
+genesis-sdk-web/genesis-web-site-vitrine/**/.env
+genesis-sdk-web/genesis-web-site-vitrine/**/.env.*
+!genesis-sdk-web/genesis-web-site-vitrine/**/.env.example
+genesis-sdk-web/genesis-web-site-vitrine/deploy/.htpasswd
+genesis-sdk-web/genesis-web-site-vitrine/deploy/genesis-api/genesis-api.jar
 /graphify-out
