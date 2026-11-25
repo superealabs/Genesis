@@ -1,0 +1,246 @@
+SITE VITRINE
+Documentation / charte graphique / about
+
+1 - Documentation
+    * utilisation
+    * Structure du codeGenerer
+    * test vs ia
+    * methode swagger
+    * utilisation token ia
+    * tutoriel
+
+3 - Playground
+    * generation de code                          => genesis-api (voir PAGE > Playground)
+
+2 - Ecosysteme
+    * languages                                   => genesis-api : GET /api/frameworks/languages
+    * Structure du projet
+    * liste des frameworks dispoinibles           => genesis-api : GET /api/frameworks + GET /api/frontend/frameworks
+
+4 - About
+    * A propos de nous(histoire)
+    * Contact
+    * Equipe
+    * charte graphique
+
+
+
+TABLE SCRIPT
+(les frameworks, langages, bases de données et statuts viennent de genesis-api :
+ pas besoin de tables t_language, t_framework, t_type_framework, t_status, t_database)
+
+t_equipe
+    * nom
+    * prenom
+    * poste
+    * email
+    * photo
+    * github
+    * linkedin
+
+t_navbar
+    * id
+    * nom
+
+content
+    * id
+    * nom
+    * files
+    * navbar_id
+
+t_charte_graphique
+    * id
+    * file
+
+FONCTION ET CLASSE
+
+BACKEND
+
+framework :
+    - genesis-api (lecture seule) :
+        - GET /api/frameworks                     (backend : id, name, languageId, type, isProd, useFrontendApp)
+        - GET /api/frameworks/cores
+        - GET /api/frameworks/templates           (templates de vues MVC)
+        - GET /api/frontend/frameworks            (frontend : React, Angular, Vue)
+
+navbar :
+    - CRUD
+
+Language :
+    - genesis-api (lecture seule) :
+        - GET /api/frameworks/languages
+        - GET /api/frontend/programming-languages
+
+Charte_graphique :
+    - CRUD
+
+Content :
+    - CRUD
+
+Equipe :
+    - CRUD
+
+Type_Framework :
+    - genesis-api : champ "type" de GET /api/frameworks ("REST API" / "MVC")
+
+Statut :
+    - genesis-api : champ "isProd" de GET /api/frameworks (true = disponible)
+
+Database :
+    - genesis-api : GET /api/databases
+
+FRONTEND (nuxt.js):
+    - Services :
+
+        - Navbar.js
+            -Getall()
+            -GetNavbarWithAllContent(Navbar)
+        - Charte_graphique.js
+            -Getall()
+            -Set(Charte_graphique)
+        - Content.js
+            -Getall()
+            -Set(Content)
+            -GetContentWithNavbar(Navbar)
+            -GetContentId(id)
+
+        - Equipe.js
+            - Getall()
+            - Set(Equipe)
+            - GetEquipeById(id)
+            -
+
+        - genesis-api.js (client HTTP, base : http://127.0.0.1:8081/api)
+            - Language.js :
+                - Getall()                        => GET /api/frameworks/languages
+            - Framework.js :
+                - Getall()                        => GET /api/frameworks
+                - GetallFrameworkDisponible()     => GET /api/frameworks, filtre isProd = true
+                - GetallFrameworkDisponible(Language) => GET /api/frameworks, filtre isProd = true et languageId
+                - GetallFrontend()                => GET /api/frontend/frameworks
+                - Select(id)                      => POST /api/generator/frameworks/{id}/select
+            - Database.js :
+                - Getall()                        => GET /api/databases
+            - Project.js :
+                - GetLanguageVersions(languageId) => GET /api/generator/language-versions/{languageId}
+                - GetFrameworkVersions(frameworkId) => GET /api/generator/framework-versions/{frameworkId}
+                - GetBuildTools(frameworkId)      => GET /api/generator/build-tools/{frameworkId}
+                - GetSecurityTypes(frameworkId)   => GET /api/security_types/{frameworkId}
+                - Configure(projet)               => POST /api/generator/project-config
+            - Script.js (mode sans base de données) :
+                - Configure(databaseId, script)   => POST /api/generator/script-database-config
+                - GetTables()                     => GET /api/generator/script/tables
+                - GetRelations()                  => GET /api/generator/script/relations
+            - Generate.js :
+                - Reset()                         => DELETE /api/generator/reset
+                - Creation()                      => POST /api/generator/script/launch
+
+PAGE
+    DOCS :
+        - Quick start :
+            - intro
+            - compatibility par framework et database   => GET /api/frameworks + GET /api/frontend/frameworks + GET /api/databases
+            - lien vers playground
+        - Vs ia :
+            - Unification multi-stack
+            - Cohérence architecturale et infrastructure
+            - Fiabilité déterministe du typage
+            - Gain de temps et d'empreinte token :
+                - par rapport au test moyenne
+                - link vers test
+            - Modèle hybride optimal
+        - guide :
+            - utilisation
+            - tutoriel
+            - swagger / framework
+
+    Playground :
+        - choix framework BACKEND :
+            - utilisation genesis-api
+            - Language.js :
+                - Getall()                        => GET /api/frameworks/languages
+            - Framework.js :
+                - GetallFrameworkDisponible(Language) => GET /api/frameworks (isProd + languageId)
+                - Select(id)                      => POST /api/generator/frameworks/{id}/select
+
+        - choix du database with SCRIPT :
+            - Formulaire pour generer ou pose un SCRIPT
+            - utilisation genesis-api
+            - Database.js :
+                - Getall()                        => GET /api/databases
+            - Script.js :
+                - Configure(databaseId, script)   => POST /api/generator/script-database-config
+                                                     (renvoie les tables et vues trouvées)
+                - GetRelations()                  => GET /api/generator/script/relations
+
+        - Choix framework FRONTEND
+            - utilisation genesis-api
+            - si mvc pas besoin                   => framework.type == "MVC"
+            - choix avec ou sans                  => sans : ne pas appeler frontend-config
+            - Framework.js :
+                - GetallFrontend()                => GET /api/frontend/frameworks
+                - ConfigureFrontend()             => POST /api/generator/frontend-config { frameworkId, languageId: null, port }
+        - Choix port
+            - port backend                        => champ projectPort de POST /api/generator/project-config
+            - port frontend                       => champ port de POST /api/generator/frontend-config
+        - generation
+            - Generate.js :
+                - Creation()                      => POST /api/generator/script/launch
+                                                     { selectedTables, selectedViews, selectedComponents, relations }
+            - ordre : Reset > Select framework > Script > Project > Frontend > Creation
+
+    Ecosystem :
+        - Structure of the code genesis :
+            - Structure
+            - description par strucutre
+        - Structure of the project generate :
+            - par framwork :                      => liste : GET /api/frameworks + GET /api/frontend/frameworks
+                - Backend
+                    - un par un
+                - frontend
+                    - un par un
+        - Liste framework :
+            - Getall()                            => GET /api/frameworks + GET /api/frontend/frameworks
+            - juste liste
+
+    About :
+        - Team
+            -Equipe.js :
+                -Getall()
+        - release
+        - Charte graphique
+
+DATA
+    Navbar :
+        - Docs :
+            - Quick start
+            - Vs ia
+            - guide
+
+        - Playground
+
+        - Ecosystem :
+            - Structure of the code genesis
+            - Structure of the project generate
+            - List framework
+
+        - About :
+            - Team
+            - release
+            - Charte graphique
+
+    Database :                                    => genesis-api : GET /api/databases
+        - MYSQL
+        - PostgresSql
+        - Oracle
+        - SqlServer
+
+    Framework :                                   => genesis-api : GET /api/frameworks + GET /api/frontend/frameworks
+        - Spring boot
+        - NET
+        - Vue
+        - Angular
+        - React
+
+    Charte_graphique :
+        - pdf => html or pdf

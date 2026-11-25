@@ -1,0 +1,53 @@
+<p class="lead">Comment utiliser Genesis dans IntelliJ IDEA, de l’ouverture de l’assistant jusqu’au lancement du projet généré.</p>
+
+<h2 id="utilisation">Utilisation</h2>
+<p>Il y a deux façons d’ouvrir Genesis dans IntelliJ IDEA, selon que vous partez de zéro ou d’un projet existant.</p>
+<h3>Créer un nouveau projet</h3>
+<p>Allez dans <b>File › New › Project…</b>, choisissez <b>Genesis</b> dans la liste à gauche et suivez l’assistant. À la fin, cliquez sur <b>Create</b>.</p>
+<h3>Générer dans un projet existant</h3>
+<p>Ouvrez votre projet, puis <b>Tools › Genesis Project Generator</b>. Le même assistant s’ouvre, et vous choisissez le dossier où le code sera écrit. C’est pratique pour ajouter du code sans créer un nouveau projet.</p>
+
+<h2 id="tutoriel">Tutoriel : de la base de données à l’API</h2>
+<ol class="steps">
+  <li><h4>Initialisation</h4><p>Choisissez le langage (Java ou C#), le framework, par exemple Spring Boot Web API REST, et le dossier de sortie.</p></li>
+  <li><h4>Connexion à la base</h4><p>Indiquez l’hôte, le port, le nom de la base et vos identifiants, puis testez la connexion. Pas encore de base ? Décrivez vos tables et l’IA écrit le SQL.</p></li>
+  <li><h4>Sélection</h4><p>Cochez les tables et les vues que vous voulez dans le projet.</p></li>
+  <li><h4>Configuration</h4><p>Réglez le port, la sécurité et le frontend (React, Angular ou Vue). Vous pouvez aussi changer les couleurs, le logo et le favicon.</p></li>
+  <li><h4>Génération et lancement</h4><p>Cliquez sur <b>Create</b>, puis lancez le projet.</p></li>
+</ol>
+<pre><code><span class="c"># Spring Boot</span>
+<span class="k">./mvnw</span> spring-boot:run
+
+<span class="c"># ASP.NET Core</span>
+<span class="k">dotnet</span> run
+
+<span class="c"># Frontend (React, Vue ou Angular)</span>
+<span class="k">npm</span> install &amp;&amp; <span class="k">npm</span> run dev</code></pre>
+
+<h2 id="swagger">Swagger par framework</h2>
+<p>Chaque API générée a sa documentation Swagger, disponible dès le premier démarrage.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Framework</th><th>Bibliothèque</th><th>Adresse</th></tr></thead>
+  <tbody>
+    <tr><td><b>Spring Boot Web API REST</b></td><td>springdoc-openapi</td><td><code>/swagger-ui/index.html</code> (on y arrive aussi depuis <code>/</code>)</td></tr>
+    <tr><td><b>ASP.NET Core Web API REST</b></td><td>Swashbuckle.AspNetCore 6.9</td><td><code>/swagger</code></td></tr>
+    <tr><td><b>NestJS Web API</b></td><td>@nestjs/swagger</td><td><code>/api</code></td></tr>
+  </tbody>
+</table></div>
+<p>Les projets ASP.NET Core MVC n’ont pas de Swagger : ils affichent directement des pages Razor.</p>
+
+<h2 id="token-ia">Utilisation token IA</h2>
+<p>Si vous n’avez pas encore de base, Genesis peut écrire le script SQL à partir d’une simple description. Pour ça, il passe par l’API <b>Groq</b>, et c’est le seul moment où des tokens sont utilisés. La génération du code, elle, se fait entièrement sur votre machine.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>Modèles disponibles</th></tr></thead>
+  <tbody>
+    <tr><td><code>llama3-8b-8192</code></td></tr><tr><td><code>llama3-70b-8192</code></td></tr>
+    <tr><td><code>llama-3.1-8b-instant</code></td></tr><tr><td><code>openai/gpt-oss-120b</code></td></tr>
+  </tbody>
+</table></div>
+<p>Ajoutez votre clé dans la configuration. Vous trouverez un exemple dans <code>genesis-core/llm.http.example</code> :</p>
+<pre><code><span class="k">POST</span> https://api.groq.com/openai/v1/chat/completions
+Authorization: Bearer <span class="s">&lt;YOUR_GROQ_TOKEN_HERE&gt;</span>
+Content-Type: application/json</code></pre>
+<p>Gardez votre clé en dehors de Git, par exemple dans une variable d’environnement.</p>
+

@@ -1,0 +1,56 @@
+<p class="lead">Genesis part de votre <span class="hl">base de données</span> pour créer un projet complet, backend et frontend. Cette page vous aide à l’installer et à faire un premier essai.</p>
+
+<h2 id="intro">Introduction</h2>
+<p>Une fois connecté à votre base, Genesis écrit pour vous :</p>
+<ul>
+  <li>les <b>modèles</b>, une classe par table (entités JPA ou classes C#) ;</li>
+  <li>les <b>contrôleurs</b>, les <b>repositories</b> et les <b>services</b> ;</li>
+  <li>les <b>écrans</b> pour consulter et modifier vos données (React, Angular, Vue ou Razor) ;</li>
+  <li>les <b>fichiers de configuration</b> (<code>application.properties</code>, <code>appsettings.json</code>…) ;</li>
+  <li>la <b>sécurité</b> et la <b>validation</b>, reprise de vos contraintes SQL.</li>
+</ul>
+<p>Vous pouvez l’utiliser comme <b>plugin IntelliJ IDEA</b> ou en <b>ligne de commande</b>.</p>
+
+<h2 id="prerequis">Prérequis</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>Outil</th><th>Version minimale</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td><b>Java</b></td><td>21</td><td>JDK (OpenJDK recommandé)</td></tr>
+    <tr><td><b>Gradle</b></td><td>8.11+</td><td>Ou le wrapper <code>./gradlew</code></td></tr>
+    <tr><td><b>IDE</b></td><td>IntelliJ IDEA 2025.1+</td><td>Ultimate ou Community</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="installation">Installation</h2>
+<pre><code><span class="c"># 1. Cloner le projet</span>
+<span class="k">git clone</span> https://github.com/superealabs/Genesis.git
+<span class="k">cd</span> Genesis
+
+<span class="c"># 2. Construire</span>
+<span class="k">gradle</span> clean build -x test
+
+<span class="c"># 3a. Lancer un IDE avec le plugin (mode développement)</span>
+<span class="k">gradle</span> genesis-intellij:runIde
+
+<span class="c"># 3b. Ou construire le plugin (.zip dans genesis-intellij/build/distributions/)</span>
+<span class="k">gradle</span> genesis-intellij:buildPlugin
+
+<span class="c"># 3c. Ou utiliser la CLI</span>
+<span class="k">gradle</span> genesis-cli:shadowJar
+<span class="k">java</span> -jar genesis-cli/build/libs/genesis-cli-0.0.1.jar</code></pre>
+<p>Pour installer le plugin à partir du fichier .zip, passez par <b>Settings › Plugins › ⚙ › Install Plugin from Disk…</b>, puis redémarrez IntelliJ.</p>
+
+<h2 id="compatibilite">Compatibilité par framework et base de données</h2>
+<!--component:CompatibilityTable-->
+<div class="table-wrap"><table>
+  <thead><tr><th>Framework</th><th>MySQL</th><th>PostgreSQL</th><th>Oracle</th><th>SQL Server</th><th>Frontend</th></tr></thead>
+  <tbody><tr><td><b>Spring Boot – Web API REST</b></td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td>React · Angular · Vue</td></tr><tr><td><b>ASP.NET Core – Web API REST</b></td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td>React · Angular · Vue</td></tr><tr><td><b>ASP.NET Core – MVC</b></td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td class="ok">✓</td><td>Vues Razor intégrées</td></tr><tr><td><b>Spring Boot – API Gateway</b></td><td class="no">n/a</td><td class="no">n/a</td><td class="no">n/a</td><td class="no">n/a</td><td>—</td></tr><tr><td><b>Spring Boot – Eureka Server</b></td><td class="no">n/a</td><td class="no">n/a</td><td class="no">n/a</td><td class="no">n/a</td><td>—</td></tr></tbody>
+</table></div>
+<div class="tiles"><div class="tile"><img src="/assets/logos/mysql.svg" alt="" loading="lazy"><div><b>MySQL</b><small>8.0+</small></div></div><div class="tile"><img src="/assets/logos/postgresql.svg" alt="" loading="lazy"><div><b>PostgreSQL</b><small>15 · 16</small></div></div><div class="tile"><img src="/assets/logos/oracle.svg" alt="" loading="lazy"><div><b>Oracle</b><small>19c</small></div></div><div class="tile"><img src="/assets/logos/sql-server.svg" alt="" loading="lazy"><div><b>SQL Server</b><small>2022</small></div></div></div>
+<!--/component-->
+
+<h2 id="playground">Essayer en ligne</h2>
+<p>Vous voulez voir le résultat avant d’installer quoi que ce soit ? Dans le Playground, vous choisissez votre stack, vous collez un script SQL et vous récupérez le projet, directement dans le navigateur.</p>
+<a class="btn btn-primary" href="/playground">Ouvrir le Playground <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-1.4 1.4 4.6 4.6H3v2h14.2l-4.6 4.6L14 19l7-7z"/></svg></a>
+
+<nav class="pager" aria-label="Pagination"><span></span><a class="next" href="/docs/vs-ia"><small>Suivant</small>Genesis vs IA</a></nav>

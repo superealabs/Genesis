@@ -1,0 +1,101 @@
+<p class="lead">Voici à quoi ressemble un projet généré, pour un projet <code>MonProjet</code> avec une seule table <code>client</code>.</p>
+
+<h2 id="backend">Backend</h2>
+<div class="tabs tabs--logo" data-tabs role="tablist"><button role="tab" type="button" aria-selected="true" aria-controls="b-spring"><img src="/assets/logos/spring.svg" alt="" loading="lazy">Spring Boot</button><button role="tab" type="button" aria-selected="false" aria-controls="b-dotnet"><img src="/assets/logos/aspnet-core.svg" alt="" loading="lazy">ASP.NET Core Web API</button><button role="tab" type="button" aria-selected="false" aria-controls="b-mvc"><img src="/assets/logos/aspnet.svg" alt="" loading="lazy">ASP.NET Core MVC</button><button role="tab" type="button" aria-selected="false" aria-controls="b-cloud"><img src="/assets/logos/spring.svg" alt="" loading="lazy">Gateway & Eureka</button></div><div class="tabpanel" id="b-spring" role="tabpanel"><div class="tree"><span class="d">MonProjet/</span>
+├── <span class="f">pom.xml</span> · <span class="f">mvnw</span> · <span class="f">.gitignore</span>
+└── <span class="d">src/main/</span>
+    ├── <span class="d">java/com/genesis/monprojet/</span>
+    │   ├── <span class="d">config/</span>              <span class="n"># OpenAPI, sécurité, CORS</span>
+    │   ├── <span class="d">controllers/</span>         <span class="n"># un contrôleur REST par table</span>
+    │   ├── <span class="d">models/</span>              <span class="n"># entités JPA</span>
+    │   │   └── <span class="d">dto/</span>
+    │   ├── <span class="d">repositories/</span>        <span class="n"># Spring Data JPA</span>
+    │   ├── <span class="d">services/</span>
+    │   │   └── <span class="d">interfaces/</span>
+    │   ├── <span class="d">specification/</span>       <span class="n"># filtres dynamiques</span>
+    │   ├── <span class="d">exception/handler/</span>
+    │   └── <span class="d">utils/</span>
+    └── <span class="d">resources/</span>
+        └── <span class="f">application.yml</span></div></div><div class="tabpanel" id="b-dotnet" role="tabpanel" hidden><div class="tree"><span class="d">MonProjet/</span>
+├── <span class="d">MonProjet/</span>
+│   ├── <span class="d">Controllers/</span>
+│   ├── <span class="d">Data/</span>                 <span class="n"># DbContext Entity Framework</span>
+│   ├── <span class="d">Models/</span>
+│   │   └── <span class="d">Dto/</span>
+│   ├── <span class="d">Repositories/</span>
+│   │   ├── <span class="d">Generic/</span> · <span class="d">Interface/</span> · <span class="d">Implementation/</span>
+│   ├── <span class="d">Services/</span>
+│   │   ├── <span class="d">Generic/</span> · <span class="d">Interface/</span> · <span class="d">Implementation/</span>
+│   ├── <span class="d">Specification/</span> · <span class="d">Filters/</span> · <span class="d">Exceptions/</span>
+│   ├── <span class="d">Serialization/</span> · <span class="d">Utils/</span>
+│   ├── <span class="f">Program.cs</span>
+│   └── <span class="f">appsettings.json</span>
+└── <span class="d">MonProjet.Tests/</span></div></div><div class="tabpanel" id="b-mvc" role="tabpanel" hidden><div class="tree"><span class="d">MonProjet/</span>
+├── <span class="d">Controllers/</span>
+├── <span class="d">Data/</span>
+├── <span class="d">Models/</span>
+│   └── <span class="d">Dto/</span>
+├── <span class="d">ViewModels/</span>
+├── <span class="d">Views/</span>
+│   ├── <span class="d">Client/</span>              <span class="n"># Index, Details, Create, Edit</span>
+│   └── <span class="d">Shared/</span>              <span class="n"># layout, navbar</span>
+├── <span class="d">Repositories/</span> · <span class="d">Services/</span>
+├── <span class="d">Specification/</span> · <span class="d">Filters/</span> · <span class="d">Exceptions/</span> · <span class="d">Utils/</span>
+└── <span class="d">wwwroot/</span>
+    └── <span class="d">images/</span></div></div><div class="tabpanel" id="b-cloud" role="tabpanel" hidden><div class="tree"><span class="d">MonGateway/</span>                 <span class="n"># Spring Cloud Gateway</span>
+├── <span class="f">pom.xml</span>
+└── <span class="d">src/main/</span>
+    ├── <span class="d">java/…/config/</span>
+    │   └── <span class="f">SecurityConfig.java</span>
+    └── <span class="d">resources/</span>
+        └── <span class="f">application.yml</span>      <span class="n"># routes, URL Eureka</span>
+
+<span class="d">MonDiscovery/</span>               <span class="n"># Eureka Server</span>
+└── <span class="d">src/main/resources/</span>
+    └── <span class="f">application.yml</span></div></div>
+<p>Pour chaque table, vous obtenez une entité, un DTO, un repository, un service (interface et implémentation) et un contrôleur.</p>
+
+<h2 id="frontend">Frontend</h2>
+<div class="tabs tabs--logo" data-tabs role="tablist"><button role="tab" type="button" aria-selected="true" aria-controls="f-react"><img src="/assets/logos/react.svg" alt="" loading="lazy">React</button><button role="tab" type="button" aria-selected="false" aria-controls="f-angular"><img src="/assets/logos/angular.svg" alt="" loading="lazy">Angular</button><button role="tab" type="button" aria-selected="false" aria-controls="f-vue"><img src="/assets/logos/vuejs.svg" alt="" loading="lazy">Vue.js</button></div><div class="tabpanel" id="f-react" role="tabpanel"><div class="tree"><span class="d">frontend/</span>
+├── <span class="f">package.json</span> · <span class="f">vite.config.ts</span> · <span class="f">tsconfig.json</span>
+├── <span class="d">public/</span>
+└── <span class="d">src/</span>
+    ├── <span class="d">pages/</span>
+    │   ├── <span class="d">client/</span>            <span class="n"># liste, détail, formulaire</span>
+    │   └── <span class="d">auth/</span>
+    ├── <span class="d">models/client/</span>
+    ├── <span class="d">services/</span>             <span class="n"># appels API</span>
+    ├── <span class="d">router/</span> · <span class="d">layouts/</span> · <span class="d">contexts/</span>
+    ├── <span class="d">components/SettingsMenu/</span>
+    ├── <span class="d">locales/</span>              <span class="n"># i18n</span>
+    └── <span class="d">config/</span></div></div><div class="tabpanel" id="f-angular" role="tabpanel" hidden><div class="tree"><span class="d">frontend/</span>
+├── <span class="f">angular.json</span> · <span class="f">package.json</span>
+└── <span class="d">src/</span>
+    ├── <span class="d">app/</span>
+    │   ├── <span class="d">features/</span>
+    │   │   ├── <span class="d">client/</span>
+    │   │   │   ├── <span class="d">client-list/</span> · <span class="d">client-details/</span>
+    │   │   │   ├── <span class="d">client-form/</span> · <span class="d">client-table-form/</span>
+    │   │   │   ├── <span class="d">models/</span>
+    │   │   │   └── <span class="d">services/</span>
+    │   │   └── <span class="d">authentication/</span>
+    │   └── <span class="d">shared/</span>
+    ├── <span class="d">assets/</span> · <span class="d">environments/</span>
+    ├── <span class="d">lang/</span>
+    └── <span class="d">utilities/</span></div></div><div class="tabpanel" id="f-vue" role="tabpanel" hidden><div class="tree"><span class="d">frontend/</span>
+├── <span class="f">package.json</span> · <span class="f">vite.config.ts</span> · <span class="f">tailwind.config.js</span>
+├── <span class="d">public/</span>
+└── <span class="d">src/</span>
+    ├── <span class="d">views/</span>
+    │   ├── <span class="d">client/</span>
+    │   └── <span class="d">auth/</span>
+    ├── <span class="d">entities/client/</span>
+    ├── <span class="d">models/</span> · <span class="d">models/validators/</span>
+    ├── <span class="d">services/</span> · <span class="d">stores/</span> · <span class="d">composables/</span>
+    ├── <span class="d">router/entities/</span>
+    ├── <span class="d">components/</span>           <span class="n"># navbar, button, auth, user</span>
+    ├── <span class="d">layouts/</span> · <span class="d">lang/</span>
+    └── <span class="d">config/</span></div></div>
+<p>Chaque table a sa liste (tri, filtres, pagination), sa page de détail, son formulaire, et une confirmation avant suppression.</p>
+
+<nav class="pager" aria-label="Pagination"><a class="prev" href="/ecosystem/structure-genesis"><small>Précédent</small>Structure du code Genesis</a><a class="next" href="/ecosystem/frameworks"><small>Suivant</small>Liste des frameworks</a></nav>

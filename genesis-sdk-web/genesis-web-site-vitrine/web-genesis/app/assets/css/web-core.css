@@ -1,0 +1,5 @@
+/* Design system genesis-web-core (genesis-sdk-web/genesis-web-core), utilisé par le Playground.
+   genesis-web-core est en dehors du dossier du site : sans @source, Tailwind ne lit pas ses
+   composants et ne génère pas leurs classes (fixed, inset-0, z-50…) → fenêtres sans style. */
+@import '../../../../../genesis-web-core/src/assets/CSS/main.css';
+@source '../../../../../genesis-web-core/src';

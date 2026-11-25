@@ -1,0 +1,3 @@
+<template>
+  <CmsPage route="/" />
+</template>

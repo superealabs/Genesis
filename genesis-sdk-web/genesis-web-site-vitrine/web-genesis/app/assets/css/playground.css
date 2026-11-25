@@ -1,0 +1,34 @@
+/* Compléments au thème genesis-vsc pour le Playground (main.css n'est pas modifié) :
+   1. Couleurs de la charte graphique (charte_graphique-V2.pdf, pages « Light Mode » / « Dark Mode »),
+      mêmes valeurs que les variables --c-* de site.css (surfaces = mélanges calculés en hexadécimal).
+   2. GenesisIdeCm lit ses couleurs sur <html> (getComputedStyle(document.documentElement)),
+      alors que le thème est posé sur <body> : on les pose sur <html> ET sur <body>.
+   3. main.css écrit hsl(200, 10, 12) sans « % » (valeur invalide) : on donne une valeur valide. */
+html:has(body.theme-genesis.genesis-dark),
+body.theme-genesis.genesis-dark {
+  --color-bg-light: #1B3131;
+  --color-bg: #112525;
+  --color-bg-dark: #000F0F;
+  --color-text: #E0FFFF;
+  --color-text-muted: #C2FFFF;
+  --color-accent: #EBBC00;
+  --color-primary: #00E043;
+  --color-bg-secondary: #00293D;
+  --color-secondary: #32BAFF;
+  --color-bg-neutral-genesis: #1C2022;
+}
+html:has(body.theme-genesis.genesis-light),
+body.theme-genesis.genesis-light {
+  --color-bg-light: #D8EFEF;
+  --color-bg: #CCE6E6;
+  --color-bg-dark: #EBFFFF;
+  --color-text: #001F1C;
+  --color-text-muted: #003D3D;
+  --color-accent: #F5C400;
+  --color-primary: #00F552;
+  --color-bg-secondary: #D6F1FF;
+  --color-secondary: #0087CB;
+  --color-bg-neutral-genesis: #E9EBED;
+}
+body.theme-genesis.genesis-dark { --color-neutral-light-genesis: #C6CDD0; }
+body.theme-genesis.genesis-light { --color-neutral-light-genesis: #5C6470; }
