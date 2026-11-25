@@ -61,6 +61,7 @@ export interface TutorialContext {
     attach: (stepId: string) => () => void;
     /** Un composant enfant insère un groupe d'étapes juste après `afterId`. Retourne la fonction de retrait. */
     registerGroup: (afterId: string, steps: TutorialStep[]) => () => void;
+
 }
 
 // ============================================================================
@@ -132,6 +133,7 @@ const TUTORIAL_KEY: InjectionKey<TutorialContext> = Symbol('genesis-tutorial');
  */
 export function useGenesisTutorial(screenId: string, sections: MaybeRefOrGetter<TutorialSections>) {
     const groups = shallowRef<{ key: symbol; afterId: string; steps: TutorialStep[] }[]>([]);
+    // ids des tutoriel actuellement monté dans le DOM
     const present = reactive(new Set<string>());
 
     // Liste d'une section, avec les groupes (sous-étapes) insérés après leur ancre

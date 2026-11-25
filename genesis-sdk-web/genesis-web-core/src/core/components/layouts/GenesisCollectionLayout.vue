@@ -8,7 +8,7 @@
                 :auto-play="true"
                 class="collection-carousel rounded-t-lg flex-shrink-0"
             >
-                <template #bottom="{ isStuck}">
+                <template #bottom="{ isStuck, activeSlide }">
                     <div 
                         class="flex gap-4 rounded-b-lg max-md:flex-col max-md:gap-2 max-md:bg-bg-dark" 
                         id="background-header"
@@ -18,7 +18,7 @@
                             <GenesisBackButton v-if="showBackButton" @click="$emit('back')" class="shrink-0" />
                             <h2 
                                 class="font-semibold font-heading text-4xl truncate transition-colors duration-300 max-md:text-text"
-                                :class="isStuck ? 'text-text' : 'text-white'"
+                                :class="titleColor(isStuck, activeSlide)"
                             >
                                 <slot name="title">{{ title }}</slot>
                             </h2>
@@ -171,6 +171,7 @@ import Carrousel, { type CarouselSlide } from '@genesis-labs/web-core/core/compo
 import SimpleSelectionPopup from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { SelectionOption } from '@genesis-labs/web-core/core/components/layouts/Popup/SimpleSelectionPopup.vue';
 import type { DisplayMode } from './display/items/GenesisItem.types.ts';
+import SlideA from '@genesis-labs/web-core/assets/PICTURES/SlideA.png'
 
 export type CollectionMode = 'selection' | 'compare';
 
@@ -230,7 +231,7 @@ const emit = defineEmits<{
 }>();
 
 const carouselSlides = ref<CarouselSlide[]>([
-    { color: '#3B82F6', label: 'Slide 1 - Bleu' },
+    { color: '#3B82F6', image: SlideA, textTone: 'dark' },
     { color: '#EF4444', label: 'Slide 2 - Rouge' },
     { color: '#10B981', label: 'Slide 3 - Vert' },
     { color: '#F59E0B', label: 'Slide 4 - Orange' },
@@ -246,6 +247,11 @@ const internalMode = computed({
     get: () => props.mode,
     set: (value) => emit('update:mode', value as CollectionMode)
 });
+
+function titleColor(isStuck: boolean, slide?: CarouselSlide) {
+    if (isStuck) return 'text-text';              // barre collée : fond bg-bg-dark (le voile)
+    return slide?.textTone === 'dark' ? 'text-black' : 'text-white';  // blanc par défaut
+}
 </script>
 <style scoped>
 /* Hauteur de la zone « slot » du carrousel : fixe en desktop, automatique en mobile (lecture verticale) */

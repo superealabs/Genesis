@@ -47,7 +47,7 @@
             class="relative z-10 flex flex-col [&>*]:flex-1 [&>*]:min-h-0"
             :style="{ height: slotHeight }"
         >
-            <slot name="bottom" :is-stuck="isStuck" />
+            <slot name="bottom" :is-stuck="isStuck" :active-slide="currentActiveSlide" />
         </div>
     </div>
 </template>

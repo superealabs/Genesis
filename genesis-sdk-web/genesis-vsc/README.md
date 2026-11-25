@@ -8,6 +8,9 @@ Son objectif est simple : faire gagner du temps aux développeurs en automatisan
 
 ---
 
+## Github Official
+URL : https://github.com/superealabs/Genesis
+
 ## Principe
 
 1. Sélectionnez votre technologie backend.
@@ -58,12 +61,6 @@ Prises en charge pour chacun des frameworks backend ci-dessus :
 | Vue | 3 |
 | Angular | 17 |
 | React | 18 |
-
-### IDE
-
-| IDE | Version |
-|---|---|
-| IntelliJ IDEA | 2026.1.3 |
 
 ---
 

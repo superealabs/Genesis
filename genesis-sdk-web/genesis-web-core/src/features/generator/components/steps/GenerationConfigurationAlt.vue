@@ -231,8 +231,6 @@
 
     </div>
 
-    <!-- (Optionnel) Tu peux conserver ou supprimer l'ancien BaseFormPopup ici. 
-         Le nouveau système GenesisTutorialItem le remplace désormais de manière plus fluide. -->
   </main>
 </template>
 

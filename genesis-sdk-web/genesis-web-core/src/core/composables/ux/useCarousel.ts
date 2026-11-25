@@ -4,6 +4,7 @@ export interface CarouselSlide {
     color?: string;
     image?: string;
     label?: string;
+    textTone?: 'light' | 'dark';
 }
 
 export type CarouselDirection = 'left' | 'right';
