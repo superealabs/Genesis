@@ -1,0 +1,19 @@
+{
+"t_charte_graphique": {
+    "list": ["id", "file", "version", "dateAjout"],
+    "detail": ["id", "file", "version", "dateAjout"]
+  },
+"t_content": {
+    "list": ["id", "nom", "route", "fichier", "ordre", "navbaridTNavbar"],
+    "detail": ["id", "nom", "route", "fichier", "ordre", "navbaridTNavbar"]
+  },
+"t_equipe": {
+    "list": ["id", "nom", "prenom", "poste", "email", "photo", "github", "linkedin"],
+    "detail": ["id", "nom", "prenom", "poste", "email", "photo", "github", "linkedin"]
+  },
+"t_navbar": {
+    "list": ["id", "nom", "ordre"],
+    "detail": ["id", "nom", "ordre"]
+  }
+
+}

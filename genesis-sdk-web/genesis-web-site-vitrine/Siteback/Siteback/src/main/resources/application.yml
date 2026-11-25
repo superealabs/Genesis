@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: siteback
+
+  datasource:
+    # Valeurs par défaut pour le développement. Sous Docker, elles sont remplacées par les
+    # variables SPRING_DATASOURCE_URL / _USERNAME / _PASSWORD (deploy/docker-compose.yml).
+    # Le mot de passe n'est plus écrit ici (il finirait dans l'image Docker et sur Git) :
+    # en local, définis SPRING_DATASOURCE_PASSWORD dans la configuration de lancement IntelliJ.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/site_genesis}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate.format_sql: true
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+
+
+server:
+  port: 9000
+  servlet:
+    context-path: /siteback
+
+# Logs Configuration
+logging:
+  level:
+    # TRACE écrit chaque détail de chaque requête : très lent. INFO suffit (DEBUG pour enquêter).
+    root: INFO
+    org.hibernate.SQL: WARN
+
+
+
+
+
+app:
+  config:
+    column-visibility:
+      file: ${user.dir}/config/column-visibility.json
