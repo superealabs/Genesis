@@ -1,0 +1,18 @@
+# Contexte de build = genesis-sdk-web (chemins relatifs à ce dossier)
+**/node_modules
+**/.nuxt
+**/.output
+**/.nitro
+**/.cache
+**/.data
+**/dist
+**/.git
+**/.idea
+**/*.log
+**/.env
+**/.env.*
+genesis-vsc
+genesis-postman-collection
+_docs
+genesis-web-site-vitrine/Siteback
+genesis-web-site-vitrine/deploy

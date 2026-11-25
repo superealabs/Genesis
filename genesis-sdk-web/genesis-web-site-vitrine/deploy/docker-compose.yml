@@ -1,0 +1,94 @@
+# ─────────────────────────────────────────────────────────────
+#  Genesis — site vitrine sur un VPS
+#
+#    cd deploy
+#    cp .env.example .env        # puis remplir .env
+#    docker compose up -d --build
+#
+#  Un seul port est ouvert sur le VPS : celui de la passerelle Nginx (127.0.0.1:${HTTP_PORT}).
+#  Le Nginx / Traefik déjà présent sur le VPS envoie le domaine vers ce port (voir nginx/vps-exemple.conf).
+#  PostgreSQL, Siteback et genesis-api ne sont joignables que dans le réseau Docker.
+# ─────────────────────────────────────────────────────────────
+name: genesis-site
+
+services:
+  # Passerelle : seul point d'entrée. Route /, /siteback/, /genesis-api/ et protège l'administration.
+  gateway:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on: [web, siteback, genesis-api]
+    ports:
+      - "127.0.0.1:${HTTP_PORT:-8080}:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./.htpasswd:/etc/nginx/.htpasswd:ro
+
+  # Site Nuxt (pages, admin, Playground)
+  web:
+    build:
+      # Contexte = genesis-sdk-web : le site a besoin de genesis-web-core (design system)
+      context: ../..
+      dockerfile: genesis-web-site-vitrine/web-genesis/Dockerfile
+    restart: unless-stopped
+    depends_on: [siteback, genesis-api]
+    environment:
+      # Vu par le navigateur : même domaine, via la passerelle (pas de CORS)
+      NUXT_PUBLIC_SITEBACK: /siteback
+      NUXT_PUBLIC_GENESIS_API: /genesis-api/api
+      # Vu par le serveur Nuxt (rendu des pages, génération du .zip) : réseau Docker
+      NUXT_SITEBACK_INTERNAL: http://siteback:9000/siteback
+      NUXT_GENESIS_API_INTERNAL: http://genesis-api:8081/api
+      # Dossier partagé avec genesis-api : il y écrit le projet, le site le zippe
+      NUXT_WORK_DIR: /work
+      # En ligne : pas de « Écrire dans un dossier » (on ne montre pas le disque du serveur)
+      NUXT_PUBLIC_ALLOW_LOCAL_FOLDERS: "false"
+    volumes:
+      - uploads:/app/public/upload        # pages HTML, photos, charte (modifiés par l'admin)
+      - work:/work
+
+  # API du contenu (t_navbar, t_content, t_equipe, t_charte_graphique)
+  siteback:
+    build: ../Siteback/Siteback
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-site_genesis}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-genesis}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Renseignez POSTGRES_PASSWORD dans .env}
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_ORG_HIBERNATE_SQL: WARN
+
+  # Moteur de génération (Playground) : image construite à partir du jar posé dans deploy/genesis-api/
+  genesis-api:
+    build: ./genesis-api
+    restart: unless-stopped
+    environment:
+      GENESIS_LLM_API_KEY: ${GENESIS_LLM_API_KEY:-}
+      GENESIS_SQL_EXECUTION_ENABLED: "false"
+    volumes:
+      - work:/work
+
+  # Base du site. schema.sql et data.sql ne sont lus qu'au tout premier lancement (volume vide)
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-site_genesis}
+      POSTGRES_USER: ${POSTGRES_USER:-genesis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Renseignez POSTGRES_PASSWORD dans .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../web-genesis/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ../web-genesis/database/data.sql:/docker-entrypoint-initdb.d/02-data.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:     # données PostgreSQL
+  uploads:    # pages HTML, images, charte (à sauvegarder avec la base)
+  work:       # projets générés en cours (temporaire)

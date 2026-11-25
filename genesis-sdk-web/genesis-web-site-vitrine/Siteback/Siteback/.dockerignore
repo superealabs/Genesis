@@ -1,0 +1,7 @@
+target
+.idea
+Siteback
+*.iml
+.git
+Dockerfile
+.dockerignore

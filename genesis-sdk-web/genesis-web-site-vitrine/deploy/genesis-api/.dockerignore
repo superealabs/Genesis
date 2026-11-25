@@ -1,0 +1,4 @@
+# Seul le jar est utile à l’image
+*
+!genesis-api.jar
+!Dockerfile
