@@ -629,6 +629,9 @@
             "@angular/platform-browser": "^17.3.0",
             "@angular/platform-browser-dynamic": "^17.3.0",
             "@angular/router": "^17.3.0",
+            "@ckeditor/ckeditor5-angular": "^8.0.0",
+            "ckeditor5": "^44.3.0",
+            "leaflet": "^1.9.4",
             "rxjs": "~7.8.0",
             "sweetalert2": "^11.22.5",
             "tslib": "^2.3.0",
@@ -639,6 +642,7 @@
             "@angular/cli": "^17.3.17",
             "@angular/compiler-cli": "^17.3.0",
             "@types/jasmine": "~5.1.0",
+            "@types/leaflet": "^1.9.22",
             "jasmine-core": "~5.1.0",
             "karma": "~6.4.0",
             "karma-chrome-launcher": "~3.2.0",
@@ -4044,6 +4048,8 @@
           },
           "dependencies": {
             "@ckeditor/ckeditor5-vue": "^8.2.0",
+            "@codemirror/lang-json": "^6.0.1",
+            "@codemirror/theme-one-dark": "^6.1.2",
             "@fortawesome/fontawesome-svg-core": "^7.0.0",
             "@fortawesome/free-brands-svg-icons": "^7.0.0",
             "@fortawesome/free-regular-svg-icons": "^7.0.0",
@@ -4061,6 +4067,7 @@
             "pinia": "^3.0.3",
             "vee-validate": "^4.15.1",
             "vue": "^3.5.18",
+            "vue-codemirror": "^6.1.1",
             "vue-i18n": "^11.1.11",
             "vue-router": "^4.5.1",
             "yoctocolors": "^2.1.2"
@@ -5794,7 +5801,7 @@
                   {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
                 </template>
         
-                <template v-else-if="field.type === 'file'">
+                {{#if containsFile=true}}<template v-else-if="field.type === 'file'">
                   <div v-if="${minStart(className)}Data[field.key]" class="flex max-w-64 items-center gap-2">
                     <button v-if="isImageContent(${minStart(className)}Data[field.key])" type="button" class="shrink-0 overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(${minStart(className)}Data[field.key]), field.label)"><img :src="buildFileSource(${minStart(className)}Data[field.key])" :alt="field.label" class="h-10 w-10 object-cover" /></button>
                     <span v-else class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-base-200 text-[9px] font-bold text-base-content/70" aria-hidden="true">{{ getFileTypeLabel(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key)) }}</span>
@@ -5802,7 +5809,7 @@
                     <button type="button" class="btn btn-ghost btn-xs shrink-0" title="Télécharger le fichier" aria-label="Télécharger le fichier" @click.stop="downloadAsset(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key))">{{ downloadedFile === getGeneratedFileName(${minStart(className)}Data[field.key], field.key) ? 'Downloading...' : 'Download'  }}</button>
                   </div>
                   <span v-else>--</span>
-                </template>
+                </template>{{/if}}
         
                 <template v-else>
                   {{ ${minStart(className)}Data[field.key] ?? '--' }}
@@ -5920,7 +5927,7 @@
                       <template v-else-if="field.type === 'select'">
                         {{ ${minStart(className)}Data[field.key] != null ? ${minStart(className)}Data[field.key].getKeyValue() : '--' }}
                       </template>
-                      <template v-else-if="field.type === 'file'">
+                      {{#if containsFile=true}}<template v-else-if="field.type === 'file'">
                         <div v-if="${minStart(className)}Data[field.key]" class="flex w-full min-w-0 items-center gap-2 text-left">
                           <button v-if="isImageContent(${minStart(className)}Data[field.key])" type="button" class="shrink-0 overflow-hidden rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" title="Prévisualiser l'image" @click="openImagePreview(buildFileSource(${minStart(className)}Data[field.key]), field.label)"><img :src="buildFileSource(${minStart(className)}Data[field.key])" :alt="field.label" class="h-10 w-10 object-cover" /></button>
                           <span v-else class="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-base-200 text-[9px] font-bold text-base-content/70" aria-hidden="true">{{ getFileTypeLabel(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key)) }}</span>
@@ -5928,7 +5935,7 @@
                           <button type="button" class="btn btn-ghost btn-xs shrink-0" title="Télécharger le fichier" aria-label="Télécharger le fichier" @click.stop="downloadAsset(${minStart(className)}Data[field.key], getGeneratedFileName(${minStart(className)}Data[field.key], field.key))">{{ downloadedFile === getGeneratedFileName(${minStart(className)}Data[field.key], field.key) ? 'Downloading...' : 'Download'  }}</button>
                         </div>
                         <span v-else>--</span>
-                      </template>
+                      </template>{{/if}}
                       <template v-else>
                         {{ ${minStart(className)}Data[field.key] ?? '--' }}
                       </template>
@@ -7367,7 +7374,7 @@
         {{/each}}{{/if}}
         async function handleSubmit() {
           const data: any = { ...formModel.value }
-          const fileFieldNames = [
+          const fileFieldNames: string[] = [
             {{#each fields}}{{#if this.uiType=file}}'${this.name}',{{/if}}{{/each}}
           ]
           Object.keys(data).forEach(key => {
@@ -7870,13 +7877,13 @@
     exports: |
       export interface I${majStart(className)} {
         {{#each fields}}
-        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isDateTime}}${minStart(this.name)}?: string{{elseIf this.isDateTimeTz}}${minStart(this.name)}?: string{{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
       }
 
       export class ${majStart(className)} extends BaseModel implements I${majStart(className)} {
         {{#each fields}}
-        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
+        {{#if this.isForeignKey}}${minStart(this.name)}?: ${majStart(this.type)}{{elseIf this.isPrimaryKey}}${minStart(this.name)}?: ${this.typeBase}{{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isDateTime}}${minStart(this.name)}?: string{{elseIf this.isDateTimeTz}}${minStart(this.name)}?: string{{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }{{else}}${minStart(this.name)}?: ${this.typeBase}{{/if}}
         {{/each}}{{removeLine}}
 
         constructor(data?: Partial<I${majStart(className)}>) {
@@ -7980,7 +7987,7 @@
         {{#each fields}}
         {{#if this.isForeignKey}}
         ${minStart(this.name)}?: string
-        {{elseIf this.isDate}}${minStart(this.name)}?: string
+        {{elseIf this.isDate}}${minStart(this.name)}?: string{{elseIf this.isDateTime}}${minStart(this.name)}?: string{{elseIf this.isDateTimeTz}}${minStart(this.name)}?: string
         {{elseIf this.isGeographic}}${minStart(this.name)}?: { latitude: number | null; longitude: number | null }
         {{elseIf this.uiType=file}}${minStart(this.name)}?: string | Uint8Array | null{{else}}
         ${minStart(this.name)}?: ${this.typeBase}{{/if}}
@@ -8015,7 +8022,7 @@
             {{#each fieldsNotFK}}
             {{#if this.isDate}}
             ${minStart(this.name)}: this.${minStart(this.name)} ? this.${minStart(this.name)}.split('T')[0] : undefined,
-            {{elseIf this.isGeographic}}${minStart(this.name)}: this.${minStart(this.name)} ?? { latitude: null, longitude: null }
+            {{elseIf this.isGeographic}}${minStart(this.name)}: this.${minStart(this.name)} ?? { latitude: null, longitude: null },
             {{else}}
             ${minStart(this.name)}: this.${minStart(this.name)},
             {{/if}}

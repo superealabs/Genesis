@@ -69,7 +69,7 @@
           :id="inputFormId"
           :class="textareaClasses"
           :rows="rows"
-          :value="modelValue ?? ''"
+          :value="typeof modelValue === 'string' ? modelValue : ''"
           @input="onInput"
         />
       </div>
