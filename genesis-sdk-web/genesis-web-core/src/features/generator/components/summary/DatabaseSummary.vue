@@ -112,7 +112,7 @@ const featureGroups = computed<FeatureGroup[]>(() => {
   let jdbcUrl = 'Non défini';
   switch (db.engine) {
     case 'mysql': jdbcUrl = `jdbc:mysql://${hostStr}:${portStr}/${dbName}`; break;
-    case 'postgre': jdbcUrl = `jdbc:postgresql://${hostStr}:${portStr}/${dbName}`; break;
+    case 'postgresql': jdbcUrl = `jdbc:postgresql://${hostStr}:${portStr}/${dbName}`; break;
     case 'sqlserver': jdbcUrl = `jdbc:sqlserver://${hostStr}:${portStr};databaseName=${dbName}`; break;
     case 'oracle': jdbcUrl = `jdbc:oracle:thin:@${hostStr}:${portStr}:${db.sid || dbName}`; break;
   }

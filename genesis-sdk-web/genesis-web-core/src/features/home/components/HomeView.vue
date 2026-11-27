@@ -54,7 +54,7 @@
 
             <!-- ═══ TITRE CENTRAL ═══ -->
             <h1 class="text-center text-9xl md:text-9xl font-semibold text-text">
-                Welcome into
+                Bienvenue sur
                 <br/>
                 <span class="text-primary">Genesis</span>
             </h1>
@@ -65,7 +65,7 @@
                 <div class="w-fit lg:w-1/3 flex flex-col gap-8">
                     <div class="flex flex-col gap-4">
                         <h2 class="text-5xl font-semibold leading-tight text-text">
-                            Start to Generate any project any time
+                            Commencer à Générer vos projets
                         </h2>
                         <p class="text-sm text-text-muted leading-relaxed">
                             Générez votre projet pas à pas : choisissez votre framework,

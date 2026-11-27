@@ -26,8 +26,7 @@
         <div class="flex-1 min-h-0 flex flex-col space-y-3">
           <div class="flex items-center justify-between flex-shrink-0">
             <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-              Unassigned Entity
-              <span class="text-primary text-sm font-normal">*</span>
+              Entités non assignées
             </h3>
             <div class="flex items-center gap-2">
               <GenesisButton
@@ -173,7 +172,7 @@
         <div class="flex-1 min-h-0 flex flex-col space-y-3">
           <div class="flex items-center justify-between flex-shrink-0">
             <h3 class="text-lg font-semibold text-text flex items-center gap-2">
-              Assignated Entity
+              Entités assignées
             </h3>
             <div class="flex items-center gap-2">
               <GenesisButton

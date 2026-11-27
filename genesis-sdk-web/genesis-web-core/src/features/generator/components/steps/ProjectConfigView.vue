@@ -66,16 +66,18 @@
               size="lg" 
               label="Port d'exécution" 
               placeholder="ex: 8080" 
-              fill-width 
+              fill-width
+              is-mandatory
             />
           </div>
           <GenesisInput 
             :model-value="config.projectLocation" 
             @update:model-value="(val) => updateConfig('projectLocation', val)"
             type="path" 
-            label="Emplacement" 
+            label="Destination" 
             fill-width 
-            size="lg" 
+            size="lg"
+            is-mandatory
             @request-folder-path="handleSelectFolderPath" 
           />
           <GenesisInput 
@@ -101,7 +103,7 @@
         <div class="flex flex-col lg:flex-row gap-6">
           <div class="flex flex-col gap-4 w-full">
             <div class="flex items-center justify-end gap-1.5">
-              <span class="text-sm text-text-muted">How to use</span>
+              <span class="text-sm text-text-muted">Aide</span>
               <GenesisButtonIcon 
                 variant="neutral" 
                 size="sm" 
@@ -144,6 +146,7 @@
                     size="lg" 
                     label="Group ID" 
                     placeholder="com.example"
+                    is-mandatory
                     fill-width
                   />
                 </div>
@@ -194,14 +197,14 @@
 
       <!-- 3. CONFIGURATION AVANCÉE -->
       <div class="space-y-4">
-        <GenesisDisclosure title="Configuration Avancée du Backend" :variant="'secondary'" :padding="'lg'" :is-in-form="true" :default-open="false">
+        <GenesisDisclosure title="Configuration Avancée" :variant="'secondary'" :padding="'lg'" :is-in-form="true" :default-open="false">
 
           <template #title>
-              <span class="text-xl font-semibold">Configuration Avancée du Backend</span>
+              <span class="text-xl font-semibold">Configuration Avancée</span>
           </template>
           <div class="flex flex-col gap-2">
             <div class="flex items-center justify-end gap-1.5">
-              <span class="text-sm text-text-muted">How to use</span>
+              <span class="text-sm text-text-muted">Aide</span>
               <GenesisButtonIcon 
                 variant="neutral" 
                 size="sm" 

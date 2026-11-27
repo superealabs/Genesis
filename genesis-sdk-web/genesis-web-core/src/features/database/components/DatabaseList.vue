@@ -13,9 +13,9 @@
   >
     <template #title>
       <span class="text-2xl font-semibold">Récemment</span>
-      <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border border-secondary">
+      <!-- <span class="text-xs font-normal text-muted bg-bg-light px-2 py-0.5 rounded-full border border-secondary">
         {{ recentDatabases.length }}
-      </span>
+      </span> -->
     </template>
 
     <div class="section-body">

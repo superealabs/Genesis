@@ -25,9 +25,9 @@
             </template>
             <template v-else>
               <div class="flex flex-col gap-1">
-                <label class="text-sm font-medium text-muted">
-                  SGBD Sélectionné <span class="text-accent ml-0.5">*</span>
-                </label>
+                <!-- <label class="text-sm font-medium text-muted">
+                  SGBD Sélectionné <span class="text-secondary ml-0.5">*</span>
+                </label> -->
                 <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
                   <span class="truncate font-medium">{{ selectedEngineName }}</span>
                 </div>
@@ -64,7 +64,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GenesisInput
           v-model="database.host"
-          label="Host IP"
+          label="Adresse IP"
           size="lg"
           placeholder="127.0.0.1"
           is-mandatory
@@ -88,7 +88,7 @@
         <div :class="database.engine == 'MySQL' ? 'md:col-span-2' : 'md:col-span-1'">
           <GenesisInput
             v-model="database.databaseName"
-            label="Database Name"
+            label="Nom de la base de donnée"
             size="lg"
             placeholder="my_database"
             is-mandatory
@@ -122,7 +122,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <GenesisInput
           v-model="database.username"
-          label="Username"
+          label="Nom d'utilisateur"
           placeholder="root"
           size="lg"
           is-mandatory
@@ -130,7 +130,7 @@
         />
         <GenesisInput
           v-model="database.password"
-          label="Password"
+          label="Mot de passe"
           type="password"
           size="lg"
           placeholder="••••••••"

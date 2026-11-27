@@ -46,7 +46,7 @@
                 <!-- Texte de droite (texte simple, sans badge) -->
                 <div
                     v-if="rightText"
-                    class="flex-shrink-0 ml-4 text-right min-w-[120px] truncate text-xs font-medium text-primary"
+                    class="flex-shrink-0 ml-4 text-right min-w-[120px] truncate text-xs font-medium text-secondary"
                     :title="rightText(item)"
                 >
                     {{ rightText(item) }}

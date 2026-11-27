@@ -2,7 +2,7 @@
     <div class="inline-flex flex-col gap-1" :class="[layoutClasses, fillWidthClasses, $attrs.class]">
         
         <label v-if="label && type !== 'boolean' && type !== 'checkbox-3-state'" class="text-sm font-medium text-muted" :class="labelClasses">
-            {{ label }}<span v-if="isMandatory" class="text-primary ml-0.5">*</span>
+            {{ label }}<span v-if="isMandatory" class="ml-0.5 text-secondary">*</span>
         </label>
 
         <template v-if="type === 'boolean'">

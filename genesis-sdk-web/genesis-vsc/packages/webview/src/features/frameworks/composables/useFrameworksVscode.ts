@@ -1,5 +1,8 @@
 // ✅ Import via le manifeste
-import { useFrameworks } from '@genesis-labs/core/features/frameworks/manifest';
+// import { useFrameworks } from '@genesis-labs/core/features/frameworks/manifest';
+
+import { useFrameworks } from '@genesis-labs/web-core/features/frameworks/manifest';
+// import { useWizardFramework } from '@genesis-labs/web-core/features/frameworks/composables/useWizardFramework';
 
 /**
  * Composable spécifique à VS Code.

@@ -64,7 +64,6 @@
 
         <!-- 2. LISTE DES RELATIONS CONFIGURÉES -->
         <div class="flex flex-col gap-2">
-          <h3 class="text-sm font-semibold text-text">Relations configurées</h3>
           
           <!-- ÉTAPE 3 : Tableau des relations -->
           <GenesisTutorialItem id="relation-table-view">

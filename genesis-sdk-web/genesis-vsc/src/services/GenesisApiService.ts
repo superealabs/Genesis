@@ -2,7 +2,7 @@
 import * as net from 'net';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { spawn, ChildProcess } from 'child_process';
+import { spawn, spawnSync, ChildProcess } from 'child_process';
 import { createAxiosInstance, resetAxiosInstance } from './http/genesisAxiosInstance';
 import * as fs from 'fs';
 
@@ -16,6 +16,7 @@ const STARTUP_RETRY_DELAY_MS = 500;
 const LOG_TAIL_LINES = 30;
 /** Délai avant d'envoyer SIGKILL si SIGTERM n'a pas tué le process. */
 const KILL_GRACE_PERIOD_MS = 5000;
+const MIN_JAVA_MAJOR = 21;
 
 export class GenesisApiService {
     private process: ChildProcess | null = null;
@@ -65,6 +66,9 @@ export class GenesisApiService {
         this.startupError = null;
 
         try {
+            const java = this.resolveJavaCommand();
+            this.checkJavaVersion(java);
+
             this.port = await this.findFreePort();
             const jarPath = path.join(context.extensionPath, 'bin', 'genesis-api-1.0.0.jar');
 
@@ -73,7 +77,8 @@ export class GenesisApiService {
             logPath = path.join(logDir, 'genesis-api.log');
             const logFd = fs.openSync(logPath, 'a');
 
-            this.process = spawn(this.resolveJavaCommand(), [
+            // nécessiste une bonne compréhension de ma part 
+            this.process = spawn(java, [
                 '-jar', jarPath,
                 `--server.port=${this.port}`,
                 `--server.address=127.0.0.1`,
@@ -83,7 +88,7 @@ export class GenesisApiService {
                 windowsHide: true
             });
 
-            const java = this.resolveJavaCommand();
+            // const java = this.resolveJavaCommand();
             logger.log(LOG_CHANNEL, `Lancement : ${java} -jar ${jarPath} (port ${this.port}) — log Spring : ${logPath}`, true);
 
             const proc = this.process;
@@ -105,7 +110,7 @@ export class GenesisApiService {
             const spawnFailure = new Promise<never>((_, reject) => {
                 proc.once('error', (e: NodeJS.ErrnoException) => reject(new Error(
                     e.code === 'ENOENT'
-                        ? 'Java introuvable. Installez un JDK 17+ ou définissez le réglage genesis.javaHome.'
+                        ? `Java introuvable. Installez un JDK ${MIN_JAVA_MAJOR}+ ou définissez le réglage genesis.javaHome.`
                         : `Échec du lancement de Java : ${e.message}`
                 )));
                 proc.once('exit', (code) => reject(new Error(
@@ -137,6 +142,31 @@ export class GenesisApiService {
             logger.log(LOG_CHANNEL, `── Dernières lignes de ${logPath} ──\n${lines.join('\n')}`);
         } catch (e) {
             logger.log(LOG_CHANNEL, `Impossible de lire ${logPath} : ${(e as Error).message}`);
+        }
+    }
+
+    private checkJavaVersion(java: string): void {
+        const result = spawnSync(java, ['-version'], { encoding: 'utf-8', windowsHide: true });
+
+        if (result.error) {
+            const code = (result.error as NodeJS.ErrnoException).code;
+            throw new Error(code === 'ENOENT'
+                ? `Java introuvable. Installez un JDK ${MIN_JAVA_MAJOR}+ ou définissez le réglage genesis.javaHome.`
+                : `Impossible d'exécuter ${java} : ${result.error.message}`);
+        }
+
+        // "java -version" écrit sur stderr : openjdk version "21.0.10" 2026-01-20
+        const output = `${result.stderr ?? ''}${result.stdout ?? ''}`;
+        const match = output.match(/version "(\d+)(?:\.(\d+))?/);
+        const major = match
+            ? (match[1] === '1' ? parseInt(match[2], 10) : parseInt(match[1], 10)) // "1.8" -> 8
+            : null;
+
+        if (major === null || major < MIN_JAVA_MAJOR) {
+            throw new Error(
+                `Genesis nécessite Java ${MIN_JAVA_MAJOR}+ (trouvé : ${major ?? 'inconnu'} via ${java}). ` +
+                `Installez un JDK ${MIN_JAVA_MAJOR}+ ou définissez le réglage genesis.javaHome.`
+            );
         }
     }
 
@@ -275,8 +305,8 @@ export class GenesisApiService {
     }
 
     private resolveJavaCommand(): string {
-        const javaHome = process.env.JAVA_HOME
-            ?? vscode.workspace.getConfiguration('genesis').get<string>('javaHome');
+        const configured = vscode.workspace.getConfiguration('genesis').get<string>('javaHome');
+        const javaHome = configured || process.env.JAVA_HOME;
         if (javaHome) {
             return path.join(javaHome, 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
         }

@@ -129,7 +129,7 @@
                     <GenesisSwitch v-model="rel.hasForm" size="sm" @update:modelValue="emitUpdate(rel, 'hasForm', $event)" />
                   </template>
                   <template v-else>
-                    <IconCheck v-if="rel.hasForm" class="w-6 h-6 text-primary" />
+                    <IconCheck v-if="rel.hasForm" class="w-6 h-6 text-secondary" />
                     <IconX v-else class="w-6 h-6 text-red-500" />
                   </template>
                 </div>
@@ -142,7 +142,7 @@
                     <GenesisSwitch v-model="rel.mandatory" size="sm" @update:modelValue="emitUpdate(rel, 'mandatory', $event)" />
                   </template>
                   <template v-else>
-                    <IconCheck v-if="rel.mandatory" class="w-6 h-6 text-primary" />
+                    <IconCheck v-if="rel.mandatory" class="w-6 h-6 text-secondary" />
                     <IconX v-else class="w-6 h-6 text-red-500" />
                   </template>
                 </div>

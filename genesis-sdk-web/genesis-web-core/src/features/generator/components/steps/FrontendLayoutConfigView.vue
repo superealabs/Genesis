@@ -6,7 +6,7 @@
       
       <!-- 1. CONFIGURATION DE BASE (Framework, Port) -->
       <div class="space-y-4">
-        <h3 class="text-lg font-semibold text-text border-b border-neutral-light pb-2">
+        <h3 class="text-lg font-semibold text-text border-b border-neutral-light-genesis pb-2">
           Configuration Frontend
         </h3>
         
@@ -29,7 +29,6 @@
               <div class="flex flex-col gap-1">
                 <label class="text-sm font-medium text-muted">Framework Frontend sélectionné</label>
                 <div class="flex items-center gap-2 h-10 px-3 bg-bg-secondary/30 rounded text-text border border-transparent">
-                  <span class="w-2 h-2 rounded-full bg-accent shrink-0"></span>
                   <span class="truncate font-medium">{{ selectedFrontendName }}</span>
                 </div>
               </div>
