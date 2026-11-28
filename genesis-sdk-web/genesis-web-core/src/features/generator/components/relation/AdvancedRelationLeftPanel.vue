@@ -11,6 +11,7 @@
           ]"
           size="xl"
           :variant="'tertiary'"
+          :disabled="isBusy"
         />
     </div>
 
@@ -28,6 +29,7 @@
                 size="lg"
                 fill-width
                 class="flex-1"
+                :disabled="isBusy"
             />
         </GenesisTutorialItem>
 
@@ -40,6 +42,7 @@
                 { label: 'Enfant', value: 'enfant' }
                 ]"
                 size="lg"
+                :disabled="isBusy"
             />
         </GenesisTutorialItem>
       </div>
@@ -55,6 +58,7 @@
             placeholder="Rechercher..."
             size="md"
             fill-width
+            :disabled="isBusy"
           >
               <template #left>
                   <IconSearch :size="16" class="text-text-muted" />
@@ -92,7 +96,12 @@
             is-editable
             :items="modeAItems"
             :selected-items="targets"
+            :is-loading="isLoading"
+            :disabled="isBusy"
+            :can-cancel="canCancel"
+            loading-text="Chargement des entités liées..."
             @update:selected-items="emit('update:targets', $event)"
+            @cancel="emit('cancel')"
           />
         </GenesisTutorialItem>
       </div>
@@ -110,6 +119,7 @@
                   size="md"
                   fill-width
                   class="flex-1"
+                  :disabled="isBusy"
               >
                   <template #left>
                       <IconSearch :size="16" class="text-text-muted" />
@@ -160,6 +170,8 @@
                 is-editable
                 :items="modeBItems"
                 :selected-items="massSelection"
+                :is-loading="isLoading"
+                :disabled="isBusy"
                 @update:selected-items="emit('update:massSelection', $event)"
                 />
             </GenesisTutorialItem>
@@ -197,10 +209,20 @@ const props = withDefaults(defineProps<{
   targets: string[];
   massSelection: string[];
 
+    /** Chargement des listes parents/enfants en cours */
+  isLoading?: boolean;
+  /** Une opération est en cours (chargement OU ajout de relations) : tout est verrouillé */
+  isBusy?: boolean;
+  /** Affiche le bouton Annuler dans le loader de la table des cibles */
+  canCancel?: boolean;
+
   // ✅ Tutoriel
   tutorialId?: string;
   includeSubTutorial?: boolean;
 }>(), {
+  isLoading: false,
+  isBusy: false,
+  canCancel: false,
   includeSubTutorial: false,
 });
 
@@ -211,6 +233,7 @@ const emit = defineEmits<{
   'update:targets': [value: string[]];
   'update:massSelection': [value: string[]];
   'update:visibleMassIds': [value: string[]];
+  cancel: [];
 }>();
 
 // ============================================================================

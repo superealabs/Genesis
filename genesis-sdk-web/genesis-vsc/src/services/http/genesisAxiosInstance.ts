@@ -5,7 +5,7 @@ let instance: AxiosInstance | null = null;
 export function createAxiosInstance(port: number): AxiosInstance {
     instance = axios.create({
         baseURL: `http://127.0.0.1:${port}/api`,
-        timeout: 10000, // Augmenté un peu pour la génération de fichiers
+        timeout: 30000, // Augmenté un peu pour la génération de fichiers
         headers: { 'Content-Type': 'application/json' }
     });
 
@@ -17,7 +17,10 @@ export function createAxiosInstance(port: number): AxiosInstance {
     instance.interceptors.response.use(
         (response) => response,
         (error) => {
-            const msg = error.response?.data?.message ?? error.message ?? 'Erreur réseau';
+            const status = error.response?.status;
+            const url = `${error.config?.method?.toUpperCase()} ${error.config?.url}`;
+            const detail = error.response?.data?.message || error.response?.data?.error || error.message || 'Erreur réseau';
+            const msg = status ? `[${status}] ${url} : ${detail}` : `${url} : ${detail}`;
             return Promise.reject(new Error(msg));
         }
     );

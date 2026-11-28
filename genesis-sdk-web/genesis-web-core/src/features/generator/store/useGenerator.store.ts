@@ -61,8 +61,10 @@ export const useGeneratorStore = defineStore('generator', () => {
 
   // Domaine : Étape 6 - Tables, Vues & Composants
   const availableTables = ref<TableMetadataDto[]>([]);
+  const isLoadingTables = ref(false);
   const tablesParents = ref<TableMetadataDto[]>([]);
   const tablesChilds = ref<TableMetadataDto[]>([]);
+  const isLoadingRelationTables = ref(false);
 
   const generationAssociations = ref<GenerationAssociatedToConfig[]>([]);
   const selectedItemsInList = ref<string[]>([]);
@@ -134,6 +136,9 @@ function reset() {
   relationsLoaded.value = false;
   tablesParents.value = [];
   tablesChilds.value = [];
+  isLoadingTables.value = false;
+  isLoadingRelationTables.value = false;
+  
 
   lastCommittedDatabaseConfig.value = null;
   frontendAssetContents.value = {};
@@ -350,8 +355,10 @@ function reset() {
 
   // --- Étape 6 : Tables, Vues & Composants ---
   function setAvailableTables(data: TableMetadataDto[]) { availableTables.value = data; }
+  function setIsLoadingTables(value: boolean) { isLoadingTables.value = value; }
   function setTablesParents(data: TableMetadataDto[]) { tablesParents.value = data; }
   function setTablesChilds(data: TableMetadataDto[]) { tablesChilds.value = data; }
+  function setIsLoadingRelationTables(value: boolean) { isLoadingRelationTables.value = value; }
   function setGenerationProfiles(profiles: { id: string | number; name: string; components: ComponentType[] }[]) {
     generationProfiles.value = profiles;
   }
@@ -603,7 +610,8 @@ function reset() {
     setGenerationProfiles,
     availableTables, tables, views, getAvailableTables, getAvailableViews,
     getTablesParents, getTablesChilds,
-    setAvailableTables, setTablesParents, setTablesChilds,
+    isLoadingTables,
+    setAvailableTables, setTablesParents, setTablesChilds,setIsLoadingTables,
     assignTableToConfig,
     removeTableFromConfig,
     isTableAssignedToConfig,
@@ -616,6 +624,7 @@ function reset() {
     // Étape 7 : Relations
     relations, relationsLoaded, getRelations, setRelations, addRelation, removeRelation,
     tablesParents, tablesChilds, pruneRelations,
+    isLoadingRelationTables, setIsLoadingRelationTables,
 
     // Étape 8 & 9 : Frontend
     pendingFrontendFramework, setPendingFrontendFramework, setSelectedFrontendFramework, 

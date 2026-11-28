@@ -113,10 +113,13 @@ export class VsCodeGeneratorService implements IGeneratorService {
 
     async fetchTablesMetadata(): Promise<TableMetadataDto[]> {
         try {
-            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata_all');
+            const { data } = await getAxiosInstance().get<TableMetadataDto[]>('/tables_metadata_all', {
+                timeout: 120_000
+            });
             return data;
         } catch (error) {
-            logger.log(LOG_CHANNEL, `⚠️ fetchTablesMetadata API échouée. Fallback mock.`, VsCodeGeneratorService.DEBUG);
+            const reason = error instanceof Error ? error.message : String(error);
+            logger.log(LOG_CHANNEL, `⚠️ fetchTablesMetadata échouée : ${reason}. Fallback mock.`, true);
             return MOCK_TABLES;
         }
     }
@@ -129,7 +132,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
         logger.log(LOG_CHANNEL, `📤 [fetchTablesMetadataParents] Appel GET ${fullUrl}`, VsCodeGeneratorService.DEBUG);
 
         try {
-            const response = await getAxiosInstance().get<TableMetadataDto[]>(url, { params });
+            const response = await getAxiosInstance().get<TableMetadataDto[]>(url, { params, timeout: 120_000 });
 
             // 👇 Log la réponse RÉELLE (statut + data)
             logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataParents] Statut: ${response.status}`, VsCodeGeneratorService.DEBUG);
@@ -171,7 +174,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
         const url = '/tables_metadata/childs';
 
         try {
-            const response = await getAxiosInstance().get<TableMetadataDto[]>(url, { params });
+            const response = await getAxiosInstance().get<TableMetadataDto[]>(url, { params, timeout: 120_000 });
 
             logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataChilds] Status: ${response.status}`, VsCodeGeneratorService.DEBUG);
             logger.log(LOG_CHANNEL, `✅ [fetchTablesMetadataChilds] Data: ${JSON.stringify(response.data)}`, VsCodeGeneratorService.DEBUG);
@@ -456,7 +459,7 @@ export class VsCodeGeneratorService implements IGeneratorService {
                 '/generator/launch',
                 {}, // 2ème argument : les données (vide ici, mais nécessaire pour placer le 3ème argument)
                 {
-                    timeout: 180000 // ⏱️ Durée en millisecondes (ici 180 000 ms = 3 minutes)
+                    timeout: 360000 // ⏱️ Durée en millisecondes (ici 360 000 ms = 6 minutes)
                 }
             );
 

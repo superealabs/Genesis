@@ -14,6 +14,11 @@
           :tutorial-id="leftPanelTutorialId"
           :include-sub-tutorial="true"
           @update:is-child-first="setDirection"
+
+          :is-busy="isBusy"
+          :can-cancel="canCancelLoad"
+          @cancel="cancelSelection"
+
           @update:anchor="setAnchor"
           @update:targets="setTargets"
           @update:visible-mass-ids="visibleMassIds = $event"
@@ -128,6 +133,7 @@ const duplicateMessage = computed(() => {
 const {
   tablesParents,
   tablesChilds,
+  isLoadingRelationTables,
   getRelations,
   addRelation,
   removeRelation,
@@ -143,6 +149,7 @@ const {
   setAnchor,
   setTargets,
   resetSelection,
+  cancelSelection,
 } = useRelationBuilder();
 
 // NOUVEAU : loader local pour les actions Add / Add All
@@ -150,6 +157,12 @@ const isAddingRelations = ref(false);
 
 // isLoading = premier chargement OU ajout en cours
 const isLoading = computed(() => isAddingRelations.value);
+
+/** Verrouille toute la saisie : chargement des listes OU ajout de relations */
+const isBusy = computed(() => isLoadingRelationTables.value || isAddingRelations.value);
+
+/** Annulation possible uniquement pendant le chargement lié à une ancre choisie */
+const canCancelLoad = computed(() => isLoadingRelationTables.value && !!anchor.value);
 
 // ============================================================================
 // ÉTAT LOCAL
@@ -252,6 +265,7 @@ defineExpose({
 // COMPUTEDS DE DISPONIBILITÉ
 // ============================================================================
 const canAdd = computed(() => {
+  if (isBusy.value) return false;
   if (mode.value === 'A') return !!anchor.value && targets.value.length > 0;
   return massSelection.value.length > 0;
 });
@@ -264,8 +278,8 @@ const canAddAll = computed(() => {
   return visibleMassIds.value.length > 0;
 });
 
-const canRemove = computed(() => selectedRelations.value.length > 0);
-const canRemoveAll = computed(() => getRelations.value.length > 0);
+const canRemove = computed(() => !isBusy.value && selectedRelations.value.length > 0);
+const canRemoveAll = computed(() => !isBusy.value && getRelations.value.length > 0);
 
 // ============================================================================
 // LOGIQUE MÉTIER (inchangée)

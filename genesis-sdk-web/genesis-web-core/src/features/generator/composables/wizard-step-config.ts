@@ -579,13 +579,15 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
   generation: {
     onEnter: async (store, { svc }) => {
       console.log("[Wizard: tables] Chargement des tables et vues...");
-      
+      store.setIsLoadingTables(true);
       try {
         const tables = await svc.fetchTablesMetadata();
         store.setAvailableTables(tables);
         console.log(`[Wizard: tables] ${tables.length} tables/vues chargées`);
       } catch (error) {
         console.error("[Wizard: tables] Échec du chargement des tables:", error);
+      } finally {
+        store.setIsLoadingTables(false);
       }
     },
     
@@ -653,21 +655,20 @@ export const WIZARD_STEP_CONFIG: Record<StepId, StepConfig> = {
 
   relations: {
     onEnter: async (store, { svc }) => {
+      useRelationBuilderState().resetState();
+      store.setIsLoadingRelationTables(true);
       try {
-        // reset de selection
-        useRelationBuilderState().resetState();
-
+        // Séquentiel volontairement : deux scans de métadonnées en parallèle saturent les grosses bases.
         const tableParents = await svc.fetchTablesMetadataParents();
         const tableChilds = await svc.fetchTablesMetadataChilds();
-        // const relations = await svc.fetchRelations();
 
         store.setTablesParents(tableParents);
         store.setTablesChilds(tableChilds);
-        // store.setRelations(relations);
         store.pruneRelations();
-        // store
       } catch (error) {
         store.setWizardError(error instanceof Error ? error.message : "Échec du chargement des relations.");
+      } finally {
+        store.setIsLoadingRelationTables(false);
       }
     },
     beforeNext: async (store, { svc }) => {

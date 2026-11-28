@@ -7,6 +7,8 @@
         <GenesisContainer
             :is-loading="isLoading"
             :loading-text="loadingText"
+            :can-cancel="canCancel"
+            @cancel="emit('cancel')"
             :is-empty="items.length === 0"
             :empty-text="emptyText"
             :min-height="minHeight"
@@ -17,9 +19,7 @@
                 v-for="item in items"
                 :key="item.tableName"
                 class="flex items-center justify-between p-3 border-b border-bg-neutral-genesis last:border-b-0 transition-colors"
-                :class="isEditable
-                    ? 'cursor-pointer hover:bg-bg-secondary hover:text-secondary'
-                    : 'cursor-default hover:bg-bg-secondary/50'"
+                :class="rowClass"
                 @click="(e) => handleRowClick(item, e)"
             >
                 <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -77,6 +77,8 @@ const props = withDefaults(defineProps<{
     rightText?: (item: EntityTableItem) => string;
     selectMode?: SelectMode;   // 👈 nouveau
     isLoading?: boolean;
+    disabled?: boolean;
+    canCancel?: boolean;
     loadingText?: string;
     emptyText?: string;
     minHeight?: number;
@@ -87,13 +89,23 @@ const props = withDefaults(defineProps<{
     selectedItems: () => [],
     selectMode: 'Select',      // 👈 défaut
     isLoading: false,
+    disabled: false,
+    canCancel: false,
     emptyText: 'Aucune entité.'
 });
 
 const emit = defineEmits<{
     toggle: [item: EntityTableItem];
     'update:selectedItems': [value: string[]];   // 👈 nouveau
+    cancel: [];
 }>();
+
+const isInteractive = computed(() => props.isEditable && !props.disabled && !props.isLoading);
+
+const rowClass = computed(() => {
+    if (isInteractive.value) return 'cursor-pointer hover:bg-bg-secondary hover:text-secondary';
+    return props.disabled ? 'cursor-not-allowed opacity-60' : 'cursor-default hover:bg-bg-secondary/50';
+});
 
 // Ref interne synchronisée avec la prop (v-model)
 const selectedIdsRef = computed({
@@ -109,7 +121,7 @@ const { handleClick } = useMultiSelect<EntityTableItem>({
 });
 
 function handleRowClick(item: EntityTableItem, event: MouseEvent) {
-    if (!props.isEditable) return;
+    if (!isInteractive.value) return;
     emit('toggle', item);   // compat : conserve l'émission de toggle
     handleClick(item, event);
 }

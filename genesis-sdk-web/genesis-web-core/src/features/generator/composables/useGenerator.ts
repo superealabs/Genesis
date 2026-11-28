@@ -141,11 +141,13 @@ export function useGenerator() {
     pendingRepositoryProvider,
 
     getTablesParents, 
-    getTablesChilds, 
+    getTablesChilds,
+    isLoadingRelationTables, 
     getRelations,
     tables, 
     views, 
-    availableTables, 
+    availableTables,
+    isLoadingTables,
     getAvailableLoggingLevels,
     getAvailableSecurityTypes,
     getAvailableCacheProviders,
@@ -353,10 +355,11 @@ export function useGenerator() {
     frontendStore.setAvailableInterfaceLanguages(data); 
   }
 
-  async function getChildrenOf(parentTableName: string) {
+  /** Sans argument : liste complète. */
+  async function getChildrenOf(parentTableName?: string) {
     return svc.fetchTablesMetadataChilds(parentTableName);
   }
-  async function getParentsOf(childTableName: string) {
+  async function getParentsOf(childTableName?: string) {
     return svc.fetchTablesMetadataParents(childTableName);
   }
 
@@ -552,9 +555,11 @@ export function useGenerator() {
     tables, 
     views, 
     availableTables,
+    isLoadingTables,
     getTablesParents, 
     getTablesChilds, 
     getRelations,
+    isLoadingRelationTables,
     relationsLoaded,
     
     // Options de configuration (Getters)

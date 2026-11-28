@@ -72,7 +72,7 @@
               is-editable
               :items="unassignedItems"
               :selected-items="store.selectedItemsInList"
-              :is-loading="isLoading"
+              :is-loading="isLoadingTables"
               loading-text="Chargement des métadonnées..."
               empty-text="Aucune table disponible."
               :min-height="200"
@@ -262,9 +262,8 @@ import GenesisButton from '@genesis-labs/web-core/core/components/ui/actions/Gen
 // ============================================================================
 const configManager = useConfigurationManager([], { singleConfiguration: true });
 const store = useGeneratorStore();
-const { tables, views, fetchTablesMetadata } = useGenerator();
+const { tables, views, isLoadingTables } = useGenerator();
 
-const isLoading = ref(false);
 const enforceDependencies = ref(false);
 
 const searchQueryUnassigned = ref('');
@@ -675,13 +674,11 @@ const configIoLogic = useConfigManagerLogic({
 });
 
 onMounted(async () => {
-  isLoading.value = true;
+  // Les tables sont chargées par le wizard (generation.onEnter) : ici, uniquement les profils.
   try {
-    await Promise.all([ fetchTablesMetadata(), syncGenerationConfigs() ]);
+    await syncGenerationConfigs();
   } catch (error) {
     console.error('[GenerationConfigurationAlt] Erreur lors de l\'initialisation:', error);
-  } finally {
-    isLoading.value = false;
   }
 });
 

@@ -1,6 +1,15 @@
 // useRelationBuilder.ts
 import { reactive, toRefs } from 'vue';
+import type { TableMetadataDto } from '@genesis-labs/shared-types';
 import { useGenerator } from '@genesis-labs/web-core/features/generator/composables/useGenerator';
+import { useGeneratorStore } from '@genesis-labs/web-core/features/generator/store/useGenerator.store';
+
+/**
+ * Jeton de la dernière demande de chargement (module-level, partagé entre les vues).
+ * Seule la demande la plus récente peut écrire dans le store : une nouvelle ancre
+ * ou une annulation rend obsolètes les réponses encore en vol.
+ */
+let loadToken = 0;
 
 /**
  * État PARTAGÉ entre RelationConfigSimpleView et RelationConfigAdvancedView.
@@ -64,31 +73,59 @@ export function useRelationBuilderState() {
  * ⚠️ Utilisable UNIQUEMENT dans un composant Vue (utilise `inject` via `useGenerator`).
  */
 export function useRelationBuilder() {
-  const { fetchTablesMetadataParents, fetchTablesMetadataChilds } = useGenerator();
+  const { getParentsOf, getChildrenOf } = useGenerator();
+  const store = useGeneratorStore();
 
   // ── Chargements ────────────────────────────────────────────────────────
-  async function safe(label: string, fn: () => Promise<unknown>) {
+  /**
+   * Chargement « dernier arrivé gagne ».
+   * Chaque appel prend un nouveau jeton ; si un autre chargement (ou une annulation)
+   * démarre entre-temps, la réponse de celui-ci est ignorée.
+   */
+  async function runLoad(
+    label: string,
+    fetchers: {
+      parents?: () => Promise<TableMetadataDto[]>;
+      childs?: () => Promise<TableMetadataDto[]>;
+    }
+  ) {
+    const token = ++loadToken;
+    const isCurrent = () => token === loadToken;
+
+    store.setIsLoadingRelationTables(true);
     try {
-      await fn();
+      if (fetchers.parents) {
+        const parents = await fetchers.parents();
+        if (!isCurrent()) return;
+        store.setTablesParents(parents);
+      }
+      if (fetchers.childs) {
+        const childs = await fetchers.childs();
+        if (!isCurrent()) return;
+        store.setTablesChilds(childs);
+      }
     } catch (error) {
-      console.error(`[useRelationBuilder] Échec chargement ${label}:`, error);
+      if (isCurrent()) console.error(`[useRelationBuilder] Échec chargement ${label}:`, error);
+    } finally {
+      // Un chargement plus récent possède le flag : on n'y touche pas.
+      if (isCurrent()) store.setIsLoadingRelationTables(false);
     }
   }
 
   /** Charge les deux listes complètes (sans filtre). */
   function loadAll() {
-    return Promise.all([
-      safe('parents', () => fetchTablesMetadataParents()),
-      safe('enfants', () => fetchTablesMetadataChilds()),
-    ]);
+    return runLoad('parents + enfants', {
+      parents: () => getParentsOf(),
+      childs: () => getChildrenOf(),
+    });
   }
 
   /** Charge le côté "cible" : enfants du parent (ParentFirst) ou parents de l'enfant (ChildFirst). */
   function loadTargetSide(anchor: string) {
     const name = anchor || undefined; // vide = tous
     return state.isChildFirst
-      ? safe('parents', () => fetchTablesMetadataParents(name))
-      : safe('enfants', () => fetchTablesMetadataChilds(name));
+      ? runLoad('parents', { parents: () => getParentsOf(name) })
+      : runLoad('enfants', { childs: () => getChildrenOf(name) });
   }
 
   // ── Actions ────────────────────────────────────────────────────────────
@@ -121,6 +158,15 @@ export function useRelationBuilder() {
     state.targets = [];
   }
 
+  /**
+   * Annule le choix courant : vide anchor + targets et recharge la liste complète du côté cible.
+   * Le nouveau chargement prend un nouveau jeton : la réponse en vol est ignorée.
+   */
+  async function cancelSelection() {
+    resetSelection();
+    await loadTargetSide('');
+  }
+
   // ✅ Réutilise les fonctions pures
   const { setTargets, resetState } = useRelationBuilderState();
 
@@ -130,6 +176,7 @@ export function useRelationBuilder() {
     setAnchor,
     setTargets,
     resetSelection,
+    cancelSelection,
     resetState,
   };
 }
